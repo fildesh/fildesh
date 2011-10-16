@@ -1,0 +1,24 @@
+
+$(H heredoc) tag
+
+Check out this document.
+It is a string variable with "llo" in it.
+This is the end.
+$(H heredoc) tag
+
+echo -e hello\nup\njello $(O echo) $(H heredoc) \
+     d e\nyellow\n$(H heredoc)
+grep llo $(X echo) $(O grep)
+
+$(H heredoc) b
+s/llo/cko/ 
+$(H heredoc) b
+
+sed -e $(H heredoc) $(X grep) $(O sed)
+
+$(H script)
+{ print "prefix " $0; }
+$(H script)
+
+awk $(H script) $(X sed)
+
