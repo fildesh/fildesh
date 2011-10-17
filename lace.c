@@ -33,6 +33,7 @@ static const char WhiteSpaceChars[] = " \t\v\r\n";
 enum SymValKind
 {
     IDescVal, ODescVal,
+    IDescFileVal, ODescFileVal,
     HereDocVal,
     NSymValKinds
 };
@@ -50,12 +51,15 @@ struct Command
     char* line;
     CommandKind kind;
     char** args;
+    uint nextra_args;
     char** extra_args;
     pid_t pid;
         /* Input stream.*/
+    int stdis;
     uint nis;
     int* is;
         /* Output streams.*/
+    int stdos;
     uint nos;
     int* os;
         /* Use this if it's a here document.*/
@@ -91,7 +95,10 @@ cleanup_SymVal (SymVal* v)
 static void
 init_Command (Command* cmd)
 {
+    cmd->nextra_args = 0;
     cmd->kind = NCommandKinds;
+    cmd->stdis = -1;
+    cmd->stdos = -1;
     cmd->nis = 0;
     cmd->nos = 0;
 }
@@ -100,6 +107,8 @@ static void
 close_Command (Command* cmd)
 {
     uint i;
+    if (cmd->stdis >= 0)  close (cmd->stdis);
+    if (cmd->stdos >= 0)  close (cmd->stdos);
     if (cmd->nis > 0)
     {
         UFor( i, cmd->nis )
@@ -119,12 +128,18 @@ close_Command (Command* cmd)
 static void
 cleanup_Command (Command* cmd)
 {
+    uint i;
     close_Command (cmd);
     free (cmd->line);
     if (cmd->kind == RunCommand)
         free (cmd->args);
     else if (cmd->kind == HereDocCommand)
         free (cmd->doc);
+
+    UFor( i, cmd->nextra_args )
+        free (cmd->extra_args[i]);
+    if (cmd->nextra_args > 0)
+        free (cmd->extra_args);
 }
 
 
@@ -245,7 +260,7 @@ parse_line (FILE* in)
         i = count_ws (s);
         if (s[i] == '#' || s[i] == '\0')  continue;
 
-        r = strlen (&s[i]);
+        r = i + strlen (&s[i]);
         assert (r > 0);
             /* if (i > 0)  memmove (s, &s[i], r+1); */
 
@@ -253,7 +268,6 @@ parse_line (FILE* in)
 
         if (s[r-1] == '\\')
         {
-            s[r-1] = ' ';
             n += r-1;
         }
         else
@@ -383,8 +397,16 @@ parse_sym (char* s)
     i = count_non_ws (s);
     if (s[i] == '\0')  return NSymValKinds;
 
-    if (s[2] == 'X')  kind = IDescVal;
-    if (s[2] == 'O')  kind = ODescVal;
+    if (s[2] == 'X')
+    {
+        if (s[3] == 'F')  kind = IDescFileVal;
+        else              kind = IDescVal;
+    }
+    if (s[2] == 'O')
+    {
+        if (s[3] == 'F')  kind = ODescFileVal;
+        else              kind = ODescVal;
+    }
     if (s[2] == 'H')  kind = HereDocVal;
 
     if (kind != NSymValKinds)
@@ -427,6 +449,28 @@ add_ios_Command (Command* cmd, int in, int out)
         cmd->os[cmd->nos] = out;
         ++ cmd->nos;
     }
+}
+
+static char*
+add_extra_arg_Command (Command* cmd, const char* s)
+{
+    uint i;
+    i = cmd->nextra_args;
+    if (i == 0)
+        cmd->extra_args = AllocT( char*, 1 );
+    else
+        ResizeT( char*, cmd->extra_args, i+1 );
+    cmd->extra_args[i] = strdup (s);
+    ++ cmd->nextra_args;
+    return cmd->extra_args[i];
+}
+
+static char*
+add_fd_arg_Command (Command* cmd, int fd)
+{
+    char buf[1024];
+    sprintf (buf, "/dev/fd/%d", fd);
+    return add_extra_arg_Command (cmd, buf);
 }
 
 static SymVal*
@@ -480,7 +524,7 @@ setup_commands (uint* ret_nsyms, uint ncmds, Command* cmds)
                     cmd->args[arg_q] = sym->as.here_doc;
                     ++ arg_q;
                 }
-                else if (kind == ODescVal)
+                else if (kind == ODescVal || kind == ODescFileVal)
                 {
                     int fd[2];
                     int ret;
@@ -491,13 +535,34 @@ setup_commands (uint* ret_nsyms, uint ncmds, Command* cmds)
                     assert (!(ret < 0));
 
                     sym->as.file_desc = fd[0];
-                    add_ios_Command (cmd, -1, fd[1]);
+                    if (kind == ODescVal)
+                    {
+                        cmd->stdos = fd[1];
+                    }
+                    else
+                    {
+                        add_ios_Command (cmd, -1, fd[1]);
+                        cmd->args[arg_q] = add_fd_arg_Command (cmd, fd[1]);
+                        ++ arg_q;
+                    }
                 }
-                else if (kind == IDescVal)
+                else if (kind == IDescVal || kind == IDescFileVal)
                 {
+                    int fd;
                     assert (sym->kind == ODescVal);
                     sym->kind = NSymValKinds;
-                    add_ios_Command (cmd, sym->as.file_desc, -1);
+                    fd = sym->as.file_desc;
+
+                    if (kind == IDescVal)
+                    {
+                        cmd->stdis = fd;
+                    }
+                    else
+                    {
+                        add_ios_Command (cmd, fd, -1);
+                        cmd->args[arg_q] = add_fd_arg_Command (cmd, fd);
+                        ++ arg_q;
+                    }
                 }
             }
             else
@@ -515,6 +580,10 @@ setup_commands (uint* ret_nsyms, uint ncmds, Command* cmds)
         }
     }
     *ret_nsyms = nsyms;
+
+    UFor( i, nsyms )
+        assert (syms[i].kind != ODescVal && "A dangling output stream!");
+
     return syms;
 }
 
@@ -579,8 +648,8 @@ int main (int argc, char** argv)
             if (j != i)
                 close_Command (&cmds[j]);
 
-        UFor( j, cmd->nis )  dup2 (cmd->is[j], 0);
-        UFor( j, cmd->nos )  dup2 (cmd->os[j], 1);
+        if (cmd->stdis >= 0)  dup2 (cmd->stdis, 0);
+        if (cmd->stdos >= 0)  dup2 (cmd->stdos, 1);
 
         execvp (cmd->args[0], cmd->args);
         assert (0);

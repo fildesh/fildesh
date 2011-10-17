@@ -1,0 +1,42 @@
+
+## This code replaces all the computer names in /lab/
+## with the user id on each machine!
+## You should have auto-login to these hosts.
+
+$(H lab)
+localhost   127.0.0.1
+ localhost   localhost
+  localhost   localhost
+   localhost   localhost
+$(H lab)
+
+echo $(H lab) $(O a)
+
+$(H clientcmd)
+who | awk '{ print "host " $0 ; }'
+$(H clientcmd)
+
+sed $(X a) $(O a) \
+    -e 's/^[[:space:]]\+/ /' \
+    -e 's/^ //' \
+    -e 's/ $//'
+
+tr $(X a) ' ' '\n' $(O a)
+
+#cat $(XF a)
+
+#$(H comment)
+xargs $(X a) -n 1 -ihost ssh host sh -c $(H clientcmd) $(O users)
+
+
+$(H subst)
+{ printf ("s/%s/%-*s/\n", $1, length($1), $2); }
+$(H subst)
+
+awk $(X users) $(H subst) $(O a)
+
+echo $(H lab) $(O b)
+
+sed $(X b) -f $(XF a)
+#$(H comment)
+
