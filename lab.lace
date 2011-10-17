@@ -1,13 +1,17 @@
 
 ## This code replaces all the computer names in /lab/
 ## with the user id on each machine!
+## Non-hostnames in the map must start with exclamation points.
 ## You should have auto-login to these hosts.
 
 $(H lab)
-localhost   127.0.0.1
- localhost   localhost
-  localhost   localhost
-   localhost   localhost
+ !door!  localhost   127.0.0.1     !door
+      !  localhost   localhost     !
+      !  localhost   localhost     !
+      !                            !
+      !          !projector        !
+      !                            !
+      !  localhost   localhost     !door
 $(H lab)
 
 echo $(H lab) $(O a)
@@ -23,14 +27,17 @@ sed $(X a) $(O a) \
 
 tr $(X a) ' ' '\n' $(O a)
 
+grep $(X a) -v '^!' $(O a)
+
 #cat $(XF a)
 
 #$(H comment)
-xargs $(X a) -n 1 -ihost ssh host sh -c $(H clientcmd) $(O users)
+xargs $(X a) -n 1 -ihost ssh -o StrictHostKeyChecking=no host \
+    sh -c $(H clientcmd) $(O users)
 
 
 $(H subst)
-{ printf ("s/%s/%-*s/\n", $1, length($1), $2); }
+{ printf ("s/\\<%s\\>/%-*s/\n", $1, length($1), $2); }
 $(H subst)
 
 awk $(X users) $(H subst) $(O a)
