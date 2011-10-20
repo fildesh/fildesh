@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <errno.h>
 #include <unistd.h>
 #include <sys/wait.h>
 
@@ -34,6 +35,8 @@ enum SymValKind
 {
     IDescVal, ODescVal,
     IDescFileVal, ODescFileVal,
+    IFutureDescVal, OFutureDescVal,
+    IFutureDescFileVal, OFutureDescFileVal,
     HereDocVal,
     NSymValKinds
 };
@@ -62,6 +65,10 @@ struct Command
     int stdos;
     uint nos;
     int* os;
+        /* If >= 0, this is a file descriptor that will
+         * close when the program command is safe to run.
+         */
+    int exec_fd;
         /* Use this if it's a here document.*/
     char* doc;
 };
@@ -95,8 +102,9 @@ cleanup_SymVal (SymVal* v)
 static void
 init_Command (Command* cmd)
 {
-    cmd->nextra_args = 0;
     cmd->kind = NCommandKinds;
+    cmd->nextra_args = 0;
+    cmd->exec_fd = -1;
     cmd->stdis = -1;
     cmd->stdos = -1;
     cmd->nis = 0;
@@ -389,7 +397,7 @@ parse_file(FILE* in, uint* n)
 static SymValKind
 parse_sym (char* s)
 {
-    uint i;
+    uint i, o;
     SymValKind kind = NSymValKinds;
 
     if (!(s[0] == '$' && s[1] == '('))  return NSymValKinds;
@@ -397,15 +405,34 @@ parse_sym (char* s)
     i = count_non_ws (s);
     if (s[i] == '\0')  return NSymValKinds;
 
-    if (s[2] == 'X')
+        /* Offset into string.*/
+    o = 2;
+
+    if (s[o] == 'X')
     {
-        if (s[3] == 'F')  kind = IDescFileVal;
-        else              kind = IDescVal;
+        if (s[o+1] == 'F')
+        {
+            if (s[o+2] == 'v')  kind = IFutureDescFileVal;
+            else                kind = IDescFileVal;
+        }
+        else
+        {
+            if (s[o+1] == 'v')  kind = IFutureDescVal;
+            else                kind = IDescVal;
+        }
     }
-    if (s[2] == 'O')
+    if (s[o] == 'O')
     {
-        if (s[3] == 'F')  kind = ODescFileVal;
-        else              kind = ODescVal;
+        if (s[o+1] == 'F')
+        {
+            if (s[o+2] == '^')  kind = OFutureDescFileVal;
+            else                kind = ODescFileVal;
+        }
+        else
+        {
+            if (s[o+1] == '^')  kind = OFutureDescVal;
+            else                kind = ODescVal;
+        }
     }
     if (s[2] == 'H')  kind = HereDocVal;
 
@@ -546,10 +573,52 @@ setup_commands (uint* ret_nsyms, uint ncmds, Command* cmds)
                         ++ arg_q;
                     }
                 }
+                else if (kind == IFutureDescVal || kind == IFutureDescFileVal)
+                {
+                    int fd[2];
+                    int ret;
+                    assert (sym->kind == NSymValKinds);
+                    sym->kind = IFutureDescVal;
+
+                    ret = pipe (fd);
+                    assert (!(ret < 0));
+
+                    sym->as.file_desc = fd[1];
+                    if (kind == IFutureDescVal)
+                    {
+                        cmd->stdos = fd[0];
+                    }
+                    else
+                    {
+                        add_ios_Command (cmd, -1, fd[0]);
+                        cmd->args[arg_q] = add_fd_arg_Command (cmd, fd[0]);
+                        if (arg_q == 0)  cmd->exec_fd = fd[0];
+                        ++ arg_q;
+                    }
+                }
                 else if (kind == IDescVal || kind == IDescFileVal)
                 {
                     int fd;
                     assert (sym->kind == ODescVal);
+                    sym->kind = NSymValKinds;
+                    fd = sym->as.file_desc;
+
+                    if (kind == IDescVal)
+                    {
+                        cmd->stdis = fd;
+                    }
+                    else
+                    {
+                        add_ios_Command (cmd, fd, -1);
+                        cmd->args[arg_q] = add_fd_arg_Command (cmd, fd);
+                        if (arg_q == 0)  cmd->exec_fd = fd;
+                        ++ arg_q;
+                    }
+                }
+                else if (kind == OFutureDescVal || kind == OFutureDescFileVal)
+                {
+                    int fd;
+                    assert (sym->kind == IFutureDescVal);
                     sym->kind = NSymValKinds;
                     fd = sym->as.file_desc;
 
@@ -651,7 +720,10 @@ int main (int argc, char** argv)
         if (cmd->stdis >= 0)  dup2 (cmd->stdis, 0);
         if (cmd->stdos >= 0)  dup2 (cmd->stdos, 1);
 
+            /* if (cmd->exec_fd < 0) */
         execvp (cmd->args[0], cmd->args);
+
+        fprintf (stderr, "Error executing: %s\n", strerror (errno));
         assert (0);
         exit (1);
     }

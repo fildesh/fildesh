@@ -1,0 +1,67 @@
+
+# Compute the sum from 1 to N
+# by generating lines containing 1 to N, 1 to N-1, ..., 1 to 2, 1
+# and counting the total number of lines! 
+
+$(H description)
+
+  seq 1 N  o
+           |  ___
+           | |  |
+  cat  o   x x  |
+       |        |
+       |        | # Going up!
+  awk  x o      |
+         |      |
+         |      |
+  tee    o  o   |
+         |   \__|
+         |
+  wc -l  x  # Prints N*(N+1)/2.
+
+$(H description)
+
+$(H N)
+10
+$(H N)
+
+$(H script)
+BEGIN {
+    getline n;
+}
+
+{
+    i = int($0);
+    if (i <= n)  print $0;
+    if (i == n)
+    {
+        -- n;
+        # Flush the current round of numbers to avoid deadlock.
+        # If fflush() is not available, wrap the awk command with
+        #    stdbuf -oL
+        fflush();
+        if (n == 0)  exit(0);
+    }
+}
+$(H script)
+
+echo $(H N) $(O echo)
+seq 1 $(H N) $(O seq)
+cat $(XF echo) $(XF seq) $(XFv pump) $(O a)
+
+#tee $(X a) out $(O a)
+
+awk $(X a) $(H script) $(O a)
+# Use this command if fflush() not implemented in your awk.
+#stdbuf -oL awk $(X a) $(H script) $(O a)
+
+tee $(X a) $(OF^ pump) $(O a)
+
+#tee $(X a) out $(O a)
+
+wc -l $(X a) $(O sum)
+
+echo -n 'The sum of 1 to' $(H N) 'is ' $(O a)
+
+cat $(XF a) $(XF sum)
+
