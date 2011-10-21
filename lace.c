@@ -12,11 +12,13 @@
 
 #include <errno.h>
 #include <unistd.h>
+#include <sys/stat.h>
 #include <sys/wait.h>
 
 
 typedef unsigned int uint;
 #define Max_uint UINT_MAX
+typedef unsigned char byte;
 
 #define true 1
 #define false 0
@@ -77,6 +79,8 @@ struct SymVal
 {
     const char* name;
     SymValKind kind;
+    uint arg_idx;  /* If a file.*/
+    uint cmd_idx;
     union SymVal_union
     {
         int file_desc;
@@ -130,6 +134,11 @@ close_Command (Command* cmd)
             close (cmd->os[i]);
         cmd->nos = 0;
         free (cmd->os);
+    }
+    if (cmd->exec_fd >= 0)
+    {
+        close (cmd->exec_fd);
+        cmd->exec_fd = -1;
     }
 }
 
@@ -557,6 +566,8 @@ setup_commands (uint* ret_nsyms, uint ncmds, Command* cmds)
                     int ret;
                     assert (sym->kind == NSymValKinds);
                     sym->kind = ODescVal;
+                    sym->cmd_idx = i;
+                    sym->arg_idx = Max_uint;
 
                     ret = pipe (fd);
                     assert (!(ret < 0));
@@ -570,6 +581,7 @@ setup_commands (uint* ret_nsyms, uint ncmds, Command* cmds)
                     {
                         add_ios_Command (cmd, -1, fd[1]);
                         cmd->args[arg_q] = add_fd_arg_Command (cmd, fd[1]);
+                        sym->arg_idx = arg_q;
                         ++ arg_q;
                     }
                 }
@@ -579,6 +591,8 @@ setup_commands (uint* ret_nsyms, uint ncmds, Command* cmds)
                     int ret;
                     assert (sym->kind == NSymValKinds);
                     sym->kind = IFutureDescVal;
+                    sym->cmd_idx = i;
+                    sym->arg_idx = Max_uint;
 
                     ret = pipe (fd);
                     assert (!(ret < 0));
@@ -592,7 +606,11 @@ setup_commands (uint* ret_nsyms, uint ncmds, Command* cmds)
                     {
                         add_ios_Command (cmd, -1, fd[0]);
                         cmd->args[arg_q] = add_fd_arg_Command (cmd, fd[0]);
-                        if (arg_q == 0)  cmd->exec_fd = fd[0];
+                        if (arg_q == 0)
+                        {
+                            sym->arg_idx = 0;
+                            cmd->exec_fd = fd[0];
+                        }
                         ++ arg_q;
                     }
                 }
@@ -610,8 +628,18 @@ setup_commands (uint* ret_nsyms, uint ncmds, Command* cmds)
                     else
                     {
                         add_ios_Command (cmd, fd, -1);
-                        cmd->args[arg_q] = add_fd_arg_Command (cmd, fd);
-                        if (arg_q == 0)  cmd->exec_fd = fd;
+                        if (arg_q > 0)
+                        {
+                            cmd->args[arg_q] = add_fd_arg_Command (cmd, fd);
+                        }
+                        else
+                        {
+                                /* TODO: Don't hard-code this file name.*/
+                            cmd->args[0] = add_extra_arg_Command (cmd, "./myfile");
+                            if (sym->arg_idx < Max_uint)
+                                cmds[sym->cmd_idx].args[sym->arg_idx] = cmd->args[0];
+                            cmd->exec_fd = fd;
+                        }
                         ++ arg_q;
                     }
                 }
@@ -629,7 +657,16 @@ setup_commands (uint* ret_nsyms, uint ncmds, Command* cmds)
                     else
                     {
                         add_ios_Command (cmd, fd, -1);
-                        cmd->args[arg_q] = add_fd_arg_Command (cmd, fd);
+                        if (sym->arg_idx > 0)
+                        {
+                            cmd->args[arg_q] = add_fd_arg_Command (cmd, fd);
+                        }
+                        else
+                        {
+                                /* TODO: Don't hard-code this file name.*/
+                            cmd->args[arg_q] = add_extra_arg_Command (cmd, "./myfile");
+                            cmds[sym->cmd_idx].args[0] = cmd->args[arg_q];
+                        }
                         ++ arg_q;
                     }
                 }
@@ -670,6 +707,28 @@ output_Command (FILE* out, const Command* cmd)
         ++ i;
     }
     fputc ('\n', out);
+}
+
+static void
+pipe_to_file (int in, const char* name)
+{
+    FILE* out = 0;
+
+    while (true)
+    {
+        ssize_t sz;
+        byte buf[BUFSIZ];
+
+        sz = read (in, buf, BUFSIZ);
+
+        if (sz <= 0)  break;
+        if (!out)  out = fopen (name, "wb");
+
+        fwrite (buf, 1, sz, out);
+    }
+
+    close (in);
+    if (out)  fclose (out);
 }
 
 int main (int argc, char** argv)
@@ -720,7 +779,13 @@ int main (int argc, char** argv)
         if (cmd->stdis >= 0)  dup2 (cmd->stdis, 0);
         if (cmd->stdos >= 0)  dup2 (cmd->stdos, 1);
 
-            /* if (cmd->exec_fd < 0) */
+        if (cmd->exec_fd >= 0)
+        {
+            pipe_to_file (cmd->exec_fd, cmd->args[0]);
+            cmd->exec_fd = -1;
+            chmod (cmd->args[0], S_IRUSR | S_IWUSR | S_IXUSR);
+        }
+
         execvp (cmd->args[0], cmd->args);
 
         fprintf (stderr, "Error executing: %s\n", strerror (errno));
