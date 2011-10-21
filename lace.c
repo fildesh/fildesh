@@ -4,6 +4,9 @@
  * This code is public domain - no restrictions.
  **/
 
+    /* stdlib.h  mkdtemp() */
+#define _BSD_SOURCE
+
 #include <assert.h>
 #include <limits.h>
 #include <stdio.h>
@@ -58,6 +61,8 @@ struct Command
     char** args;
     uint nextra_args;
     char** extra_args;
+    uint ntmp_files;
+    char** tmp_files;
     pid_t pid;
         /* Input stream.*/
     int stdis;
@@ -108,6 +113,7 @@ init_Command (Command* cmd)
 {
     cmd->kind = NCommandKinds;
     cmd->nextra_args = 0;
+    cmd->ntmp_files = 0;
     cmd->exec_fd = -1;
     cmd->stdis = -1;
     cmd->stdos = -1;
@@ -157,13 +163,20 @@ cleanup_Command (Command* cmd)
         free (cmd->extra_args[i]);
     if (cmd->nextra_args > 0)
         free (cmd->extra_args);
+    UFor( i, cmd->ntmp_files )
+    {
+        remove (cmd->tmp_files[i]);
+        free (cmd->tmp_files[i]);
+    }
+    if (cmd->ntmp_files > 0)
+        free (cmd->tmp_files);
 }
 
 
-/** Find a string in an array of strings,
- * return the location of it.
- * If not found, Max_uint is returned.
- **/
+    /** Find a string in an array of strings,
+     * return the location of it.
+     * If not found, Max_uint is returned.
+     **/
 static uint
 lookup_SymVal (uint n, const SymVal* a, const char* s)
 {
@@ -198,14 +211,14 @@ count_non_ws (const char* s)
     return strcspn (s, WhiteSpaceChars);
 }
 
-/** HERE document is created by
- * ${H var_name} Optional identifying stuff.
- * Line 1 in here.
- * Line 2 in here.
- * ...
- * Line n in here.
- * ${H var_name} Optional identifying stuff.
- **/
+    /** HERE document is created by
+     * ${H var_name} Optional identifying stuff.
+     * Line 1 in here.
+     * Line 2 in here.
+     * ...
+     * Line n in here.
+     * ${H var_name} Optional identifying stuff.
+     **/
 static char*
 parse_here_doc (FILE* in, const char* term)
 {
@@ -509,10 +522,28 @@ add_fd_arg_Command (Command* cmd, int fd)
     return add_extra_arg_Command (cmd, buf);
 }
 
+static char*
+add_tmp_file_Command (Command* cmd, uint x, const char* tmpdir)
+{
+    char buf[1024];
+    uint i;
+    sprintf (buf, "%s/%u", tmpdir, x);
+    i = cmd->ntmp_files;
+    if (i == 0)
+        cmd->tmp_files = AllocT( char*, 1 );
+    else
+        ResizeT( char*, cmd->tmp_files, i+1 );
+    cmd->tmp_files[i] = strdup (buf);
+    ++ cmd->ntmp_files;
+    return cmd->tmp_files[i];
+}
+
 static SymVal*
-setup_commands (uint* ret_nsyms, uint ncmds, Command* cmds)
+setup_commands (uint* ret_nsyms, uint ncmds, Command* cmds,
+                const char* tmpdir)
 {
     uint i;
+    uint ntmp_files = 0;
     const uint syms_chunk_sz = 1;
     uint nsyms_full;
     uint nsyms = 0;
@@ -634,8 +665,8 @@ setup_commands (uint* ret_nsyms, uint ncmds, Command* cmds)
                         }
                         else
                         {
-                                /* TODO: Don't hard-code this file name.*/
-                            cmd->args[0] = add_extra_arg_Command (cmd, "./myfile");
+                            cmd->args[0] = add_tmp_file_Command (cmd, ntmp_files, tmpdir);
+                            ++ ntmp_files;
                             if (sym->arg_idx < Max_uint)
                                 cmds[sym->cmd_idx].args[sym->arg_idx] = cmd->args[0];
                             cmd->exec_fd = fd;
@@ -663,9 +694,12 @@ setup_commands (uint* ret_nsyms, uint ncmds, Command* cmds)
                         }
                         else
                         {
-                                /* TODO: Don't hard-code this file name.*/
-                            cmd->args[arg_q] = add_extra_arg_Command (cmd, "./myfile");
-                            cmds[sym->cmd_idx].args[0] = cmd->args[arg_q];
+                            char* s;
+                            s = add_tmp_file_Command (&cmds[sym->cmd_idx],
+                                                      ntmp_files, tmpdir);
+                            ++ ntmp_files;
+                            cmds[sym->cmd_idx].args[0] = s;
+                            cmd->args[arg_q] = s;
                         }
                         ++ arg_q;
                     }
@@ -709,6 +743,10 @@ output_Command (FILE* out, const Command* cmd)
     fputc ('\n', out);
 }
 
+    /** Read from the file descriptor /in/ and write to file /name/.
+     * If the input stream contains no data, the file will not be
+     * written (or overwritten).
+     **/
 static void
 pipe_to_file (int in, const char* name)
 {
@@ -740,6 +778,15 @@ int main (int argc, char** argv)
     SymVal* syms;
     uint i;
     int ret;
+    char tmpdir[128];
+
+    strcpy (tmpdir, "/tmp/lace-XXXXXX");
+
+    if (!mkdtemp (tmpdir))
+    {
+        sprintf ("Unable to create temp directory: %s\n", strerror (errno));
+        exit (1);
+    }
 
     if (argc == 2)
         in = fopen (argv[1], "rb");
@@ -749,7 +796,7 @@ int main (int argc, char** argv)
     cmds = parse_file (in, &ncmds);
     fclose (in);
 
-    syms = setup_commands (&nsyms, ncmds, cmds);
+    syms = setup_commands (&nsyms, ncmds, cmds, tmpdir);
 
     if (false)
         UFor( i, ncmds )
@@ -804,6 +851,10 @@ int main (int argc, char** argv)
     }
     free (cmds);
     free (syms);
+
+    ret = rmdir (tmpdir);
+    if (ret != 0)
+        fprintf (stderr, "Temp directory not removed: %s\n", tmpdir);
 
     return 0;
 }
