@@ -790,7 +790,8 @@ int main (int argc, char** argv)
 
     if (!mkdtemp (tmpdir))
     {
-        sprintf ("Unable to create temp directory: %s\n", strerror (errno));
+        fprintf (stderr, "Unable to create temp directory: %s\n",
+                 strerror (errno));
         exit (1);
     }
 
