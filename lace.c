@@ -38,7 +38,7 @@ static const char WhiteSpaceChars[] = " \t\v\r\n";
 
 enum SymValKind
 {
-    IDescVal, ODescVal,
+    IDescVal, ODescVal, IODescVal,
     IDescFileVal, ODescFileVal,
     IFutureDescVal, OFutureDescVal,
     IFutureDescFileVal, OFutureDescFileVal,
@@ -432,7 +432,11 @@ parse_sym (char* s)
 
     if (s[o] == 'X')
     {
-        if (s[o+1] == 'F')
+        if (s[o+1] == 'O')
+        {
+            kind = IODescVal;
+        }
+        else if (s[o+1] == 'F')
         {
             if (s[o+2] == 'v')  kind = IFutureDescFileVal;
             else                kind = IDescFileVal;
@@ -591,68 +595,15 @@ setup_commands (uint* ret_nsyms, uint ncmds, Command* cmds,
                     cmd->args[arg_q] = sym->as.here_doc;
                     ++ arg_q;
                 }
-                else if (kind == ODescVal || kind == ODescFileVal)
-                {
-                    int fd[2];
-                    int ret;
-                    assert (sym->kind == NSymValKinds);
-                    sym->kind = ODescVal;
-                    sym->cmd_idx = i;
-                    sym->arg_idx = Max_uint;
-
-                    ret = pipe (fd);
-                    assert (!(ret < 0));
-
-                    sym->as.file_desc = fd[0];
-                    if (kind == ODescVal)
-                    {
-                        cmd->stdos = fd[1];
-                    }
-                    else
-                    {
-                        add_ios_Command (cmd, -1, fd[1]);
-                        cmd->args[arg_q] = add_fd_arg_Command (cmd, fd[1]);
-                        sym->arg_idx = arg_q;
-                        ++ arg_q;
-                    }
-                }
-                else if (kind == IFutureDescVal || kind == IFutureDescFileVal)
-                {
-                    int fd[2];
-                    int ret;
-                    assert (sym->kind == NSymValKinds);
-                    sym->kind = IFutureDescVal;
-                    sym->cmd_idx = i;
-                    sym->arg_idx = Max_uint;
-
-                    ret = pipe (fd);
-                    assert (!(ret < 0));
-
-                    sym->as.file_desc = fd[1];
-                    if (kind == IFutureDescVal)
-                    {
-                        cmd->stdos = fd[0];
-                    }
-                    else
-                    {
-                        add_ios_Command (cmd, -1, fd[0]);
-                        cmd->args[arg_q] = add_fd_arg_Command (cmd, fd[0]);
-                        if (arg_q == 0)
-                        {
-                            sym->arg_idx = 0;
-                            cmd->exec_fd = fd[0];
-                        }
-                        ++ arg_q;
-                    }
-                }
-                else if (kind == IDescVal || kind == IDescFileVal)
+                if (kind == IDescVal || kind == IDescFileVal ||
+                    kind == IODescVal)
                 {
                     int fd;
                     assert (sym->kind == ODescVal);
                     sym->kind = NSymValKinds;
                     fd = sym->as.file_desc;
 
-                    if (kind == IDescVal)
+                    if (kind == IDescVal || kind == IODescVal)
                     {
                         cmd->stdis = fd;
                     }
@@ -700,6 +651,61 @@ setup_commands (uint* ret_nsyms, uint ncmds, Command* cmds,
                             ++ ntmp_files;
                             cmds[sym->cmd_idx].args[0] = s;
                             cmd->args[arg_q] = s;
+                        }
+                        ++ arg_q;
+                    }
+                }
+                if (kind == ODescVal || kind == ODescFileVal ||
+                    kind == IODescVal)
+                {
+                    int fd[2];
+                    int ret;
+                    assert (sym->kind == NSymValKinds);
+                    sym->kind = ODescVal;
+                    sym->cmd_idx = i;
+                    sym->arg_idx = Max_uint;
+
+                    ret = pipe (fd);
+                    assert (!(ret < 0));
+
+                    sym->as.file_desc = fd[0];
+                    if (kind == ODescVal || kind == IODescVal)
+                    {
+                        cmd->stdos = fd[1];
+                    }
+                    else
+                    {
+                        add_ios_Command (cmd, -1, fd[1]);
+                        cmd->args[arg_q] = add_fd_arg_Command (cmd, fd[1]);
+                        sym->arg_idx = arg_q;
+                        ++ arg_q;
+                    }
+                }
+                else if (kind == IFutureDescVal || kind == IFutureDescFileVal)
+                {
+                    int fd[2];
+                    int ret;
+                    assert (sym->kind == NSymValKinds);
+                    sym->kind = IFutureDescVal;
+                    sym->cmd_idx = i;
+                    sym->arg_idx = Max_uint;
+
+                    ret = pipe (fd);
+                    assert (!(ret < 0));
+
+                    sym->as.file_desc = fd[1];
+                    if (kind == IFutureDescVal)
+                    {
+                        cmd->stdos = fd[0];
+                    }
+                    else
+                    {
+                        add_ios_Command (cmd, -1, fd[0]);
+                        cmd->args[arg_q] = add_fd_arg_Command (cmd, fd[0]);
+                        if (arg_q == 0)
+                        {
+                            sym->arg_idx = 0;
+                            cmd->exec_fd = fd[0];
                         }
                         ++ arg_q;
                     }

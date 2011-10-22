@@ -1,0 +1,63 @@
+
+# Take a file with pairs of people in it,
+# and a uid/name file which has a specific order to it,
+# and output a special ordered format with a uni-directional relationship
+# for each pair (one person's line references the other person's but
+# not vice-versa).
+
+# To see it in action, run
+#   lace pair-up.lace < pairs
+# Assure best-match is built!
+
+$(H name-file)
+names
+$(H name-file)
+
+$(H split-script)
+s/^ *\(.*[^ ]\) *worked with *\(.*[^ ]\) *(.*$/1\t\1\n2\t\2/
+s/^ *\(.*[^ ]\) *worked alone.*$/0\t\1/
+$(H split-script)
+
+echo $(H split-script) $(O script)
+
+sed -f $(XF script) $(O a)
+
+tee $(X a) $(OF tags) $(O names)
+
+cut $(XO tags) -f1
+cut $(XO names) -f2
+
+cat -n $(H name-file) $(O name-table)
+
+sed $(XO name-table) 's/^ \+//'
+
+./best-match $(XO names) $(XF name-table)
+
+sed $(XO names) 's/^\([^ ]*\) \+/\1\t/'
+
+paste $(XF tags) $(XF names) $(O a)
+
+$(H pair-up)
+BEGIN { FS = "\t"; }
+
+{
+    if ($1 == 1)  next_partner = $3;
+    if ($1 == 2)  partner = next_partner;
+    else          partner = "";
+    printf "%s\t* %-12s %-12s %s\n", $2, partner, $3, $4;
+}
+$(H pair-up)
+
+awk $(XO a) $(H pair-up)
+
+sort $(XO a) -nu
+
+cat -n $(H name-file) $(O name-table)
+
+sed $(XO name-table) \
+    -e 's/^ \+//'  -e 's/\t/\t               /'
+
+sort $(XO a) -mnu - $(XF name-table)
+
+cut $(X a) -f 1 --complement
+
