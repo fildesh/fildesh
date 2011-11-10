@@ -42,7 +42,7 @@ enum SymValKind
     IDescFileVal, ODescFileVal,
     IFutureDescVal, OFutureDescVal,
     IFutureDescFileVal, OFutureDescFileVal,
-    HereDocVal,
+    HereDocVal, IHereDocFileVal,
     NSymValKinds
 };
 enum CommandKind { RunCommand, HereDocCommand, NCommandKinds };
@@ -76,6 +76,9 @@ struct Command
          * close when the program command is safe to run.
          */
     int exec_fd;
+        /* If != 0, this is the contents of a file to execute.*/
+    const char* exec_doc;
+
         /* Use this if it's a here document.*/
     char* doc;
 };
@@ -115,6 +118,7 @@ init_Command (Command* cmd)
     cmd->nextra_args = 0;
     cmd->ntmp_files = 0;
     cmd->exec_fd = -1;
+    cmd->exec_doc = 0;
     cmd->stdis = -1;
     cmd->stdos = -1;
     cmd->nis = 0;
@@ -146,6 +150,7 @@ close_Command (Command* cmd)
         close (cmd->exec_fd);
         cmd->exec_fd = -1;
     }
+    cmd->exec_doc = 0;
 }
 
 static void
@@ -400,7 +405,8 @@ parse_file(FILE* in, uint* n)
         ncmds += 1;
         cmd->line = line;
 
-        if (line[0] == '$' && line[1] == '(' && line[2] == 'H')
+        if (line[0] == '$' && line[1] == '(' && line[2] == 'H'
+            && line[3] != 'F')
         {
             cmd->kind = HereDocCommand;
             cmd->doc = parse_here_doc (in, line);
@@ -460,7 +466,11 @@ parse_sym (char* s)
             else                kind = ODescVal;
         }
     }
-    if (s[2] == 'H')  kind = HereDocVal;
+    if (s[o] == 'H')
+    {
+        if (s[o+1] == 'F')  kind = IHereDocFileVal;
+        else                kind = HereDocVal;
+    }
 
     if (kind != NSymValKinds)
     {
@@ -542,6 +552,25 @@ add_tmp_file_Command (Command* cmd, uint x, const char* tmpdir)
     return cmd->tmp_files[i];
 }
 
+    /** Write a file /name/ given contents /doc/.**/
+static void
+write_here_doc_file (const char* name, const char* doc)
+{
+    uint n;
+    FILE* out;
+
+    out = fopen (name, "wb");
+    if (!out)
+    {
+        fprintf (stderr, "Cannot open file for writing!:%s\n",
+                 name);
+        return;
+    }
+    n = strlen (doc);
+    fwrite (doc, sizeof (char), n, out);
+    fclose (out);
+}
+
 static SymVal*
 setup_commands (uint* ret_nsyms, uint ncmds, Command* cmds,
                 const char* tmpdir)
@@ -596,10 +625,13 @@ setup_commands (uint* ret_nsyms, uint ncmds, Command* cmds,
                     ++ arg_q;
                 }
                 if (kind == IDescVal || kind == IDescFileVal ||
-                    kind == IODescVal)
+                    kind == IODescVal || kind == IHereDocFileVal)
                 {
                     int fd;
-                    assert (sym->kind == ODescVal);
+                    if (kind == IHereDocFileVal)
+                        assert (sym->kind == HereDocVal);
+                    else
+                        assert (sym->kind == ODescVal);
                     sym->kind = NSymValKinds;
                     fd = sym->as.file_desc;
 
@@ -607,7 +639,7 @@ setup_commands (uint* ret_nsyms, uint ncmds, Command* cmds,
                     {
                         cmd->stdis = fd;
                     }
-                    else
+                    else if (kind == IDescFileVal)
                     {
                         add_ios_Command (cmd, fd, -1);
                         if (arg_q > 0)
@@ -624,6 +656,19 @@ setup_commands (uint* ret_nsyms, uint ncmds, Command* cmds,
                         }
                         ++ arg_q;
                     }
+                    else
+                    {
+                        assert (kind == IHereDocFileVal);
+                        cmd->args[arg_q] =
+                            add_tmp_file_Command (cmd, ntmp_files, tmpdir);
+                        ++ ntmp_files;
+                            /* Write the temp file now.*/
+                        write_here_doc_file (cmd->args[arg_q],
+                                             sym->as.here_doc);
+                        if (arg_q == 0)
+                            cmd->exec_doc = sym->as.here_doc;
+                        ++ arg_q;
+                    }
                 }
                 else if (kind == OFutureDescVal || kind == OFutureDescFileVal)
                 {
@@ -632,9 +677,9 @@ setup_commands (uint* ret_nsyms, uint ncmds, Command* cmds,
                     sym->kind = NSymValKinds;
                     fd = sym->as.file_desc;
 
-                    if (kind == IDescVal)
+                    if (kind == OFutureDescVal)
                     {
-                        cmd->stdis = fd;
+                        cmd->stdos = fd;
                     }
                     else
                     {
@@ -696,7 +741,7 @@ setup_commands (uint* ret_nsyms, uint ncmds, Command* cmds,
                     sym->as.file_desc = fd[1];
                     if (kind == IFutureDescVal)
                     {
-                        cmd->stdos = fd[0];
+                        cmd->stdis = fd[0];
                     }
                     else
                     {
@@ -837,6 +882,11 @@ int main (int argc, char** argv)
         {
             pipe_to_file (cmd->exec_fd, cmd->args[0]);
             cmd->exec_fd = -1;
+            chmod (cmd->args[0], S_IRUSR | S_IWUSR | S_IXUSR);
+        }
+        if (cmd->exec_doc)
+        {
+            cmd->exec_doc = 0;
             chmod (cmd->args[0], S_IRUSR | S_IWUSR | S_IXUSR);
         }
 

@@ -1,0 +1,69 @@
+#!/bin/env lace
+
+# This code prints students' program outputs and java source codes without
+# using a terrible amount of paper. Each single student's files are
+# concatenated into a single file separated by form feed (page break)
+# characters. This makes different original files print on different pages.
+#
+# This allows 2 columns on a side of paper to contain different file contents.
+# It is essentially getting around a limitation with /enscript/.
+#
+# Student codes and outputs are assumed to be layed out as such:
+#   D.<username>/Problem<X>.java
+#              ./output
+
+## Begin sub-lace program.
+$(H perstudent)
+
+$(H printer)
+laser112ad
+$(H printer)
+
+tee $(OF a) $(O nameline)
+xargs $(X a) -idir find dir -type f -name Problem*.java -or -name output \
+  $(O to-tmp)
+
+
+$(H script)
+BEGIN {
+    firstline = "";
+    lines = "";
+}
+/output$/ {
+    firstline = gensub ("^[^ ]* ", "", "", $0);
+    next;
+}
+{
+    lines = lines gensub ("^([^ ]*) ", "\n\\1\n", "", $0);
+}
+END {
+    printf "%s%s", firstline, lines;
+}
+$(H script)
+
+awk $(Xv up-a) $(H script) $(O a)
+xargs $(XO a) cat
+
+sed $(XO nameline) 's/^D.\(.*\)$/###### $(id -un): \1 ######/'
+cat $(XO a) $(XF nameline) -
+
+# Swap comments to actually print!
+cat $(X a) -
+#enscript $(X a) -G -2r -T 4 -Dduplex:true -P $(H printer)
+
+# Keep the rest of the lines in /perstudent/ below other stuff.
+$(H page-break)
+
+$(H page-break)
+
+xargs $(X to-tmp) -ifile echo $(HF page-break) file \
+  $(O^ up-a)
+$(H perstudent)
+## End sub-lace program.
+
+
+ls $(O a)
+grep $(XO a) '^D\.'
+#head -n1 $(XO a)
+xpipe $(X a) /bin/env lace $(HF perstudent)
+
