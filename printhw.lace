@@ -65,5 +65,5 @@ $(H perstudent)
 ls $(O a)
 grep $(XO a) '^D\.'
 #head -n1 $(XO a)
-xpipe $(X a) /bin/env lace $(HF perstudent)
+xpipe $(X a) lace $(HF perstudent)
 
