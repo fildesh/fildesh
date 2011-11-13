@@ -1,3 +1,4 @@
+#!/bin/env lace
 
 # Take a file with pairs of people in it,
 # and a uid/name file which has a specific order to it,
@@ -6,8 +7,8 @@
 # not vice-versa).
 
 # To see it in action, run
-#   lace pair-up.lace < pairs
-# Assure best-match is built!
+#   ./pair-up.lace < pairs
+# Assure best-match is built and is in your PATH!
 
 $(H name-file)
 names
@@ -31,7 +32,7 @@ cat -n $(H name-file) $(O name-table)
 
 sed $(XO name-table) 's/^ \+//'
 
-./best-match $(XO names) $(XF name-table)
+best-match $(XO names) $(XF name-table)
 
 sed $(XO names) 's/^\([^ ]*\) \+/\1\t/'
 

@@ -1,5 +1,10 @@
 #!/bin/env lace
 
+# Usage:
+#   cd /pathto/homework/section
+#   printhw.lace < /pathto/ordered/namesfile
+# Printing is disabled for safe testing, search for "enscript" to enable.
+
 # This code prints students' program outputs and java source codes without
 # using a terrible amount of paper. Each single student's files are
 # concatenated into a single file separated by form feed (page break)
@@ -10,7 +15,7 @@
 #
 # Student codes and outputs are assumed to be layed out as such:
 #   D.<username>/Problem<X>.java
-#              ./output
+#              |/output
 
 ## Begin sub-lace program.
 $(H perstudent)
@@ -64,6 +69,13 @@ $(H perstudent)
 
 ls $(O a)
 grep $(XO a) '^D\.'
+
+# Get ordering of user ids from standard in.
+awk '{ print NR "\tD." $1; }' $(O ids)
+best-match $(XO a) $(XF ids)
+sort $(XO a) -nu
+cut $(XO a) -f2
+
 #head -n1 $(XO a)
 xpipe $(X a) lace $(HF perstudent)
 

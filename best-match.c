@@ -136,6 +136,7 @@ int main (int argc, char** argv)
 {
     uint* lcs_array;
     FILE* in;
+    FILE* out;
     char* buf;
     char** lines;
     uint width;
@@ -174,6 +175,7 @@ int main (int argc, char** argv)
         ++ arg_offset;
     }
 
+    out = stdout;
     while (1)
     {
         uint i;
@@ -184,8 +186,8 @@ int main (int argc, char** argv)
         s = fgets (line, max_len, in);
         if (!s)  break;
         i = matching_line (lcs_array, width, line, lines);
-        fputs (lines[i], stdout);
-        fputc ('\n', stdout);
+        fputs (lines[i], out);
+        fputc ('\n', out);
     }
 
     free (lcs_array);
