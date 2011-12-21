@@ -12,7 +12,7 @@ int main()
         char buf[N];
         nread = fread (buf, sizeof(char), N, in);
 #undef N
-    } while (nread == 0);
+    } while (nread != 0);
     fclose (in);
     return 0;
 }

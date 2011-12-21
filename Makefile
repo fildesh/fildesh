@@ -4,7 +4,7 @@ CFLAGS = -ansi -pedantic -Wall -Wextra
 CFLAGS += -D_SVID_SOURCE
 CFLAGS += -g
 
-progs = lace best-match xpipe void
+progs = lace best-match xpipe void cat1
 
 all: $(progs)
 
@@ -18,6 +18,9 @@ xpipe: xpipe.c
 	$(CC) $(CFLAGS) -o $@ $^
 
 void: void.c
+	$(CC) $(CFLAGS) -o $@ $^
+
+cat1: cat1.c
 	$(CC) $(CFLAGS) -o $@ $^
 
 .PHONY: clean
