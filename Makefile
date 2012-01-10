@@ -23,6 +23,9 @@ void: void.c
 cat1: cat1.c
 	$(CC) $(CFLAGS) -o $@ $^
 
+ssh-all: ssh-all.c
+	$(CC) $(CFLAGS) -o $@ $^
+
 .PHONY: clean
 clean:
 	rm -f $(progs)

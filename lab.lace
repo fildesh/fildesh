@@ -32,8 +32,7 @@ grep $(X a) -v '^!' $(O a)
 #cat $(XF a)
 
 #$(H comment)
-xargs $(X a) -n 1 -ihost ssh -o StrictHostKeyChecking=no host \
-    sh -c $(H clientcmd) $(O users)
+ssh-all $(XF a) $(H clientcmd) $(O users)
 
 
 $(H subst)
