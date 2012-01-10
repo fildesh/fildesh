@@ -46,9 +46,9 @@ exec_ssh (const char* host)
         "ssh", "-o", "StrictHostKeyChecking=no",
         0,  /* /host/ goes here.*/
         "sh", "-s",
-        0
+        0  /* /host/ also goes here as an argument.*/
     };
-    const int argc = ArraySz( ssh_cmd ) - 1;
+    const int argc = ArraySz( ssh_cmd );
     int argi = 0;
     char** argv;
 
@@ -61,6 +61,8 @@ exec_ssh (const char* host)
 
     for (; ssh_cmd[argi]; ++ argi)
         argv[argi] = strdup (ssh_cmd[argi]);
+
+    argv[argi++] = strdup (host);
 
     AssertSafe( argi == argc, "" );
     argv[argc] = 0;
