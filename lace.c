@@ -39,6 +39,7 @@ static const char WhiteSpaceChars[] = " \t\v\r\n";
 enum SymValKind
 {
     IDescVal, ODescVal, IODescVal,
+    IDescArgVal,
     IDescFileVal, ODescFileVal,
     IFutureDescVal, OFutureDescVal,
     IFutureDescFileVal, OFutureDescFileVal,
@@ -58,6 +59,7 @@ struct Command
 {
     char* line;
     CommandKind kind;
+    uint nargs;
     char** args;
     uint nextra_args;
     char** extra_args;
@@ -78,6 +80,10 @@ struct Command
     int exec_fd;
         /* If != 0, this is the contents of a file to execute.*/
     const char* exec_doc;
+
+        /* Use these input streams to fill corresponding (null) arguments.*/
+    uint niargs;
+    int* iargs;
 
         /* Use this if it's a here document.*/
     char* doc;
@@ -115,6 +121,7 @@ static void
 init_Command (Command* cmd)
 {
     cmd->kind = NCommandKinds;
+    cmd->nargs = 0;
     cmd->nextra_args = 0;
     cmd->ntmp_files = 0;
     cmd->exec_fd = -1;
@@ -123,6 +130,7 @@ init_Command (Command* cmd)
     cmd->stdos = -1;
     cmd->nis = 0;
     cmd->nos = 0;
+    cmd->niargs = 0;
 }
 
 static void
@@ -154,7 +162,7 @@ close_Command (Command* cmd)
 }
 
 static void
-cleanup_Command (Command* cmd)
+lose_Command (Command* cmd)
 {
     uint i;
     close_Command (cmd);
@@ -175,6 +183,8 @@ cleanup_Command (Command* cmd)
     }
     if (cmd->ntmp_files > 0)
         free (cmd->tmp_files);
+    if (cmd->niargs > 0)
+        free (cmd->iargs);
 }
 
 
@@ -317,7 +327,7 @@ parse_line (FILE* in)
 }
 
 static char**
-sep_line (char* s)
+sep_line (uint* ret_n, char* s)
 {
     FILE* out = stderr;
     const size_t max_nargs = 1024;
@@ -370,6 +380,7 @@ sep_line (char* s)
     }
     a[n] = 0;
     ResizeT( char*, a, n+1 );
+    *ret_n = n;
     return a;
 }
 
@@ -414,7 +425,7 @@ parse_file(FILE* in, uint* n)
         else
         {
             cmd->kind = RunCommand;
-            cmd->args = sep_line (cmd->line);
+            cmd->args = sep_line (&cmd->nargs, cmd->line);
         }
     }
 
@@ -441,6 +452,10 @@ parse_sym (char* s)
         if (s[o+1] == 'O')
         {
             kind = IODescVal;
+        }
+        else if (s[o+1] == 'A')
+        {
+            kind = IDescArgVal;
         }
         else if (s[o+1] == 'F')
         {
@@ -512,6 +527,18 @@ add_ios_Command (Command* cmd, int in, int out)
         cmd->os[cmd->nos] = out;
         ++ cmd->nos;
     }
+}
+
+static void
+add_iarg_Command (Command* cmd, int in)
+{
+    add_ios_Command (cmd, in, -1);
+    if (cmd->niargs == 0)
+        cmd->iargs = AllocT( int, 1 );
+    else
+        ResizeT( int, cmd->iargs, cmd->niargs+1 );
+    cmd->iargs[cmd->niargs] = in;
+    ++ cmd->niargs;
 }
 
 static char*
@@ -591,7 +618,7 @@ setup_commands (uint* ret_nsyms, uint ncmds, Command* cmds,
         Command* cmd;
         cmd = &cmds[i];
 
-        while (true)
+        for (arg_r = 0; arg_r < cmd->nargs; ++ arg_r)
         {
             SymVal* sym;
             SymValKind kind;
@@ -625,6 +652,7 @@ setup_commands (uint* ret_nsyms, uint ncmds, Command* cmds,
                     ++ arg_q;
                 }
                 if (kind == IDescVal || kind == IDescFileVal ||
+                    kind == IDescArgVal ||
                     kind == IODescVal || kind == IHereDocFileVal)
                 {
                     int fd;
@@ -638,6 +666,12 @@ setup_commands (uint* ret_nsyms, uint ncmds, Command* cmds,
                     if (kind == IDescVal || kind == IODescVal)
                     {
                         cmd->stdis = fd;
+                    }
+                    else if (kind == IDescArgVal)
+                    {
+                        add_iarg_Command (cmd, fd);
+                        cmd->args[arg_q] = 0;
+                        ++ arg_q;
                     }
                     else if (kind == IDescFileVal)
                     {
@@ -761,14 +795,10 @@ setup_commands (uint* ret_nsyms, uint ncmds, Command* cmds,
                 cmd->args[arg_q] = cmd->args[arg_r];
                 ++ arg_q;
             }
-
-            ++ arg_r;
-            if (!cmd->args[arg_r])
-            {
-                cmd->args[arg_q] = 0;
-                break;
-            }
         }
+
+        cmd->nargs = arg_q;
+        cmd->args[cmd->nargs] = 0;
     }
     *ret_nsyms = nsyms;
 
@@ -785,11 +815,13 @@ output_Command (FILE* out, const Command* cmd)
     if (cmd->kind != RunCommand)  return;
 
     fputs ("COMMAND: ", out);
-    while (cmd->args[i])
+    UFor( i, cmd->nargs )
     {
         if (i > 0)  fputc (' ', out);
-        fputs (cmd->args[i], out);
-        ++ i;
+        if (cmd->args[i])
+            fputs (cmd->args[i], out);
+        else
+            fputs ("NULL", out);
     }
     fputc ('\n', out);
 }
@@ -820,6 +852,85 @@ pipe_to_file (int in, const char* name)
     if (out)  fclose (out);
 }
 
+    /** Read everything from the file descriptor /in/.**/
+static char*
+readin_fd (int in)
+{
+    const uint n_per_chunk = 8192;
+    uint nfull;
+    uint n = 0;
+    char* buf;
+
+    nfull = n_per_chunk;
+    buf = AllocT( char, nfull );
+
+    while (1)
+    {
+        ssize_t nread;
+        if (n + n_per_chunk > nfull)
+        {
+            nfull += n_per_chunk;
+            ResizeT( char, buf, nfull );
+        }
+        nread = read (in, &buf[n], n_per_chunk * sizeof(char));
+        assert (nread >= 0 && "Problem reading file descriptor!");
+        if (nread == 0)  break;
+        n += nread / sizeof(char);
+    }
+    close (in);
+
+    ResizeT( char, buf, n+1 );
+    buf[n] = '\0';
+    return buf;
+}
+
+    /** Fill in all NULL arguments, they should be
+     * filled by the output of another command.
+     **/
+static void
+fill_dependent_args (Command* cmd)
+{
+    uint i, j;
+    j = 0;
+    UFor( i, cmd->nargs )
+    {
+        if (!cmd->args[i])
+        {
+            assert (j < cmd->niargs);
+            cmd->args[i] = readin_fd (cmd->iargs[j]);
+            ++ j;
+        }
+    }
+    assert (j == cmd->niargs);
+}
+
+    /** Add the utility bin directory to the PATH environment variable.**/
+static void
+add_util_path_env ()
+{
+    static const char k[] = "PATH";
+#ifndef UtilBin
+#define UtilBin "bin"
+#endif
+    static const char path[] = UtilBin;
+#undef UtilBin
+    char* v;
+    char* s;
+
+    v = getenv (k);
+    if (!v)
+    {
+        setenv (k, path, 1);
+        return;
+    }
+
+    s = AllocT( char, strlen (path) + 1 + strlen (v) + 1 );
+    sprintf (s, "%s:%s", path, v);
+    setenv (k, s, 1);
+    free (s);
+}
+
+
 int main (int argc, char** argv)
 {
     FILE* in = 0;
@@ -830,6 +941,8 @@ int main (int argc, char** argv)
     uint i;
     int ret;
     char tmpdir[128];
+
+    add_util_path_env ();
 
     strcpy (tmpdir, "/tmp/lace-XXXXXX");
 
@@ -890,6 +1003,8 @@ int main (int argc, char** argv)
             chmod (cmd->args[0], S_IRUSR | S_IWUSR | S_IXUSR);
         }
 
+        fill_dependent_args (cmd);
+
         execvp (cmd->args[0], cmd->args);
 
         fprintf (stderr, "Error executing: %s\n", strerror (errno));
@@ -904,7 +1019,7 @@ int main (int argc, char** argv)
     {
         if (cmds[i].kind == RunCommand)
             ret = waitpid (cmds[i].pid, 0, 0);
-        cleanup_Command (&cmds[i]);
+        lose_Command (&cmds[i]);
     }
     free (cmds);
     free (syms);

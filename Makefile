@@ -4,29 +4,37 @@ CFLAGS = -ansi -pedantic -Wall -Wextra
 CFLAGS += -D_SVID_SOURCE
 CFLAGS += -g
 
-progs = lace best-match xpipe void cat1
+utils = best-match xpipe void cat1
+util_exes = $(addprefix bin/,$(utils))
 
-all: $(progs)
+all: lace $(util_exes)
 
 lace: lace.c
+	$(CC) $(CFLAGS) \
+		"-DUtilBin=\"$(PWD)/bin\"" \
+		-o $@ $^
+
+bin/best-match: best-match.c
 	$(CC) $(CFLAGS) -o $@ $^
 
-best-match: best-match.c
+bin/xpipe: xpipe.c
 	$(CC) $(CFLAGS) -o $@ $^
 
-xpipe: xpipe.c
+bin/void: void.c
 	$(CC) $(CFLAGS) -o $@ $^
 
-void: void.c
+bin/cat1: cat1.c
 	$(CC) $(CFLAGS) -o $@ $^
 
-cat1: cat1.c
+bin/ssh-all: ssh-all.c
 	$(CC) $(CFLAGS) -o $@ $^
 
-ssh-all: ssh-all.c
-	$(CC) $(CFLAGS) -o $@ $^
+$(util_exes): | bin
+
+bin:
+	mkdir -p bin
 
 .PHONY: clean
 clean:
-	rm -f $(progs)
+	rm -f lace $(util_exes)
 
