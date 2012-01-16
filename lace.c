@@ -85,7 +85,7 @@ struct Command
     uint niargs;
     int* iargs;
 
-        /* Use this if it's a here document.*/
+        /* Use this if it's a HERE document.*/
     char* doc;
 };
 
@@ -618,6 +618,27 @@ setup_commands (uint* ret_nsyms, uint ncmds, Command* cmds,
         Command* cmd;
         cmd = &cmds[i];
 
+            /* The command defines a HERE document.*/
+        if (cmd->kind == HereDocCommand)
+        {
+            SymVal* sym;
+            SymValKind kind;
+
+                /* The loop below should not run.*/
+            assert (cmd->nargs == 0 && "Invariant.");
+
+            if (nsyms + 1 > nsyms_full)
+            {
+                nsyms_full += syms_chunk_sz;
+                ResizeT( SymVal, syms, nsyms_full );
+            }
+            kind = parse_sym (cmd->line);
+            assert (kind == HereDocVal);
+            sym = add_SymVal (&nsyms, syms, cmd->line);
+            sym->kind = kind;
+            sym->as.here_doc = cmd->doc;
+        }
+
         for (arg_r = 0; arg_r < cmd->nargs; ++ arg_r)
         {
             SymVal* sym;
@@ -627,17 +648,6 @@ setup_commands (uint* ret_nsyms, uint ncmds, Command* cmds,
             {
                 nsyms_full += syms_chunk_sz;
                 ResizeT( SymVal, syms, nsyms_full );
-            }
-
-                /* This isn't really a loop for a here document.*/
-            if (cmd->kind == HereDocCommand)
-            {
-                kind = parse_sym (cmd->line);
-                assert (kind == HereDocVal);
-                sym = add_SymVal (&nsyms, syms, cmd->line);
-                sym->kind = kind;
-                sym->as.here_doc = cmd->doc;
-                break;
             }
 
             kind = parse_sym (cmd->args[arg_r]);
@@ -797,8 +807,11 @@ setup_commands (uint* ret_nsyms, uint ncmds, Command* cmds,
             }
         }
 
-        cmd->nargs = arg_q;
-        cmd->args[cmd->nargs] = 0;
+        if (cmd->nargs > 0)
+        {
+            cmd->nargs = arg_q;
+            cmd->args[cmd->nargs] = 0;
+        }
     }
     *ret_nsyms = nsyms;
 
