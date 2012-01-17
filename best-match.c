@@ -1,41 +1,12 @@
 
+#include "futil.h"
+
 #include <assert.h>
 #include <ctype.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
-typedef unsigned int uint;
-
-static char*
-read_file (FILE* in)
-{
-    const uint n_per_chunk = 8192;
-    uint nfull;
-    uint n = 0;
-    char* buf;
-
-    nfull = n_per_chunk;
-    buf = (char*) malloc (nfull * sizeof (char));
-
-    while (1)
-    {
-        size_t nread;
-        if (n + n_per_chunk > nfull)
-        {
-            nfull += n_per_chunk;
-            buf = (char*) realloc (buf, nfull * sizeof(char));
-        }
-        nread = fread (&buf[n], sizeof(char), n_per_chunk, in);
-        if (nread == 0)  break;
-        n += nread;
-    }
-    fclose (in);
-
-    buf = realloc (buf, n+1);
-    buf[n] = '\0';
-    return buf;
-}
 
 static char**
 split_lines (char* buf, uint* ret_max_len)
@@ -158,7 +129,7 @@ int main (int argc, char** argv)
     }
     ++arg_offset;
 
-    buf = read_file (in);
+    buf = read_FILE (in);
     lines = split_lines (buf, &width);
     lcs_array = (uint*) malloc (width * sizeof (uint));
 

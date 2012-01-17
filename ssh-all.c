@@ -27,10 +27,10 @@ static const char* ExeName = 0;
 static void
 show_usage_and_exit ()
 {
-    fprintf (ErrOut, "Usage:%s file command\n", ExeName);
-    fputs ("  Where /file/ contains a machine name on each line.\n", ErrOut);
+    fprintf (ErrOut, "Usage:%s FILE COMMAND\n", ExeName);
+    fputs ("  Where /FILE/ contains a machine name on each line.\n", ErrOut);
     fputs ("  It can be '-' for stdin.\n", ErrOut);
-    fputs ("  The /command/ is processed by /bin/sh, so escape it!\n", ErrOut);
+    fputs ("  The /COMMAND/ is processed by /bin/sh, so escape it!\n", ErrOut);
     exit (1);
 }
 

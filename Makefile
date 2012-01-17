@@ -4,7 +4,7 @@ CFLAGS = -ansi -pedantic -Wall -Wextra
 CFLAGS += -D_SVID_SOURCE
 CFLAGS += -g
 
-utils = best-match xpipe void cat1
+utils = best-match xpipe void cat1 ujoin
 util_exes = $(addprefix bin/,$(utils))
 
 all: lace $(util_exes)
@@ -14,7 +14,10 @@ lace: lace.c
 		"-DUtilBin=\"$(PWD)/bin\"" \
 		-o $@ $^
 
-bin/best-match: best-match.c
+%.o: %.c
+	$(CC) -c $(CFLAGS) $^ -o $@
+
+bin/best-match: best-match.c futil.o
 	$(CC) $(CFLAGS) -o $@ $^
 
 bin/xpipe: xpipe.c
@@ -27,6 +30,9 @@ bin/cat1: cat1.c
 	$(CC) $(CFLAGS) -o $@ $^
 
 bin/ssh-all: ssh-all.c
+	$(CC) $(CFLAGS) -o $@ $^
+
+bin/ujoin: ujoin.c futil.o
 	$(CC) $(CFLAGS) -o $@ $^
 
 $(util_exes): | bin
