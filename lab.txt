@@ -1,0 +1,7 @@
+ !door!  localhost   127.0.0.1     !door
+      !  localhost   localhost     !
+      !  localhost   localhost     !
+      !                            !
+      !          !projector        !
+      !                            !
+      !  localhost   localhost     !door

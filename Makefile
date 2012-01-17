@@ -4,7 +4,7 @@ CFLAGS = -ansi -pedantic -Wall -Wextra
 CFLAGS += -D_SVID_SOURCE
 CFLAGS += -g
 
-utils = best-match xpipe void cat1 ujoin
+utils = best-match xpipe void cat1 ssh-all ujoin
 util_exes = $(addprefix bin/,$(utils))
 
 all: lace $(util_exes)

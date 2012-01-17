@@ -1,20 +1,15 @@
+#!/bin/env lace
 
-## This code replaces all the computer names in /lab/
+## This code replaces all the computer names in /lab-file/
 ## with the user id on each machine!
 ## Non-hostnames in the map must start with exclamation points.
 ## You should have auto-login to these hosts.
 
-$(H lab)
- !door!  localhost   127.0.0.1     !door
-      !  localhost   localhost     !
-      !  localhost   localhost     !
-      !                            !
-      !          !projector        !
-      !                            !
-      !  localhost   localhost     !door
-$(H lab)
+$(H lab-file)
+lab.txt
+$(H lab-file)
 
-echo $(H lab) $(O a)
+cat $(H lab-file) $(O a)
 
 $(H clientcmd)
 who -u | awk '$2 == ":0" { print "'"$1 "'" $1 ; }'
@@ -41,7 +36,7 @@ $(H subst)
 
 awk $(X users) $(H subst) $(O a)
 
-echo $(H lab) $(O b)
+cat $(H lab-file) $(O b)
 
 sed $(X b) -f $(XF a)
 #$(H comment)
