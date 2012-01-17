@@ -39,6 +39,34 @@ show_usage_and_exit ()
     exit (1);
 }
 
+    /** Open a file for reading or writing.
+     * Exit with an error status if this is not possible.
+     **/
+static FILE*
+open_file_arg (const char* arg, bool writing)
+{
+    FILE* f;
+    if (writing)
+    {
+        if (0 == strcmp (arg, "-"))  f = stdout;
+        else                         f = fopen (arg, "wb");
+    }
+    else
+    {
+        if (0 == strcmp (arg, "-"))  f = stdin;
+        else                         f = fopen (arg, "rb");
+    }
+    if (!f)
+    {
+        fprintf (ErrOut, "%s - Cannot open file for %s:%s\n",
+                 ExeName,
+                 writing ? "writing" : "reading",
+                 arg);
+        exit (1);
+    }
+    return f;
+}
+
 static Table(LineJoin)
 setup_lookup_table (char* contents, const char* delim)
 {
@@ -92,7 +120,8 @@ setup_lookup_table (char* contents, const char* delim)
 }
 
 static void
-compare_lines (FILE* in, Table(LineJoin)* table, const char* delim)
+compare_lines (FILE* in, Table(LineJoin)* table, const char* delim,
+               FILE* nomatch_out)
 {
     DeclTable( char, line );
     const uint delim_sz = delim ? strlen (delim) : 0;
@@ -135,9 +164,17 @@ compare_lines (FILE* in, Table(LineJoin)* table, const char* delim)
                 break;
             }
         }
+        if (nomatch_out && !table->s[i].large_line)
+        {
+            fprintf (nomatch_out, "%s%s%s\n",
+                     field,
+                     delim ? delim : "\t",
+                     payload);
+        }
     }
     LoseTable( char, line );
     fclose (in);
+    if (nomatch_out)  fclose (nomatch_out);
 }
 
 
@@ -147,6 +184,7 @@ int main (int argc, char** argv)
     const char* dflt_record = 0;
     bool keep_join_field = true;
     bool large_on_left = false;
+    FILE* nomatch_file = 0;
     FILE* small_file = 0;
     FILE* large_file = 0;
     FILE* out = stdout;
@@ -160,17 +198,7 @@ int main (int argc, char** argv)
     if (argi >= argc)
         show_usage_and_exit ();
 
-    if (0 == strcmp (argv[argi], "-"))
-        small_file = stdin;
-    else
-        small_file = fopen (argv[argi], "rb");
-    if (!small_file)
-    {
-        fprintf (ErrOut, "%s - Cannot open small file:%s\n",
-                 ExeName, argv[argi]);
-        exit (1);
-    }
-    ++ argi;
+    small_file = open_file_arg (argv[argi++], false);
 
     if (argi >= argc)
     {
@@ -179,17 +207,7 @@ int main (int argc, char** argv)
         exit (1);
     }
 
-    if (0 == strcmp (argv[argi], "-"))
-        large_file = stdin;
-    else
-        large_file = fopen (argv[argi], "rb");
-    if (!large_file)
-    {
-        fprintf (ErrOut, "%s - Cannot open large file:%s\n",
-                 ExeName, argv[argi]);
-        exit (1);
-    }
-    ++ argi;
+    large_file = open_file_arg (argv[argi++], false);
 
     while (argi < argc)
     {
@@ -228,6 +246,16 @@ int main (int argc, char** argv)
             }
             dflt_record = argv[argi++];
         }
+        else if (0 == strcmp (arg, "--nomatch"))
+        {
+            if (argi >= argc)
+            {
+                fprintf (ErrOut, "%s - Need argument for nomatch file (--nomatch).\n",
+                         ExeName);
+                exit (1);
+            }
+            nomatch_file = open_file_arg (argv[argi++], true);
+        }
         else
         {
             fprintf (ErrOut, "%s - Unknown argument:%s\n", ExeName, arg);
@@ -237,7 +265,7 @@ int main (int argc, char** argv)
 
     small_file_contents = read_FILE (small_file);
     table = setup_lookup_table (small_file_contents, delim);
-    compare_lines (large_file, &table, delim);
+    compare_lines (large_file, &table, delim, nomatch_file);
 
     if (!delim)  delim = "\t";
     UFor( i, table.sz )
