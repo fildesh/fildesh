@@ -22,7 +22,7 @@ sed $(X a) $(O a) \
 
 tr $(X a) ' ' '\n' $(O a)
 
-grep $(X a) -v '^!' $(O a)
+grep $(X a) -v -e '^!' -e '^$' $(O a)
 
 #cat $(XF a)
 

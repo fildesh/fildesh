@@ -667,10 +667,14 @@ setup_commands (uint* ret_nsyms, uint ncmds, Command* cmds,
                 {
                     int fd;
                     if (kind == IHereDocFileVal)
+                    {
                         assert (sym->kind == HereDocVal);
+                    }
                     else
+                    {
                         assert (sym->kind == ODescVal);
-                    sym->kind = NSymValKinds;
+                        sym->kind = NSymValKinds;
+                    }
                     fd = sym->as.file_desc;
 
                     if (kind == IDescVal || kind == IODescVal)
