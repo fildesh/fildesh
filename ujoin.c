@@ -12,8 +12,8 @@ typedef struct LineJoin LineJoin;
 struct LineJoin
 {
     char* field;
-    char* small_line;  /* From small file.*/
-    char* large_line;  /* From large file.*/
+    char* lookup_line;  /* From small file.*/
+    char* stream_line;  /* From large file.*/
 };
 
 DeclTableT( LineJoin );
@@ -22,8 +22,17 @@ DeclTableT( LineJoin );
 init_LineJoin (LineJoin* join)
 {
     join->field = 0;
-    join->small_line = 0;
-    join->large_line = 0;
+    join->lookup_line = 0;
+    join->stream_line = 0;
+}
+
+    void
+lose_LineJoin (LineJoin* join)
+{
+    if (join->field)
+        free (join->field);
+    if (join->stream_line && join->stream_line != join->field)
+        free (join->stream_line);
 }
 
 static void
@@ -68,51 +77,41 @@ open_file_arg (const char* arg, bool writing)
 }
 
 static Table(LineJoin)
-setup_lookup_table (char* contents, const char* delim)
+setup_lookup_table (FileB* in, const char* delim)
 {
     DeclTable( LineJoin, table );
-    char* s = contents;
     const uint delim_sz = delim ? strlen (delim) : 0;
+    char* s;
 
-    while (s)
+    for (s = getline_FileB (in);
+         s;
+         s = getline_FileB (in))
     {
         LineJoin* join;
 
-        if (table.sz > 0)
-        {
-            if (s != contents && s[-1] == '\r')
-                s[-1] = '\0';
-            if (s[0] != '\0')
-            {
-                s[0] = '\0';
-                s = &s[1];
-            }
-        }
+            /* Disregard a trailing empty line.*/
         if (s[0] == '\0')  break;
 
         GrowTable( LineJoin, table, 1 );
         join = &table.s[table.sz-1];
         init_LineJoin (join);
+        s = strdup (s);
         join->field = s;
         if (delim)
             s = strstr (s, delim);
         else
             s = &s[strcspn (s, WhiteSpaceChars)];
 
-        if (!s)
-        {
-            s = &join->field[strlen (join->field)];
-            fprintf (ErrOut, "%s - Small file has no delimiter, line:%u\n",
-                     ExeName, table.sz);
-        }
-        if (s[0] != '\0')
+        if (!s || s[0] == '\0')
+            s = 0;
+
+        if (s)
         {
             s[0] = 0;
             if (delim)  s = &s[delim_sz];
             else        s = &s[1 + strspn (&s[1], WhiteSpaceChars)];
         }
-        join->small_line = s;
-        s = strchr (s, '\n');
+        join->lookup_line = s;
     }
 
     PackTable( LineJoin, table );
@@ -120,60 +119,63 @@ setup_lookup_table (char* contents, const char* delim)
 }
 
 static void
-compare_lines (FILE* in, Table(LineJoin)* table, const char* delim,
+compare_lines (FileB* in, Table(LineJoin)* table, const char* delim,
                FILE* nomatch_out)
 {
-    DeclTable( char, line );
     const uint delim_sz = delim ? strlen (delim) : 0;
     uint line_no = 0;
-    uint off;
+    char* line;
 
-    for (off = getline_FILE (in, &line, 0);
-         off > 0;
-         off = getline_FILE (in, &line, off))
+    for (line = getline_FileB (in);
+         line;
+         line = getline_FileB (in))
     {
         uint i;
-        char* field = line.s;
+        char* field = line;
         char* payload;
 
         ++ line_no;
 
-        if (delim)  payload = strstr (line.s, delim);
-        else        payload = &line.s[strcspn (line.s, WhiteSpaceChars)];
+        if (delim)  payload = strstr (line, delim);
+        else        payload = &line[strcspn (line, WhiteSpaceChars)];
 
         if (!payload || payload[0] == '\0')
-        {
-            fprintf (ErrOut, "%s - Large file has no delimiter, line:%u\n",
-                     ExeName, line_no);
-            continue;
-        }
+            payload = 0;
 
-        payload[0] = '\0';
-        if (delim)
-            payload = &payload[delim_sz];
-        else
-            payload = &payload[1 + strspn (&payload[1], WhiteSpaceChars)];
+        if (payload)
+        {
+            payload[0] = '\0';
+            if (delim)
+                payload = &payload[delim_sz];
+            else
+                payload = &payload[1 + strspn (&payload[1], WhiteSpaceChars)];
+        }
 
         UFor( i, table->sz )
         {
-            if (0 == strcmp (field, table->s[i].field))
+            LineJoin* join = &table->s[i];
+            if (0 == strcmp (field, join->field))
             {
-                if (table->s[i].large_line)
-                    free (table->s[i].large_line);
-                table->s[i].large_line = strdup (payload);
+                if (table->s[i].stream_line)
+                    fprintf (ErrOut, "Already a match for:%s\n", field);
+                else if (payload)
+                    join->stream_line = strdup (payload);
+                else
+                    join->stream_line = join->field;
                 break;
             }
         }
-        if (nomatch_out && !table->s[i].large_line)
+        if (nomatch_out && !table->s[i].stream_line)
         {
-            fprintf (nomatch_out, "%s%s%s\n",
-                     field,
-                     delim ? delim : "\t",
-                     payload);
+            fputs (field, nomatch_out);
+            if (payload)
+            {
+                fputs (delim ? delim : "\t", nomatch_out);
+                fputs (payload, nomatch_out);
+            }
+            fputc ('\n', nomatch_out);
         }
     }
-    LoseTable( char, line );
-    fclose (in);
     if (nomatch_out)  fclose (nomatch_out);
 }
 
@@ -183,22 +185,24 @@ int main (int argc, char** argv)
     const char* delim = 0;
     const char* dflt_record = 0;
     bool keep_join_field = true;
-    bool large_on_left = false;
+    bool stream_on_left = false;
     FILE* nomatch_file = 0;
-    FILE* small_file = 0;
-    FILE* large_file = 0;
+    FileB lookup_in;
+    FileB stream_in;
     FILE* out = stdout;
     int argi = 1;
     uint i;
-    char* small_file_contents;
     Table(LineJoin) table;
 
     ExeName = argv[0];
 
+    init_FileB (&lookup_in);
+    init_FileB (&stream_in);
+
     if (argi >= argc)
         show_usage_and_exit ();
 
-    small_file = open_file_arg (argv[argi++], false);
+    lookup_in.f = open_file_arg (argv[argi++], false);
 
     if (argi >= argc)
     {
@@ -207,7 +211,7 @@ int main (int argc, char** argv)
         exit (1);
     }
 
-    large_file = open_file_arg (argv[argi++], false);
+    stream_in.f = open_file_arg (argv[argi++], false);
 
     while (argi < argc)
     {
@@ -223,7 +227,7 @@ int main (int argc, char** argv)
         }
         else if (0 == strcmp (arg, "-l"))
         {
-            large_on_left = true;
+            stream_on_left = true;
         }
         else if (0 == strcmp (arg, "-d"))
         {
@@ -263,42 +267,53 @@ int main (int argc, char** argv)
         }
     }
 
-    small_file_contents = read_FILE (small_file);
-    table = setup_lookup_table (small_file_contents, delim);
-    compare_lines (large_file, &table, delim, nomatch_file);
+    read_FileB (&lookup_in);
+    table = setup_lookup_table (&lookup_in, delim);
+    lose_FileB (&lookup_in);
+    compare_lines (&stream_in, &table, delim, nomatch_file);
+    lose_FileB (&stream_in);
 
     if (!delim)  delim = "\t";
     UFor( i, table.sz )
     {
         LineJoin* join = &table.s[i];
-        const char* large_line = join->large_line;
-        if (!large_line && dflt_record)
-            large_line = dflt_record;
-        if (large_line)
+        const char* stream_line = join->stream_line;
+        if (!stream_line && dflt_record)
+            stream_line = dflt_record;
+        if (stream_line)
         {
+            bool tab = false;
             if (keep_join_field)
             {
                 fputs (join->field, out);
-                fputs (delim, out);
+                tab = true;
             }
-            if (large_on_left)
+
+            if (stream_on_left && stream_line != join->field)
             {
-                fputs (large_line, out);
-                fputs (delim, out);
+                if (tab)  fputs (delim, out);
+                tab = true;
+                fputs (stream_line, out);
             }
-            fputs (join->small_line, out);
-            if (!large_on_left)
+
+            if (join->lookup_line)
             {
-                fputs (delim, out);
-                fputs (large_line, out);
+                if (tab)  fputs (delim, out);
+                tab = true;
+                fputs (join->lookup_line, out);
+            }
+
+            if (!stream_on_left && stream_line != join->field)
+            {
+                if (tab)  fputs (delim, out);
+                tab = true;
+                fputs (stream_line, out);
             }
             fputc ('\n', out);
         }
-        if (join->large_line)
-            free (join->large_line);
+        lose_LineJoin (join);
     }
 
-    free (small_file_contents);
     LoseTable( LineJoin, table );
     return 0;
 }

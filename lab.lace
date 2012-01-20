@@ -9,35 +9,27 @@ $(H lab-file)
 lab.txt
 $(H lab-file)
 
-cat $(H lab-file) $(O a)
+ $(O a) cat $(H lab-file)
+$(XO a) sed \
+    -e 's/^[[:space:]]\+/ /' \
+    -e 's/^ //' \
+    -e 's/ $//'
+$(XO a) tr ' ' '\n'
+$(XO a) grep -v -e '^!' -e '^$'
+
 
 $(H clientcmd)
 who -u | awk '$2 == ":0" { print "'"$1 "'" $1 ; }'
 $(H clientcmd)
 
-sed $(X a) $(O a) \
-    -e 's/^[[:space:]]\+/ /' \
-    -e 's/^ //' \
-    -e 's/ $//'
-
-tr $(X a) ' ' '\n' $(O a)
-
-grep $(X a) -v -e '^!' -e '^$' $(O a)
-
-#cat $(XF a)
-
-#$(H comment)
-ssh-all $(XF a) $(H clientcmd) $(O users)
+ $(O users) ssh-all $(XF a) $(H clientcmd)
 
 
 $(H subst)
 { printf ("s/\\<%s\\>/%-*s/\n", $1, length($1), $2); }
 $(H subst)
 
-awk $(X users) $(H subst) $(O a)
+$(X users) $(O a) awk $(H subst)
 
-cat $(H lab-file) $(O b)
-
-sed $(X b) -f $(XF a)
-#$(H comment)
+sed -f $(XF a) $(H lab-file)
 

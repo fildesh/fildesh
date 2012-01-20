@@ -78,3 +78,91 @@ getline_FILE (FILE* in, Table(char)* line, uint off)
     return off;
 }
 
+    void
+init_FileB (FileB* f)
+{
+    f->f = 0;
+    InitTable( char, f->buf );
+    f->off = 0;
+}
+
+    void
+lose_FileB (FileB* f)
+{
+    if (f->f)  fclose (f->f);
+    LoseTable( char, f->buf );
+}
+
+    void
+close_FileB (FileB* f)
+{
+    lose_FileB (f);
+    init_FileB (f);
+}
+
+    char*
+read_FileB (FileB* in)
+{
+    char* s = read_FILE (in->f);
+    in->f = 0;
+    close_FileB (in);
+    in->buf.s = s;
+    in->buf.sz = strlen (s);
+    in->buf.alloc_sz = in->buf.sz + 1;
+    return s;
+}
+
+    char*
+getline_FileB (FileB* in)
+{
+    const uint n_per_chunk = BUFSIZ;
+    char* s = 0;
+    uint off = in->off;
+
+    if (off > 0)
+    {
+        size_t n;
+        s = &in->buf.s[off];
+        n = strlen (s) + 1;
+        memmove (in->buf.s, s, n * sizeof (char));
+        off = n - 1;
+        s = strchr (in->buf.s, '\n');
+    }
+    else if (!in->f)
+    {
+        s = strchr (in->buf.s, '\n');
+    }
+
+    if (in->f)  while (!s)
+    {
+        size_t n;
+
+        n = off + n_per_chunk + 1;
+        if (in->buf.sz < n)
+            GrowTable( char, in->buf, n - in->buf.sz );
+
+        s = &in->buf.s[off];
+        n = fread (s, sizeof (char), n_per_chunk, in->f);
+        s[n] = 0;
+        s = strchr (s, '\n');
+        off += n;
+        if (n == 0)  break;
+    }
+
+    off = 0;
+    if (s)
+    {
+        if (s != in->buf.s && s[-1] == '\r')
+            s[-1] = '\0';
+        if (s[0] != '\0')
+        {
+            s[0] = '\0';
+            s = &s[1];
+        }
+        off = IndexInTable( char, in->buf, s );
+    }
+
+    in->off = off;
+    return (off == 0) ? 0 : in->buf.s;
+}
+
