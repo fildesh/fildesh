@@ -1,0 +1,22 @@
+#!/bin/env lace
+
+## This finds out who turned in an assignment.
+
+$(H names-file)
+names
+$(H names-file)
+$(H wrong-section-file)
+wrong-section
+$(H wrong-section-file)
+
+ $(O a) ls
+$(XO a) grep '^D\.'
+$(XO a) sed -e 's/^D\.\(.*\)/\1\t*/'
+$(XO a) ujoin $(H names-file) - -p '' -l -nomatch $(H wrong-section-file)
+$(XO a) tee $(OF b)
+$(XO a) cut -f1,2
+$(XO b) cut --complement -f1,2
+$(XO a) awk -- '{ printf ("%-3s%-10s\n", $2, $1); }'
+$(XO a) paste - $(XF b)
+$(X a) cat -
+

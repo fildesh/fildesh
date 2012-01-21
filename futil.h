@@ -37,6 +37,8 @@ char*
 read_FileB (FileB* in);
 char*
 getline_FileB (FileB* in);
+char*
+getlined_FileB (FileB* in, const char* delim);
 
 #endif
 

@@ -7,6 +7,8 @@
     /* stdlib.h  mkdtemp() */
 #define _BSD_SOURCE
 
+#include "futil.h"
+
 #include <assert.h>
 #include <limits.h>
 #include <stdio.h>
@@ -19,13 +21,12 @@
 #include <sys/wait.h>
 
 
-typedef unsigned int uint;
+static char* ExeName = 0;
+#define ErrOut stderr
+
+
 #define Max_uint UINT_MAX
 typedef unsigned char byte;
-
-#define true 1
-#define false 0
-#define UFor( i, bel )  for (i = 0; i < bel; ++i)
 
 #define AllocT( Type, capacity ) \
     (((capacity) == 0) ? (Type*) 0 : \
@@ -33,8 +34,6 @@ typedef unsigned char byte;
 
 #define ResizeT( Type, arr, capacity ) \
     ((arr) = (Type*) realloc (arr, (capacity) * sizeof (Type)))
-
-static const char WhiteSpaceChars[] = " \t\v\r\n";
 
 enum SymValKind
 {
@@ -235,95 +234,53 @@ count_non_ws (const char* s)
      * ${H var_name} Optional identifying stuff.
      **/
 static char*
-parse_here_doc (FILE* in, const char* term)
+parse_here_doc (FileB* in, const char* term)
 {
-    const size_t max_line_sz = 2048;
-    uint nfull;
-    size_t term_sz;
-    uint n = 0;
-    char* doc;
+    DeclTable( char, delim );
+    char* s;
 
-    term_sz = strlen (term) * sizeof (char);
-    nfull = 2 * max_line_sz;
-    doc = AllocT( char, nfull );
+    GrowTable( char, delim, 1 + strlen(term) + 1 );
+    delim.s[0] = '\n';
+    strcpy (&delim.s[1], term);
 
-    while (true)
-    {
-        char* s;
-        uint r;
-
-        if (n + max_line_sz > nfull)
-        {
-            nfull += max_line_sz;
-            ResizeT( char, doc, nfull );
-        }
-
-        s = &doc[n];
-        if (!fgets (s, max_line_sz, in))  break;
-        r = strlen (s);
-        while (r > 0 && strchr (WhiteSpaceChars, s[r-1]))  --r;
-
-        if (term_sz == r * sizeof (char))
-            if (0 == memcmp (s, term, term_sz))
-                break;
-
-        n += strlen (s);
-    }
-        /* Remove trailing newline.*/
-    if (n > 0)  -- n;
-    doc[n] = '\0';
-    ResizeT( char, doc, n+1 );
-    return doc;
+    s = getlined_FileB (in, delim.s);
+    LoseTable( char, delim );
+    return strdup (s);
 }
 
 static char*
-parse_line (FILE* in)
+parse_line (FileB* in)
 {
-    const size_t max_line_sz = 1024;
-    uint nfull;
-    uint n = 0;
-    char* line;
+    DeclTable( char, line );
+    char* s;
 
-    nfull = 2 * max_line_sz;
-    line = AllocT( char, nfull );
-
-    while (true)
+    for (s = getline_FileB (in);
+         s;
+         s = getline_FileB (in))
     {
-        uint i, r;
-        char* s;
+        uint i, n;
+        bool multiline = false;
 
-        if (n + max_line_sz > nfull)
-        {
-            nfull += max_line_sz;
-            ResizeT( char, line, nfull );
-        }
+        s = &s[count_ws (s)];
+        if (s[0] == '#' || s[0] == '\0')  continue;
 
-        s = &line[n];
+        n = strlen (s);
 
-        if (!fgets (s, max_line_sz, in))  break;
+        while (strchr (WhiteSpaceChars, s[n-1]))  --n;
 
-        i = count_ws (s);
-        if (s[i] == '#' || s[i] == '\0')  continue;
+        multiline = s[n-1] == '\\';
+        if (multiline)  --n;
 
-        r = i + strlen (&s[i]);
-        assert (r > 0);
-            /* if (i > 0)  memmove (s, &s[i], r+1); */
+        i = line.sz;
+        GrowTable( char, line, n );
+        memcpy (&line.s[i], s, n * sizeof (char));
 
-        while (strchr (WhiteSpaceChars, s[r-1]))  --r;
-
-        if (s[r-1] == '\\')
-        {
-            n += r-1;
-        }
-        else
-        {
-            n += r;
-            break;
-        }
+        if (!multiline)  break;
     }
-    line[n] = '\0';
-    ResizeT( char, line, n+1 );
-    return line;
+    GrowTable( char, line, 1 );
+    line.s[line.sz-1] = '\0';
+    PackTable( char, line );
+    return line.s;
 }
 
 static char**
@@ -386,7 +343,7 @@ sep_line (uint* ret_n, char* s)
 
 
 static Command*
-parse_file(FILE* in, uint* n)
+parse_file(FileB* in, uint* n)
 {
     const uint cmds_chunk_sz = 64;
     uint ncmds_full = 0;
@@ -820,7 +777,14 @@ setup_commands (uint* ret_nsyms, uint ncmds, Command* cmds,
     *ret_nsyms = nsyms;
 
     UFor( i, nsyms )
-        assert (syms[i].kind != ODescVal && "A dangling output stream!");
+    {
+        if (syms[i].kind == ODescVal)
+        {
+            fprintf (ErrOut, "%s - Dangling output stream! Symbol:%s\n",
+                     ExeName, syms[i].name);
+            assert (syms[i].kind != ODescVal && "A dangling output stream!");
+        }
+    }
 
     return syms;
 }
@@ -947,17 +911,30 @@ add_util_path_env ()
     free (s);
 }
 
+static void
+show_usage_and_exit ()
+{
+    const char* s;
+    s = "Usage: %s [[-f] SCRIPTFILE | -- SCRIPT]\n";
+    fprintf (ErrOut, s, ExeName);
+    exit (1);
+}
 
 int main (int argc, char** argv)
 {
-    FILE* in = 0;
+    FileB in;
     uint ncmds = 0;
     Command* cmds;
     uint nsyms = 0;
     SymVal* syms;
     uint i;
     int ret;
+    int argi = 0;
     char tmpdir[128];
+
+    init_FileB (&in);
+
+    ExeName = argv[argi++];
 
     add_util_path_env ();
 
@@ -965,18 +942,50 @@ int main (int argc, char** argv)
 
     if (!mkdtemp (tmpdir))
     {
-        fprintf (stderr, "Unable to create temp directory: %s\n",
+        fprintf (ErrOut, "%s - Unable to create temp directory:%s\n",
+                 ExeName,
                  strerror (errno));
         exit (1);
     }
 
-    if (argc == 2)
-        in = fopen (argv[1], "rb");
-    if (!in)
-        in = stdin;
+    if (argi < argc)
+    {
+        const char* arg;
+        arg = argv[argi++];
+        if (0 == strcmp (arg, "--"))
+        {
+            if (argi >= argc)  show_usage_and_exit ();
+            arg = argv[argi++];
+            in.buf.s = strdup (arg);
+            in.buf.sz = strlen (in.buf.s);
+            in.buf.alloc_sz = in.buf.sz+1;
+        }
+        else
+        {
+            if (0 == strcmp (arg, "-f") && argi >= argc)
+            {
+                show_usage_and_exit ();
+                arg = argv[argi++];
+            }
 
-    cmds = parse_file (in, &ncmds);
-    fclose (in);
+            in.f = fopen (arg, "rb");
+            if (!in.f)
+            {
+                fprintf (ErrOut, "%s - Cannot read script:%s\n",
+                         ExeName, arg);
+                exit (1);
+            }
+        }
+
+        if (argi < argc)  show_usage_and_exit ();
+    }
+    else
+    {
+        in.f = stdin;
+    }
+
+    cmds = parse_file (&in, &ncmds);
+    lose_FileB (&in);
 
     syms = setup_commands (&nsyms, ncmds, cmds, tmpdir);
 
@@ -1023,8 +1032,10 @@ int main (int argc, char** argv)
         fill_dependent_args (cmd);
 
         execvp (cmd->args[0], cmd->args);
+        ret = errno;
 
-        fprintf (stderr, "Error executing: %s\n", strerror (errno));
+        fprintf (stderr, "%s - Error executing:%s\n", ExeName, cmd->args[0]);
+        fprintf (stderr, "  Reason:%s\n", strerror (ret));
         assert (0);
         exit (1);
     }

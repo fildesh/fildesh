@@ -1,64 +1,73 @@
 #!/bin/env lace
 
 # Take a file with pairs of people in it,
-# and a uid/name file which has a specific order to it,
+# and a username/fullname file which has a specific order to it,
 # and output a special ordered format with a uni-directional relationship
 # for each pair (one person's line references the other person's but
 # not vice-versa).
 
 # To see it in action, run
 #   ./pair-up.lace < pairs
-# Assure best-match is built and is in your PATH!
 
 $(H name-file)
 names
 $(H name-file)
 
+
+# Break the pairs file into a useful format of lines:
+#   tag name
+# where /tag/ is
+#   0 - Worked alone.
+#   1 - Worked with a partner.
+#   2 - Worked as a partner (did not submit on this person's computer).
+# and /name/ is the student's real name (as they typed during submit).
 $(H split-script)
 s/^ *\(.*[^ ]\) *worked with *\(.*[^ ]\) *(.*$/1\t\1\n2\t\2/
 s/^ *\(.*[^ ]\) *worked alone.*$/0\t\1/
 $(H split-script)
+ $(O a) sed -f $(HF split-script)
 
-echo $(H split-script) $(O script)
+# Split /tag/ and /name/ columns as described above.
+# They will be pasted back together later.
+$(XO a) tee $(OF tags)
+$(XO tags) cut -f1
+$(XO a) cut -f2
 
-sed -f $(XF script) $(O a)
+ $(O name-table) cat $(H name-file)
+# Reorder names to "First Last" instead of "Last, First".
+$(XO name-table) sed -e 's/\t\(.*\), \(.*\)$/\t\2 \1/'
+# Fuzzy match for each student in the pairs file.
+$(XO a) best-match $(XF name-table)
+# Only want the username of each match.
+$(XO a) cut -f1
 
-tee $(X a) $(OF tags) $(O names)
+# Paste /tag/ and /name/ columns back together.
+$(XO a) paste $(XF tags) -
 
-cut $(XO tags) -f1
-cut $(XO names) -f2
-
-cat -n $(H name-file) $(O name-table)
-
-sed $(XO name-table) 's/^ \+//'
-
-best-match $(XO names) $(XF name-table)
-
-sed $(XO names) 's/^\([^ ]*\) \+/\1\t/'
-
-paste $(XF tags) $(XF names) $(O a)
-
+# Here is where the actual pairing happens.
+# Partners are listed contiguously in the input stream,
+# so the Partner #1 students are one line before their
+# corresponding Partner #2.
+# Add the name of Partner #1 to the end of the Partner #2 line.
 $(H pair-up)
 BEGIN { FS = "\t"; }
 
 {
-    if ($1 == 1)  next_partner = $3;
-    if ($1 == 2)  partner = next_partner;
-    else          partner = "";
-    printf "%s\t* %-12s %-12s %s\n", $2, partner, $3, $4;
+    role = $1;
+    username = $2;
+    if (role == 1)  next_partner = username;
+    if (role == 2)  partner = next_partner;
+    else            partner = "";
+    printf "%s\t* %-12s\n", username, partner;
 }
 $(H pair-up)
+$(XO a) awk $(H pair-up)
 
-awk $(XO a) $(H pair-up)
+# Add the student's full name to the end of the line.
+# This also introduces students who did not attend lab as lines without '*'.
+$(XO a) ujoin $(H name-file) - -l -p ' '
 
-sort $(XO a) -nu
-
-cat -n $(H name-file) $(O name-table)
-
-sed $(XO name-table) \
-    -e 's/^ \+//'  -e 's/\t/\t               /'
-
-sort $(XO a) -mnu - $(XF name-table)
-
-cut $(X a) -f 1 --complement
+# Re-order and print columns.
+$(XO a) sed -e 's/\(.*\)\t\(.*\)\t\(.*\)/\2\t\1\t\3/'
+$(X a) expand -t 15,26
 

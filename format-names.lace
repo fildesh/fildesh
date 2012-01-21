@@ -1,0 +1,61 @@
+#!/bin/env lace
+
+$(H section)
+1
+$(H section)
+
+$(H grades-file)
+cs1121.master
+$(H grades-file)
+
+# Generate this file from
+#   getent passwd
+# on wopr.
+$(H passwd-file)
+passwd
+$(H passwd-file)
+
+$(H names-uids-script)
+BEGIN {
+    getline;
+    getline n;
+    n += 4;
+    while (n > 0)
+    {
+        -- n;
+        getline;
+    }
+}
+{
+    ws = "[[:space:]]+"
+    # Name.
+    r = "^\"([^\"]*)\"";
+    # User id.
+    r=r ws "([[:digit:]]+)";
+    # Some number that we don't use.
+    r=r ws "[[:digit:]]+";
+    # Section number.
+    r=r ws "([[:digit:]]+)";
+    # Rest of file.
+    r=r ws ".*$";
+
+    line = gensub (r, "\\3\t\\2\t\\1", "", $0);
+    print line;
+}
+$(H names-uids-script)
+
+ $(O a) awk -- $(H names-uids-script) $(H grades-file)
+
+ $(O sec) printf '^%d' $(H section)
+$(XO a) grep $(XA sec)
+
+$(XO a) cut --complement -f1
+
+ $(O arg) printf '--output-delimiter=\t'
+ $(O passwd) cut '--delimiter=:' $(XA arg) -f1,3 $(H passwd-file)
+$(XO passwd) awk -- '{ print $2 "\t" $1 ; }'
+
+$(XO a) ujoin - $(XF passwd) -x -l -p 'NOTHERE'
+
+cat $(XF a)
+

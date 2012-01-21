@@ -120,7 +120,7 @@ setup_lookup_table (FileB* in, const char* delim)
 
 static void
 compare_lines (FileB* in, Table(LineJoin)* table, const char* delim,
-               FILE* nomatch_out)
+               FILE* nomatch_out, FILE* dupmatch_out)
 {
     const uint delim_sz = delim ? strlen (delim) : 0;
     uint line_no = 0;
@@ -133,6 +133,7 @@ compare_lines (FileB* in, Table(LineJoin)* table, const char* delim,
         uint i;
         char* field = line;
         char* payload;
+        char nixed_char = '\0';
 
         ++ line_no;
 
@@ -144,49 +145,65 @@ compare_lines (FileB* in, Table(LineJoin)* table, const char* delim,
 
         if (payload)
         {
+            nixed_char = payload[0];
             payload[0] = '\0';
+        }
+
+        for (i = 0; i < table->sz; ++i)
+            if (0 == strcmp (field, table->s[i].field))
+                break;
+
+        if (i == table->sz)
+        {
+            if (nomatch_out)
+            {
+                if (payload)  payload[0] = nixed_char;
+                fputs (line, nomatch_out);
+                fputc ('\n', nomatch_out);
+            }
+        }
+        else if (table->s[i].stream_line)
+        {
+            if (payload)  payload[0] = nixed_char;
+            if (dupmatch_out)
+            {
+                fputs (line, dupmatch_out);
+                fputc ('\n', dupmatch_out);
+            }
+            else
+            {
+                fprintf (ErrOut, "Already a match for:%s\n", line);
+            }
+        }
+        else if (!payload)
+        {
+            LineJoin* join = &table->s[i];
+            join->stream_line = join->field;
+        }
+        else
+        {
+            LineJoin* join = &table->s[i];
             if (delim)
                 payload = &payload[delim_sz];
             else
                 payload = &payload[1 + strspn (&payload[1], WhiteSpaceChars)];
-        }
 
-        UFor( i, table->sz )
-        {
-            LineJoin* join = &table->s[i];
-            if (0 == strcmp (field, join->field))
-            {
-                if (table->s[i].stream_line)
-                    fprintf (ErrOut, "Already a match for:%s\n", field);
-                else if (payload)
-                    join->stream_line = strdup (payload);
-                else
-                    join->stream_line = join->field;
-                break;
-            }
-        }
-        if (nomatch_out && !table->s[i].stream_line)
-        {
-            fputs (field, nomatch_out);
-            if (payload)
-            {
-                fputs (delim ? delim : "\t", nomatch_out);
-                fputs (payload, nomatch_out);
-            }
-            fputc ('\n', nomatch_out);
+            join->stream_line = strdup (payload);
         }
     }
     if (nomatch_out)  fclose (nomatch_out);
+    if (dupmatch_out)  fclose (dupmatch_out);
 }
 
 
 int main (int argc, char** argv)
 {
-    const char* delim = 0;
+    const char* delim = "\t";
     const char* dflt_record = 0;
     bool keep_join_field = true;
     bool stream_on_left = false;
     FILE* nomatch_file = 0;
+    FILE* dupmatch_file = 0;
     FileB lookup_in;
     FileB stream_in;
     FILE* out = stdout;
@@ -229,6 +246,10 @@ int main (int argc, char** argv)
         {
             stream_on_left = true;
         }
+        else if (0 == strcmp (arg, "-ws"))
+        {
+            delim = 0;
+        }
         else if (0 == strcmp (arg, "-d"))
         {
             if (argi >= argc)
@@ -250,15 +271,25 @@ int main (int argc, char** argv)
             }
             dflt_record = argv[argi++];
         }
-        else if (0 == strcmp (arg, "--nomatch"))
+        else if (0 == strcmp (arg, "-nomatch"))
         {
             if (argi >= argc)
             {
-                fprintf (ErrOut, "%s - Need argument for nomatch file (--nomatch).\n",
+                fprintf (ErrOut, "%s - Need argument for nomatch file (-nomatch).\n",
                          ExeName);
                 exit (1);
             }
             nomatch_file = open_file_arg (argv[argi++], true);
+        }
+        else if (0 == strcmp (arg, "-dupmatch"))
+        {
+            if (argi >= argc)
+            {
+                fprintf (ErrOut, "%s - Need argument for nomatch file (-dupmatch).\n",
+                         ExeName);
+                exit (1);
+            }
+            dupmatch_file = open_file_arg (argv[argi++], true);
         }
         else
         {
@@ -270,7 +301,7 @@ int main (int argc, char** argv)
     read_FileB (&lookup_in);
     table = setup_lookup_table (&lookup_in, delim);
     lose_FileB (&lookup_in);
-    compare_lines (&stream_in, &table, delim, nomatch_file);
+    compare_lines (&stream_in, &table, delim, nomatch_file, dupmatch_file);
     lose_FileB (&stream_in);
 
     if (!delim)  delim = "\t";

@@ -9,7 +9,7 @@ util_exes = $(addprefix bin/,$(utils))
 
 all: lace $(util_exes)
 
-lace: lace.c
+lace: lace.c futil.o
 	$(CC) $(CFLAGS) \
 		"-DUtilBin=\"$(PWD)/bin\"" \
 		-o $@ $^

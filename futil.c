@@ -144,12 +144,11 @@ getline_FileB (FileB* in)
         s = &in->buf.s[off];
         n = fread (s, sizeof (char), n_per_chunk, in->f);
         s[n] = 0;
+        if (n == 0)  break;
         s = strchr (s, '\n');
         off += n;
-        if (n == 0)  break;
     }
 
-    off = 0;
     if (s)
     {
         if (s != in->buf.s && s[-1] == '\r')
@@ -158,6 +157,61 @@ getline_FileB (FileB* in)
         {
             s[0] = '\0';
             s = &s[1];
+        }
+        off = IndexInTable( char, in->buf, s );
+    }
+
+    in->off = off;
+    return (off == 0) ? 0 : in->buf.s;
+}
+
+    char*
+getlined_FileB (FileB* in, const char* delim)
+{
+    const uint n_per_chunk = BUFSIZ;
+    char* s = 0;
+    uint off = in->off;
+    uint delim_sz = strlen (delim);
+
+    if (off > 0)
+    {
+        size_t n;
+        s = &in->buf.s[off];
+        n = strlen (s) + 1;
+        memmove (in->buf.s, s, n * sizeof (char));
+        off = n - 1;
+        s = strstr (in->buf.s, delim);
+    }
+    else if (!in->f)
+    {
+        s = strstr (in->buf.s, delim);
+    }
+
+    if (in->f)  while (!s)
+    {
+        size_t n;
+
+        n = off + n_per_chunk + 1;
+        if (in->buf.sz < n)
+            GrowTable( char, in->buf, n - in->buf.sz );
+
+        s = &in->buf.s[off];
+        n = fread (s, sizeof (char), n_per_chunk, in->f);
+        s[n] = 0;
+        if (n == 0)  break;
+        if (off < delim_sz)
+            s = strstr (in->buf.s, delim);
+        else
+            s = strstr (&in->buf.s[1+off-delim_sz], delim);
+        off += n;
+    }
+
+    if (s)
+    {
+        if (s[0] != '\0')
+        {
+            s[0] = '\0';
+            s = &s[delim_sz];
         }
         off = IndexInTable( char, in->buf, s );
     }

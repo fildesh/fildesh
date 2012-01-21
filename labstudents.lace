@@ -1,0 +1,30 @@
+#!/bin/env lace
+
+$(H lab-file)
+lab112.txt
+$(H lab-file)
+
+$(H attend-file)
+present3
+$(H attend-file)
+
+$(H parse-lab)
+ $(O a) sed \
+    -e 's/^[[:space:]]\+/ /' \
+    -e 's/^ //' \
+    -e 's/ $//'
+$(XO a) tr ' ' '\n'
+$(X a) grep -v -e '^!' -e '^$'
+$(H parse-lab)
+
+ $(O lookup) cat $(H lab-file)
+$(XO lookup) lace -- $(H parse-lab)
+
+ $(O present) cat $(H attend-file)
+$(XO present) lace -- $(H parse-lab)
+
+ $(O b) ujoin $(XF lookup) $(XF present) -nomatch $(OF a)
+$(X b) void
+
+cat $(XF a)
+
