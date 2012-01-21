@@ -13,6 +13,13 @@ $(H name-file)
 names
 $(H name-file)
 
+$(H allnames-file)
+allnames
+$(H allnames-file)
+
+$(H wrong-section-file)
+wrong-section
+$(H wrong-section-file)
 
 # Break the pairs file into a useful format of lines:
 #   tag name
@@ -33,7 +40,7 @@ $(XO a) tee $(OF tags)
 $(XO tags) cut -f1
 $(XO a) cut -f2
 
- $(O name-table) cat $(H name-file)
+ $(O name-table) cat $(H allnames-file)
 # Reorder names to "First Last" instead of "Last, First".
 $(XO name-table) sed -e 's/\t\(.*\), \(.*\)$/\t\2 \1/'
 # Fuzzy match for each student in the pairs file.
@@ -65,7 +72,9 @@ $(XO a) awk $(H pair-up)
 
 # Add the student's full name to the end of the line.
 # This also introduces students who did not attend lab as lines without '*'.
-$(XO a) ujoin $(H name-file) - -l -p ' '
+$(XO a) ujoin $(H name-file) - -l -p ' ' -nomatch $(H wrong-section-file)
+
+
 
 # Re-order and print columns.
 $(XO a) sed -e 's/\(.*\)\t\(.*\)\t\(.*\)/\2\t\1\t\3/'

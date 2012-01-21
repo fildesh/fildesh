@@ -4,7 +4,7 @@ CFLAGS = -ansi -pedantic -Wall -Wextra
 CFLAGS += -D_SVID_SOURCE
 CFLAGS += -g
 
-utils = best-match xpipe void cat1 ssh-all ujoin
+utils = best-match xpipe void cat1 ssh-all ujoin godo
 util_exes = $(addprefix bin/,$(utils))
 
 all: lace $(util_exes)
@@ -33,6 +33,9 @@ bin/ssh-all: ssh-all.c
 	$(CC) $(CFLAGS) -o $@ $^
 
 bin/ujoin: ujoin.c futil.o
+	$(CC) $(CFLAGS) -o $@ $^
+
+bin/godo: godo.c
 	$(CC) $(CFLAGS) -o $@ $^
 
 $(util_exes): | bin

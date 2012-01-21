@@ -46,7 +46,7 @@ $(H names-uids-script)
 
  $(O a) awk -- $(H names-uids-script) $(H grades-file)
 
- $(O sec) printf '^%d' $(H section)
+ $(O sec) printf '^%s' $(H section)
 $(XO a) grep $(XA sec)
 
 $(XO a) cut --complement -f1

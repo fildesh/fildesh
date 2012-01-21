@@ -1,0 +1,21 @@
+#!/bin/env lace
+
+$(H section)
+1
+$(H section)
+$(H lab)
+2
+$(H lab)
+
+ $(O a) printf '%s\n%s\n' $(H section) $(H lab)
+$(XO a) godo /classes/cs1121/grades ./pairs.pl
+
+$(XO a) sed '1s/^.*? *//'
+
+ $(O home) awk 'BEGIN { printf "%s", ENVIRON["HOME"]; }'
+ $(O f) printf '%s/cs1121.grading/Lab%d/sec%d/pairs' \
+    $(XA home) $(H lab) $(H section)
+$(XO a) tee $(XA f)
+
+cat $(XF a)
+
