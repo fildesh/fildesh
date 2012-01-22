@@ -28,13 +28,6 @@ static char* ExeName = 0;
 #define Max_uint UINT_MAX
 typedef unsigned char byte;
 
-#define AllocT( Type, capacity ) \
-    (((capacity) == 0) ? (Type*) 0 : \
-     (Type*) malloc ((capacity) * sizeof (Type)))
-
-#define ResizeT( Type, arr, capacity ) \
-    ((arr) = (Type*) realloc (arr, (capacity) * sizeof (Type)))
-
 enum SymValKind
 {
     IDescVal, ODescVal, IODescVal,
@@ -53,26 +46,31 @@ typedef enum CommandKind CommandKind;
 typedef struct SymVal SymVal;
 typedef struct Command Command;
 
+#ifndef DeclTableT_int
+#define DeclTableT_int
+DeclTableT( int );
+#endif
+
+#ifndef DeclTableT_CString
+#define DeclTableT_CString
+typedef char* CString;
+DeclTableT( CString );
+#endif
 
 struct Command
 {
     char* line;
     CommandKind kind;
-    uint nargs;
-    char** args;
-    uint nextra_args;
-    char** extra_args;
-    uint ntmp_files;
-    char** tmp_files;
+    Table( CString ) args;
+    Table( CString ) extra_args;
+    Table( CString ) tmp_files;
     pid_t pid;
         /* Input stream.*/
     int stdis;
-    uint nis;
-    int* is;
+    Table( int ) is;
         /* Output streams.*/
     int stdos;
-    uint nos;
-    int* os;
+    Table( int ) os;
         /* If >= 0, this is a file descriptor that will
          * close when the program command is safe to run.
          */
@@ -81,12 +79,12 @@ struct Command
     const char* exec_doc;
 
         /* Use these input streams to fill corresponding (null) arguments.*/
-    uint niargs;
-    int* iargs;
+    Table( int ) iargs;
 
         /* Use this if it's a HERE document.*/
     char* doc;
 };
+DeclTableT( Command );
 
 struct SymVal
 {
@@ -100,6 +98,7 @@ struct SymVal
         char* here_doc;
     } as;
 };
+DeclTableT( SymVal );
 
 
 static void
@@ -120,16 +119,16 @@ static void
 init_Command (Command* cmd)
 {
     cmd->kind = NCommandKinds;
-    cmd->nargs = 0;
-    cmd->nextra_args = 0;
-    cmd->ntmp_files = 0;
+    InitTable( CString, cmd->args );
+    InitTable( CString, cmd->extra_args );
+    InitTable( CString, cmd->tmp_files );
     cmd->exec_fd = -1;
     cmd->exec_doc = 0;
     cmd->stdis = -1;
+    InitTable( int, cmd->is );
     cmd->stdos = -1;
-    cmd->nis = 0;
-    cmd->nos = 0;
-    cmd->niargs = 0;
+    InitTable( int, cmd->os );
+    InitTable( int, cmd->iargs );
 }
 
 static void
@@ -138,20 +137,22 @@ close_Command (Command* cmd)
     uint i;
     if (cmd->stdis >= 0)  close (cmd->stdis);
     if (cmd->stdos >= 0)  close (cmd->stdos);
-    if (cmd->nis > 0)
+    if (cmd->is.sz > 0)
     {
-        UFor( i, cmd->nis )
-            close (cmd->is[i]);
-        free (cmd->is);
-        cmd->nis = 0;
+        UFor( i, cmd->is.sz )
+            close (cmd->is.s[i]);
     }
-    if (cmd->nos > 0)
+    LoseTable( int, cmd->is );
+    InitTable( int, cmd->is );
+
+    if (cmd->os.sz > 0)
     {
-        UFor( i, cmd->nos )
-            close (cmd->os[i]);
-        cmd->nos = 0;
-        free (cmd->os);
+        UFor( i, cmd->os.sz )
+            close (cmd->os.s[i]);
     }
+    LoseTable( int, cmd->os );
+    InitTable( int, cmd->os );
+
     if (cmd->exec_fd >= 0)
     {
         close (cmd->exec_fd);
@@ -167,23 +168,22 @@ lose_Command (Command* cmd)
     close_Command (cmd);
     free (cmd->line);
     if (cmd->kind == RunCommand)
-        free (cmd->args);
+        LoseTable( CString, cmd->args );
     else if (cmd->kind == HereDocCommand)
         free (cmd->doc);
 
-    UFor( i, cmd->nextra_args )
-        free (cmd->extra_args[i]);
-    if (cmd->nextra_args > 0)
-        free (cmd->extra_args);
-    UFor( i, cmd->ntmp_files )
+    UFor( i, cmd->extra_args.sz )
+        free (cmd->extra_args.s[i]);
+    LoseTable( CString, cmd->extra_args );
+
+    UFor( i, cmd->tmp_files.sz )
     {
-        remove (cmd->tmp_files[i]);
-        free (cmd->tmp_files[i]);
+        remove (cmd->tmp_files.s[i]);
+        free (cmd->tmp_files.s[i]);
     }
-    if (cmd->ntmp_files > 0)
-        free (cmd->tmp_files);
-    if (cmd->niargs > 0)
-        free (cmd->iargs);
+    LoseTable( CString, cmd->tmp_files );
+
+    LoseTable( int, cmd->iargs );
 }
 
 
@@ -192,26 +192,26 @@ lose_Command (Command* cmd)
      * If not found, Max_uint is returned.
      **/
 static uint
-lookup_SymVal (uint n, const SymVal* a, const char* s)
+lookup_SymVal (Table(SymVal)* syms, const char* s)
 {
     uint i;
-    UFor( i, n )
-        if (0 == strcmp (a[i].name, s))
+    UFor( i, syms->sz )
+        if (0 == strcmp (syms->s[i].name, s))
             return i;
     return Max_uint;
 }
 
 static SymVal*
-add_SymVal (uint* n, SymVal* a, const char* s)
+add_SymVal (Table(SymVal)* syms, const char* s)
 {
     uint i;
-    i = lookup_SymVal (*n, a, s);
-    if (i != Max_uint)  return &a[i];
-    i = *n;
-    *n += 1;
-    init_SymVal (&a[i]);
-    a[i].name = s;
-    return &a[i];
+    i = lookup_SymVal (syms, s);
+    if (i != Max_uint)  return &syms->s[i];
+    i = syms->sz;
+    GrowTable( SymVal, *syms, 1 );
+    init_SymVal (&syms->s[i]);
+    syms->s[i].name = s;
+    return &syms->s[i];
 }
 
 static uint
@@ -283,17 +283,10 @@ parse_line (FileB* in)
     return line.s;
 }
 
-static char**
-sep_line (uint* ret_n, char* s)
+static void
+sep_line (Table(CString)* args, char* s)
 {
-    FILE* out = stderr;
-    const size_t max_nargs = 1024;
-    uint n = 0;
-    char** a;
-
-    a = AllocT( char*, max_nargs );
-
-    while (n < max_nargs)
+    while (1)
     {
         uint i;
 
@@ -304,30 +297,30 @@ sep_line (uint* ret_n, char* s)
         if (s[0] == '\'')
         {
             s = &s[1];
-            a[n++] = s;
+            PushTable( CString, *args, s );
             i = strcspn (s, "'");
             if (s[i] == '\0')
             {
-                fputs ("Unterminated single quote.\n", out);
+                fputs ("Unterminated single quote.\n", ErrOut);
                 break;
             }
             s = &s[i];
         }
         else if (s[0] == '$' && s[1] == '(')
         {
-            a[n++] = s;
+            PushTable( CString, *args, s );
             s = &s[2];
             i = strcspn (s, ")");
             if (s[i] == '\0')
             {
-                fputs ("Unterminated variable.\n", out);
+                fputs ("Unterminated variable.\n", ErrOut);
                 break;
             }
             s = &s[i+1];
         }
         else
         {
-            a[n++] = s;
+            PushTable( CString, *args, s );
             i = count_non_ws (s);
             s = &s[i];
         }
@@ -335,42 +328,27 @@ sep_line (uint* ret_n, char* s)
         s[0] = '\0';
         s = &s[1];
     }
-    a[n] = 0;
-    ResizeT( char*, a, n+1 );
-    *ret_n = n;
-    return a;
+    PackTable( CString, *args );
 }
 
 
-static Command*
-parse_file(FileB* in, uint* n)
+static Table(Command)
+parse_file(FileB* in)
 {
-    const uint cmds_chunk_sz = 64;
-    uint ncmds_full = 0;
-    uint ncmds = 0;
-    Command* cmds;
-
-    ncmds_full = 2 * cmds_chunk_sz;
-    cmds = AllocT( Command, ncmds_full );
-    
+    DeclTable( Command, cmds );
     while (true)
     {
         char* line;
         Command* cmd;
-        if (ncmds + 1 > ncmds_full)
-        {
-            ncmds_full += cmds_chunk_sz;
-            ResizeT( Command, cmds, ncmds_full );
-        }
-        cmd = &cmds[ncmds];
-        init_Command (cmd);
         line = parse_line (in);
         if (line[0] == '\0')
         {
             free (line);
             break;
         }
-        ncmds += 1;
+        GrowTable( Command, cmds, 1 );
+        cmd = &cmds.s[cmds.sz - 1];
+        init_Command (cmd);
         cmd->line = line;
 
         if (line[0] == '$' && line[1] == '(' && line[2] == 'H'
@@ -382,11 +360,10 @@ parse_file(FileB* in, uint* n)
         else
         {
             cmd->kind = RunCommand;
-            cmd->args = sep_line (&cmd->nargs, cmd->line);
+            sep_line (&cmd->args, cmd->line);
         }
     }
-
-    *n = ncmds;
+    PackTable( Command, cmds );
     return cmds;
 }
 
@@ -466,50 +443,24 @@ static void
 add_ios_Command (Command* cmd, int in, int out)
 {
     if (in >= 0)
-    {
-        if (cmd->nis == 0)
-            cmd->is = AllocT( int, 1 );
-        else
-            ResizeT( int, cmd->is, cmd->nis+1 );
-        cmd->is[cmd->nis] = in;
-        ++ cmd->nis;
-    }
+        PushTable( int, cmd->is, in );
 
     if (out >= 0)
-    {
-        if (cmd->nos == 0)
-            cmd->os = AllocT( int, 1 );
-        else
-            ResizeT( int, cmd->os, cmd->nos+1 );
-        cmd->os[cmd->nos] = out;
-        ++ cmd->nos;
-    }
+        PushTable( int, cmd->os, out );
 }
 
 static void
 add_iarg_Command (Command* cmd, int in)
 {
     add_ios_Command (cmd, in, -1);
-    if (cmd->niargs == 0)
-        cmd->iargs = AllocT( int, 1 );
-    else
-        ResizeT( int, cmd->iargs, cmd->niargs+1 );
-    cmd->iargs[cmd->niargs] = in;
-    ++ cmd->niargs;
+    PushTable( int, cmd->iargs, in );
 }
 
 static char*
 add_extra_arg_Command (Command* cmd, const char* s)
 {
-    uint i;
-    i = cmd->nextra_args;
-    if (i == 0)
-        cmd->extra_args = AllocT( char*, 1 );
-    else
-        ResizeT( char*, cmd->extra_args, i+1 );
-    cmd->extra_args[i] = strdup (s);
-    ++ cmd->nextra_args;
-    return cmd->extra_args[i];
+    PushTable( CString, cmd->extra_args, strdup (s) );
+    return cmd->extra_args.s[cmd->extra_args.sz - 1];
 }
 
 static char*
@@ -524,16 +475,9 @@ static char*
 add_tmp_file_Command (Command* cmd, uint x, const char* tmpdir)
 {
     char buf[1024];
-    uint i;
     sprintf (buf, "%s/%u", tmpdir, x);
-    i = cmd->ntmp_files;
-    if (i == 0)
-        cmd->tmp_files = AllocT( char*, 1 );
-    else
-        ResizeT( char*, cmd->tmp_files, i+1 );
-    cmd->tmp_files[i] = strdup (buf);
-    ++ cmd->ntmp_files;
-    return cmd->tmp_files[i];
+    PushTable( CString, cmd->tmp_files, strdup (buf) );
+    return cmd->tmp_files.s[cmd->tmp_files.sz - 1];
 }
 
     /** Write a file /name/ given contents /doc/.**/
@@ -546,7 +490,7 @@ write_here_doc_file (const char* name, const char* doc)
     out = fopen (name, "wb");
     if (!out)
     {
-        fprintf (stderr, "Cannot open file for writing!:%s\n",
+        fprintf (ErrOut, "Cannot open file for writing!:%s\n",
                  name);
         return;
     }
@@ -555,25 +499,19 @@ write_here_doc_file (const char* name, const char* doc)
     fclose (out);
 }
 
-static SymVal*
-setup_commands (uint* ret_nsyms, uint ncmds, Command* cmds,
+static Table(SymVal)
+setup_commands (Table(Command)* cmds,
                 const char* tmpdir)
 {
     uint i;
     uint ntmp_files = 0;
-    const uint syms_chunk_sz = 1;
-    uint nsyms_full;
-    uint nsyms = 0;
-    SymVal* syms;
+    DeclTable( SymVal, syms );
 
-    nsyms_full = 2 * syms_chunk_sz;
-    syms = AllocT( SymVal, nsyms_full );
-
-    for (i = 0; i < ncmds; ++i)
+    for (i = 0; i < cmds->sz; ++i)
     {
         uint arg_q = 0, arg_r = 0;
         Command* cmd;
-        cmd = &cmds[i];
+        cmd = &cmds->s[i];
 
             /* The command defines a HERE document.*/
         if (cmd->kind == HereDocCommand)
@@ -582,40 +520,29 @@ setup_commands (uint* ret_nsyms, uint ncmds, Command* cmds,
             SymValKind kind;
 
                 /* The loop below should not run.*/
-            assert (cmd->nargs == 0 && "Invariant.");
+            assert (cmd->args.sz == 0 && "Invariant.");
 
-            if (nsyms + 1 > nsyms_full)
-            {
-                nsyms_full += syms_chunk_sz;
-                ResizeT( SymVal, syms, nsyms_full );
-            }
             kind = parse_sym (cmd->line);
             assert (kind == HereDocVal);
-            sym = add_SymVal (&nsyms, syms, cmd->line);
+            sym = add_SymVal (&syms, cmd->line);
             sym->kind = kind;
             sym->as.here_doc = cmd->doc;
         }
 
-        for (arg_r = 0; arg_r < cmd->nargs; ++ arg_r)
+        for (arg_r = 0; arg_r < cmd->args.sz; ++ arg_r)
         {
             SymVal* sym;
             SymValKind kind;
 
-            if (nsyms + 1 > nsyms_full)
-            {
-                nsyms_full += syms_chunk_sz;
-                ResizeT( SymVal, syms, nsyms_full );
-            }
-
-            kind = parse_sym (cmd->args[arg_r]);
+            kind = parse_sym (cmd->args.s[arg_r]);
 
             if (kind < NSymValKinds)
             {
-                sym = add_SymVal (&nsyms, syms, cmd->args[arg_r]);
+                sym = add_SymVal (&syms, cmd->args.s[arg_r]);
                 if (kind == HereDocVal)
                 {
                     assert (sym->kind == HereDocVal);
-                    cmd->args[arg_q] = sym->as.here_doc;
+                    cmd->args.s[arg_q] = sym->as.here_doc;
                     ++ arg_q;
                 }
                 if (kind == IDescVal || kind == IDescFileVal ||
@@ -641,7 +568,7 @@ setup_commands (uint* ret_nsyms, uint ncmds, Command* cmds,
                     else if (kind == IDescArgVal)
                     {
                         add_iarg_Command (cmd, fd);
-                        cmd->args[arg_q] = 0;
+                        cmd->args.s[arg_q] = 0;
                         ++ arg_q;
                     }
                     else if (kind == IDescFileVal)
@@ -649,14 +576,14 @@ setup_commands (uint* ret_nsyms, uint ncmds, Command* cmds,
                         add_ios_Command (cmd, fd, -1);
                         if (arg_q > 0)
                         {
-                            cmd->args[arg_q] = add_fd_arg_Command (cmd, fd);
+                            cmd->args.s[arg_q] = add_fd_arg_Command (cmd, fd);
                         }
                         else
                         {
-                            cmd->args[0] = add_tmp_file_Command (cmd, ntmp_files, tmpdir);
+                            cmd->args.s[0] = add_tmp_file_Command (cmd, ntmp_files, tmpdir);
                             ++ ntmp_files;
                             if (sym->arg_idx < Max_uint)
-                                cmds[sym->cmd_idx].args[sym->arg_idx] = cmd->args[0];
+                                cmds->s[sym->cmd_idx].args.s[sym->arg_idx] = cmd->args.s[0];
                             cmd->exec_fd = fd;
                         }
                         ++ arg_q;
@@ -664,11 +591,11 @@ setup_commands (uint* ret_nsyms, uint ncmds, Command* cmds,
                     else
                     {
                         assert (kind == IHereDocFileVal);
-                        cmd->args[arg_q] =
+                        cmd->args.s[arg_q] =
                             add_tmp_file_Command (cmd, ntmp_files, tmpdir);
                         ++ ntmp_files;
                             /* Write the temp file now.*/
-                        write_here_doc_file (cmd->args[arg_q],
+                        write_here_doc_file (cmd->args.s[arg_q],
                                              sym->as.here_doc);
                         if (arg_q == 0)
                             cmd->exec_doc = sym->as.here_doc;
@@ -691,16 +618,16 @@ setup_commands (uint* ret_nsyms, uint ncmds, Command* cmds,
                         add_ios_Command (cmd, fd, -1);
                         if (sym->arg_idx > 0)
                         {
-                            cmd->args[arg_q] = add_fd_arg_Command (cmd, fd);
+                            cmd->args.s[arg_q] = add_fd_arg_Command (cmd, fd);
                         }
                         else
                         {
                             char* s;
-                            s = add_tmp_file_Command (&cmds[sym->cmd_idx],
+                            s = add_tmp_file_Command (&cmds->s[sym->cmd_idx],
                                                       ntmp_files, tmpdir);
                             ++ ntmp_files;
-                            cmds[sym->cmd_idx].args[0] = s;
-                            cmd->args[arg_q] = s;
+                            cmds->s[sym->cmd_idx].args.s[0] = s;
+                            cmd->args.s[arg_q] = s;
                         }
                         ++ arg_q;
                     }
@@ -726,7 +653,7 @@ setup_commands (uint* ret_nsyms, uint ncmds, Command* cmds,
                     else
                     {
                         add_ios_Command (cmd, -1, fd[1]);
-                        cmd->args[arg_q] = add_fd_arg_Command (cmd, fd[1]);
+                        cmd->args.s[arg_q] = add_fd_arg_Command (cmd, fd[1]);
                         sym->arg_idx = arg_q;
                         ++ arg_q;
                     }
@@ -751,7 +678,7 @@ setup_commands (uint* ret_nsyms, uint ncmds, Command* cmds,
                     else
                     {
                         add_ios_Command (cmd, -1, fd[0]);
-                        cmd->args[arg_q] = add_fd_arg_Command (cmd, fd[0]);
+                        cmd->args.s[arg_q] = add_fd_arg_Command (cmd, fd[0]);
                         if (arg_q == 0)
                         {
                             sym->arg_idx = 0;
@@ -763,29 +690,26 @@ setup_commands (uint* ret_nsyms, uint ncmds, Command* cmds,
             }
             else
             {
-                cmd->args[arg_q] = cmd->args[arg_r];
+                cmd->args.s[arg_q] = cmd->args.s[arg_r];
                 ++ arg_q;
             }
         }
 
-        if (cmd->nargs > 0)
-        {
-            cmd->nargs = arg_q;
-            cmd->args[cmd->nargs] = 0;
-        }
+        if (cmd->args.sz > 0)
+            cmd->args.sz = arg_q;
     }
-    *ret_nsyms = nsyms;
 
-    UFor( i, nsyms )
+    UFor( i, syms.sz )
     {
-        if (syms[i].kind == ODescVal)
+        if (syms.s[i].kind == ODescVal)
         {
             fprintf (ErrOut, "%s - Dangling output stream! Symbol:%s\n",
-                     ExeName, syms[i].name);
-            assert (syms[i].kind != ODescVal && "A dangling output stream!");
+                     ExeName, syms.s[i].name);
+            assert (syms.s[i].kind != ODescVal && "A dangling output stream!");
         }
     }
 
+    PackTable( SymVal, syms );
     return syms;
 }
 
@@ -796,11 +720,11 @@ output_Command (FILE* out, const Command* cmd)
     if (cmd->kind != RunCommand)  return;
 
     fputs ("COMMAND: ", out);
-    UFor( i, cmd->nargs )
+    UFor( i, cmd->args.sz )
     {
         if (i > 0)  fputc (' ', out);
-        if (cmd->args[i])
-            fputs (cmd->args[i], out);
+        if (cmd->args.s[i])
+            fputs (cmd->args.s[i], out);
         else
             fputs ("NULL", out);
     }
@@ -838,31 +762,26 @@ static char*
 readin_fd (int in)
 {
     const uint n_per_chunk = 8192;
-    uint nfull;
-    uint n = 0;
-    char* buf;
-
-    nfull = n_per_chunk;
-    buf = AllocT( char, nfull );
+    DeclTable( char, buf );
+    uint off = 0;
 
     while (1)
     {
-        ssize_t nread;
-        if (n + n_per_chunk > nfull)
-        {
-            nfull += n_per_chunk;
-            ResizeT( char, buf, nfull );
-        }
-        nread = read (in, &buf[n], n_per_chunk * sizeof(char));
-        assert (nread >= 0 && "Problem reading file descriptor!");
-        if (nread == 0)  break;
-        n += nread / sizeof(char);
+        ssize_t n;
+        n = off + n_per_chunk + 1;
+        if (buf.sz < n)
+            GrowTable( char, buf, n - buf.sz );
+
+        n = read (in, &buf.s[off], n_per_chunk * sizeof(char));
+        assert (n >= 0 && "Problem reading file descriptor!");
+        if (n == 0)  break;
+        off += n;
     }
     close (in);
 
-    ResizeT( char, buf, n+1 );
-    buf[n] = '\0';
-    return buf;
+    MPopTable( char, buf, buf.sz - off + 1 );
+    buf.s[off] = '\0';
+    return buf.s;
 }
 
     /** Fill in all NULL arguments, they should be
@@ -873,16 +792,16 @@ fill_dependent_args (Command* cmd)
 {
     uint i, j;
     j = 0;
-    UFor( i, cmd->nargs )
+    UFor( i, cmd->args.sz )
     {
-        if (!cmd->args[i])
+        if (!cmd->args.s[i])
         {
-            assert (j < cmd->niargs);
-            cmd->args[i] = readin_fd (cmd->iargs[j]);
+            assert (j < cmd->iargs.sz);
+            cmd->args.s[i] = readin_fd (cmd->iargs.s[j]);
             ++ j;
         }
     }
-    assert (j == cmd->niargs);
+    assert (j == cmd->iargs.sz);
 }
 
     /** Add the utility bin directory to the PATH environment variable.**/
@@ -896,7 +815,7 @@ add_util_path_env ()
     static const char path[] = UtilBin;
 #undef UtilBin
     char* v;
-    char* s;
+    DeclTable( char, dec );
 
     v = getenv (k);
     if (!v)
@@ -905,10 +824,10 @@ add_util_path_env ()
         return;
     }
 
-    s = AllocT( char, strlen (path) + 1 + strlen (v) + 1 );
-    sprintf (s, "%s:%s", path, v);
-    setenv (k, s, 1);
-    free (s);
+    GrowTable( char, dec, strlen (path) + 1 + strlen (v) + 1 );
+    sprintf (dec.s, "%s:%s", path, v);
+    setenv (k, dec.s, 1);
+    LoseTable( char, dec );
 }
 
 static void
@@ -923,10 +842,8 @@ show_usage_and_exit ()
 int main (int argc, char** argv)
 {
     FileB in;
-    uint ncmds = 0;
-    Command* cmds;
-    uint nsyms = 0;
-    SymVal* syms;
+    Table( Command ) cmds;
+    Table( SymVal ) syms;
     uint i;
     int ret;
     int argi = 0;
@@ -984,21 +901,21 @@ int main (int argc, char** argv)
         in.f = stdin;
     }
 
-    cmds = parse_file (&in, &ncmds);
+    cmds = parse_file (&in);
     lose_FileB (&in);
 
-    syms = setup_commands (&nsyms, ncmds, cmds, tmpdir);
+    syms = setup_commands (&cmds, tmpdir);
 
     if (false)
-        UFor( i, ncmds )
-            output_Command (stderr, &cmds[i]);
+        UFor( i, cmds.sz )
+            output_Command (ErrOut, &cmds.s[i]);
 
-    for (i = 0; i < ncmds; ++i)
+    for (i = 0; i < cmds.sz; ++i)
     {
         uint j;
         Command* cmd;
 
-        cmd = &cmds[i];
+        cmd = &cmds.s[i];
 
         if (cmd->kind != RunCommand)  continue;
 
@@ -1010,51 +927,52 @@ int main (int argc, char** argv)
         }
         assert (!(cmd->pid < 0));
 
-        UFor( j, ncmds )
+        UFor( j, cmds.sz )
             if (j != i)
-                close_Command (&cmds[j]);
+                close_Command (&cmds.s[j]);
 
         if (cmd->stdis >= 0)  dup2 (cmd->stdis, 0);
         if (cmd->stdos >= 0)  dup2 (cmd->stdos, 1);
 
         if (cmd->exec_fd >= 0)
         {
-            pipe_to_file (cmd->exec_fd, cmd->args[0]);
+            pipe_to_file (cmd->exec_fd, cmd->args.s[0]);
             cmd->exec_fd = -1;
-            chmod (cmd->args[0], S_IRUSR | S_IWUSR | S_IXUSR);
+            chmod (cmd->args.s[0], S_IRUSR | S_IWUSR | S_IXUSR);
         }
         if (cmd->exec_doc)
         {
             cmd->exec_doc = 0;
-            chmod (cmd->args[0], S_IRUSR | S_IWUSR | S_IXUSR);
+            chmod (cmd->args.s[0], S_IRUSR | S_IWUSR | S_IXUSR);
         }
 
         fill_dependent_args (cmd);
 
-        execvp (cmd->args[0], cmd->args);
+        PushTable( CString, cmd->args, 0 );
+        execvp (cmd->args.s[0], cmd->args.s);
         ret = errno;
 
-        fprintf (stderr, "%s - Error executing:%s\n", ExeName, cmd->args[0]);
-        fprintf (stderr, "  Reason:%s\n", strerror (ret));
+        fprintf (ErrOut, "%s - Error executing:%s\n", ExeName, cmd->args.s[0]);
+        fprintf (ErrOut, "  Reason:%s\n", strerror (ret));
         assert (0);
         exit (1);
     }
 
-    UFor( i, nsyms )
-        cleanup_SymVal (&syms[i]);
+    UFor( i, syms.sz )
+        cleanup_SymVal (&syms.s[i]);
 
-    UFor( i, ncmds )
+    UFor( i, cmds.sz )
     {
-        if (cmds[i].kind == RunCommand)
-            ret = waitpid (cmds[i].pid, 0, 0);
-        lose_Command (&cmds[i]);
+        if (cmds.s[i].kind == RunCommand)
+            ret = waitpid (cmds.s[i].pid, 0, 0);
+        lose_Command (&cmds.s[i]);
     }
-    free (cmds);
-    free (syms);
+    LoseTable( Command, cmds );
+    LoseTable( SymVal, syms );
 
     ret = rmdir (tmpdir);
     if (ret != 0)
-        fprintf (stderr, "Temp directory not removed: %s\n", tmpdir);
+        fprintf (ErrOut, "Temp directory not removed: %s\n", tmpdir);
 
     return 0;
 }
