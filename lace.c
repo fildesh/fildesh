@@ -769,7 +769,7 @@ readin_fd (int in)
     {
         ssize_t n;
         n = off + n_per_chunk + 1;
-        if (buf.sz < n)
+        if (buf.sz < (size_t) n)
             GrowTable( char, buf, n - buf.sz );
 
         n = read (in, &buf.s[off], n_per_chunk * sizeof(char));
