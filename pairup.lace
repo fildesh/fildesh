@@ -7,19 +7,16 @@
 # not vice-versa).
 
 # To see it in action, run
-#   ./pair-up.lace < pairs
+#   ./pair-up.lace
+# Specify the following as HERE docs in labconf.lace:
+#   names_file
+#   pairs_file
+#   allnames_file
+#   wrong_section_file
 
-$(H name-file)
-names
-$(H name-file)
+$(<< labconf.lace)
 
-$(H allnames-file)
-allnames
-$(H allnames-file)
-
-$(H wrong-section-file)
-wrong-section
-$(H wrong-section-file)
+ $(O a) cat $(H pairs_file)
 
 # Break the pairs file into a useful format of lines:
 #   tag name
@@ -28,11 +25,11 @@ $(H wrong-section-file)
 #   1 - Worked with a partner.
 #   2 - Worked as a partner (did not submit on this person's computer).
 # and /name/ is the student's real name (as they typed during submit).
-$(H split-script)
+$(H split_script)
 s/^ *\(.*[^ ]\) *worked with *\(.*[^ ]\) *(.*$/1\t\1\n2\t\2/
 s/^ *\(.*[^ ]\) *worked alone.*$/0\t\1/
-$(H split-script)
- $(O a) sed -f $(HF split-script)
+$(H split_script)
+$(XO a) sed -f $(HF split_script)
 
 # Split /tag/ and /name/ columns as described above.
 # They will be pasted back together later.
@@ -40,11 +37,11 @@ $(XO a) tee $(OF tags)
 $(XO tags) cut -f1
 $(XO a) cut -f2
 
- $(O name-table) cat $(H allnames-file)
+ $(O name_table) cat $(H allnames_file)
 # Reorder names to "First Last" instead of "Last, First".
-$(XO name-table) sed -e 's/\t\(.*\), \(.*\)$/\t\2 \1/'
+$(XO name_table) sed -e 's/\t\(.*\), \(.*\)$/\t\2 \1/'
 # Fuzzy match for each student in the pairs file.
-$(XO a) best-match $(XF name-table)
+$(XO a) best-match $(XF name_table)
 # Only want the username of each match.
 $(XO a) cut -f1
 
@@ -56,7 +53,7 @@ $(XO a) paste $(XF tags) -
 # so the Partner #1 students are one line before their
 # corresponding Partner #2.
 # Add the name of Partner #1 to the end of the Partner #2 line.
-$(H pair-up)
+$(H pair_up)
 BEGIN { FS = "\t"; }
 
 {
@@ -67,14 +64,12 @@ BEGIN { FS = "\t"; }
     else            partner = "";
     printf "%s\t* %-12s\n", username, partner;
 }
-$(H pair-up)
-$(XO a) awk $(H pair-up)
+$(H pair_up)
+$(XO a) awk -- $(H pair_up)
 
 # Add the student's full name to the end of the line.
 # This also introduces students who did not attend lab as lines without '*'.
-$(XO a) ujoin $(H name-file) - -l -p ' ' -nomatch $(H wrong-section-file)
-
-
+$(XO a) ujoin $(H names_file) - -l -p ' ' -nomatch $(H wrong_section_file)
 
 # Re-order and print columns.
 $(XO a) sed -e 's/\(.*\)\t\(.*\)\t\(.*\)/\2\t\1\t\3/'

@@ -2,7 +2,8 @@
 
 # Usage:
 #   cd /pathto/homework/section
-#   printhw.lace < /pathto/ordered/namesfile
+#   printhw.lace
+# Specify names_file and printer as HERE docs in labconf.lace.
 # Printing is disabled for safe testing, search for "enscript" to enable.
 
 # This code prints students' program outputs and java source codes without
@@ -17,16 +18,17 @@
 #   D.<username>/Problem<X>.java
 #              |/output
 
+$(<< labconf.lace)
+
 ## Begin sub-lace program.
 $(H perstudent)
+$(<< labconf.lace)
 
-$(H printer)
-laser112ad
-$(H printer)
-
-tee $(OF a) $(O nameline)
-xargs $(X a) -idir find dir -type f -name Problem*.java -or -name output \
-  $(O to-tmp)
+ $(O nameline) tee $(OF a)
+$(XO a) cut -f1
+$(XO a) sed 's/\(.*\)/D.\1/'
+$(X a) $(O to_tmp) \
+    xargs -idir find dir -type f -name Problem*.java -or -name output
 
 
 $(H script)
@@ -46,36 +48,39 @@ END {
 }
 $(H script)
 
-awk $(Xv up-a) $(H script) $(O a)
-xargs $(XO a) cat
+$(Xv up_a) $(O a) awk -- $(H script)
+$(XO a) xargs cat
 
-sed $(XO nameline) 's/^D.\(.*\)$/###### $(id -un): \1 ######/'
-cat $(XO a) $(XF nameline) -
+$(XO nameline) sed 's/^\(.*\)\t\(.*\), \(.*\)$/###### \1 - \3 \2 ######/'
+$(XO a) cat $(XF nameline) -
 
 # Swap comments to actually print!
-cat $(X a) -
+$(X a) cat -
 #enscript $(X a) -G -2r -T 4 -Dduplex:true -P $(H printer)
 
 # Keep the rest of the lines in /perstudent/ below other stuff.
-$(H page-break)
+#
+# There is a temporary file created for the page break,
+# it can't be cleaned up too quickly.
+# Ideally, the temp file would be passed down as an argument to xpipe,
+# which would be cleaned up when xpipe finished...
+# but lace scripts don't have a concept of arguments yet.
+$(H page_break)
 
-$(H page-break)
+$(H page_break)
+$(X to_tmp) $(O^ up_a) \
+    xargs -ifile echo $(HF page_break) file
 
-xargs $(X to-tmp) -ifile echo $(HF page-break) file \
-  $(O^ up-a)
 $(H perstudent)
 ## End sub-lace program.
 
 
-ls $(O a)
-grep $(XO a) '^D\.'
+ $(O a) ls
+$(XO a) grep '^D\.'
+$(XO a) grep -o '[^\.]*$'
+$(XO a) ujoin $(H names_file) -
 
-# Get ordering of user ids from standard in.
-awk '{ print NR "\tD." $1; }' $(O ids)
-best-match $(XO a) $(XF ids)
-sort $(XO a) -nu
-cut $(XO a) -f2
-
-#head -n1 $(XO a)
-xpipe $(X a) lace $(HF perstudent)
+#$(X a) cat -
+#$(X a) head -n1
+$(X a) xpipe lace -- $(H perstudent)
 

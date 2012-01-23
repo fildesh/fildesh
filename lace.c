@@ -224,20 +224,43 @@ count_non_ws (const char* s)
 {
     return strcspn (s, WhiteSpaceChars);
 }
+static uint
+trim_trailing_ws (char* s)
+{
+    uint n = strlen (s);
+    while (0 < n && strchr (WhiteSpaceChars, s[n-1]))  --n;
+    s[n] = '\0';
+    return n;
+}
 
     /** HERE document is created by
-     * ${H var_name} Optional identifying stuff.
+     * $(H var_name) Optional identifying stuff.
      * Line 1 in here.
      * Line 2 in here.
      * ...
      * Line n in here.
-     * ${H var_name} Optional identifying stuff.
+     * $(H var_name) Optional identifying stuff.
+     *
+     * OR it could look like:
+     * $(H: var_name) value
      **/
 static char*
 parse_here_doc (FileB* in, const char* term)
 {
     DeclTable( char, delim );
     char* s;
+
+        /* Check for the single-line case.*/
+    if (term[3] == ':')
+    {
+        term = strchr (term, ')');
+        if (!term)  return strdup ("");
+        term = &term[1];
+        term = &term[count_ws (term)];
+        s = strdup (term);
+        trim_trailing_ws (s);
+        return s;
+    }
 
     GrowTable( char, delim, 1 + strlen(term) + 1 );
     delim.s[0] = '\n';
@@ -246,6 +269,23 @@ parse_here_doc (FileB* in, const char* term)
     s = getlined_FileB (in, delim.s);
     LoseTable( char, delim );
     return strdup (s);
+}
+
+static void
+inject_include (FileB* in, char* name)
+{
+    FileB src;
+
+    name = &name[count_ws (name)];
+    name[strcspn (name, ")")] = '\0';
+
+    init_FileB( &src );
+    src.f = fopen (name, "rb");
+    if (!src.f)
+        fprintf (ErrOut, "%s - Failed to include file:%s\n",
+                 ExeName, name);
+
+    inject_FileB (in, &src, "\n");
 }
 
 static char*
@@ -264,9 +304,7 @@ parse_line (FileB* in)
         s = &s[count_ws (s)];
         if (s[0] == '#' || s[0] == '\0')  continue;
 
-        n = strlen (s);
-
-        while (strchr (WhiteSpaceChars, s[n-1]))  --n;
+        n = trim_trailing_ws (s);
 
         multiline = s[n-1] == '\\';
         if (multiline)  --n;
@@ -333,7 +371,7 @@ sep_line (Table(CString)* args, char* s)
 
 
 static Table(Command)
-parse_file(FileB* in)
+parse_file (FileB* in)
 {
     DeclTable( Command, cmds );
     while (true)
@@ -351,11 +389,19 @@ parse_file(FileB* in)
         init_Command (cmd);
         cmd->line = line;
 
-        if (line[0] == '$' && line[1] == '(' && line[2] == 'H'
-            && line[3] != 'F')
+        if (line[0] == '$' && line[1] == '(' &&
+            line[2] == 'H' && line[3] != 'F')
         {
             cmd->kind = HereDocCommand;
             cmd->doc = parse_here_doc (in, line);
+        }
+        else if (line[0] == '$' && line[1] == '(' &&
+                 line[2] == '<' && line[3] == '<')
+        {
+            inject_include (in, &line[4]);
+                /* We don't add a command, just add more file content!*/
+            lose_Command (&cmds.s[cmds.sz-1]);
+            MPopTable( Command, cmds, 1 );
         }
         else
         {

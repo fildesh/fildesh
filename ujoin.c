@@ -238,6 +238,16 @@ int main (int argc, char** argv)
         {
             show_usage_and_exit ();
         }
+        else if (0 == strcmp (arg, "-o"))
+        {
+            if (argi >= argc)
+            {
+                fprintf (ErrOut, "%s - Output (-o) needs an argument.\n",
+                         ExeName);
+                exit (1);
+            }
+            out = open_file_arg (argv[argi++], true);
+        }
         else if (0 == strcmp (arg, "-x"))
         {
             keep_join_field = false;
@@ -344,6 +354,7 @@ int main (int argc, char** argv)
         }
         lose_LineJoin (join);
     }
+    fclose (out);
 
     LoseTable( LineJoin, table );
     return 0;

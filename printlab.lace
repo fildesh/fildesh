@@ -1,0 +1,27 @@
+#!/bin/env lace
+
+# Run this from ~/cs1121.grading/Lab2/sec3/ or w/e is appropriate.
+# The users' files will be printed in the specified order.
+# Pipe a file with lines that look like:
+#   * 4 user1        user3      User 3 Real Name            // Problem13.java
+#     0              user5      User 5 Real Name            //
+#   * 5              user1      User 1 Real Name            // Problem13.java   There can be
+#   * 5              user6      User 6 Real Name            // Problem13.java   extra stuff here.
+# In this example:
+#   We want to print User 1's Problem13.java for User 3.
+#   User 5 did not turn anything in
+#   Of course we also want to print Problem13.java for User 1.
+#   User 6 worked alone (maybe... doesn't matter).
+
+# Use /printer/ variable in config file.
+$(<< labconf.lace)
+
+ $(O a) grep '^\*'
+$(XO a) sed \
+    -e 's/^. *[[:digit:]]* *//' \
+    -e 's_^\([^ ]*\) .*// *\([^ ]*\)_D.\1/\2\t_'
+$(XO a) cut -f1
+
+$(X a) xargs -n 1 ls
+#$(X a) xargs -n 1 enscript -G -T 4 -2r -P $(H printer)
+

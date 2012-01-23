@@ -1,0 +1,8 @@
+#!/bin/env lace
+
+$(<< labconf.lace)
+
+ $(O a) printf '%s\n' $(H section)
+ $(O b) printf './Accept.lab%d' $(H lab)
+$(X a) godo /classes/cs1121/gbin $(XA b)
+

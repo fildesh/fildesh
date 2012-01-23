@@ -39,6 +39,8 @@ char*
 getline_FileB (FileB* in);
 char*
 getlined_FileB (FileB* in, const char* delim);
+void
+inject_FileB (FileB* in, FileB* src, const char* delim);
 
 #endif
 

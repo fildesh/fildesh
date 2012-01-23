@@ -1,21 +1,24 @@
 #!/bin/env lace
 
-$(H section)
-1
-$(H section)
-
-$(H grades-file)
-cs1121.master
-$(H grades-file)
+$(H: grade_file) cs1121.master
 
 # Generate this file from
 #   getent passwd
 # on wopr.
-$(H passwd-file)
-passwd
-$(H passwd-file)
+$(H: passwd_file) passwd
 
-$(H names-uids-script)
+# Prompt user.
+printf 'Enter section number (.* is wild) and output file (on separate lines):\n'
+ $(O a) head -n 2
+$(XO a) tr '\n' '\t'
+$(X a) $(O outfile) tee $(OF section)
+$(XO section) cut -f1
+$(XO outfile) cut -f2
+# Trim the streams because cut leaves extra newlines!
+$(XO section) tr --delete '\n'
+$(XO outfile) tr --delete '\n'
+
+$(H names_uids_script)
 BEGIN {
     getline;
     getline n;
@@ -42,20 +45,18 @@ BEGIN {
     line = gensub (r, "\\3\t\\2\t\\1", "", $0);
     print line;
 }
-$(H names-uids-script)
+$(H names_uids_script)
 
- $(O a) awk -- $(H names-uids-script) $(H grades-file)
+ $(O a) awk -- $(H names_uids_script) $(H grade_file)
 
- $(O sec) printf '^%s' $(H section)
+ $(O sec) printf '^%s' $(XA section)
 $(XO a) grep $(XA sec)
 
 $(XO a) cut --complement -f1
 
  $(O arg) printf '--output-delimiter=\t'
- $(O passwd) cut '--delimiter=:' $(XA arg) -f1,3 $(H passwd-file)
+ $(O passwd) cut '--delimiter=:' $(XA arg) -f1,3 $(H passwd_file)
 $(XO passwd) awk -- '{ print $2 "\t" $1 ; }'
 
-$(XO a) ujoin - $(XF passwd) -x -l -p 'NOTHERE'
-
-cat $(XF a)
+$(X a) ujoin - $(XF passwd) -x -l -p 'NOTHERE' -o $(XA outfile)
 

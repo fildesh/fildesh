@@ -220,3 +220,36 @@ getlined_FileB (FileB* in, const char* delim)
     return (off == 0) ? 0 : in->buf.s;
 }
 
+    /** Inject content from a file /src/
+     * at the current read position of file /in/.
+     * This allows a trivial implementation of #include.
+     **/
+    void
+inject_FileB (FileB* in, FileB* src, const char* delim)
+{
+    uint delim_sz = strlen (delim);
+
+    read_FileB (src);
+
+    if (src->buf.sz > 0)
+    {
+        uint sz = in->buf.sz - in->off;
+        GrowTable( char, in->buf, src->buf.sz + delim_sz );
+            /* Make room for injection.*/
+        memmove (&in->buf.s[in->off + src->buf.sz + delim_sz],
+                 &in->buf.s[in->off],
+                 sz * sizeof (char));
+            /* Inject file contents, assume src->buf.sz is strlen!*/
+        memcpy (&in->buf.s[in->off],
+                src->buf.s,
+                src->buf.sz * sizeof (char));
+    }
+        /* Add the delimiter at the end.*/
+    if (delim_sz > 0)
+        memcpy (&in->buf.s[in->off + src->buf.sz],
+                delim,
+                delim_sz * sizeof (char));
+
+    close_FileB (src);
+}
+

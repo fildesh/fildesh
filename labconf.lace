@@ -1,0 +1,9 @@
+
+$(H: section) 1
+$(H: lab) 2
+$(H: names_file) names
+$(H: allnames_file) allnames
+$(H: pairs_file) pairs
+$(H: printer) laser112ad
+$(H: wrong_section_file) wrong-section
+

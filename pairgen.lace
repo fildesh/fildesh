@@ -1,21 +1,26 @@
 #!/bin/env lace
 
-$(H section)
-1
-$(H section)
-$(H lab)
-2
-$(H lab)
+## This generates the pairs file.
+## It also copies labconf.lace to the grading directory,
+## along with some others.
+
+# Need: lab section names_file allnames_file pairs_file
+$(<< labconf.lace)
+
+ $(O home) awk 'BEGIN { printf "%s", ENVIRON["HOME"]; }'
+ $(O dir) printf '%s/cs1121.grading/Lab%d/sec%d' \
+    $(XA home) $(H lab) $(H section)
+
+$(XO dir) tee $(OF dst_dir)
+# Copy labconf.lace to the grading directory.
+cp -f labconf.lace $(H names_file) $(H allnames_file) $(XA dst_dir)
 
  $(O a) printf '%s\n%s\n' $(H section) $(H lab)
 $(XO a) godo /classes/cs1121/grades ./pairs.pl
-
 $(XO a) sed '1s/^.*? *//'
 
- $(O home) awk 'BEGIN { printf "%s", ENVIRON["HOME"]; }'
- $(O f) printf '%s/cs1121.grading/Lab%d/sec%d/pairs' \
-    $(XA home) $(H lab) $(H section)
+ $(O f) printf '%s/%s' $(XA dir) $(H pairs_file)
+# Write the pairs file.
 $(XO a) tee $(XA f)
-
-cat $(XF a)
+$(X a) void
 
