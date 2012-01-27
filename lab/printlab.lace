@@ -22,6 +22,7 @@ $(XO a) sed \
     -e 's_^\([^ ]*\) .*// *\([^ ]*\)_D.\1/\2\t_'
 $(XO a) cut -f1
 
+# Swap the following comments to enable printing!
 $(X a) xargs -n 1 ls
 #$(X a) xargs -n 1 enscript -G -T 4 -2r -P $(H printer)
 
