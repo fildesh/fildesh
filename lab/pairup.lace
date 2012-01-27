@@ -16,6 +16,9 @@
 
 $(<< labconf.lace)
 
+# Output file to verify matches are good.
+$(H: pairup_matches_file) pairup-matches
+
  $(O a) cat $(H pairs_file)
 
 # Break the pairs file into a useful format of lines:
@@ -37,11 +40,20 @@ $(XO a) tee $(OF tags)
 $(XO tags) cut -f1
 $(XO a) cut -f2
 
+# Use this later.
+$(XO a) tee $(OF dupt_keys)
+
  $(O name_table) cat $(H allnames_file)
 # Reorder names to "First Last" instead of "Last, First".
 $(XO name_table) sed -e 's/\t\(.*\), \(.*\)$/\t\2 \1/'
 # Fuzzy match for each student in the pairs file.
-$(XO a) best-match $(XF name_table)
+$(XO a) best-match $(XF name_table) -
+
+$(XO a) tee $(OF dupt_vals)
+ $(O dupt) paste $(XF dupt_keys) $(XF dupt_vals)
+$(XO dupt) tee $(H pairup_matches_file)
+$(X dupt) void
+
 # Only want the username of each match.
 $(XO a) cut -f1
 
@@ -69,7 +81,12 @@ $(XO a) awk -- $(H pair_up)
 
 # Add the student's full name to the end of the line.
 # This also introduces students who did not attend lab as lines without '*'.
-$(XO a) ujoin $(H names_file) - -l -p ' ' -nomatch $(H wrong_section_file)
+$(XO a) ujoin $(H names_file) - -l -p ' ' -nomatch $(OF wrong_section)
+
+# Record who is in the wrong section.
+$(XO wrong_section) cut -f1
+$(XO wrong_section) tee $(H wrong_section_file)
+$(X wrong_section) void
 
 # Re-order and print columns.
 $(XO a) sed -e 's/\(.*\)\t\(.*\)\t\(.*\)/\2\t\1\t\3/'

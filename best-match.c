@@ -7,6 +7,49 @@
 #include <stdio.h>
 #include <string.h>
 
+static const char* ExeName = 0;
+#define ErrOut stderr
+
+static void
+show_usage_and_exit ()
+{
+    const char* s;
+    s = "Usage: %s TABLE QUERIES [OPTION]*\n";
+    fprintf (ErrOut, s, ExeName);
+    s = "    TABLE is a file used for lookup.\n";
+    fputs (s, ErrOut);
+    s = "    QUERIES is a file, each line prompts an output of the closest match from TABLE.\n";
+    fputs (s, ErrOut);
+    exit (1);
+}
+
+    /** Open a file for reading or writing.
+     * Exit with an error status if this is not possible.
+     **/
+static FILE*
+open_file_arg (const char* arg, bool writing)
+{
+    FILE* f;
+    if (writing)
+    {
+        if (0 == strcmp (arg, "-"))  f = stdout;
+        else                         f = fopen (arg, "wb");
+    }
+    else
+    {
+        if (0 == strcmp (arg, "-"))  f = stdin;
+        else                         f = fopen (arg, "rb");
+    }
+    if (!f)
+    {
+        fprintf (ErrOut, "%s - Cannot open file for %s:%s\n",
+                 ExeName,
+                 writing ? "writing" : "reading",
+                 arg);
+        exit (1);
+    }
+    return f;
+}
 
 static char**
 split_lines (char* buf, uint* ret_max_len)
@@ -106,64 +149,64 @@ matching_line (uint* a, uint width, const char* s, char* const* lines)
 int main (int argc, char** argv)
 {
     uint* lcs_array;
-    FILE* in;
+    FileB lookup_in;
+    FileB stream_in;
     FILE* out;
     char* buf;
+    char* s;
     char** lines;
     uint width;
-    int arg_offset = 1;
+    int argi = 1;
 
+    ExeName = argv[0];
 
-    if (argc <= arg_offset)
-    {
-        fprintf (stderr, "%s: Require a file name.\n", argv[0]);
-        return 1;
-    }
+    init_FileB (&lookup_in);
+    init_FileB (&stream_in);
 
-    in = fopen (argv[arg_offset], "rb");
-    if (!in)
-    {
-        fprintf (stderr, "%s: Cannot open table file: %s\n",
-                 argv[0], argv[arg_offset]);
-        return 1;
-    }
-    ++arg_offset;
+    if (argi >= argc)
+        show_usage_and_exit ();
 
-    buf = read_FILE (in);
+    lookup_in.f = open_file_arg (argv[argi++], false);
+
+    if (argi >= argc)
+        show_usage_and_exit ();
+
+    buf = read_FileB (&lookup_in);
     lines = split_lines (buf, &width);
     lcs_array = (uint*) malloc (width * sizeof (uint));
 
-    in = stdin;
-    if (argc > arg_offset)
+    stream_in.f = open_file_arg (argv[argi++], false);
+
+    while (argi < argc)
     {
-        in = fopen (argv[arg_offset], "rb");
-        if (!in)
+        const char* arg = argv[argi];
+        ++ argi;
+        if (0 == strcmp (arg, "-h"))
         {
-            fprintf (stderr, "%s: Cannot open query file: %s\n",
-                     argv[0], argv[arg_offset]);
-            return 1;
+            show_usage_and_exit ();
         }
-        ++ arg_offset;
+        else
+        {
+            fprintf (ErrOut, "%s - Unknown argument:%s\n", ExeName, arg);
+            show_usage_and_exit ();
+        }
     }
 
     out = stdout;
-    while (1)
+    for (s = getline_FileB (&stream_in);
+         s;
+         s = getline_FileB (&stream_in))
     {
         uint i;
-        const uint max_len = 8192;
-        char line[8192];
-        char* s;
-
-        s = fgets (line, max_len, in);
-        if (!s)  break;
-        i = matching_line (lcs_array, width, line, lines);
+        i = matching_line (lcs_array, width, s, lines);
         fputs (lines[i], out);
         fputc ('\n', out);
     }
 
     free (lcs_array);
     free (lines);
-    free (buf);
+    lose_FileB (&lookup_in);
+    lose_FileB (&stream_in);
     return 0;
 }
 
