@@ -9,7 +9,7 @@ util_exes = $(addprefix bin/,$(utils))
 
 all: lace $(util_exes)
 
-lace: lace.c futil.o
+lace: lace.c cx/fileb.o cx/bstree.o cx/rbtree.o
 	$(CC) $(CFLAGS) \
 		"-DUtilBin=\"$(PWD)/bin\"" \
 		-o $@ $^
@@ -17,7 +17,7 @@ lace: lace.c futil.o
 %.o: %.c
 	$(CC) -c $(CFLAGS) $^ -o $@
 
-bin/best-match: best-match.c futil.o
+bin/best-match: best-match.c cx/fileb.o
 	$(CC) $(CFLAGS) -o $@ $^
 
 bin/xpipe: xpipe.c
@@ -32,7 +32,7 @@ bin/cat1: cat1.c
 bin/ssh-all: ssh-all.c
 	$(CC) $(CFLAGS) -o $@ $^
 
-bin/ujoin: ujoin.c futil.o cx/bstree.o cx/rbtree.o
+bin/ujoin: ujoin.c cx/fileb.o cx/bstree.o cx/rbtree.o
 	$(CC) $(CFLAGS) -o $@ $^
 
 bin/godo: godo.c

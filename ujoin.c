@@ -1,6 +1,6 @@
 
-#include "futil.h"
 #include "cx/assoc.h"
+#include "cx/fileb.h"
 
 #include <assert.h>
 #include <stdlib.h>
@@ -12,7 +12,7 @@ static const char* ExeName = 0;
 typedef struct LineJoin LineJoin;
 struct LineJoin
 {
-    DeclAssocNodeField( LineJoin );
+    DeclAssocNodeField( LineJoin, LineJoin );
     char* field;
     char* lookup_line;  /* From small file.*/
     char* stream_line;  /* From large file.*/
@@ -27,7 +27,7 @@ swapped_LineJoin (const LineJoin* lhs, const LineJoin* rhs)
     return ((ret < 0) ? Nil : ((ret > 0) ? Yes : May));
 }
 
-DeclAssocT( LineJoin, swapped_LineJoin );
+DeclAssocT( LineJoin, LineJoin, swapped_LineJoin );
 
     void
 init_LineJoin (LineJoin* join)

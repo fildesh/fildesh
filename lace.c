@@ -1,13 +1,14 @@
 
-/** This is the lace utility
- * as written by Alex Klinkhamer.
- * This code is public domain - no restrictions.
- **/
+    /** This is the lace utility
+     * as written by Alex Klinkhamer.
+     * This code is public domain - no restrictions.
+     **/
 
     /* stdlib.h  mkdtemp() */
 #define _BSD_SOURCE
 
-#include "futil.h"
+#include "cx/assoc.h"
+#include "cx/fileb.h"
 
 #include <assert.h>
 #include <limits.h>
@@ -97,9 +98,17 @@ struct SymVal
         int file_desc;
         char* here_doc;
     } as;
+    DeclAssocNodeField( SymVal, SymVal );
 };
 DeclTableT( SymVal );
 
+static Trit
+swapped_SymVal (const SymVal* lhs, const SymVal* rhs)
+{
+    int ret = strcmp (lhs->name, rhs->name);
+    return ((ret < 0) ? Nil : ((ret > 0) ? Yes : May));
+}
+DeclAssocT( SymVal, SymVal, swapped_SymVal );
 
 static void
 init_SymVal (SymVal* v)
@@ -187,31 +196,20 @@ lose_Command (Command* cmd)
 }
 
 
-    /** Find a string in an array of strings,
-     * return the location of it.
-     * If not found, Max_uint is returned.
-     **/
-static uint
-lookup_SymVal (Table(SymVal)* syms, const char* s)
-{
-    uint i;
-    UFor( i, syms->sz )
-        if (0 == strcmp (syms->s[i].name, s))
-            return i;
-    return Max_uint;
-}
-
 static SymVal*
-add_SymVal (Table(SymVal)* syms, const char* s)
+getf_SymVal (Table(SymVal)* syms, Assoc(SymVal)* assoc, const char* s)
 {
-    uint i;
-    i = lookup_SymVal (syms, s);
-    if (i != Max_uint)  return &syms->s[i];
-    i = syms->sz;
+    SymVal* x;  SymVal* y;
+
     GrowTable( SymVal, *syms, 1 );
-    init_SymVal (&syms->s[i]);
-    syms->s[i].name = s;
-    return &syms->s[i];
+    x = &syms->s[syms->sz-1];
+    init_SymVal (x);
+    x->name = s;
+
+    FixRefsAssoc( SymVal, *assoc, syms->s, syms->sz-1 );
+    y = GetfAssoc( SymVal, *assoc, *x );
+    if (y != x)  MPopTable( SymVal, *syms, 1 );
+    return y;
 }
 
 static uint
@@ -545,13 +543,16 @@ write_here_doc_file (const char* name, const char* doc)
     fclose (out);
 }
 
-static Table(SymVal)
+static void
 setup_commands (Table(Command)* cmds,
                 const char* tmpdir)
 {
     uint i;
     uint ntmp_files = 0;
     DeclTable( SymVal, syms );
+    Assoc( SymVal ) assoc;
+
+    InitAssoc( SymVal, assoc );
 
     for (i = 0; i < cmds->sz; ++i)
     {
@@ -570,7 +571,7 @@ setup_commands (Table(Command)* cmds,
 
             kind = parse_sym (cmd->line);
             assert (kind == HereDocVal);
-            sym = add_SymVal (&syms, cmd->line);
+            sym = getf_SymVal (&syms, &assoc, cmd->line);
             sym->kind = kind;
             sym->as.here_doc = cmd->doc;
         }
@@ -584,7 +585,7 @@ setup_commands (Table(Command)* cmds,
 
             if (kind < NSymValKinds)
             {
-                sym = add_SymVal (&syms, cmd->args.s[arg_r]);
+                sym = getf_SymVal (&syms, &assoc, cmd->args.s[arg_r]);
                 if (kind == HereDocVal)
                 {
                     assert (sym->kind == HereDocVal);
@@ -755,8 +756,9 @@ setup_commands (Table(Command)* cmds,
         }
     }
 
-    PackTable( SymVal, syms );
-    return syms;
+    UFor( i, syms.sz )
+        cleanup_SymVal (&syms.s[i]);
+    LoseTable( SymVal, syms );
 }
 
 static void
@@ -889,7 +891,6 @@ int main (int argc, char** argv)
 {
     FileB in;
     Table( Command ) cmds;
-    Table( SymVal ) syms;
     uint i;
     int ret;
     int argi = 0;
@@ -925,9 +926,10 @@ int main (int argc, char** argv)
         }
         else
         {
-            if (0 == strcmp (arg, "-f") && argi >= argc)
+                /* Optional -f flag.*/
+            if (0 == strcmp (arg, "-f"))
             {
-                show_usage_and_exit ();
+                if (argi >= argc)  show_usage_and_exit ();
                 arg = argv[argi++];
             }
 
@@ -950,7 +952,8 @@ int main (int argc, char** argv)
     cmds = parse_file (&in);
     lose_FileB (&in);
 
-    syms = setup_commands (&cmds, tmpdir);
+    setup_commands (&cmds, tmpdir);
+
 
     if (false)
         UFor( i, cmds.sz )
@@ -1004,9 +1007,6 @@ int main (int argc, char** argv)
         exit (1);
     }
 
-    UFor( i, syms.sz )
-        cleanup_SymVal (&syms.s[i]);
-
     UFor( i, cmds.sz )
     {
         if (cmds.s[i].kind == RunCommand)
@@ -1014,7 +1014,6 @@ int main (int argc, char** argv)
         lose_Command (&cmds.s[i]);
     }
     LoseTable( Command, cmds );
-    LoseTable( SymVal, syms );
 
     ret = rmdir (tmpdir);
     if (ret != 0)

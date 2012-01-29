@@ -1,8 +1,8 @@
 
-#ifndef FUTIL_H_
-#define FUTIL_H_
+#ifndef FileB
+#define FileB FileB
 
-#include "cx/table.h"
+#include "table.h"
 
 #include <stdio.h>
 

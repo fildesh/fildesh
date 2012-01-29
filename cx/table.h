@@ -74,7 +74,7 @@
 } while (0)
 
 #define IndexInTable( T, table, e ) \
-    (((size_t) (e) - (size_t) ((table).s)) / sizeof (T))
+    IndexOf( T, (table).s, e )
 
 #endif
 
