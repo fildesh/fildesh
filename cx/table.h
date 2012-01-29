@@ -1,13 +1,7 @@
 
 #ifndef TABLE_H_
 #define TABLE_H_
-
-typedef int bool;
-#define true 1
-#define false 0
-
-typedef unsigned int uint;
-#define UFor( i, bel )  for (i = 0; i < (bel); ++i)
+#include "def.h"
 
 #define DeclTableT( T ) \
     typedef struct Table_##T Table_##T; \

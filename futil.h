@@ -2,7 +2,7 @@
 #ifndef FUTIL_H_
 #define FUTIL_H_
 
-#include "table.h"
+#include "cx/table.h"
 
 #include <stdio.h>
 
