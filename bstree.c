@@ -56,6 +56,13 @@ root_of_BSTree (BSTree* t)
     return t->sentinel->split[1];
 }
 
+    void
+root_for_BSTree (BSTree* t, BSTNode* x)
+{
+    x->joint = t->sentinel;
+    t->sentinel->split[1] = x;
+}
+
     /**
      * Preorder, postorder, and inorder traversals are supported by
      * values of Nil, Yes, and May for /postorder/ respectively.

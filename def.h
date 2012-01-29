@@ -4,10 +4,12 @@
 #include <stddef.h>
 
 #define CastUp( T, field, p ) \
-    ((T*) ((size_t) p - offsetof( T, field )))
+    ((T*) ((ptrdiff_t) p - offsetof( T, field )))
 
 #define IndexOf( T, a, e ) \
-    (((size_t) (e) - (size_t) (a)) / sizeof (T))
+    (((ptrdiff_t) (e) - (ptrdiff_t) (a)) / sizeof (T))
+
+#define inline __inline
 
 #if 1
 typedef int bool;
