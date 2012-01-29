@@ -32,7 +32,7 @@ bin/cat1: cat1.c
 bin/ssh-all: ssh-all.c
 	$(CC) $(CFLAGS) -o $@ $^
 
-bin/ujoin: ujoin.c futil.o
+bin/ujoin: ujoin.c futil.o cx/bstree.o cx/rbtree.o
 	$(CC) $(CFLAGS) -o $@ $^
 
 bin/godo: godo.c

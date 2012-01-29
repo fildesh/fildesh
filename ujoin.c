@@ -1,5 +1,6 @@
 
 #include "futil.h"
+#include "cx/assoc.h"
 
 #include <assert.h>
 #include <stdlib.h>
@@ -11,12 +12,22 @@ static const char* ExeName = 0;
 typedef struct LineJoin LineJoin;
 struct LineJoin
 {
+    DeclAssocNodeField( LineJoin );
     char* field;
     char* lookup_line;  /* From small file.*/
     char* stream_line;  /* From large file.*/
 };
 
 DeclTableT( LineJoin );
+
+static Trit
+swapped_LineJoin (const LineJoin* lhs, const LineJoin* rhs)
+{
+    int ret = strcmp (lhs->field, rhs->field);
+    return ((ret < 0) ? Nil : ((ret > 0) ? Yes : May));
+}
+
+DeclAssocT( LineJoin, swapped_LineJoin );
 
     void
 init_LineJoin (LineJoin* join)
@@ -119,7 +130,7 @@ setup_lookup_table (FileB* in, const char* delim)
 }
 
 static void
-compare_lines (FileB* in, Table(LineJoin)* table, const char* delim,
+compare_lines (FileB* in, Assoc(LineJoin)* assoc, const char* delim,
                FILE* nomatch_out, FILE* dupmatch_out)
 {
     const uint delim_sz = delim ? strlen (delim) : 0;
@@ -130,10 +141,10 @@ compare_lines (FileB* in, Table(LineJoin)* table, const char* delim,
          line;
          line = getline_FileB (in))
     {
-        uint i;
         char* field = line;
         char* payload;
         char nixed_char = '\0';
+        LineJoin* join = 0;
 
         ++ line_no;
 
@@ -149,11 +160,13 @@ compare_lines (FileB* in, Table(LineJoin)* table, const char* delim,
             payload[0] = '\0';
         }
 
-        for (i = 0; i < table->sz; ++i)
-            if (0 == strcmp (field, table->s[i].field))
-                break;
+        {
+            LineJoin tmp;
+            tmp.field = field;
+            join = GetAssoc( LineJoin, *assoc, tmp );
+        }
 
-        if (i == table->sz)
+        if (!join)
         {
             if (nomatch_out)
             {
@@ -162,7 +175,7 @@ compare_lines (FileB* in, Table(LineJoin)* table, const char* delim,
                 fputc ('\n', nomatch_out);
             }
         }
-        else if (table->s[i].stream_line)
+        else if (join->stream_line)
         {
             if (payload)  payload[0] = nixed_char;
             if (dupmatch_out)
@@ -177,12 +190,10 @@ compare_lines (FileB* in, Table(LineJoin)* table, const char* delim,
         }
         else if (!payload)
         {
-            LineJoin* join = &table->s[i];
             join->stream_line = join->field;
         }
         else
         {
-            LineJoin* join = &table->s[i];
             if (delim)
                 payload = &payload[delim_sz];
             else
@@ -210,6 +221,7 @@ int main (int argc, char** argv)
     int argi = 1;
     uint i;
     Table(LineJoin) table;
+    Assoc(LineJoin) assoc;
 
     ExeName = argv[0];
 
@@ -311,7 +323,10 @@ int main (int argc, char** argv)
     read_FileB (&lookup_in);
     table = setup_lookup_table (&lookup_in, delim);
     lose_FileB (&lookup_in);
-    compare_lines (&stream_in, &table, delim, nomatch_file, dupmatch_file);
+    InitAssoc( LineJoin, assoc );
+    UFor( i, table.sz )
+        SetfAssoc( LineJoin, assoc, table.s[i] );
+    compare_lines (&stream_in, &assoc, delim, nomatch_file, dupmatch_file);
     lose_FileB (&stream_in);
 
     if (!delim)  delim = "\t";
