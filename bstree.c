@@ -120,12 +120,12 @@ insert_BSTree (BSTree* t, BSTNode* x)
 {
     BSTNode* a = t->sentinel;
     BSTNode* y = root_of_BSTree (t);
-    Bit side = 1;
+    Bit side = side_BSTNode (y);
 
     while (y != t->sentinel)
     {
-        a = y;
         side = (t->swapped (x, y) == Yes) ? 1 : 0;
+        a = y;
         y = y->split[side];
     }
 
@@ -133,6 +133,55 @@ insert_BSTree (BSTree* t, BSTNode* x)
     x->joint = a;
     x->split[0] = t->sentinel;
     x->split[1] = t->sentinel;
+}
+
+    /** If a node matching /x/ exists, return that node.
+     * Otherwise, add /x/ to the tree and return it.
+     **/
+    BSTNode*
+ensure_BSTree (BSTree* t, BSTNode* x)
+{
+    BSTNode* a = t->sentinel;
+    BSTNode* y = root_of_BSTree (t);
+    Bit side = side_BSTNode (y);
+
+    while (y != t->sentinel)
+    {
+        switch (t->swapped (x, y))
+        {
+            case Nil:  side = 0;  break;
+            case Yes:  side = 1;  break;
+            case May:  return y;
+        }
+        a = y;
+        y = y->split[side];
+    }
+
+    a->split[side] = x;
+    x->joint = a;
+    x->split[0] = t->sentinel;
+    x->split[1] = t->sentinel;
+    return x;
+}
+
+    /**
+     * Ensure /x/ exists in the tree.
+     * It replaces a matching node if one exists.
+     * The matching node (which was replaced) is returned.
+     * If no matching node was replaced, 0 is returned.
+     **/
+    BSTNode*
+setf_BSTree (BSTree* t, BSTNode* x)
+{
+    BSTNode* y = ensure_BSTree (t, x);
+    if (y == x)  return 0;
+    x->joint = y->joint;
+    x->joint->split[side_BSTNode (y)] = x;
+    x->split[0] = y->split[0];
+    x->split[0]->joint = x;
+    x->split[1] = y->split[1];
+    x->split[1]->joint = x;
+    return y;
 }
 
     /** Remove a given node from the tree.

@@ -37,9 +37,12 @@ traverse_BSTree (BSTree* t, Trit postorder,
                  void (* f) (BSTNode*, void*), void* dat);
 BSTNode*
 find_BSTree (BSTree* t, const BSTNode* x);
-
 void
 insert_BSTree (BSTree* t, BSTNode* x);
+BSTNode*
+ensure_BSTree (BSTree* t, BSTNode* x);
+BSTNode*
+setf_BSTree (BSTree* t, BSTNode* x);
 void
 remove_BSTree (BSTree* t, BSTNode* a);
 

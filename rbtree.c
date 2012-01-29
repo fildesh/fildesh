@@ -101,6 +101,41 @@ insert_RBTree (RBTree* t, RBTNode* x)
     fixup_insert (x, t);
 }
 
+    /** If a node matching /x/ exists, return that node.
+     * Otherwise, add /x/ to the tree and return it.
+     **/
+    RBTNode*
+ensure_RBTree (RBTree* t, RBTNode* x)
+{
+    BSTNode* y = ensure_BSTree (&t->bst, &x->bst);
+    if (y == &x->bst)
+    {
+        x->red = Yes;
+        fixup_insert (x, t);
+    }
+    else
+    {
+        x = CastUp( RBTNode, bst, y );
+    }
+    return x;
+}
+
+    /**
+     * Ensure /x/ exists in the tree.
+     * It replaces a matching node if one exists.
+     * The matching node (which was replaced) is returned.
+     * If no matching node was replaced, 0 is returned.
+     **/
+    RBTNode*
+setf_RBTree (RBTree* t, RBTNode* x)
+{
+    BSTNode* y = setf_BSTree (&t->bst, &x->bst);
+    if (!y)  return 0;
+    x->red = Yes;
+    fixup_insert (x, t);
+    return CastUp( RBTNode, bst, y );
+}
+
 static void
 fixup_remove (RBTNode* y, RBTree* t, Bit side)
 {
