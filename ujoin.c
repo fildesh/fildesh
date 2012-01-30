@@ -18,7 +18,7 @@ struct LineJoin
     char* stream_line;  /* From large file.*/
 };
 
-DeclTableT( LineJoin );
+DeclTableT( LineJoin, LineJoin );
 
 static Trit
 swapped_LineJoin (const LineJoin* lhs, const LineJoin* rhs)

@@ -49,13 +49,14 @@ typedef struct Command Command;
 
 #ifndef DeclTableT_int
 #define DeclTableT_int
-DeclTableT( int );
+DeclTableT( int, int );
 #endif
+
+DeclTableT( iargs, struct { int fd; bool scrap_newline; } );
 
 #ifndef DeclTableT_CString
 #define DeclTableT_CString
-typedef char* CString;
-DeclTableT( CString );
+DeclTableT( CString, char* );
 #endif
 
 struct Command
@@ -80,12 +81,12 @@ struct Command
     const char* exec_doc;
 
         /* Use these input streams to fill corresponding (null) arguments.*/
-    Table( int ) iargs;
+    Table( iargs ) iargs;
 
         /* Use this if it's a HERE document.*/
     char* doc;
 };
-DeclTableT( Command );
+DeclTableT( Command, Command );
 
 struct SymVal
 {
@@ -100,7 +101,7 @@ struct SymVal
     } as;
     DeclAssocNodeField( SymVal, SymVal );
 };
-DeclTableT( SymVal );
+DeclTableT( SymVal, SymVal );
 
 static Trit
 swapped_SymVal (const SymVal* lhs, const SymVal* rhs)
@@ -137,7 +138,7 @@ init_Command (Command* cmd)
     InitTable( int, cmd->is );
     cmd->stdos = -1;
     InitTable( int, cmd->os );
-    InitTable( int, cmd->iargs );
+    InitTable( iargs, cmd->iargs );
 }
 
 static void
@@ -192,7 +193,7 @@ lose_Command (Command* cmd)
     }
     LoseTable( CString, cmd->tmp_files );
 
-    LoseTable( int, cmd->iargs );
+    LoseTable( iargs, cmd->iargs );
 }
 
 
@@ -494,10 +495,12 @@ add_ios_Command (Command* cmd, int in, int out)
 }
 
 static void
-add_iarg_Command (Command* cmd, int in)
+add_iarg_Command (Command* cmd, int in, bool scrap_newline)
 {
     add_ios_Command (cmd, in, -1);
-    PushTable( int, cmd->iargs, in );
+    GrowTable( iargs, cmd->iargs, 1 );
+    cmd->iargs.s[cmd->iargs.sz-1].fd = in;
+    cmd->iargs.s[cmd->iargs.sz-1].scrap_newline = scrap_newline;
 }
 
 static char*
@@ -614,7 +617,7 @@ setup_commands (Table(Command)* cmds,
                     }
                     else if (kind == IDescArgVal)
                     {
-                        add_iarg_Command (cmd, fd);
+                        add_iarg_Command (cmd, fd, true);
                         cmd->args.s[arg_q] = 0;
                         ++ arg_q;
                     }
@@ -851,7 +854,8 @@ fill_dependent_args (Command* cmd)
         if (!cmd->args.s[i])
         {
             assert (j < cmd->iargs.sz);
-            cmd->args.s[i] = readin_fd (cmd->iargs.s[j], true);
+            cmd->args.s[i] = readin_fd (cmd->iargs.s[j].fd,
+                                        cmd->iargs.s[j].scrap_newline);
             ++ j;
         }
     }
