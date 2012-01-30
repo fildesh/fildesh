@@ -807,7 +807,7 @@ pipe_to_file (int in, const char* name)
 
     /** Read everything from the file descriptor /in/.**/
 static char*
-readin_fd (int in)
+readin_fd (int in, bool scrap_newline)
 {
     const uint n_per_chunk = 8192;
     DeclTable( char, buf );
@@ -829,6 +829,12 @@ readin_fd (int in)
 
     MPopTable( char, buf, buf.sz - off + 1 );
     buf.s[off] = '\0';
+    if (scrap_newline && off > 0 && buf.s[off-1] == '\n')
+    {
+        buf.s[--off] = '\0';
+        if (off > 0 && buf.s[off-1] == '\r')
+            buf.s[--off] = '\0';
+    }
     return buf.s;
 }
 
@@ -845,7 +851,7 @@ fill_dependent_args (Command* cmd)
         if (!cmd->args.s[i])
         {
             assert (j < cmd->iargs.sz);
-            cmd->args.s[i] = readin_fd (cmd->iargs.s[j]);
+            cmd->args.s[i] = readin_fd (cmd->iargs.s[j], true);
             ++ j;
         }
     }

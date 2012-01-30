@@ -7,3 +7,8 @@ $(H: pairs_file) pairs
 $(H: printer) laser112ad
 $(H: wrong_section_file) wrong-section
 
+$(H files_to_print)
+Problem1.java
+Problem12.java
+$(H files_to_print)
+

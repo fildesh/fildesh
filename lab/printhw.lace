@@ -3,7 +3,8 @@
 # Usage:
 #   cd /pathto/homework/section
 #   printhw.lace
-# Specify names_file and printer as HERE docs in labconf.lace.
+# Specify files_to_print, names_file, and printer
+# as HERE docs in labconf.lace.
 # Printing is disabled for safe testing, search for "enscript" to enable.
 
 # This code prints students' program outputs and java source codes without
@@ -24,12 +25,24 @@ $(<< labconf.lace)
 $(H perstudent)
 $(<< labconf.lace)
 
+$(H find_args_script)
+BEGIN {
+    print_or = 0;
+}
+{
+    if (print_or)  print "-or";
+    print_or = 1;
+    print "-name";
+    print $0;
+}
+$(H find_args_script)
+ $(O files) awk -- $(H find_args_script) $(HF files_to_print)
+
  $(O nameline) tee $(OF a)
 $(XO a) cut -f1
 $(XO a) sed 's/\(.*\)/D.\1/'
-$(X a) $(O to_tmp) \
-    xargs -idir find dir -type f -name Problem*.java -or -name output
-
+$(X files) $(O to_tmp) \
+    xargs -d '\n' find $(XA a) -type f
 
 $(H script)
 BEGIN {
