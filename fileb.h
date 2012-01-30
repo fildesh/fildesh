@@ -8,7 +8,7 @@
 
 #ifndef DeclTableT_char
 #define DeclTableT_char
-DeclTableT( char );
+DeclTableT( char, char );
 #endif
 
 typedef struct FileB FileB;

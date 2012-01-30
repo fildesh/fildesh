@@ -22,7 +22,7 @@ struct TNode
     char* key;
 };
 
-DeclTableT( TNode );
+DeclTableT( TNode, TNode );
 
     Trit
 swapped_TNode (const BSTNode* lhs, const BSTNode* rhs)

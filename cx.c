@@ -5,14 +5,14 @@
 #include "table.h"
 #include "bstree.h"
 
-DeclTableT( uint );
+DeclTableT( uint, uint );
 
 
 typedef struct ASTree ASTree;
 typedef struct AST AST;
 
-DeclTableT( char );
-DeclTableT( AST );
+DeclTableT( char, char );
+DeclTableT( AST, AST );
 
 typedef
 enum SyntaxKind
