@@ -4,12 +4,12 @@ CFLAGS = -ansi -pedantic -Wall -Wextra
 CFLAGS += -D_SVID_SOURCE
 CFLAGS += -g
 
-utils = best-match xpipe void cat1 ssh-all ujoin godo
+utils = lace best-match xpipe void cat1 ssh-all ujoin godo
 util_exes = $(addprefix bin/,$(utils))
 
-all: lace $(util_exes)
+all: $(util_exes)
 
-lace: lace.c cx/fileb.o cx/bstree.o cx/rbtree.o
+bin/lace: lace.c cx/fileb.o cx/bstree.o cx/rbtree.o
 	$(CC) $(CFLAGS) \
 		"-DUtilBin=\"$(PWD)/bin\"" \
 		-o $@ $^
@@ -45,5 +45,5 @@ bin:
 
 .PHONY: clean
 clean:
-	rm -f lace $(util_exes)
+	rm -f $(util_exes)
 

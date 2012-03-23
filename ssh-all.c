@@ -44,6 +44,7 @@ exec_ssh (const char* host)
     static const char* const ssh_cmd[] =
     {
         "ssh", "-o", "StrictHostKeyChecking=no",
+        "-o", "PasswordAuthentication=no",
         0,  /* /host/ goes here.*/
         "sh", "-s",
         0  /* /host/ also goes here as an argument.*/
