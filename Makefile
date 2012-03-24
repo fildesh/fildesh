@@ -16,3 +16,7 @@ cx: cx.c bstree.o rbtree.o
 %.o: %.c
 	$(CC) -c $(CFLAGS) $< -o $@
 
+.PHONY: clean
+clean:
+	rm -f *.o cx verify
+
