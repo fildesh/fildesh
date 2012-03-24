@@ -26,9 +26,6 @@ static char* ExeName = 0;
 #define ErrOut stderr
 
 
-#define Max_uint UINT_MAX
-typedef unsigned char byte;
-
 enum SymValKind
 {
     IDescVal, ODescVal, IODescVal,
