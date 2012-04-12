@@ -1,6 +1,6 @@
 
-#ifndef BSTree
-#define BSTree BSTree
+#ifndef BSTree_H_
+#define BSTree_H_
 
 #include "def.h"
 
@@ -18,8 +18,6 @@ struct BSTree
     BSTNode* sentinel;
     Trit (* swapped) (const BSTNode* lhs, const BSTNode* rhs);
 };
-
-void output_dot (BSTree* t);
 
 void
 init_BSTree (BSTree* t, BSTNode* sentinel,

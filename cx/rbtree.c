@@ -1,7 +1,6 @@
 
 #include "rbtree.h"
 #include <stdlib.h>
-#include <stddef.h>
 
 static Bit
 root (const RBTree* t, const RBTNode* x)

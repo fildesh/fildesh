@@ -171,7 +171,7 @@ int main (int argc, char** argv)
     if (argi >= argc)
         show_usage_and_exit ();
 
-    buf = read_FileB (&lookup_in);
+    buf = load_FileB (&lookup_in);
     lines = split_lines (buf, &width);
     lcs_array = (uint*) malloc (width * sizeof (uint));
 

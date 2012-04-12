@@ -1,10 +1,12 @@
 
+#include "fileb.h"
 #include "rbtree.h"
 #include "table.h"
-#include <string.h>
+
+#include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <unistd.h>
+#include <string.h>
 
 #if 1
 char* strdup (const char* s)
@@ -100,6 +102,47 @@ remove_TNode (RBTree* t, TNode* a)
     free (a->key);
 }
 
+    void
+testfn_skipws_FileB ()
+{
+    const char text[] = "hello i am\n some \n text! ";
+    const char* const expect_text[] = {
+        "hello", "i", "am", "some", "text!"
+    };
+    uint idx = 0;
+    FileB st_in;
+    FileB* const in = &st_in;
+    FILE* out = stderr;
+
+    init_FileB (in);
+#if 0
+    in->f = fopen ("test", "rb");
+#else
+    in->buf.s = strdup (text);
+    in->buf.sz = sizeof(text);
+    in->buf.alloc_sz = in->buf.sz;
+#endif
+
+    while ((getline_FileB (in)))
+    {
+        FileB st_olay;
+        FileB* const olay = &st_olay;
+        char* s;
+
+        olay_FileB (olay, in);
+        while ((s = nextok_FileB (olay, 0, 0)))
+        {
+            Claim2(idx ,<, ArraySz( expect_text ));
+            Claim2(0 ,==, strcmp(expect_text[idx], s));
+            ++ idx;
+            fputs (s, out);
+            fputc ('\n', out);
+        }
+    }
+
+    lose_FileB (in);
+}
+
 int main ()
 {
     RBTree rbtree;
@@ -109,6 +152,8 @@ int main ()
     TNode* b;
     uint nodei = 0;
     char buf[100];
+
+    testfn_skipws_FileB ();
 
     a = &nodes[nodei++];
     t = &rbtree;
@@ -144,8 +189,6 @@ int main ()
     }
 
     output_dot (&t->bst);
-#if 0
-#endif
 
     lose_BSTree (&t->bst, lose_TNode);
 

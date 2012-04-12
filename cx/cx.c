@@ -1,22 +1,23 @@
 
+#include "fileb.h"
+#include "bstree.h"
+#include "table.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "table.h"
-#include "bstree.h"
-
+#ifndef Table_uint
+#define Table_uint Table_uint
 DeclTableT( uint, uint );
-
+#endif
 
 typedef struct ASTree ASTree;
 typedef struct AST AST;
 
-DeclTableT( char, char );
-DeclTableT( AST, AST );
-
 typedef
 enum SyntaxKind
-{    Function
+{   ConsCell
+    ,Function
     ,Char
     ,Int
     ,Float
@@ -30,15 +31,13 @@ enum SyntaxKind
 struct ASTree
 {
     BSTree bst;
+    BSTNode sentinel;
 };
 
 struct AST
 {
     SyntaxKind kind;
-    uint ascend_idx;
-    Table_AST* ascend_table;
-    Table( AST ) descend;
-        /* Should just have 'BSTNode bst;' */
+    BSTNode bst;
     union AST_union {
         char a_char;
         int a_int;
@@ -49,20 +48,40 @@ struct AST
     } dat;
 };
 
-    void
-init_AST (AST* ast)
+    AST*
+side_of_AST (AST* ast, Bit side)
 {
-    ast->kind = NSyntaxKinds;
-    ast->ascend_idx = 0;
-    ast->ascend_table = 0;
-    InitTable( AST, ast->descend );
-    ast->dat.a_other = 0;
+    BSTNode* bst = ast->bst.split[side];
+    return CastUp( AST, bst, bst );
 }
 
     void
-lose_AST (AST* ast)
+set_side_AST (AST* a, AST* b, Bit side)
 {
-    uint i;
+    a->bst.split[side] = &b->bst;
+    b->bst.joint       = &a->bst;
+}
+
+    void
+init_ASTree (ASTree* ast)
+{
+    init_BSTree (&ast->bst, &ast->sentinel, NULL);
+}
+
+    void
+init_AST (AST* ast, ASTree* t)
+{
+    ast->kind = NSyntaxKinds;
+    ast->bst.split[0] = &t->sentinel;
+    ast->bst.split[1] = &t->sentinel;
+    ast->dat.a_other = 0;
+}
+
+static
+    void
+lose_AST (BSTNode* bst)
+{
+    AST* ast = CastUp( AST, bst, bst );
     switch (ast->kind)
     {
     case Char:
@@ -75,17 +94,20 @@ lose_AST (AST* ast)
             free (ast->dat.a_other);
         break;
     }
-
-    for (i = 0; i < ast->descend.sz; ++i)
-        lose_AST (&ast->descend.s[i]);
-    LoseTable( AST, ast->descend );
 }
 
     void
-output_AST (FILE* out, const AST* ast)
+lose_ASTree (ASTree* ast)
+{
+    lose_BSTree (&ast->bst, lose_AST);
+}
+
+    void
+dump_AST (FILE* out, const ASTree* t, const BSTNode* bst)
 {
     char txt[100];
     uint txtsz = 0;
+    const AST* ast = CastUp( AST, bst, bst );
 
     switch (ast->kind)
     {
@@ -104,16 +126,16 @@ output_AST (FILE* out, const AST* ast)
         break;
     case Plus:
         fputc ('(', out);
-        output_AST (out, &ast->descend.s[0]);
+        dump_AST (out, t, bst->split[0]);
         fputc ('+', out);
-        output_AST (out, &ast->descend.s[1]);
+        dump_AST (out, t, bst->split[1]);
         fputc (')', out);
         break;
     case Minus:
         fputc ('(', out);
-        output_AST (out, &ast->descend.s[0]);
+        dump_AST (out, t, bst->split[0]);
         fputc ('-', out);
-        output_AST (out, &ast->descend.s[1]);
+        dump_AST (out, t, bst->split[1]);
         fputc (')', out);
         break;
     default:
@@ -123,25 +145,46 @@ output_AST (FILE* out, const AST* ast)
     if (txtsz > 0)  fwrite (txt, sizeof(char), txtsz, out);
 }
 
+    void
+dump_ASTree (FILE* out, ASTree* t)
+{
+    dump_AST (out, t, root_of_BSTree (&t->bst));
+}
+
 int main (int argc, char** argv)
 {
     FILE* out = stdout;
-    AST root;
-    AST* ast = &root;
-    init_AST (ast);
+    ASTree tree;
+    ASTree* t = &tree;
+    AST nodes[10];
+    AST* ast = &nodes[0];
 
-    GrowTable( AST, ast->descend, 2 );
-    init_AST (&ast->descend.s[0]);
-    init_AST (&ast->descend.s[1]);
+    init_ASTree (t);
+    init_AST (ast, t);
     ast->kind = Plus;
-    ast->descend.s[0].kind = Int;
-    ast->descend.s[0].dat.a_int = 1;
-    ast->descend.s[1].kind = Int;
-    ast->descend.s[1].dat.a_int = 2;
+    root_for_BSTree (&t->bst, &ast->bst);
 
-    ast = &root;
-    output_AST (out, ast);
-    lose_AST (ast);
+    init_AST (++ ast, t);
+    set_side_AST (ast-1, ast, 0);
+    ast->kind = Int;
+    ast->dat.a_int = 1;
+
+    init_AST (++ ast, t);
+    set_side_AST (ast-2, ast, 1);
+    ast->kind = Minus;
+
+    init_AST (++ ast, t);
+    set_side_AST (ast-1, ast, 0);
+    ast->kind = Int;
+    ast->dat.a_int = 2;
+
+    init_AST (++ ast, t);
+    set_side_AST (ast-2, ast, 1);
+    ast->kind = Int;
+    ast->dat.a_int = 3;
+
+    dump_ASTree (out, t);
+    lose_ASTree (&tree);
     return 0;
 }
 

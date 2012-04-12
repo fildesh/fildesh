@@ -320,7 +320,7 @@ int main (int argc, char** argv)
         }
     }
 
-    read_FileB (&lookup_in);
+    load_FileB (&lookup_in);
     table = setup_lookup_table (&lookup_in, delim);
     lose_FileB (&lookup_in);
     InitAssoc( LineJoin, assoc );

@@ -1,6 +1,6 @@
 
-#ifndef RBTree
-#define RBTree RBTree
+#ifndef RBTree_H_
+#define RBTree_H_
 #include "bstree.h"
 
 typedef struct RBTNode RBTNode;

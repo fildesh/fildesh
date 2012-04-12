@@ -275,13 +275,14 @@ inject_include (FileB* in, char* name)
     name = &name[count_ws (name)];
     name[strcspn (name, ")")] = '\0';
 
-    init_FileB( &src );
-    src.f = fopen (name, "rb");
+    init_FileB (&src);
+    open_FileB (&src, 0, name);
     if (!src.f)
         fprintf (ErrOut, "%s - Failed to include file:%s\n",
                  ExeName, name);
 
     inject_FileB (in, &src, "\n");
+    lose_FileB (&src);
 }
 
 static char*
@@ -929,7 +930,7 @@ int main (int argc, char** argv)
             arg = argv[argi++];
             in.buf.s = strdup (arg);
             in.buf.sz = strlen (in.buf.s);
-            in.buf.alloc_sz = in.buf.sz+1;
+            in.buf.alloc_sz = in.buf.sz;
         }
         else
         {
