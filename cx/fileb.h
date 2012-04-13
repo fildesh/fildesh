@@ -27,7 +27,7 @@ struct FileB
 {
     FILE* f;
     Table(char) buf;
-    uint off;
+    TableSzT_char off;
     bool good;
     bool sink;
     FileB_Format fmt;

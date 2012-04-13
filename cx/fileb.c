@@ -12,6 +12,8 @@ DeclTableT( byte, byte );
 
 static const uint NPerChunk = BUFSIZ;
 
+static bool
+load_chunk_FileB (FileB* in);
 
     void
 init_FileB (FileB* f)
@@ -115,39 +117,57 @@ load_FileB (FileB* f)
 {
     bool good = true;
     long ret = 0;
-    size_t sz = 0;
-    char* s = 0;
 
     if (good && (good = !!f->f))
     {
         ret = fseek (f->f, 0, SEEK_END);
     }
-    if (good && (good = (ret == 0)))
+
+        /* Some streams cannot be seeked.*/
+    if (good && ret != 0)
     {
-        ret = ftell (f->f);
+        bool more = true;
+        while (more)
+            more = load_chunk_FileB (f);
     }
-    if (good && (good = (ret >= 0)))
+    else
     {
-        sz = ret;
-        ret = fseek (f->f, 0, SEEK_SET);
-    }
-    if (good && (good = (ret == 0)))
-    {
-        GrowTable( char, f->buf, sz/sizeof(char) );
-        s = &f->buf.s[f->off];
-        ret = fread (s, 1, sz, f->f);
-        f->off += ret;
-        s[ret] = 0;
+        size_t sz = 0;
+        if (good && (good = (ret == 0)))
+        {
+            ret = ftell (f->f);
+        }
+        if (good && (good = (ret >= 0)))
+        {
+            sz = ret;
+            ret = fseek (f->f, 0, SEEK_SET);
+        }
+        if (good && (good = (ret == 0)))
+        {
+            GrowTable( char, f->buf, sz/sizeof(char) );
+
+                /* Note this relation!*/
+            Claim2( f->off + sz ,==, f->buf.sz-1 );
+
+            ret = fread (&f->buf.s[f->off], 1, sz, f->f);
+            if (ret >= 0)
+                f->buf.s[f->off + ret] = '\0';
+
+            good = (ret == (long)sz);
+        }
     }
 
     close_FileB (f);
 
-    if (good && (good = (ret == (long)sz)))  return s;
-
-    return 0;
+    if (good)
+    {
+        char* s = &f->buf.s[f->off];
+        f->off = f->buf.sz-1;
+        return s;
+    }
+    return NULL;
 }
 
-static
     bool
 load_chunk_FileB (FileB* in)
 {
