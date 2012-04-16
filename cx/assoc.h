@@ -21,13 +21,13 @@
         return swapped( CastUp( T, field_AssocNode_##S, a ), \
                         CastUp( T, field_AssocNode_##S, b ) ); \
     } \
-    inline void \
+    qual_inline void \
     init_Assoc_##S (Assoc_##S* a) \
     { \
         init_RBTree (&a->rbt, &a->sentinel, AssocNode_##S##_swapped); \
         a->table = 0; \
     } \
-    inline void \
+    qual_inline void \
     fix_refs_Assoc_##S (Assoc_##S* a, T* table, uint n) \
     { \
         uint i; \
@@ -49,20 +49,20 @@
                 x->split[1] = (BSTNode*) (diff + (ptrdiff_t) x->split[1]); \
         } \
     } \
-    inline T* \
+    qual_inline T* \
     setf_Assoc_##S (Assoc_##S* a, T* e) \
     { \
         RBTNode* node = setf_RBTree (&a->rbt, &e->field_AssocNode_##S); \
         if (!node)  return 0; \
         return CastUp( T, field_AssocNode_##S, node ); \
     } \
-    inline T* \
+    qual_inline T* \
     getf_Assoc_##S (Assoc_##S* a, T* e) \
     { \
         RBTNode* x = ensure_RBTree (&a->rbt, &e->field_AssocNode_##S); \
         return CastUp( T, field_AssocNode_##S, x ); \
     } \
-    inline T* \
+    qual_inline T* \
     get_Assoc_##S (Assoc_##S* a, T* e) \
     { \
         BSTNode* node; \
@@ -72,7 +72,7 @@
                           CastUp( RBTNode, bst, node ) ) \
                 : 0); \
     } \
-    inline void \
+    qual_inline void \
     del_Assoc_##S (Assoc_##S* a, T* e) \
     { \
         remove_RBTree (&a->rbt, &e->field_AssocNode_##S); \

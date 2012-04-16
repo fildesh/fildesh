@@ -109,7 +109,10 @@ olay_FileB (FileB* olay, FileB* source)
     init_FileB (olay);
     olay->buf.s = source->buf.s;
     olay->buf.sz = source->off;
-    if (source->sink)  olay->buf.sz += 1;
+    if (source->sink)
+        olay->buf.sz = source->off + 1;
+    else if (olay->buf.sz == source->buf.sz - 1)
+        olay->buf.sz = source->buf.sz;
 }
 
     char*
@@ -195,6 +198,7 @@ flushx_FileB (FileB* in)
     Table(char)* buf = &in->buf;
     Claim2( 0 ,<, buf->sz );
     Claim2( 0 ,==, buf->s[buf->sz-1] );
+    Claim2( in->off ,<, buf->sz );
     if (in->off == 0)  return;
     buf->sz = buf->sz - in->off;
     if (buf->sz > 0)
@@ -234,7 +238,7 @@ getline_FileB (FileB* in)
     }
     else
     {
-        in->off = in->buf.sz;
+        in->off = in->buf.sz - 1;
     }
 
     return (in->buf.sz == 1) ? 0 : in->buf.s;
@@ -268,7 +272,7 @@ getlined_FileB (FileB* in, const char* delim)
     }
     else
     {
-        in->off = in->buf.sz;
+        in->off = in->buf.sz - 1;
     }
 
     return (in->buf.sz == 1) ? 0 : in->buf.s;
@@ -284,7 +288,8 @@ skipds_FileB (FileB* in, const char* delims)
     s = in->buf.s;
     s = &s[strspn (s, delims)];
 
-    while (!s[0]) {
+    while (!s[0])
+    {
         flushx_FileB (in);
         if (!load_chunk_FileB (in))  break;
         s = in->buf.s;
@@ -304,7 +309,8 @@ nextds_FileB (FileB* in, char* ret_match, const char* delims)
     s = in->buf.s;
     s = &s[strcspn (s, delims)];
 
-    while (!s[0]) {
+    while (!s[0])
+    {
         uint off = in->buf.sz - 1;
         if (!load_chunk_FileB (in))  break;
         s = &in->buf.s[off];
@@ -320,7 +326,7 @@ nextds_FileB (FileB* in, char* ret_match, const char* delims)
     }
     else
     {
-        in->off = in->buf.sz;
+        in->off = in->buf.sz - 1;
     }
 
     return (in->buf.sz == 1) ? 0 : in->buf.s;
@@ -383,7 +389,7 @@ flusho_FileB (FileB* f)
     return (f->off == 0);
 }
 
-static inline
+qual_inline
     bool
 dump_chunk_FileB (FileB* f)
 {

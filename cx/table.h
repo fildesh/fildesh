@@ -11,7 +11,7 @@
         uint alloc_sz; \
         TableT_##S* s; \
     }; \
-    static inline \
+    qual_inline \
         void \
     grow_nodep_Table_##S (Table_##S* table, uint capac, \
                           void* (*f) (void*, size_t)) \
@@ -30,7 +30,7 @@
                 f (table->s, table->alloc_sz * sizeof (TableT_##S)); \
         } \
     } \
-    static inline \
+    qual_inline \
         TableT_##S* \
     grow1_nodep_Table_##S (Table_##S* table, \
                            void* (*f) (void*, size_t)) \

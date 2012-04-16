@@ -29,5 +29,8 @@ setf_RBTree (RBTree* t, RBTNode* x);
 void
 remove_RBTree (RBTree* t, RBTNode* y);
 
+#ifdef IncludeC
+#include "rbtree.c"
+#endif
 #endif
 

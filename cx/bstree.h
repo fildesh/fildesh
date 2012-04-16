@@ -51,5 +51,8 @@ side_BSTNode (const BSTNode* x);
 void
 rotate_BSTNode (BSTNode* b, Bit side);
 
+#ifdef IncludeC
+#include "bstree.c"
+#endif
 #endif
 
