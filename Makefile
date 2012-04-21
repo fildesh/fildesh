@@ -4,7 +4,7 @@ CFLAGS = -ansi -pedantic -Wall -Wextra
 CFLAGS += -D_SVID_SOURCE
 CFLAGS += -g
 
-utils = lace best-match xpipe void cat1 ssh-all ujoin godo
+utils = lace add best-match xpipe void cat1 ssh-all ujoin godo
 util_exes = $(addprefix bin/,$(utils))
 
 all: $(util_exes)
@@ -16,6 +16,9 @@ bin/lace: lace.c cx/fileb.o cx/bstree.o cx/rbtree.o
 
 %.o: %.c
 	$(CC) -c $(CFLAGS) $^ -o $@
+
+bin/add: add.c cx/fileb.o
+	$(CC) $(CFLAGS) -o $@ $^
 
 bin/best-match: best-match.c cx/fileb.o
 	$(CC) $(CFLAGS) -o $@ $^
