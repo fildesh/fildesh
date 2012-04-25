@@ -18,6 +18,7 @@ int main ()
 
     init_FileB (f);
     f->f = in;
+    f->byline = true;
 
     while (getline_FileB (f))
     {
@@ -27,6 +28,7 @@ int main ()
         olay_FileB (&olay, f);
         x = sum_line (&olay);
         fprintf (out, "%f\n", x);
+        fflush (out);
     }
 
     return 0;

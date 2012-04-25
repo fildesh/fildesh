@@ -6,6 +6,11 @@
 
 #include <stdio.h>
 
+#ifndef Table_byte
+#define Table_byte Table_byte
+DeclTableT( byte, byte );
+#endif
+
 #ifndef Table_char
 #define Table_char Table_char
 DeclTableT( char, char );
@@ -18,7 +23,7 @@ typedef struct FileB FileB;
 
 enum FileB_Format {
     FileB_Ascii,
-        /* FileB_Raw, */
+    FileB_Raw,
     FileB_NFormats
 };
 typedef enum FileB_Format FileB_Format;
@@ -26,10 +31,11 @@ typedef enum FileB_Format FileB_Format;
 struct FileB
 {
     FILE* f;
-    Table(char) buf;
-    TableSzT_char off;
+    Table(byte) buf;
+    TableSzT_byte off;
     bool good;
     bool sink;
+    bool byline;
     FileB_Format fmt;
     Table(char) pathname;
     Table(char) filename;
@@ -44,12 +50,16 @@ void
 close_FileB (FileB* f);
 void
 lose_FileB (FileB* f);
+void
+setfmt_FileB (FileB* f, FileB_Format fmt);
 bool
 open_FileB (FileB* f, const char* pathname, const char* filename);
 void
 olay_FileB (FileB* olay, FileB* source);
 char*
 load_FileB (FileB* f);
+void
+flushx_FileB (FileB* f);
 char*
 getline_FileB (FileB* in);
 char*
@@ -86,8 +96,33 @@ load_uint_FileB (FileB* f, uint* x);
 bool
 load_real_FileB (FileB* f, real* x);
 
+bool
+loadn_byte_FileB (FileB* f, byte* a, TableSzT_byte n);
+
 FileB*
 stdout_FileB ();
+
+
+qual_inline
+    bool
+nullt_FileB (const FileB* f)
+{
+    return (f->fmt < FileB_Raw);
+}
+
+qual_inline
+    bool
+byline_FileB (const FileB* f)
+{
+    return f->byline;
+}
+
+qual_inline
+    char*
+cstr_FileB (FileB* f)
+{
+    return (char*) f->buf.s;
+}
 
 #ifdef IncludeC
 #include "fileb.c"

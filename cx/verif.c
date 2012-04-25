@@ -116,9 +116,10 @@ testfn_skipws_FileB ()
 
     init_FileB (in);
 #if 0
+    open_FileB (in, "", "test");
     in->f = fopen ("test", "rb");
 #else
-    in->buf.s = strdup (text);
+    in->buf.s = (byte*) strdup (text);
     in->buf.sz = sizeof(text);
     in->buf.alloc_sz = in->buf.sz;
 #endif

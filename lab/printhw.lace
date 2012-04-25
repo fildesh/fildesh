@@ -64,6 +64,9 @@ $(H script)
 $(Xv up_a) $(O a) awk -- $(H script)
 $(XO a) xargs cat
 
+# TODO: Why is this needed?
+$(XO a) tail -n +2
+
 $(XO nameline) sed 's/^\(.*\)\t\(.*\), \(.*\)$/###### \1 - \3 \2 ######/'
 $(XO a) cat $(XF nameline) -
 
@@ -94,6 +97,6 @@ $(XO a) grep -o '[^\.]*$'
 $(XO a) ujoin $(H names_file) -
 
 #$(X a) cat -
-#$(X a) head -n1
+#$(XO a) head -n1
 $(X a) xpipe lace -- $(H perstudent)
 

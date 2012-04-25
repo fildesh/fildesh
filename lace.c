@@ -928,8 +928,8 @@ int main (int argc, char** argv)
         {
             if (argi >= argc)  show_usage_and_exit ();
             arg = argv[argi++];
-            in.buf.s = strdup (arg);
-            in.buf.sz = strlen (in.buf.s) + 1;
+            in.buf.s = (byte*) strdup (arg);
+            in.buf.sz = strlen (cstr_FileB (&in)) + 1;
             in.buf.alloc_sz = in.buf.sz;
         }
         else
