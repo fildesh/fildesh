@@ -7,6 +7,10 @@ sum_line (FileB* f)
     real x = 0, y = 0;
     while (load_real_FileB (f, &y))
         x += y;
+    f->good = true;
+    skipds_FileB (f, 0);
+    if (cstr_FileB (f) [0] != '\0')
+        fputs ("Line is no good!\n", stderr);
     return x;
 }
 
