@@ -10,10 +10,12 @@
 DeclTableT( byte, byte );
 #endif
 
-static const uint NPerChunk = BUFSIZ;
-
 static bool
 load_chunk_FileB (FileB* f);
+static inline bool
+dump_chunk_FileB (FileB* f);
+static void
+dumpn_raw_byte_FileB (FileB* f, const byte* a, TableSzT_byte n);
 
     void
 init_FileB (FileB* f)
@@ -50,6 +52,43 @@ lose_FileB (FileB* f)
     LoseTable( byte, f->buf );
     LoseTable( char, f->pathname );
     LoseTable( char, f->filename );
+}
+
+    void
+seto_FileB (FileB* f, bool sink)
+{
+    Claim( !f->f );
+    f->sink = sink;
+}
+
+static inline
+    TableSzT_byte
+chunksz_FileB (FileB* f)
+{
+    static const uint NPerChunk = BUFSIZ;
+    (void) f;
+    return NPerChunk;
+}
+
+    byte*
+ensure_FileB (FileB* f, TableSzT_byte n)
+{
+    TableSzT_byte sz;
+    if (f->sink)
+    {
+        dump_chunk_FileB (f);
+        SizeUpTable( byte, f->buf, f->off+n );
+        return &f->buf.s[f->off];
+    }
+
+    sz = f->buf.sz;
+    if (nullt_FileB (f))
+    {
+        Claim2( 0 ,<, sz );
+        sz -= 1;
+    }
+    GrowTable( byte, f->buf, n );
+    return &f->buf.s[sz];
 }
 
     void
@@ -194,43 +233,40 @@ load_FileB (FileB* f)
     bool
 load_chunk_FileB (FileB* f)
 {
-    Table(byte)* buf = &f->buf;
+    const TableSzT_byte chunksz = chunksz_FileB (f);
+    TableT(byte)* buf = &f->buf;
     size_t n;
     byte* s;
 
     if (!f->f)  return false;
 
-    n = buf->sz;
-    if (nullt_FileB (f))
-    {
-        Claim2( 0 ,<, n );
-        n -= 1;
-    }
-
-    GrowTable( byte, *buf, NPerChunk );
-    s = &buf->s[n];
+    s = ensure_FileB (f, chunksz);
 
     if (byline_FileB (f))
     {
         char* line = (char*) s;
         Claim( nullt_FileB (f) );
-        line = fgets (line, NPerChunk, f->f);
+            /* Don't worry about actually reading a full line here,
+             * that's at a higher level.
+             * We just want to avoid deadlock by stopping at a newline.
+             */
+        line = fgets (line, chunksz, f->f);
         n = (line ? strlen (line) : 0);
     }
     else
     {
-        n = fread (s, 1, NPerChunk, f->f);
+        n = fread (s, 1, chunksz, f->f);
     }
     if (nullt_FileB (f))
         s[n] = 0;
-    buf->sz -= (NPerChunk - n);
+    buf->sz -= (chunksz - n);
     return (n != 0);
 }
 
     void
 flushx_FileB (FileB* f)
 {
-    Table(byte)* buf = &f->buf;
+    TableT(byte)* buf = &f->buf;
     if (nullt_FileB (f))
     {
         Claim2( 0 ,<, buf->sz );
@@ -418,25 +454,71 @@ skipto_FileB (FileB* in, const char* pos)
     in->off = IndexInTable( byte, in->buf, pos );
 }
 
+static
+    bool
+fdump_FileB (FileB* f, const byte* a, uint n)
+{
+    size_t nout;
+    nout = fwrite (a, 1, n, f->f);
+    return (nout == n);
+}
+
+static inline
+    bool
+selfcont_FileB (FileB* f)
+{
+    return (!f->f);
+}
+
+static
+    bool
+flusho1_FileB (FileB* f, const byte* a, uint n)
+{
+    bool good = true;
+    if (selfcont_FileB (f))
+    {
+        if (n == 0)  return true;
+        GrowTable( byte, f->buf, n );
+        memcpy (&f->buf.s[f->off], a, n);
+        f->off += n;
+    }
+    else
+    {
+        if (f->off > 0)
+        {
+            good = fdump_FileB (f, f->buf.s, f->off);
+            if (!good)  return false;
+            f->buf.sz = 1;
+            f->off = 0;
+        }
+        if (n > 0)
+        {
+            good = fdump_FileB (f, a, n);
+            if (!good)  return false;
+        }
+    }
+
+
+    if (nullt_FileB (f))
+    {
+            /* Not sure why...*/
+        f->buf.s[f->off] = 0;
+    }
+    return true;
+}
+
     bool
 flusho_FileB (FileB* f)
 {
-    size_t n;
-    if (f->off == 0)  return true;
-    if (!f->f)  return true;
-    n = fwrite (f->buf.s, 1, f->off, f->f);
-    f->buf.s[0] = 0;
-    f->buf.sz = 1;
-    f->off -= n;
-    return (f->off == 0);
+    return flusho1_FileB (f, 0, 0);
 }
 
-qual_inline
     bool
 dump_chunk_FileB (FileB* f)
 {
-    if (f->off < NPerChunk)  return true;
+    if (f->off < chunksz_FileB (f))  return true;
         /* In the future, we may not want to flush all the time!*/
+        /* Also, we may not wish to flush the whole buffer.*/
     return flusho_FileB (f);
 }
 
@@ -471,6 +553,53 @@ dump_cstr_FileB (FileB* f, const char* s)
     uint n = strlen (s);
     GrowTable( byte, f->buf, n );
     memcpy (&f->buf.s[f->off], s, (n+1)*sizeof(char));
+    f->off += n;
+    dump_chunk_FileB (f);
+}
+
+    void
+dumpn_raw_byte_FileB (FileB* f, const byte* a, TableSzT_byte n)
+{
+    const TableSzT_byte ntotal = f->off + n;
+    if (ntotal <= f->buf.alloc_sz)
+    {
+        memcpy (&f->buf.s[f->off], a, n);
+        f->off = ntotal;
+        if (f->off > f->buf.sz)
+            f->buf.sz = f->off;
+    }
+    else if (ntotal <= 2*chunksz_FileB (f))
+    {
+        SizeUpTable( byte, f->buf, 2*chunksz_FileB (f) );
+        memcpy (&f->buf.s[f->off], a, n);
+        f->off = ntotal;
+    }
+    else
+    {
+        flusho1_FileB (f, a, n);
+    }
+}
+
+    void
+dumpn_byte_FileB (FileB* f, const byte* a, TableSzT_byte n)
+{
+    if (f->fmt == FileB_Raw)
+    {
+        dumpn_raw_byte_FileB (f, a, n);
+        return;
+    }
+    { BLoop( i, n )
+        dump_uint_FileB (f, a[i]);
+        if (i+1 < n)
+            dump_char_FileB (f, ' ');
+    } BLose()
+}
+
+    void
+dumpn_char_FileB (FileB* f, const char* a, TableSzT_byte n)
+{
+    GrowTable( byte, f->buf, n );
+    memcpy (&f->buf.s[f->off], a, (n+1)*sizeof(char));
     f->off += n;
     dump_chunk_FileB (f);
 }

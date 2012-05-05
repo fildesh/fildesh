@@ -75,7 +75,11 @@ typedef float real;
 
 #if __STDC_VERSION__ < 199901L
 #define inline __inline
+#ifdef _WIN32
+#define restrict
+#else
 #define restrict __restrict
+#endif
 #endif
 
 #define qual_inline static inline

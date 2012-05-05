@@ -31,14 +31,14 @@ typedef enum FileB_Format FileB_Format;
 struct FileB
 {
     FILE* f;
-    Table(byte) buf;
+    TableT(byte) buf;
     TableSzT_byte off;
     bool good;
     bool sink;
     bool byline;
     FileB_Format fmt;
-    Table(char) pathname;
-    Table(char) filename;
+    TableT(char) pathname;
+    TableT(char) filename;
 };
 
 static const char WhiteSpaceChars[] = " \t\v\r\n";
@@ -50,6 +50,10 @@ void
 close_FileB (FileB* f);
 void
 lose_FileB (FileB* f);
+void
+seto_FileB (FileB* f, bool sink);
+byte*
+ensure_FileB (FileB* f, TableSzT_byte);
 void
 setfmt_FileB (FileB* f, FileB_Format fmt);
 bool
@@ -85,6 +89,11 @@ void
 dump_char_FileB (FileB* f, char c);
 void
 dump_cstr_FileB (FileB* f, const char* s);
+
+void
+dumpn_byte_FileB (FileB* f, const byte* a, TableSzT_byte n);
+void
+dumpn_char_FileB (FileB* f, const char* a, TableSzT_byte n);
 
 char*
 load_uint_cstr (uint* ret, const char* in);

@@ -103,7 +103,7 @@ lose_ASTree (ASTree* ast)
 }
 
     void
-dump_AST (FILE* out, const ASTree* t, const BSTNode* bst)
+dump_AST (FileB* f, const ASTree* t, const BSTNode* bst)
 {
     char txt[100];
     uint txtsz = 0;
@@ -125,39 +125,42 @@ dump_AST (FILE* out, const ASTree* t, const BSTNode* bst)
         txtsz = sprintf (txt, "%f", ast->dat.a_double);
         break;
     case Plus:
-        fputc ('(', out);
-        dump_AST (out, t, bst->split[0]);
-        fputc ('+', out);
-        dump_AST (out, t, bst->split[1]);
-        fputc (')', out);
+        dump_char_FileB (f, '(');
+        dump_AST (f, t, bst->split[0]);
+        dump_char_FileB (f, '+');
+        dump_AST (f, t, bst->split[1]);
+        dump_char_FileB (f, ')');
         break;
     case Minus:
-        fputc ('(', out);
-        dump_AST (out, t, bst->split[0]);
-        fputc ('-', out);
-        dump_AST (out, t, bst->split[1]);
-        fputc (')', out);
+        dump_char_FileB (f, '(');
+        dump_AST (f, t, bst->split[0]);
+        dump_char_FileB (f, '-');
+        dump_AST (f, t, bst->split[1]);
+        dump_char_FileB (f, ')');
         break;
     default:
         fputs ("No Good!\n", stderr);
         break;
     };
-    if (txtsz > 0)  fwrite (txt, sizeof(char), txtsz, out);
+    if (txtsz > 0)
+        dumpn_char_FileB (f, txt, txtsz);
 }
 
     void
-dump_ASTree (FILE* out, ASTree* t)
+dump_ASTree (FileB* f, ASTree* t)
 {
-    dump_AST (out, t, root_of_BSTree (&t->bst));
+    dump_AST (f, t, root_of_BSTree (&t->bst));
 }
 
 int main (int argc, char** argv)
 {
-    FILE* out = stdout;
+    FileB* f;
     ASTree tree;
     ASTree* t = &tree;
     AST nodes[10];
     AST* ast = &nodes[0];
+
+    f = stdout_FileB ();
 
     init_ASTree (t);
     init_AST (ast, t);
@@ -183,7 +186,8 @@ int main (int argc, char** argv)
     ast->kind = Int;
     ast->dat.a_int = 3;
 
-    dump_ASTree (out, t);
+    dump_ASTree (f, t);
+    lose_FileB (f);
     lose_ASTree (&tree);
     return 0;
 }

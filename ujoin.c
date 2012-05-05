@@ -87,7 +87,7 @@ open_file_arg (const char* arg, bool writing)
     return f;
 }
 
-static Table(LineJoin)
+static TableT(LineJoin)
 setup_lookup_table (FileB* in, const char* delim)
 {
     DeclTable( LineJoin, table );
@@ -219,7 +219,7 @@ int main (int argc, char** argv)
     FILE* out = stdout;
     int argi = 1;
     uint i;
-    Table(LineJoin) table;
+    TableT(LineJoin) table;
     Assoc(LineJoin) assoc;
 
     ExeName = argv[0];

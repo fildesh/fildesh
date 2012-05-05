@@ -60,16 +60,16 @@ struct Command
 {
     char* line;
     CommandKind kind;
-    Table( CString ) args;
-    Table( CString ) extra_args;
-    Table( CString ) tmp_files;
+    TableT( CString ) args;
+    TableT( CString ) extra_args;
+    TableT( CString ) tmp_files;
     pid_t pid;
         /* Input stream.*/
     int stdis;
-    Table( int ) is;
+    TableT( int ) is;
         /* Output streams.*/
     int stdos;
-    Table( int ) os;
+    TableT( int ) os;
         /* If >= 0, this is a file descriptor that will
          * close when the program command is safe to run.
          */
@@ -78,7 +78,7 @@ struct Command
     const char* exec_doc;
 
         /* Use these input streams to fill corresponding (null) arguments.*/
-    Table( iargs ) iargs;
+    TableT( iargs ) iargs;
 
         /* Use this if it's a HERE document.*/
     char* doc;
@@ -195,7 +195,7 @@ lose_Command (Command* cmd)
 
 
 static SymVal*
-getf_SymVal (Table(SymVal)* syms, Assoc(SymVal)* assoc, const char* s)
+getf_SymVal (TableT(SymVal)* syms, Assoc(SymVal)* assoc, const char* s)
 {
     SymVal* x;  SymVal* y;
 
@@ -319,7 +319,7 @@ parse_line (FileB* in)
 }
 
 static void
-sep_line (Table(CString)* args, char* s)
+sep_line (TableT(CString)* args, char* s)
 {
     while (1)
     {
@@ -367,7 +367,7 @@ sep_line (Table(CString)* args, char* s)
 }
 
 
-static Table(Command)
+static TableT(Command)
 parse_file (FileB* in)
 {
     DeclTable( Command, cmds );
@@ -545,7 +545,7 @@ write_here_doc_file (const char* name, const char* doc)
 }
 
 static void
-setup_commands (Table(Command)* cmds,
+setup_commands (TableT(Command)* cmds,
                 const char* tmpdir)
 {
     uint i;
@@ -898,7 +898,7 @@ show_usage_and_exit ()
 int main (int argc, char** argv)
 {
     FileB in;
-    Table( Command ) cmds;
+    TableT( Command ) cmds;
     uint i;
     int ret;
     int argi = 0;
