@@ -43,9 +43,9 @@
                           : sentinel); \
             if (x->joint != sentinel) \
                 x->joint = (BSTNode*) (diff + (ptrdiff_t) x->joint); \
-            if (x->split[0] != sentinel) \
+            if (x->split[0]) \
                 x->split[0] = (BSTNode*) (diff + (ptrdiff_t) x->split[0]); \
-            if (x->split[1] != sentinel) \
+            if (x->split[1]) \
                 x->split[1] = (BSTNode*) (diff + (ptrdiff_t) x->split[1]); \
         } \
     } \

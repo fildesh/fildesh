@@ -103,7 +103,7 @@ setup_lookup_table (FileB* in, const char* delim)
             /* Disregard a trailing empty line.*/
         if (s[0] == '\0')  break;
 
-        join = Grow1Table( LineJoin, table );
+        join = Grow1Table( table );
         init_LineJoin (join);
         s = strdup (s);
         join->field = s;
@@ -124,7 +124,7 @@ setup_lookup_table (FileB* in, const char* delim)
         join->lookup_line = s;
     }
 
-    PackTable( LineJoin, table );
+    PackTable( table );
     return table;
 }
 
@@ -369,7 +369,7 @@ int main (int argc, char** argv)
     }
     fclose (out);
 
-    LoseTable( LineJoin, table );
+    LoseTable( table );
     return 0;
 }
 

@@ -1,131 +1,204 @@
 
-#ifndef TABLE_H_
-#define TABLE_H_
+#ifndef Table_H_
+#define Table_H_
 #include "def.h"
 
+#include <stdlib.h>
+
+typedef size_t TableSz;
+typedef byte TableLgSz;
+typedef unsigned short TableElSz;
+
 #define TableT( S )  TableT_##S
+#define TableSzT( S )  TableSz
 
 #define DeclTableT( S, T ) \
     typedef struct TableT_##S TableT_##S; \
-    typedef struct CSeqT_##S CSeqT_##S; \
     typedef T TableElT_##S; \
-    typedef uint TableSzT_##S; \
-    struct CSeqT_##S { \
-        TableSzT_##S sz; \
-        TableElT_##S* s; \
-    }; \
     struct TableT_##S { \
-        TableSzT_##S sz; \
-        TableSzT_##S alloc_sz; \
         TableElT_##S* s; \
-    }; \
-    qual_inline \
-        void \
-    grow_nodep_TableT_##S (TableT_##S* table, TableSzT_##S capac, \
-                          void* (*f) (void*, size_t)) \
-    { \
-        table->sz += capac; \
-        if (table->sz >= table->alloc_sz) \
-        { \
-            if (table->alloc_sz == 0) \
-            { \
-                table->s = 0; \
-                table->alloc_sz = 4; \
-            } \
-            while (table->sz >= table->alloc_sz) \
-                table->alloc_sz *= 2; \
-            table->s = (TableElT_##S*) \
-                f (table->s, table->alloc_sz * sizeof (TableElT_##S)); \
-        } \
-    } \
-    qual_inline \
-        TableElT_##S* \
-    grow1_nodep_TableT_##S (TableT_##S* table, \
-                           void* (*f) (void*, size_t)) \
-    { \
-        grow_nodep_TableT_##S (table, 1, f); \
-        return &table->s[table->sz-1]; \
-    } \
-    qual_inline \
-        CSeqT_##S \
-    CSeqT_TableT_##S (TableT_##S* table) \
-    { \
-        CSeqT_##S c; \
-        c.sz = table->sz; \
-        c.s = table->s; \
-        return c; \
-    } \
-    typedef TableSzT_##S CSeqSzT_##S
+        TableSz sz; \
+        TableElSz elsz; \
+        TableLgSz alloc_lgsz; \
+    }
 
+DeclTableT( void, void );
+typedef TableT(void) Table;
+
+
+qual_inline
+    Table
+dflt_TableT (TableElSz elsz)
+{
+    Table t = { 0, 0, 0, 0 };
+    t.elsz = elsz;
+    return t;
+}
 #define DeclTable( S, table ) \
-    TableT_##S table = { 0, 0, 0 }
+    TableT_##S table = { 0, 0, sizeof(TableElT_##S), 0 }
 
-#define InitTable( S, table )  do \
-{ \
-    (table).sz = 0; \
-    (table).alloc_sz = 0; \
-    (table).s = 0; \
-} while (0)
+qual_inline
+    void
+init_TableT (Table* t, TableElSz elsz)
+{
+    *t = dflt_TableT (elsz);
+}
+#define InitTable( t ) \
+    init_TableT ((Table*)&(t), sizeof(*(t).s))
 
-#define GrowTable( S, table, capac ) \
-    grow_nodep_TableT_##S (&(table), capac, realloc)
+qual_inline
+    void
+lose_Table (Table* t)
+{
+    if (t->alloc_lgsz > 0)
+        free (t->s);
+}
+#define LoseTable( table ) \
+    lose_Table ((Table*) &(table))
 
-#define Grow1Table( S, table ) \
-    grow1_nodep_TableT_##S (&(table), realloc)
+qual_inline
+    TableSz
+allocsz_Table (const Table* t)
+{
+    if (t->alloc_lgsz == 0)  return 0;
+    return (TableSz)1 << (t->alloc_lgsz - 1);
+}
 
-#define DeclGrow1Table( S, table, x ) \
-    TableElT_##S* const x = Grow1Table( S, table )
+qual_inline
+    void*
+elt_TableT (Table* t, TableSz idx, TableElSz elsz)
+{
+    return EltZ( t->s, idx, elsz );
+}
+qual_inline void* elt_Table (Table* t, TableSz idx)
+{ return elt_TableT (t, idx, t->elsz); }
 
-#define MPopTable( S, table, capac )  do \
-{ \
-    (table).sz -= (capac); \
-    if ((table).sz < (table).alloc_sz / 4 && (table).alloc_sz > 4) \
-    { \
-        do \
-        { \
-            (table).alloc_sz /= 2; \
-        } while ((table).sz < (table).alloc_sz / 4 && (table).alloc_sz > 4); \
-        (table).s = (TableElT_##S*) \
-            realloc ((table).s, (table).alloc_sz * sizeof (TableElT_##S)); \
-    } \
-} while (0)
+qual_inline
+    TableSz
+idxelt_TableT (const Table* t, const void* el, TableElSz elsz)
+{
+    return (TableSz) IdxEltZ( t->s, el, elsz );
+}
+qual_inline TableSz idxelt_Table (const Table* t, const void* el)
+{ return idxelt_TableT (t, el, t->elsz); }
+#define IdxEltTable( t, el ) \
+    idxelt_TableT ((Table*) &(t), el, sizeof(*(t).s))
 
-#define SizeTable( S, table, capac )  do \
-{ \
-    if ((table).sz <= (capac))  GrowTable( S, table, (capac) - (table).sz ); \
-    else                        MPopTable( S, table, (table).sz - (capac) ); \
-} while (0)
+
+qual_inline
+    void
+grow_TableT (Table* t, TableSz capac, TableElSz elsz)
+{
+    t->sz += capac;
+    if ((t->sz << 1) > ((TableSz)1 << t->alloc_lgsz))
+    {
+        if (t->alloc_lgsz == 0)
+        {
+            t->s = 0;
+            t->alloc_lgsz = 1;
+        }
+        while (t->sz > ((TableSz)1 << t->alloc_lgsz))
+            t->alloc_lgsz += 1;
+
+        t->alloc_lgsz += 1;
+        t->s = realloc (t->s, allocsz_Table (t) * elsz);
+    }
+}
+#define GrowTable( t, capac ) \
+    grow_TableT ((Table*) &(t), capac, sizeof(*(t).s))
+qual_inline void grow_Table (Table* t, TableSz capac)
+{ grow_TableT (t, capac, t->elsz); }
+
+
+qual_inline
+    void
+mpop_TableT (Table* t, TableSz capac, TableElSz elsz)
+{
+    t->sz -= capac;
+    if ((t->alloc_lgsz >= 3) && ((t->sz >> (t->alloc_lgsz - 3)) == 0))
+    {
+        while ((t->alloc_lgsz >= 4) && ((t->sz >> (t->alloc_lgsz - 4)) == 0))
+            t->alloc_lgsz -= 1;
+        t->alloc_lgsz -= 1;
+        t->s = realloc (t->s, allocsz_Table (t) * elsz);
+    }
+}
+#define MPopTable( t, capac ) \
+    mpop_TableT ((Table*) &(t), capac, sizeof(*(t).s))
+qual_inline void mpop_Table (Table* t, TableSz capac)
+{ mpop_TableT (t, capac, t->elsz); }
+
+
+qual_inline
+    void*
+grow1_TableT (Table* t, TableElSz elsz)
+{
+    grow_TableT (t, 1, elsz);
+    return elt_TableT (t, t->sz - 1, elsz);
+}
+    /* (grow1_TableT ((Table*) &(t), sizeof(*(t).s)),  */
+#define Grow1Table( t ) \
+    (grow_TableT ((Table*) &(t), 1, sizeof(*(t).s)), \
+     &(t).s[(t).sz-1])
+#define DeclGrow1Table( S, t, x ) \
+    TableElT_##S* const x = Grow1Table( t )
+#define PushTable( table, x ) \
+    *(Grow1Table( table )) = (x)
+qual_inline void* grow1_Table (Table* t)
+{ return grow1_TableT (t, t->elsz); }
+
+
+qual_inline
+    void
+size_TableT (Table* t, TableSz capac, TableElSz elsz)
+{
+    if (t->sz <= capac)  grow_TableT (t, capac - t->sz, elsz);
+    else                 mpop_TableT (t, t->sz - capac, elsz);
+}
+#define SizeTable( t, capac ) \
+    size_TableT ((Table*) &(t), capac, sizeof(*(t).s))
+qual_inline void size_Table (Table* t, TableSz capac)
+{ size_TableT (t, capac, t->elsz); }
+
 
     /** Never downsize.**/
-#define SizeUpTable( S, table, capac ) do \
-{ \
-    if ((table).sz < (capac))  GrowTable( S, table, (capac) - (table).sz ); \
-} while (0)
+qual_inline
+    void
+sizeup_TableT (Table* t, TableSz capac, TableElSz elsz)
+{
+    if (t->sz < capac)
+        grow_TableT (t, capac - t->sz, elsz);
+}
+#define SizeUpTable( t, capac ) \
+    sizeup_TableT ((Table*) &(t), capac, sizeof(*(t).s))
+qual_inline void sizeup_Table (Table* t, TableSz capac)
+{ sizeup_TableT (t, capac, t->elsz); }
 
-#define PushTable( S, table, x ) \
-    *(Grow1Table( S, table )) = (x)
 
-#define PackTable( S, table )  do if ((table).sz < (table).alloc_sz) \
-{ \
-    if ((table).sz == 0) \
-    { \
-        free ((table).s); \
-        (table).s = 0; \
-    } \
-    else \
-    { \
-        (table).s = (TableElT_##S*) \
-            realloc ((table).s, (table).alloc_sz * sizeof (TableElT_##S)); \
-    } \
-} while (0)
-
-#define LoseTable( S, table )  do if ((table).alloc_sz > 0) \
-{ \
-    free ((table).s); \
-} while (0)
-
-#define IndexInTable( S, table, e ) \
-    IndexOf( TableElT_##S, (table).s, e )
+qual_inline
+    void
+pack_TableT (Table* t, TableElSz elsz)
+{
+    if ((t->sz << 1) < ((TableSz) 1 << t->alloc_lgsz))
+    {
+        if (t->sz == 0)
+        {
+            free (t->s);
+            t->s = 0;
+            t->alloc_lgsz = 0;
+        }
+        else
+        {
+            t->s = realloc (t->s, t->sz * elsz);
+            while ((t->sz << 1) < ((TableSz) 1 << t->alloc_lgsz))
+                t->alloc_lgsz -= 1;
+        }
+    }
+}
+#define PackTable( t ) \
+    pack_TableT ((Table*) &(t), sizeof(*(t).s))
+qual_inline void pack_Table (Table* t)
+{ pack_TableT (t, t->elsz); }
 
 #endif
 

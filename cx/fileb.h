@@ -4,15 +4,16 @@
 
 #include "table.h"
 
+#include <stdarg.h>
 #include <stdio.h>
 
-#ifndef Table_byte
-#define Table_byte Table_byte
+#ifndef DeclTableT_byte
+#define DeclTableT_byte
 DeclTableT( byte, byte );
 #endif
 
-#ifndef Table_char
-#define Table_char Table_char
+#ifndef DeclTableT_char
+#define DeclTableT_char
 DeclTableT( char, char );
 #endif
 
@@ -30,12 +31,14 @@ typedef enum FileB_Format FileB_Format;
 
 struct FileB
 {
+        /* TODO - Needs to be lighter weight.*/
     FILE* f;
     TableT(byte) buf;
-    TableSzT_byte off;
+    TableSzT(byte) off;
     bool good;
     bool sink;
     bool byline;
+        /* TODO - Flag for auto-flush so packets can be sent.*/
     FileB_Format fmt;
     TableT(char) pathname;
     TableT(char) filename;
@@ -53,11 +56,13 @@ lose_FileB (FileB* f);
 void
 seto_FileB (FileB* f, bool sink);
 byte*
-ensure_FileB (FileB* f, TableSzT_byte);
+ensure_FileB (FileB* f, TableSzT(byte) n);
 void
 setfmt_FileB (FileB* f, FileB_Format fmt);
 bool
 open_FileB (FileB* f, const char* pathname, const char* filename);
+void
+set_FILE_FileB (FileB* f, FILE* file);
 void
 olay_FileB (FileB* olay, FileB* source);
 char*
@@ -89,11 +94,15 @@ void
 dump_char_FileB (FileB* f, char c);
 void
 dump_cstr_FileB (FileB* f, const char* s);
+void
+vprintf_FileB (FileB* f, const char* fmt, va_list args);
+void
+printf_FileB (FileB* f, const char* fmt, ...);
 
 void
-dumpn_byte_FileB (FileB* f, const byte* a, TableSzT_byte n);
+dumpn_byte_FileB (FileB* f, const byte* a, TableSzT(byte) n);
 void
-dumpn_char_FileB (FileB* f, const char* a, TableSzT_byte n);
+dumpn_char_FileB (FileB* f, const char* a, TableSzT(byte) n);
 
 char*
 load_uint_cstr (uint* ret, const char* in);
@@ -106,10 +115,7 @@ bool
 load_real_FileB (FileB* f, real* x);
 
 bool
-loadn_byte_FileB (FileB* f, byte* a, TableSzT_byte n);
-
-FileB*
-stdout_FileB ();
+loadn_byte_FileB (FileB* f, byte* a, TableSzT(byte) n);
 
 
 qual_inline

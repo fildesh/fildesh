@@ -1,3 +1,4 @@
+#!/bin/env lace
 
 # Compute the sum from 1 to N
 # by generating lines containing 1 to N, 1 to N-1, ..., 1 to 2, 1
@@ -87,16 +88,18 @@ cat $(XF echo) $(XF seq) $(XFv pump) $(O a)
 
 #tee $(X a) out $(O a)
 
+$(H comment)
 awk $(X a) $(H script) $(O a)
 # Use this command if fflush() not implemented in your awk.
 #stdbuf -oL awk $(X a) $(H script) $(O a)
 
 $(H comment)
+
 # Instead of running awk, the next block can be used.
 echo $(H prog) $(O exe)
 gcc $(X exe) -O3 -o $(OF exe) -xc -
 $(XF exe) $(X a) $(O a)
-$(H comment)
+#$(H comment)
 
 tee $(X a) $(OF^ pump) $(O a)
 

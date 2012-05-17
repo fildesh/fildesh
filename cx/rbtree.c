@@ -17,7 +17,8 @@ joint (RBTNode* x)
 static RBTNode*
 split (RBTNode* x, Bit side)
 {
-    return CastUp( RBTNode, bst, x->bst.split[side] );
+    BSTNode* y = x->bst.split[side];
+    return y ? CastUp( RBTNode, bst, y ) : 0;
 }
 
 static void
@@ -138,64 +139,28 @@ setf_RBTree (RBTree* t, RBTNode* x)
 static void
 fixup_remove (RBTNode* y, RBTree* t, Bit side)
 {
+    if (y->red)
+    {
+        y->red = 0;
+        return;
+    }
+
     while (!root (t, y))
     {
         RBTNode* b = joint (y);
-        RBTNode* a;
-        RBTNode* w;
-        RBTNode* x;
+        RBTNode* a = split (b, !side);
+        RBTNode* w = 0;
+        RBTNode* x = 0;
 
-            /* Case 1.          (done)
-             *
-             *      b+            a#
-             *      / \           / \
-             *    a#   #'y  =>  w*   +b
-             *    / \               / \
-             *  w*   *x           x*   #y
-             */
-        if (b->red)
+        if (a)
         {
-            rotate (b, side);
-            break;
+            w = split (a, !side);
+            x = split (a, side);
         }
-        a = split (b, !side);
 
-            /* Case 2.        (continue, match case 1)
+            /* Case 1.                        (done)
              *
-             *      b#            a#
-             *      / \           / \
-             *    a+   #'y  =>  w#   +b
-             *    / \               / \
-             *  w#   #x           x#   #'y
-             */
-        if (a->red)
-        {
-            rotate (b, side);
-            a->red = 0;
-            b->red = 1;
-            continue;  /* Match case 1.*/
-        }
-        w = split (a, !side);
-
-            /* Case 3.          (done)
-             *
-             *      b#            a#
-             *      / \           / \
-             *    a#   #'y  =>  w#   #b
-             *    / \               / \
-             *  w+   *x           x*   #y
-             */
-        if (w->red)
-        {
-            rotate (b, side);
-            w->red = 0;
-            break;
-        }
-        x = split (a, side);
-
-            /* Case 4.                        (done)
-             *
-             *      b#             b#           x#
+             *      b*             b*           x*
              *      / \            / \          / \
              *    a#   #'y  =>   x+   #y  =>  a#   #b
              *    / \            / \          /|   |\
@@ -203,11 +168,57 @@ fixup_remove (RBTNode* y, RBTree* t, Bit side)
              *       / \       / \
              *     1#   #2   w*   #1
              */
-        if (x->red)
+        if (x && x->red)
         {
             rotate (a, !side);
             rotate (b, side);
-            x->red = 0;
+            if (b->red)  b->red = 0;
+            else         x->red = 0;
+            break;
+        }
+
+            /* Case 2.          (done)
+             *
+             *      b+            a#
+             *      / \           / \
+             *    a#   #'y  =>  w*   +b
+             *    / \               / \
+             *  w*   #x           x#   #y
+             */
+        if (b->red)
+        {
+            rotate (b, side);
+            break;
+        }
+
+            /* Case 3.        (continue, match case 1 or 2)
+             *
+             *      b#            a#
+             *      / \           / \
+             *    a+   #'y  =>  w#   +b
+             *    / \               / \
+             *  w#   #x           x#   #'y
+             */
+        if (a && a->red)
+        {
+            rotate (b, side);
+            a->red = 0;
+            b->red = 1;
+            continue;  /* Match case 1 or 2.*/
+        }
+
+            /* Case 4.          (done)
+             *
+             *      b#            a#
+             *      / \           / \
+             *    a#   #'y  =>  w#   #b
+             *    / \               / \
+             *  w+   *x           x*   #y
+             */
+        if (w && w->red)
+        {
+            rotate (b, side);
+            w->red = 0;
             break;
         }
 
@@ -231,9 +242,9 @@ remove_RBTree (RBTree* t, RBTNode* y)
     RBTNode* x = joint (y);
     Bit side = side_BSTNode (&y->bst);
     Bit red;
-    remove_BSTree (&t->bst, &y->bst);
+    remove_BSTNode (&y->bst);
     x = split (x, side);
-    if (&x->bst == t->bst.sentinel)
+    if (!x)
     {
         red = y->red;
     }
@@ -244,11 +255,19 @@ remove_RBTree (RBTree* t, RBTNode* y)
     }
     if (red)  return;
 
-        /* Put /y/ as a leaf in the tree to simplify fixup.*/
-    y->red = 0;
-    y->bst.split[0] = t->bst.sentinel;
-    y->bst.split[1] = t->bst.sentinel;
-
-    fixup_remove (y, t, y->bst.joint->split[1] == t->bst.sentinel);
+    if (y->bst.split[0])
+    {
+        fixup_remove (split (y, 0), t, 0);
+    }
+    else if (y->bst.split[1])
+    {
+        fixup_remove (split (y, 1), t, 1);
+    }
+    else
+    {
+            /* Put /y/ as a leaf in the tree to simplify fixup.*/
+        y->red = 0;
+        fixup_remove (y, t, !y->bst.joint->split[1]);
+    }
 }
 

@@ -44,12 +44,25 @@ ensure_BSTree (BSTree* t, BSTNode* x);
 BSTNode*
 setf_BSTree (BSTree* t, BSTNode* x);
 void
-remove_BSTree (BSTree* t, BSTNode* a);
+remove_BSTNode (BSTNode* a);
 
-Bit
-side_BSTNode (const BSTNode* x);
 void
 rotate_BSTNode (BSTNode* b, Bit side);
+
+qual_inline
+    Bit
+side_BSTNode (const BSTNode* x)
+{
+    return (x && x == x->joint->split[1]) ? 1 : 0;
+}
+
+qual_inline
+    void
+join_BSTNode (BSTNode* y, BSTNode* x, Bit side)
+{
+    y->split[side] = x;
+    if (x)  x->joint = y;
+}
 
 #ifdef IncludeC
 #include "bstree.c"

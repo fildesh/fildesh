@@ -126,16 +126,16 @@ static void
 init_Command (Command* cmd)
 {
     cmd->kind = NCommandKinds;
-    InitTable( CString, cmd->args );
-    InitTable( CString, cmd->extra_args );
-    InitTable( CString, cmd->tmp_files );
+    InitTable( cmd->args );
+    InitTable( cmd->extra_args );
+    InitTable( cmd->tmp_files );
     cmd->exec_fd = -1;
     cmd->exec_doc = 0;
     cmd->stdis = -1;
-    InitTable( int, cmd->is );
+    InitTable( cmd->is );
     cmd->stdos = -1;
-    InitTable( int, cmd->os );
-    InitTable( iargs, cmd->iargs );
+    InitTable( cmd->os );
+    InitTable( cmd->iargs );
 }
 
 static void
@@ -149,16 +149,16 @@ close_Command (Command* cmd)
         UFor( i, cmd->is.sz )
             close (cmd->is.s[i]);
     }
-    LoseTable( int, cmd->is );
-    InitTable( int, cmd->is );
+    LoseTable( cmd->is );
+    InitTable( cmd->is );
 
     if (cmd->os.sz > 0)
     {
         UFor( i, cmd->os.sz )
             close (cmd->os.s[i]);
     }
-    LoseTable( int, cmd->os );
-    InitTable( int, cmd->os );
+    LoseTable( cmd->os );
+    InitTable( cmd->os );
 
     if (cmd->exec_fd >= 0)
     {
@@ -175,22 +175,22 @@ lose_Command (Command* cmd)
     close_Command (cmd);
     free (cmd->line);
     if (cmd->kind == RunCommand)
-        LoseTable( CString, cmd->args );
+        LoseTable( cmd->args );
     else if (cmd->kind == HereDocCommand)
         free (cmd->doc);
 
     UFor( i, cmd->extra_args.sz )
         free (cmd->extra_args.s[i]);
-    LoseTable( CString, cmd->extra_args );
+    LoseTable( cmd->extra_args );
 
     UFor( i, cmd->tmp_files.sz )
     {
         remove (cmd->tmp_files.s[i]);
         free (cmd->tmp_files.s[i]);
     }
-    LoseTable( CString, cmd->tmp_files );
+    LoseTable( cmd->tmp_files );
 
-    LoseTable( iargs, cmd->iargs );
+    LoseTable( cmd->iargs );
 }
 
 
@@ -199,14 +199,14 @@ getf_SymVal (TableT(SymVal)* syms, Assoc(SymVal)* assoc, const char* s)
 {
     SymVal* x;  SymVal* y;
 
-    GrowTable( SymVal, *syms, 1 );
+    GrowTable( *syms, 1 );
     x = &syms->s[syms->sz-1];
     init_SymVal (x);
     x->name = s;
 
     FixRefsAssoc( SymVal, *assoc, syms->s, syms->sz-1 );
     y = GetfAssoc( SymVal, *assoc, *x );
-    if (y != x)  MPopTable( SymVal, *syms, 1 );
+    if (y != x)  MPopTable( *syms, 1 );
     return y;
 }
 
@@ -258,12 +258,12 @@ parse_here_doc (FileB* in, const char* term)
         return s;
     }
 
-    GrowTable( char, delim, 1 + strlen(term) + 1 );
+    GrowTable( delim, 1 + strlen(term) + 1 );
     delim.s[0] = '\n';
     strcpy (&delim.s[1], term);
 
     s = getlined_FileB (in, delim.s);
-    LoseTable( char, delim );
+    LoseTable( delim );
     return strdup (s);
 }
 
@@ -307,14 +307,14 @@ parse_line (FileB* in)
         if (multiline)  --n;
 
         i = line.sz;
-        GrowTable( char, line, n );
+        GrowTable( line, n );
         memcpy (&line.s[i], s, n * sizeof (char));
 
         if (!multiline)  break;
     }
-    GrowTable( char, line, 1 );
+    GrowTable( line, 1 );
     line.s[line.sz-1] = '\0';
-    PackTable( char, line );
+    PackTable( line );
     return line.s;
 }
 
@@ -332,7 +332,7 @@ sep_line (TableT(CString)* args, char* s)
         if (s[0] == '\'')
         {
             s = &s[1];
-            PushTable( CString, *args, s );
+            PushTable( *args, s );
             i = strcspn (s, "'");
             if (s[i] == '\0')
             {
@@ -343,7 +343,7 @@ sep_line (TableT(CString)* args, char* s)
         }
         else if (s[0] == '$' && s[1] == '(')
         {
-            PushTable( CString, *args, s );
+            PushTable( *args, s );
             s = &s[2];
             i = strcspn (s, ")");
             if (s[i] == '\0')
@@ -355,7 +355,7 @@ sep_line (TableT(CString)* args, char* s)
         }
         else
         {
-            PushTable( CString, *args, s );
+            PushTable( *args, s );
             i = count_non_ws (s);
             s = &s[i];
         }
@@ -363,7 +363,7 @@ sep_line (TableT(CString)* args, char* s)
         s[0] = '\0';
         s = &s[1];
     }
-    PackTable( CString, *args );
+    PackTable( *args );
 }
 
 
@@ -381,7 +381,7 @@ parse_file (FileB* in)
             free (line);
             break;
         }
-        GrowTable( Command, cmds, 1 );
+        GrowTable( cmds, 1 );
         cmd = &cmds.s[cmds.sz - 1];
         init_Command (cmd);
         cmd->line = line;
@@ -398,7 +398,7 @@ parse_file (FileB* in)
             inject_include (in, &line[4]);
                 /* We don't add a command, just add more file content!*/
             lose_Command (&cmds.s[cmds.sz-1]);
-            MPopTable( Command, cmds, 1 );
+            MPopTable( cmds, 1 );
         }
         else
         {
@@ -406,7 +406,7 @@ parse_file (FileB* in)
             sep_line (&cmd->args, cmd->line);
         }
     }
-    PackTable( Command, cmds );
+    PackTable( cmds );
     return cmds;
 }
 
@@ -486,17 +486,17 @@ static void
 add_ios_Command (Command* cmd, int in, int out)
 {
     if (in >= 0)
-        PushTable( int, cmd->is, in );
+        PushTable( cmd->is, in );
 
     if (out >= 0)
-        PushTable( int, cmd->os, out );
+        PushTable( cmd->os, out );
 }
 
 static void
 add_iarg_Command (Command* cmd, int in, bool scrap_newline)
 {
     add_ios_Command (cmd, in, -1);
-    GrowTable( iargs, cmd->iargs, 1 );
+    GrowTable( cmd->iargs, 1 );
     cmd->iargs.s[cmd->iargs.sz-1].fd = in;
     cmd->iargs.s[cmd->iargs.sz-1].scrap_newline = scrap_newline;
 }
@@ -504,7 +504,7 @@ add_iarg_Command (Command* cmd, int in, bool scrap_newline)
 static char*
 add_extra_arg_Command (Command* cmd, const char* s)
 {
-    PushTable( CString, cmd->extra_args, strdup (s) );
+    PushTable( cmd->extra_args, strdup (s) );
     return cmd->extra_args.s[cmd->extra_args.sz - 1];
 }
 
@@ -521,7 +521,7 @@ add_tmp_file_Command (Command* cmd, uint x, const char* tmpdir)
 {
     char buf[1024];
     sprintf (buf, "%s/%u", tmpdir, x);
-    PushTable( CString, cmd->tmp_files, strdup (buf) );
+    PushTable( cmd->tmp_files, strdup (buf) );
     return cmd->tmp_files.s[cmd->tmp_files.sz - 1];
 }
 
@@ -759,7 +759,7 @@ setup_commands (TableT(Command)* cmds,
 
     UFor( i, syms.sz )
         cleanup_SymVal (&syms.s[i]);
-    LoseTable( SymVal, syms );
+    LoseTable( syms );
 }
 
 static void
@@ -819,7 +819,7 @@ readin_fd (int in, bool scrap_newline)
         ssize_t n;
         n = off + n_per_chunk + 1;
         if (buf.sz < (size_t) n)
-            GrowTable( char, buf, n - buf.sz );
+            GrowTable( buf, n - buf.sz );
 
         n = read (in, &buf.s[off], n_per_chunk * sizeof(char));
         assert (n >= 0 && "Problem reading file descriptor!");
@@ -828,7 +828,7 @@ readin_fd (int in, bool scrap_newline)
     }
     close (in);
 
-    MPopTable( char, buf, buf.sz - off + 1 );
+    MPopTable( buf, buf.sz - off + 1 );
     buf.s[off] = '\0';
     if (scrap_newline && off > 0 && buf.s[off-1] == '\n')
     {
@@ -880,10 +880,10 @@ add_util_path_env ()
         return;
     }
 
-    GrowTable( char, dec, strlen (path) + 1 + strlen (v) + 1 );
+    GrowTable( dec, strlen (path) + 1 + strlen (v) + 1 );
     sprintf (dec.s, "%s:%s", path, v);
     setenv (k, dec.s, 1);
-    LoseTable( char, dec );
+    LoseTable( dec );
 }
 
 static void
@@ -928,9 +928,9 @@ int main (int argc, char** argv)
         {
             if (argi >= argc)  show_usage_and_exit ();
             arg = argv[argi++];
-            in.buf.s = (byte*) strdup (arg);
-            in.buf.sz = strlen (cstr_FileB (&in)) + 1;
-            in.buf.alloc_sz = in.buf.sz;
+            SizeTable( in.buf, strlen (arg) + 1 );
+            memcpy (in.buf.s, arg, in.buf.sz);
+            PackTable( in.buf );
         }
         else
         {
@@ -1005,7 +1005,7 @@ int main (int argc, char** argv)
 
         fill_dependent_args (cmd);
 
-        PushTable( CString, cmd->args, 0 );
+        PushTable( cmd->args, 0 );
         execvp (cmd->args.s[0], cmd->args.s);
         ret = errno;
 
@@ -1021,7 +1021,7 @@ int main (int argc, char** argv)
             ret = waitpid (cmds.s[i].pid, 0, 0);
         lose_Command (&cmds.s[i]);
     }
-    LoseTable( Command, cmds );
+    LoseTable( cmds );
 
     ret = rmdir (tmpdir);
     if (ret != 0)
