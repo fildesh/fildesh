@@ -3,13 +3,14 @@ CC = gcc
 CFLAGS = -ansi -pedantic -Wall -Wextra
 CFLAGS += -D_SVID_SOURCE
 CFLAGS += -g
+#CFLAGS += -O3
 
 utils = lace add best-match xpipe void cat1 ssh-all ujoin godo
 util_exes = $(addprefix bin/,$(utils))
 
 all: $(util_exes)
 
-bin/lace: lace.c cx/fileb.o cx/bstree.o cx/rbtree.o
+bin/lace: lace.c cx/fileb.o cx/bstree.o cx/rbtree.o cx/sys-cx.o
 	$(CC) $(CFLAGS) \
 		"-DUtilBin=\"$(PWD)/bin\"" \
 		-o $@ $^

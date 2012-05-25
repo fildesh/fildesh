@@ -41,3 +41,30 @@
 
 #define DecloStack( T, x )  T onstack_##x; T* const restrict x = &onstack_##x
 
+
+
+    /** Implemented in sys-cx.c **/
+void
+dbglog_printf3 (const char* file,
+                const char* func,
+                uint line,
+                const char* fmt,
+                ...);
+
+#define DBog0(s)  dbglog_printf3 (__FILE__,__FUNC__,__LINE__,s)
+#define DBog1(s,a)  dbglog_printf3 (__FILE__,__FUNC__,__LINE__,s,a)
+#define DBog2(s,a,b)  dbglog_printf3 (__FILE__,__FUNC__,__LINE__,s,a,b)
+#define DBog3(s,a,b,c)  dbglog_printf3 (__FILE__,__FUNC__,__LINE__,s,a,b,c)
+
+    /** Cascading if statement.**/
+#define BCasc(cond, inv, msg) \
+    if (!(inv) || !(cond)) \
+    { \
+        inv = false; \
+        if (msg) \
+        { \
+            DBog2( "(%s => !(%s))", msg, #cond ); \
+        } \
+    } \
+    BLose() if (inv) BInit()
+

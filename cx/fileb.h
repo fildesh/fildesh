@@ -139,6 +139,11 @@ cstr_FileB (FileB* f)
     return (char*) f->buf.s;
 }
 
+    /* Implemented in sys-cx.c */
+FileB* stdin_FileB ();
+FileB* stdout_FileB ();
+FileB* stderr_FileB ();
+
 #ifdef IncludeC
 #include "fileb.c"
 #endif

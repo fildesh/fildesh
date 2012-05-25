@@ -60,7 +60,7 @@ typedef float real;
 #endif
 
 
-#ifdef _WIN32
+#ifdef _MSC_VER
     /* Disable warning: 'fopen' unsafe, use fopen_s instead */
     /* REF CMakeLists.txt: Define _CRT_SECURE_NO_WARNINGS */
 
@@ -75,7 +75,7 @@ typedef float real;
 
 #if __STDC_VERSION__ < 199901L
 #define inline __inline
-#ifdef _WIN32
+#ifdef _MSC_VER
 #define restrict
 #else
 #define restrict __restrict
@@ -83,6 +83,13 @@ typedef float real;
 #endif
 
 #define qual_inline static inline
+
+#ifdef _MSC_VER
+# define __FUNC__ __FUNCTION__
+#else
+# define __FUNC__ __func__
+#endif
+
 
 #include "synhax.h"
 

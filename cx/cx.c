@@ -1,6 +1,7 @@
 
 #include "fileb.h"
 #include "bstree.h"
+#include "sys-cx.h"
 #include "table.h"
 
 #include <stdio.h>
@@ -154,7 +155,7 @@ dump_ASTree (FileB* f, ASTree* t)
 
 int main (int argc, char** argv)
 {
-    DecloStack( FileB, f );
+    FileB* f;
     ASTree tree;
     ASTree* t = &tree;
     AST nodes[10];
@@ -162,9 +163,9 @@ int main (int argc, char** argv)
     (void) argc;
     (void) argv;
 
-    init_FileB (f);
-    seto_FileB (f, true);
-    set_FILE_FileB (f, stdout);
+    init_sys_cx ();
+
+    f = stdout_FileB ();
 
     init_ASTree (t);
     init_AST (ast);
@@ -192,8 +193,9 @@ int main (int argc, char** argv)
 
     dump_ASTree (f, t);
     dump_char_FileB (f, '\n');
-    lose_FileB (f);
     lose_ASTree (&tree);
+
+    lose_sys_cx ();
     return 0;
 }
 

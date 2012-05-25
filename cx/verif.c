@@ -1,6 +1,7 @@
 
 #include "fileb.h"
 #include "rbtree.h"
+#include "sys-cx.h"
 #include "table.h"
 
 #include <assert.h>
@@ -206,7 +207,7 @@ testfn_skipws_FileB ()
     open_FileB (in, "", "test");
     in->f = fopen ("test", "rb");
 #else
-    size_Table ((Table*)&in->buf, sizeof (text));
+    SizeTable (in->buf, sizeof(text));
     memcpy (in->buf.s, text, in->buf.sz);
 #endif
 
@@ -336,30 +337,37 @@ testfn_Table ()
     uint n = (1 << 12) + 1;
     DeclTableT( V, int );
     DeclTable( V, t );
+    Table tmp_table;
 
-    Claim2( t.elsz ,==, sizeof(int) );
-    claim_allocsz_Table ((Table*) &t);
-    claim_allocsz_Table ((Table*) &t);
+    tmp_table = MakeCastTable( t );
+    claim_allocsz_Table (&tmp_table);
+    XferCastTable( t, tmp_table );
 
     { BLoop( i, n )
-        DeclGrow1Table( V, t, x );
+        DeclGrow1Table( V, x, t );
         *x = (int) i;
-        claim_allocsz_Table ((Table*) &t);
+
+        tmp_table = MakeCastTable( t );
+        claim_allocsz_Table (&tmp_table);
+        XferCastTable( t, tmp_table );
     } BLose()
 
     PackTable( t );
-    Claim2( t.sz - 1 ,==, allocsz_Table ((Table*) &t) );
+    Claim2( t.sz - 1 ,==, AllocszTable( t ));
 
     { BLoop( i, n )
         t.s[t.sz-1] = val;
         MPopTable( t, 1 );
-        claim_allocsz_Table ((Table*) &t);
+
+        tmp_table = MakeCastTable( t );
+        claim_allocsz_Table (&tmp_table);
+        XferCastTable( t, tmp_table );
     } BLose()
 
     Claim2( 0 ,==, t.sz );
-    Claim2( 0 ,<, allocsz_Table ((Table*) &t) );
+    Claim2( 0 ,<, AllocszTable( t ));
     PackTable( t );
-    Claim2( 0 ,==, allocsz_Table ((Table*) &t) );
+    Claim2( 0 ,==, AllocszTable( t ));
     InitTable( t );
 
     PushTable( t, val );
@@ -379,11 +387,13 @@ testfn_Table ()
 
 int main ()
 {
-    testfn_skipws_FileB ();
+    init_sys_cx ();
 
+    testfn_skipws_FileB ();
     testfn_RBTree ();
     testfn_Table ();
 
+    lose_sys_cx ();
     return 0;
 }
 

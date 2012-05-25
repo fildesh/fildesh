@@ -9,6 +9,7 @@
 
 #include "cx/assoc.h"
 #include "cx/fileb.h"
+#include "cx/sys-cx.h"
 
 #include <assert.h>
 #include <limits.h>
@@ -904,6 +905,8 @@ int main (int argc, char** argv)
     int argi = 0;
     char tmpdir[128];
 
+    init_sys_cx ();
+
     init_FileB (&in);
 
     ExeName = argv[argi++];
@@ -1027,6 +1030,7 @@ int main (int argc, char** argv)
     if (ret != 0)
         fprintf (ErrOut, "Temp directory not removed: %s\n", tmpdir);
 
+    lose_sys_cx ();
     return 0;
 }
 

@@ -8,6 +8,8 @@
 
 #include "def.h"
 #include "fileb.h"
+#include "sys-cx.h"
+
 #include <aio.h>
 #include <errno.h>
 #include <netdb.h>
@@ -19,89 +21,6 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-
-#ifdef _MSC_VER
-# define __func__ __FUNCTION__
-#endif
-
-
-#define DBog0(s)  dump_debug(__FILE__,__func__,__LINE__,s)
-#define DBog1(s,a)  dump_debug (__FILE__,__func__,__LINE__,s,a)
-#define DBog2(s,a,b)  dump_debug (__FILE__,__func__,__LINE__,s,a,b)
-#define DBog3(s,a,b,c)  dump_debug (__FILE__,__func__,__LINE__,s,a,b,c)
-
-
-#if 0
-#define CCif(cond, inv, msg) \
-    if ((inv) && !(cond)) \
-    { \
-        inv = false; \
-        if (msg) \
-        { \
-            DBog2( "(%s => !(%s))", msg, #cond ); \
-        } \
-    } \
-    else if (inv)
-#endif
-
-    /** Cascading if statement.**/
-#define BCasc(cond, inv, msg) \
-    if (!(inv) || !(cond)) \
-    { \
-        inv = false; \
-        if (msg) \
-        { \
-            DBog2( "(%s => !(%s))", msg, #cond ); \
-        } \
-    } \
-    BLose() if (inv) BInit()
-
-
-FileB LogOut;
-
-static
-    void
-dump_debug (const char* file,
-            const char* func,
-            uint line,
-            const char* fmt,
-            ...)
-{
-    va_list args;
-    int err = errno;
-    FileB* f = &LogOut;
-
-    printf_FileB (f, "%s(%u) %s: ", file, line, func);
-
-    va_start (args, fmt);
-    vprintf_FileB (f, fmt, args);
-    va_end(args);
-
-    dump_char_FileB (f, '\n');
-
-    if (err != 0)
-    {
-#if 0
-            /* Why no work? */
-        const uint n = 2048 * sizeof(char);
-        char* s;
-
-        printf_FileB (f, "^^^ errno:%d ", err);
-
-        s = (char*) ensure_FileB (f, n);
-        s[0] = '\0';
-
-        strerror_r (err, s, n);
-
-        f->off += strlen (s) * sizeof(char);
-        dump_char_FileB (f, '\n');
-#else
-        printf_FileB (f, "^^^ errno:%d %s\n", err, strerror (err));
-#endif
-        errno = 0;
-    }
-    flusho_FileB (f);
-}
 
 
 int main ()
@@ -118,12 +37,10 @@ int main ()
     struct addrinfo* addr = 0;
     DecloStack( struct aiocb, aio );
 
+    init_sys_cx ();
+
     memset (&crit, 0, sizeof (crit));
     memset (aio, 0, sizeof (*aio));
-
-    init_FileB (&LogOut);
-    seto_FileB (&LogOut, true);
-    set_FILE_FileB (&LogOut, stderr);
 
 
         /* crit.ai_family = AF_INET6; */
@@ -278,8 +195,8 @@ int main ()
     if (list)
         freeaddrinfo (list);
 
-    lose_FileB (&LogOut);
     memset (aio, 0, sizeof (*aio));
+    lose_sys_cx ();
     return 0;
 }
 

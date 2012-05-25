@@ -1,6 +1,7 @@
 
 #include "cx/assoc.h"
 #include "cx/fileb.h"
+#include "cx/sys-cx.h"
 
 #include <assert.h>
 #include <stdlib.h>
