@@ -106,7 +106,7 @@ setup_lookup_table (FileB* in, const char* delim)
 
         join = Grow1Table( table );
         init_LineJoin (join);
-        s = strdup (s);
+        s = dup_cstr (s);
         join->field = s;
         if (delim)
             s = strstr (s, delim);
@@ -199,7 +199,7 @@ compare_lines (FileB* in, Assoc(LineJoin)* assoc, const char* delim,
             else
                 payload = &payload[1 + strspn (&payload[1], WhiteSpaceChars)];
 
-            join->stream_line = strdup (payload);
+            join->stream_line = dup_cstr (payload);
         }
     }
     if (nomatch_out)  fclose (nomatch_out);

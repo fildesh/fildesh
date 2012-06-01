@@ -1,53 +1,67 @@
 
 CC = gcc
-CFLAGS = -ansi -pedantic -Wall -Wextra
-CFLAGS += -D_SVID_SOURCE
+CFLAGS = -ansi -pedantic
+CFLAGS += -Wall -Wextra -Wstrict-aliasing
 CFLAGS += -g
 #CFLAGS += -O3
 
-utils = lace add best-match xpipe void cat1 ssh-all ujoin godo
-util_exes = $(addprefix bin/,$(utils))
+cx_path = ../cx
+bin_path = ../bin
 
-all: $(util_exes)
+IFLAGS = -I$(cx_path)/..
 
-bin/lace: lace.c cx/fileb.o cx/bstree.o cx/rbtree.o cx/sys-cx.o
-	$(CC) $(CFLAGS) \
-		"-DUtilBin=\"$(PWD)/bin\"" \
+CFLAGS += $(IFLAGS)
+
+exe_list = lace add best-match xpipe void cat1 ssh-all ujoin godo
+exe_list := $(addprefix $(bin_path)/,$(exe_list))
+
+all: $(exe_list)
+
+$(bin_path)/lace: lace.c \
+	$(cx_path)/fileb.o $(cx_path)/bstree.o \
+	$(cx_path)/rbtree.o $(cx_path)/sys-cx.o
+	$(CC) $(CFLAGS) -D_SVID_SOURCE \
+		"-DUtilBin=\"$(bin_path)\"" \
 		-o $@ $^
+
+$(bin_path)/add: add.c $(cx_path)/fileb.o
+	$(CC) $(CFLAGS) -o $@ $^
+
+$(bin_path)/best-match: best-match.c $(cx_path)/fileb.o
+	$(CC) $(CFLAGS) -o $@ $^
+
+$(bin_path)/xpipe: xpipe.c
+	$(CC) $(CFLAGS) -o $@ $^
+
+$(bin_path)/void: void.c
+	$(CC) $(CFLAGS) -o $@ $^
+
+$(bin_path)/cat1: cat1.c
+	$(CC) $(CFLAGS) -o $@ $^
+
+$(bin_path)/ssh-all: ssh-all.c
+	$(CC) $(CFLAGS) -o $@ $^
+
+$(bin_path)/ujoin: ujoin.c \
+	$(cx_path)/fileb.o $(cx_path)/bstree.o $(cx_path)/rbtree.o
+	$(CC) $(CFLAGS) -o $@ $^
+
+$(bin_path)/godo: godo.c
+	$(CC) $(CFLAGS) -o $@ $^
+
+.PHONY: $(cx_path)
+$(cx_path):
+	$(MAKE) -C $(cx_path)
 
 %.o: %.c
 	$(CC) -c $(CFLAGS) $^ -o $@
 
-bin/add: add.c cx/fileb.o
-	$(CC) $(CFLAGS) -o $@ $^
+$(exe_list): | $(bin_path)
 
-bin/best-match: best-match.c cx/fileb.o
-	$(CC) $(CFLAGS) -o $@ $^
-
-bin/xpipe: xpipe.c
-	$(CC) $(CFLAGS) -o $@ $^
-
-bin/void: void.c
-	$(CC) $(CFLAGS) -o $@ $^
-
-bin/cat1: cat1.c
-	$(CC) $(CFLAGS) -o $@ $^
-
-bin/ssh-all: ssh-all.c
-	$(CC) $(CFLAGS) -o $@ $^
-
-bin/ujoin: ujoin.c cx/fileb.o cx/bstree.o cx/rbtree.o
-	$(CC) $(CFLAGS) -o $@ $^
-
-bin/godo: godo.c
-	$(CC) $(CFLAGS) -o $@ $^
-
-$(util_exes): | bin
-
-bin:
-	mkdir -p bin
+$(bin_path):
+	mkdir -p $(bin_path)
 
 .PHONY: clean
 clean:
-	rm -f $(util_exes)
+	rm -f *.o $(exe_list)
 

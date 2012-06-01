@@ -4,6 +4,8 @@
      * to the forked process' stdin.
      **/
 
+#define POSIX_C_SOURCE 1
+
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,6 +13,7 @@
 
 #include <errno.h>
 #include <unistd.h>
+#include <sys/types.h>
 #include <sys/wait.h>
 
     /** Bail out.**/

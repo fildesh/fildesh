@@ -1,23 +1,20 @@
 
+#define POSIX_C_SOURCE 1
+
+#include "cx/fileb.h"
+
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include <unistd.h>
+#include <sys/types.h>
 #include <sys/wait.h>
 
 #define BigEnuff 4096
 
-#define AllocT( Type, capacity ) \
-    (((capacity) == 0) ? (Type*) 0 : \
-     (Type*) malloc ((capacity) * sizeof (Type)))
-
-#define ArraySz( a )  sizeof(a) / sizeof(*a)
-
 #define AssertSafe( cond, msg )  assert ((cond) && (msg))
-
-static const char WhiteSpaceChars[] = " \t\v\r\n";
 
 static const char* ExeName = 0;
 #define ErrOut stderr
@@ -51,19 +48,17 @@ exec_ssh (const char* host)
     };
     const int argc = ArraySz( ssh_cmd );
     int argi = 0;
-    char** argv;
-
-    argv = AllocT( char*, argc+1 );
+    DeclAlloc( char*, argv, argc+1 );
 
     for (; ssh_cmd[argi]; ++ argi)
-        argv[argi] = strdup (ssh_cmd[argi]);
+        argv[argi] = dup_cstr (ssh_cmd[argi]);
 
-    argv[argi++] = strdup (host);
+    argv[argi++] = dup_cstr (host);
 
     for (; ssh_cmd[argi]; ++ argi)
-        argv[argi] = strdup (ssh_cmd[argi]);
+        argv[argi] = dup_cstr (ssh_cmd[argi]);
 
-    argv[argi++] = strdup (host);
+    argv[argi++] = dup_cstr (host);
 
     AssertSafe( argi == argc, "" );
     argv[argc] = 0;
