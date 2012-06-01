@@ -69,7 +69,7 @@ split_lines (char* buf, uint* ret_max_len)
         s = &s[1];
     }
 
-    lines = (char**) malloc ((n+1) * sizeof (char**));
+    lines = AllocT( char*, n+1 );
     lines[n] = 0;
 
     s = buf;
@@ -173,7 +173,7 @@ int main (int argc, char** argv)
 
     buf = load_FileB (&lookup_in);
     lines = split_lines (buf, &width);
-    lcs_array = (uint*) malloc (width * sizeof (uint));
+    lcs_array = AllocT( uint, width );
 
     stream_in.f = open_file_arg (argv[argi++], false);
 

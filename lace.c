@@ -251,10 +251,10 @@ parse_here_doc (FileB* in, const char* term)
     if (term[3] == ':')
     {
         term = strchr (term, ')');
-        if (!term)  return strdup ("");
+        if (!term)  return dup_cstr ("");
         term = &term[1];
         term = &term[count_ws (term)];
-        s = strdup (term);
+        s = dup_cstr (term);
         trim_trailing_ws (s);
         return s;
     }
@@ -265,7 +265,7 @@ parse_here_doc (FileB* in, const char* term)
 
     s = getlined_FileB (in, delim.s);
     LoseTable( delim );
-    return strdup (s);
+    return dup_cstr (s);
 }
 
 static void
@@ -505,7 +505,7 @@ add_iarg_Command (Command* cmd, int in, bool scrap_newline)
 static char*
 add_extra_arg_Command (Command* cmd, const char* s)
 {
-    PushTable( cmd->extra_args, strdup (s) );
+    PushTable( cmd->extra_args, dup_cstr (s) );
     return cmd->extra_args.s[cmd->extra_args.sz - 1];
 }
 
@@ -522,7 +522,7 @@ add_tmp_file_Command (Command* cmd, uint x, const char* tmpdir)
 {
     char buf[1024];
     sprintf (buf, "%s/%u", tmpdir, x);
-    PushTable( cmd->tmp_files, strdup (buf) );
+    PushTable( cmd->tmp_files, dup_cstr (buf) );
     return cmd->tmp_files.s[cmd->tmp_files.sz - 1];
 }
 
