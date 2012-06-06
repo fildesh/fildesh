@@ -1,5 +1,6 @@
 
 #include "cx/fileb.h"
+#include "cx/sys-cx.h"
 
 #include <assert.h>
 #include <ctype.h>
@@ -158,6 +159,7 @@ int main (int argc, char** argv)
     uint width;
     int argi = 1;
 
+    init_sys_cx ();
     ExeName = argv[0];
 
     init_FileB (&lookup_in);
@@ -207,6 +209,7 @@ int main (int argc, char** argv)
     free (lines);
     lose_FileB (&lookup_in);
     lose_FileB (&stream_in);
+    lose_sys_cx ();
     return 0;
 }
 

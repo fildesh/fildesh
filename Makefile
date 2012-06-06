@@ -24,10 +24,10 @@ $(bin_path)/lace: lace.c \
 		"-DUtilBin=\"$(bin_path)\"" \
 		-o $@ $^
 
-$(bin_path)/add: add.c $(cx_path)/fileb.o
+$(bin_path)/add: add.c $(cx_path)/fileb.o $(cx_path)/sys-cx.o
 	$(CC) $(CFLAGS) -o $@ $^
 
-$(bin_path)/best-match: best-match.c $(cx_path)/fileb.o
+$(bin_path)/best-match: best-match.c $(cx_path)/fileb.o $(cx_path)/sys-cx.o
 	$(CC) $(CFLAGS) -o $@ $^
 
 $(bin_path)/xpipe: xpipe.c
@@ -43,7 +43,8 @@ $(bin_path)/ssh-all: ssh-all.c
 	$(CC) $(CFLAGS) -o $@ $^
 
 $(bin_path)/ujoin: ujoin.c \
-	$(cx_path)/fileb.o $(cx_path)/bstree.o $(cx_path)/rbtree.o
+	$(cx_path)/fileb.o $(cx_path)/bstree.o $(cx_path)/rbtree.o \
+	$(cx_path)/sys-cx.o
 	$(CC) $(CFLAGS) -o $@ $^
 
 $(bin_path)/godo: godo.c

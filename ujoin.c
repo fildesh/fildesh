@@ -223,6 +223,7 @@ int main (int argc, char** argv)
     TableT(LineJoin) table;
     Assoc(LineJoin) assoc;
 
+    init_sys_cx ();
     ExeName = argv[0];
 
     init_FileB (&lookup_in);
@@ -371,6 +372,7 @@ int main (int argc, char** argv)
     fclose (out);
 
     LoseTable( table );
+    lose_sys_cx ();
     return 0;
 }
 

@@ -1,5 +1,6 @@
 
 #include "cx/fileb.h"
+#include "cx/sys-cx.h"
 
 static real
 sum_line (FileB* f)
@@ -19,6 +20,7 @@ int main ()
     DecloStack( FileB, f );
     FILE* in = stdin;
     FILE* out = stdout;
+    init_sys_cx ();
 
     init_FileB (f);
     f->f = in;
@@ -29,12 +31,14 @@ int main ()
         FileB olay;
         real x;
 
-        olay_FileB (&olay, f);
+        init_FileB (&olay);
+        olay_FileB (&olay.xo, f);
         x = sum_line (&olay);
         fprintf (out, "%f\n", x);
         fflush (out);
     }
 
+    lose_sys_cx ();
     return 0;
 }
 

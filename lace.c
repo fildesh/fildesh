@@ -931,9 +931,9 @@ int main (int argc, char** argv)
         {
             if (argi >= argc)  show_usage_and_exit ();
             arg = argv[argi++];
-            SizeTable( in.buf, strlen (arg) + 1 );
-            memcpy (in.buf.s, arg, in.buf.sz);
-            PackTable( in.buf );
+            SizeTable( in.xo.buf, strlen (arg) + 1 );
+            memcpy (in.xo.buf.s, arg, in.xo.buf.sz);
+            PackTable( in.xo.buf );
         }
         else
         {
