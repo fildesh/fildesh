@@ -89,15 +89,15 @@ open_file_arg (const char* arg, bool writing)
 }
 
 static TableT(LineJoin)
-setup_lookup_table (FileB* in, const char* delim)
+setup_lookup_table (XFileB* xf, const char* delim)
 {
     DeclTable( LineJoin, table );
     const uint delim_sz = delim ? strlen (delim) : 0;
     char* s;
 
-    for (s = getline_FileB (in);
+    for (s = getline_XFileB (xf);
          s;
-         s = getline_FileB (in))
+         s = getline_XFileB (xf))
     {
         LineJoin* join;
 
@@ -130,16 +130,16 @@ setup_lookup_table (FileB* in, const char* delim)
 }
 
 static void
-compare_lines (FileB* in, Assoc(LineJoin)* assoc, const char* delim,
+compare_lines (XFileB* xf, Assoc(LineJoin)* assoc, const char* delim,
                FILE* nomatch_out, FILE* dupmatch_out)
 {
     const uint delim_sz = delim ? strlen (delim) : 0;
     uint line_no = 0;
     char* line;
 
-    for (line = getline_FileB (in);
+    for (line = getline_XFileB (xf);
          line;
-         line = getline_FileB (in))
+         line = getline_XFileB (xf))
     {
         char* field = line;
         char* payload;
@@ -321,12 +321,12 @@ int main (int argc, char** argv)
         }
     }
 
-    table = setup_lookup_table (&lookup_in, delim);
+    table = setup_lookup_table (&lookup_in.xo, delim);
     lose_FileB (&lookup_in);
     InitAssoc( LineJoin, assoc );
     UFor( i, table.sz )
         SetfAssoc( LineJoin, assoc, table.s[i] );
-    compare_lines (&stream_in, &assoc, delim, nomatch_file, dupmatch_file);
+    compare_lines (&stream_in.xo, &assoc, delim, nomatch_file, dupmatch_file);
     lose_FileB (&stream_in);
 
     if (!delim)  delim = "\t";

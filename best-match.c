@@ -195,9 +195,9 @@ int main (int argc, char** argv)
     }
 
     out = stdout;
-    for (s = getline_FileB (&stream_in);
+    for (s = getline_XFileB (&stream_in.xo);
          s;
-         s = getline_FileB (&stream_in))
+         s = getline_XFileB (&stream_in.xo))
     {
         uint i;
         i = matching_line (lcs_array, width, s, lines);

@@ -21,7 +21,7 @@ $(bin_path)/lace: lace.c \
 	$(cx_path)/fileb.o $(cx_path)/bstree.o \
 	$(cx_path)/rbtree.o $(cx_path)/sys-cx.o
 	$(CC) $(CFLAGS) -D_SVID_SOURCE \
-		"-DUtilBin=\"$(bin_path)\"" \
+		"-DUtilBin=\"$(abspath $(bin_path))\"" \
 		-o $@ $^
 
 $(bin_path)/add: add.c $(cx_path)/fileb.o $(cx_path)/sys-cx.o

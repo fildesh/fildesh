@@ -242,7 +242,7 @@ trim_trailing_ws (char* s)
      * $(H: var_name) value
      **/
 static char*
-parse_here_doc (FileB* in, const char* term)
+parse_here_doc (XFileB* in, const char* term)
 {
     DeclTable( char, delim );
     char* s;
@@ -263,7 +263,7 @@ parse_here_doc (FileB* in, const char* term)
     delim.s[0] = '\n';
     strcpy (&delim.s[1], term);
 
-    s = getlined_FileB (in, delim.s);
+    s = getlined_XFileB (in, delim.s);
     LoseTable( delim );
     return dup_cstr (s);
 }
@@ -287,14 +287,14 @@ inject_include (FileB* in, char* name)
 }
 
 static char*
-parse_line (FileB* in)
+parse_line (XFileB* xf)
 {
     DeclTable( char, line );
     char* s;
 
-    for (s = getline_FileB (in);
+    for (s = getline_XFileB (xf);
          s;
-         s = getline_FileB (in))
+         s = getline_XFileB (xf))
     {
         uint i, n;
         bool multiline = false;
@@ -371,12 +371,13 @@ sep_line (TableT(CString)* args, char* s)
 static TableT(Command)
 parse_file (FileB* in)
 {
+    XFileB* const xf = &in->xo;
     DeclTable( Command, cmds );
     while (true)
     {
         char* line;
         Command* cmd;
-        line = parse_line (in);
+        line = parse_line (xf);
         if (line[0] == '\0')
         {
             free (line);
@@ -391,7 +392,7 @@ parse_file (FileB* in)
             line[2] == 'H' && line[3] != 'F')
         {
             cmd->kind = HereDocCommand;
-            cmd->doc = parse_here_doc (in, line);
+            cmd->doc = parse_here_doc (xf, line);
         }
         else if (line[0] == '$' && line[1] == '(' &&
                  line[2] == '<' && line[3] == '<')

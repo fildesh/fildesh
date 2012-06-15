@@ -3,39 +3,37 @@
 #include "cx/sys-cx.h"
 
 static real
-sum_line (FileB* f)
+sum_line (XFileB* xf)
 {
     real x = 0, y = 0;
-    while (load_real_FileB (f, &y))
+    while (load_real_XFileB (xf, &y))
         x += y;
-    f->good = true;
-    skipds_FileB (f, 0);
-    if (cstr_FileB (f) [0] != '\0')
+    skipds_XFileB (xf, 0);
+    if (cstr_XFileB (xf) [0] != '\0')
         fputs ("Line is no good!\n", stderr);
     return x;
 }
 
 int main ()
 {
-    DecloStack( FileB, f );
-    FILE* in = stdin;
-    FILE* out = stdout;
+    XFileB* xf;
+    OFileB* of;
+    char* s;
+
     init_sys_cx ();
 
-    init_FileB (f);
-    f->f = in;
-    f->byline = true;
+    xf = stdin_XFileB ();
+    of = stdout_OFileB ();
 
-    while (getline_FileB (f))
+    for (s = getline_XFileB (xf);
+         s;
+         s = getline_XFileB (xf))
     {
-        FileB olay;
         real x;
-
-        init_FileB (&olay);
-        olay_FileB (&olay.xo, f);
+        XFileB olay = olay_XFileB (xf, IdxEltTable( xf->buf, s ));
         x = sum_line (&olay);
-        fprintf (out, "%f\n", x);
-        fflush (out);
+        printf_OFileB (of, "%f\n", x);
+        flush_OFileB (of);
     }
 
     lose_sys_cx ();
