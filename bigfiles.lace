@@ -1,0 +1,6 @@
+#!/bin/env lace
+
+ $(O a) du -a
+$(XO a) sort -n
+cat1 $(XF a)
+
