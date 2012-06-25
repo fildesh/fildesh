@@ -13,7 +13,8 @@ IFLAGS = -I$(cx_path)/..
 
 CFLAGS += $(IFLAGS)
 
-exe_list = lace add best-match xpipe void cat1 ssh-all ujoin godo \
+exe_list = lace add best-match xpipe void cat1 ssh-all ujoin \
+		   godo waitdo \
 		   chatty satsyn
 exe_list := $(addprefix $(bin_path)/,$(exe_list))
 
@@ -50,6 +51,9 @@ $(bin_path)/ujoin: ujoin.c \
 	$(CC) $(CFLAGS) -o $@ $^
 
 $(bin_path)/godo: godo.c
+	$(CC) $(CFLAGS) -o $@ $^
+
+$(bin_path)/waitdo: waitdo.c $(cx_path)/fileb.o $(cx_path)/sys-cx.o
 	$(CC) $(CFLAGS) -o $@ $^
 
 $(bin_path)/chatty: chatty.c $(cx_path)/fileb.o $(cx_path)/sys-cx.o
