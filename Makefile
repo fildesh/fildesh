@@ -3,7 +3,7 @@ CC = gcc
 CFLAGS = -ansi -pedantic
 CFLAGS += -Wall -Wextra -Wstrict-aliasing
 CFLAGS += -g
-#CFLAGS += -pg
+#CFLAGS += -pg -O2
 #CFLAGS += -O3
 
 cx_path = ../cx
