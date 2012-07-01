@@ -690,7 +690,7 @@ setup_commands (TableT(Command)* cmds,
                     assert (sym->kind == NSymValKinds);
                     sym->kind = ODescVal;
                     sym->cmd_idx = i;
-                    sym->arg_idx = Max_uint;
+                    InitDomMax( sym->arg_idx );
 
                     ret = pipe (fd);
                     assert (!(ret < 0));
@@ -715,7 +715,7 @@ setup_commands (TableT(Command)* cmds,
                     assert (sym->kind == NSymValKinds);
                     sym->kind = IFutureDescVal;
                     sym->cmd_idx = i;
-                    sym->arg_idx = Max_uint;
+                    InitDomMax( sym->arg_idx );
 
                     ret = pipe (fd);
                     assert (!(ret < 0));
