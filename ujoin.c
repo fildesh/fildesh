@@ -1,5 +1,5 @@
 
-#include "cx/assoc.h"
+#include "cx/associa.h"
 #include "cx/fileb.h"
 #include "cx/sys-cx.h"
 
@@ -13,27 +13,17 @@ static const char* ExeName = 0;
 typedef struct LineJoin LineJoin;
 struct LineJoin
 {
-    DeclAssocNodeField( LineJoin, LineJoin );
-    char* field;
+    TabStr field;
     char* lookup_line;  /* From small file.*/
     char* stream_line;  /* From large file.*/
 };
 
 DeclTableT( LineJoin, LineJoin );
 
-static Trit
-swapped_LineJoin (const LineJoin* lhs, const LineJoin* rhs)
-{
-    int ret = strcmp (lhs->field, rhs->field);
-    return ((ret < 0) ? Nil : ((ret > 0) ? Yes : May));
-}
-
-DeclAssocT( LineJoin, LineJoin, swapped_LineJoin );
-
     void
 init_LineJoin (LineJoin* join)
 {
-    join->field = 0;
+    join->field = dflt_TabStr ();
     join->lookup_line = 0;
     join->stream_line = 0;
 }
@@ -41,23 +31,28 @@ init_LineJoin (LineJoin* join)
     void
 lose_LineJoin (LineJoin* join)
 {
-    if (join->field)
-        free (join->field);
-    if (join->stream_line && join->stream_line != join->field)
+    if (join->stream_line && join->stream_line != join->field.s)
         free (join->stream_line);
+    lose_TabStr (&join->field);
 }
 
 static void
 show_usage_and_exit ()
 {
-    const char* s;
-    s = "Usage: %s SMALL LARGE [OPTION]*\n";
-    fprintf (ErrOut, s, ExeName);
-    s = "    SMALL is a file used for lookup.\n";
-    fputs (s, ErrOut);
-    s = "    LARGE can be a stream, which tries to match the fields in SMALL.\n";
-    fputs (s, ErrOut);
-    exit (1);
+    OFileB* of = stderr_OFileB ();
+    printf_OFileB (of, "Usage: %s SMALL LARGE [OPTION]*\n", ExeName);
+#define f(s)  dump_cstr_OFileB (of, s); dump_char_OFileB (of, '\n')
+    f("    SMALL is a file used for lookup.");
+    f("    LARGE can be a stream, which tries to match the fields in SMALL.");
+    f("    -x  Nix the join field.");
+    f("    -l  Output from LARGE on the left.");
+    f("    -ws  Use any whitespace as the delimiter.");
+    f("    -d DELIM  Use a delimiter other than tab.");
+    f("    -p DFLT  Default record to use when it is empty.");
+    f("    -nomatch FILE  Put lines whose fields could not be matched here.");
+    f("    -dupmatch FILE  Put fields who got matched here.");
+#undef f
+    fail_exit_sys_cx (0);
 }
 
     /** Open a file for reading or writing.
@@ -106,8 +101,8 @@ setup_lookup_table (XFileB* xf, const char* delim)
 
         join = Grow1Table( table );
         init_LineJoin (join);
-        s = dup_cstr (s);
-        join->field = s;
+        join->field = cons1_TabStr (s);
+        s = cstr_TabStr (&join->field);
         if (delim)
             s = strstr (s, delim);
         else
@@ -118,6 +113,7 @@ setup_lookup_table (XFileB* xf, const char* delim)
 
         if (s)
         {
+            join->field.sz = IdxEltTable( join->field, s );
             s[0] = 0;
             if (delim)  s = &s[delim_sz];
             else        s = &s[1 + strspn (&s[1], WhiteSpaceChars)];
@@ -130,7 +126,7 @@ setup_lookup_table (XFileB* xf, const char* delim)
 }
 
 static void
-compare_lines (XFileB* xf, Assoc(LineJoin)* assoc, const char* delim,
+compare_lines (XFileB* xf, Associa* map, const char* delim,
                FILE* nomatch_out, FILE* dupmatch_out)
 {
     const uint delim_sz = delim ? strlen (delim) : 0;
@@ -161,9 +157,9 @@ compare_lines (XFileB* xf, Assoc(LineJoin)* assoc, const char* delim,
         }
 
         {
-            LineJoin tmp;
-            tmp.field = field;
-            join = GetAssoc( LineJoin, *assoc, tmp );
+            TabStr ts = dflt1_TabStr (field);
+            Assoc* assoc = lookup_Associa (map, &ts);
+            join = (assoc ? *(LineJoin**) val_of_Assoc (assoc) : 0);
         }
 
         if (!join)
@@ -190,7 +186,7 @@ compare_lines (XFileB* xf, Assoc(LineJoin)* assoc, const char* delim,
         }
         else if (!payload)
         {
-            join->stream_line = join->field;
+            join->stream_line = join->field.s;
         }
         else
         {
@@ -221,7 +217,7 @@ int main (int argc, char** argv)
     int argi = 1;
     uint i;
     TableT(LineJoin) table;
-    Assoc(LineJoin) assoc;
+    DecloStack( Associa, map );
 
     init_sys_cx ();
     ExeName = argv[0];
@@ -308,7 +304,7 @@ int main (int argc, char** argv)
         {
             if (argi >= argc)
             {
-                fprintf (ErrOut, "%s - Need argument for nomatch file (-dupmatch).\n",
+                fprintf (ErrOut, "%s - Need argument for dupmatch file (-dupmatch).\n",
                          ExeName);
                 exit (1);
             }
@@ -323,10 +319,15 @@ int main (int argc, char** argv)
 
     table = setup_lookup_table (&lookup_in.xo, delim);
     lose_FileB (&lookup_in);
-    InitAssoc( LineJoin, assoc );
-    UFor( i, table.sz )
-        SetfAssoc( LineJoin, assoc, table.s[i] );
-    compare_lines (&stream_in.xo, &assoc, delim, nomatch_file, dupmatch_file);
+    init3_Associa (map, sizeof(TabStr), sizeof(LineJoin*),
+                   (Trit (*) (const void*, const void*)) swapped_TabStr);
+    { BLoop( i, table.sz )
+        LineJoin* join = &table.s[i];
+        insert_Associa (map, &join->field, &join);
+    } BLose()
+    flush_OFileB (stderr_OFileB ());
+    compare_lines (&stream_in.xo, map, delim, nomatch_file, dupmatch_file);
+
     lose_FileB (&stream_in);
 
     if (!delim)  delim = "\t";
@@ -341,11 +342,11 @@ int main (int argc, char** argv)
             bool tab = false;
             if (keep_join_field)
             {
-                fputs (join->field, out);
+                fputs (join->field.s, out);
                 tab = true;
             }
 
-            if (stream_on_left && stream_line != join->field)
+            if (stream_on_left && stream_line != join->field.s)
             {
                 if (tab)  fputs (delim, out);
                 tab = true;
@@ -359,7 +360,7 @@ int main (int argc, char** argv)
                 fputs (join->lookup_line, out);
             }
 
-            if (!stream_on_left && stream_line != join->field)
+            if (!stream_on_left && stream_line != join->field.s)
             {
                 if (tab)  fputs (delim, out);
                 tab = true;
@@ -372,6 +373,7 @@ int main (int argc, char** argv)
     fclose (out);
 
     LoseTable( table );
+    lose_Associa (map);
     lose_sys_cx ();
     return 0;
 }

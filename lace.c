@@ -7,7 +7,7 @@
     /* stdlib.h  mkdtemp() */
 #define _BSD_SOURCE
 
-#include "cx/assoc.h"
+#include "cx/associa.h"
 #include "cx/fileb.h"
 #include "cx/sys-cx.h"
 
@@ -88,7 +88,7 @@ DeclTableT( Command, Command );
 
 struct SymVal
 {
-    const char* name;
+    TabStr name;
     SymValKind kind;
     uint arg_idx;  /* If a file.*/
     uint cmd_idx;
@@ -97,29 +97,20 @@ struct SymVal
         int file_desc;
         char* here_doc;
     } as;
-    DeclAssocNodeField( SymVal, SymVal );
 };
 DeclTableT( SymVal, SymVal );
-
-static Trit
-swapped_SymVal (const SymVal* lhs, const SymVal* rhs)
-{
-    int ret = strcmp (lhs->name, rhs->name);
-    return ((ret < 0) ? Nil : ((ret > 0) ? Yes : May));
-}
-DeclAssocT( SymVal, SymVal, swapped_SymVal );
 
 static void
 init_SymVal (SymVal* v)
 {
-    v->name = 0;
+    v->name = dflt_TabStr ();
     v->kind = NSymValKinds;
 }
 
 static void
-cleanup_SymVal (SymVal* v)
+lose_SymVal (SymVal* v)
 {
-    v->name = 0;
+    v->name = dflt_TabStr ();
     v->kind = NSymValKinds;
 }
 
@@ -196,19 +187,23 @@ lose_Command (Command* cmd)
 
 
 static SymVal*
-getf_SymVal (TableT(SymVal)* syms, Assoc(SymVal)* assoc, const char* s)
+getf_SymVal (Associa* map, const char* s)
 {
-    SymVal* x;  SymVal* y;
+    TabStr ts;
+    Assoc* assoc;
+    ujint sz = map->nodes.sz;
+    SymVal* x;
 
-    GrowTable( *syms, 1 );
-    x = &syms->s[syms->sz-1];
-    init_SymVal (x);
-    x->name = s;
+    ts = dflt1_TabStr (s);
 
-    FixRefsAssoc( SymVal, *assoc, syms->s, syms->sz-1 );
-    y = GetfAssoc( SymVal, *assoc, *x );
-    if (y != x)  MPopTable( *syms, 1 );
-    return y;
+    assoc = ensure_Associa (map, &ts);
+    x = (SymVal*) val_of_Assoc (assoc);
+    if (map->nodes.sz > sz)
+    {
+        init_SymVal (x);
+        x->name = ts;
+    }
+    return x;
 }
 
 static uint
@@ -550,15 +545,13 @@ static void
 setup_commands (TableT(Command)* cmds,
                 const char* tmpdir)
 {
-    uint i;
     uint ntmp_files = 0;
-    DeclTable( SymVal, syms );
-    Assoc( SymVal ) assoc;
+    DecloStack( Associa, map );
 
-    InitAssoc( SymVal, assoc );
+    init3_Associa (map, sizeof(TabStr), sizeof(SymVal),
+                   (Trit (*) (const void*, const void*)) swapped_TabStr);
 
-    for (i = 0; i < cmds->sz; ++i)
-    {
+    { BLoop( i, cmds->sz )
         uint arg_q = 0, arg_r = 0;
         Command* cmd;
         cmd = &cmds->s[i];
@@ -574,7 +567,7 @@ setup_commands (TableT(Command)* cmds,
 
             kind = parse_sym (cmd->line);
             assert (kind == HereDocVal);
-            sym = getf_SymVal (&syms, &assoc, cmd->line);
+            sym = getf_SymVal (map, cmd->line);
             sym->kind = kind;
             sym->as.here_doc = cmd->doc;
         }
@@ -588,7 +581,7 @@ setup_commands (TableT(Command)* cmds,
 
             if (kind < NSymValKinds)
             {
-                sym = getf_SymVal (&syms, &assoc, cmd->args.s[arg_r]);
+                sym = getf_SymVal (map, cmd->args.s[arg_r]);
                 if (kind == HereDocVal)
                 {
                     assert (sym->kind == HereDocVal);
@@ -747,21 +740,21 @@ setup_commands (TableT(Command)* cmds,
 
         if (cmd->args.sz > 0)
             cmd->args.sz = arg_q;
-    }
+    } BLose()
 
-    UFor( i, syms.sz )
-    {
-        if (syms.s[i].kind == ODescVal)
+    { BLoop( i, map->vals.sz )
+        SymVal* x = (SymVal*) elt_Table (&map->vals, i);
+        if (x->kind == ODescVal)
         {
             fprintf (ErrOut, "%s - Dangling output stream! Symbol:%s\n",
-                     ExeName, syms.s[i].name);
-            assert (syms.s[i].kind != ODescVal && "A dangling output stream!");
+                     ExeName, x->name.s);
+            assert (x->kind != ODescVal && "A dangling output stream!");
         }
-    }
 
-    UFor( i, syms.sz )
-        cleanup_SymVal (&syms.s[i]);
-    LoseTable( syms );
+        lose_SymVal (x);
+    } BLose()
+
+    lose_Associa (map);
 }
 
 static void
