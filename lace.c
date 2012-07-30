@@ -88,7 +88,7 @@ DeclTableT( Command, Command );
 
 struct SymVal
 {
-    TabStr name;
+    AlphaTab name;
     SymValKind kind;
     uint arg_idx;  /* If a file.*/
     uint cmd_idx;
@@ -103,14 +103,14 @@ DeclTableT( SymVal, SymVal );
 static void
 init_SymVal (SymVal* v)
 {
-    v->name = dflt_TabStr ();
+    v->name = dflt_AlphaTab ();
     v->kind = NSymValKinds;
 }
 
 static void
 lose_SymVal (SymVal* v)
 {
-    v->name = dflt_TabStr ();
+    v->name = dflt_AlphaTab ();
     v->kind = NSymValKinds;
 }
 
@@ -189,12 +189,12 @@ lose_Command (Command* cmd)
 static SymVal*
 getf_SymVal (Associa* map, const char* s)
 {
-    TabStr ts;
+    AlphaTab ts;
     Assoc* assoc;
     ujint sz = map->nodes.sz;
     SymVal* x;
 
-    ts = dflt1_TabStr (s);
+    ts = dflt1_AlphaTab (s);
 
     assoc = ensure_Associa (map, &ts);
     x = (SymVal*) val_of_Assoc (assoc);
@@ -548,8 +548,8 @@ setup_commands (TableT(Command)* cmds,
     uint ntmp_files = 0;
     DecloStack( Associa, map );
 
-    init3_Associa (map, sizeof(TabStr), sizeof(SymVal),
-                   (Trit (*) (const void*, const void*)) swapped_TabStr);
+    init3_Associa (map, sizeof(AlphaTab), sizeof(SymVal),
+                   (SwappedFn) swapped_AlphaTab);
 
     { BLoop( i, cmds->sz )
         uint arg_q = 0, arg_r = 0;

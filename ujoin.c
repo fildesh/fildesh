@@ -13,7 +13,7 @@ static const char* ExeName = 0;
 typedef struct LineJoin LineJoin;
 struct LineJoin
 {
-    TabStr field;
+    AlphaTab field;
     char* lookup_line;  /* From small file.*/
     char* stream_line;  /* From large file.*/
 };
@@ -23,7 +23,7 @@ DeclTableT( LineJoin, LineJoin );
     void
 init_LineJoin (LineJoin* join)
 {
-    join->field = dflt_TabStr ();
+    join->field = dflt_AlphaTab ();
     join->lookup_line = 0;
     join->stream_line = 0;
 }
@@ -33,7 +33,7 @@ lose_LineJoin (LineJoin* join)
 {
     if (join->stream_line && join->stream_line != join->field.s)
         free (join->stream_line);
-    lose_TabStr (&join->field);
+    lose_AlphaTab (&join->field);
 }
 
 static void
@@ -101,8 +101,8 @@ setup_lookup_table (XFileB* xf, const char* delim)
 
         join = Grow1Table( table );
         init_LineJoin (join);
-        join->field = cons1_TabStr (s);
-        s = cstr_TabStr (&join->field);
+        join->field = cons1_AlphaTab (s);
+        s = cstr_AlphaTab (&join->field);
         if (delim)
             s = strstr (s, delim);
         else
@@ -157,7 +157,7 @@ compare_lines (XFileB* xf, Associa* map, const char* delim,
         }
 
         {
-            TabStr ts = dflt1_TabStr (field);
+            AlphaTab ts = dflt1_AlphaTab (field);
             Assoc* assoc = lookup_Associa (map, &ts);
             join = (assoc ? *(LineJoin**) val_of_Assoc (assoc) : 0);
         }
@@ -319,8 +319,8 @@ int main (int argc, char** argv)
 
     table = setup_lookup_table (&lookup_in.xo, delim);
     lose_FileB (&lookup_in);
-    init3_Associa (map, sizeof(TabStr), sizeof(LineJoin*),
-                   (Trit (*) (const void*, const void*)) swapped_TabStr);
+    init3_Associa (map, sizeof(AlphaTab), sizeof(LineJoin*),
+                   (SwappedFn) swapped_AlphaTab);
     { BLoop( i, table.sz )
         LineJoin* join = &table.s[i];
         insert_Associa (map, &join->field, &join);
