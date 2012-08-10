@@ -1,17 +1,17 @@
+/** \file lace.c
+ *
+ * This is the lace utility
+ * as written by Alex Klinkhamer.
+ * This code is public domain - no restrictions.
+ **/
 
-    /** This is the lace utility
-     * as written by Alex Klinkhamer.
-     * This code is public domain - no restrictions.
-     **/
-
-    /* stdlib.h  mkdtemp() */
+/* stdlib.h  mkdtemp() */
 #define _BSD_SOURCE
 
+#include "cx/syscx.h"
 #include "cx/associa.h"
 #include "cx/fileb.h"
-#include "cx/sys-cx.h"
 
-#include <assert.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -21,10 +21,6 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
-
-
-static char* ExeName = 0;
-#define ErrOut stderr
 
 
 enum SymValKind
@@ -45,52 +41,41 @@ typedef enum CommandKind CommandKind;
 typedef struct SymVal SymVal;
 typedef struct Command Command;
 
-#ifndef DeclTableT_int
-#define DeclTableT_int
-DeclTableT( int, int );
-#endif
-
+DeclTableT( Command, Command );
+DeclTableT( SymVal, SymVal );
 DeclTableT( iargs, struct { int fd; bool scrap_newline; } );
-
-#ifndef DeclTableT_CString
-#define DeclTableT_CString
-DeclTableT( CString, char* );
-#endif
 
 struct Command
 {
     char* line;
     CommandKind kind;
-    TableT( CString ) args;
-    TableT( CString ) extra_args;
-    TableT( CString ) tmp_files;
+    TableT(cstr) args;
+    TableT(cstr) extra_args;
+    TableT(cstr) tmp_files;
     pid_t pid;
-        /* Input stream.*/
-    int stdis;
-    TableT( int ) is;
-        /* Output streams.*/
-    int stdos;
-    TableT( int ) os;
-        /* If >= 0, this is a file descriptor that will
-         * close when the program command is safe to run.
-         */
+    int stdis; /**< Standard input stream.**/
+    TableT( int ) is; /**< Input streams.**/
+    int stdos; /**< Standard output stream.**/
+    TableT( int ) os; /** Output streams.**/
+    /** If >= 0, this is a file descriptor that will
+     * close when the program command is safe to run.
+     **/
     int exec_fd;
-        /* If != 0, this is the contents of a file to execute.*/
+    /** If != 0, this is the contents of a file to execute.**/
     const char* exec_doc;
 
-        /* Use these input streams to fill corresponding (null) arguments.*/
+    /** Use these input streams to fill corresponding (null) arguments.**/
     TableT( iargs ) iargs;
 
-        /* Use this if it's a HERE document.*/
+    /** Use this if it's a HERE document.**/
     char* doc;
 };
-DeclTableT( Command, Command );
 
 struct SymVal
 {
     AlphaTab name;
     SymValKind kind;
-    uint arg_idx;  /* If a file.*/
+    uint arg_idx;  /**< If a file.**/
     uint cmd_idx;
     union SymVal_union
     {
@@ -98,7 +83,6 @@ struct SymVal
         char* here_doc;
     } as;
 };
-DeclTableT( SymVal, SymVal );
 
 static void
 init_SymVal (SymVal* v)
@@ -264,20 +248,17 @@ parse_here_doc (XFileB* in, const char* term)
 }
 
 static void
-inject_include (FileB* in, char* name)
+inject_include (XFileB* in, char* name)
 {
-    FileB src;
+    FileB src = dflt_FileB ();
 
     name = &name[count_ws (name)];
     name[strcspn (name, ")")] = '\0';
 
-    init_FileB (&src);
-    open_FileB (&src, 0, name);
-    if (!src.f)
-        fprintf (ErrOut, "%s - Failed to include file:%s\n",
-                 ExeName, name);
+    if (!open_FileB (&src, 0, name))
+        DBog1( "Failed to include file: %s", name );
 
-    inject_FileB (in, &src, "\n");
+    inject_XFileB (in, &src.xo, "\n");
     lose_FileB (&src);
 }
 
@@ -315,7 +296,7 @@ parse_line (XFileB* xf)
 }
 
 static void
-sep_line (TableT(CString)* args, char* s)
+sep_line (TableT(cstr)* args, char* s)
 {
     while (1)
     {
@@ -332,7 +313,7 @@ sep_line (TableT(CString)* args, char* s)
             i = strcspn (s, "'");
             if (s[i] == '\0')
             {
-                fputs ("Unterminated single quote.\n", ErrOut);
+                DBog0( "Unterminated single quote." );
                 break;
             }
             s = &s[i];
@@ -344,7 +325,7 @@ sep_line (TableT(CString)* args, char* s)
             i = strcspn (s, ")");
             if (s[i] == '\0')
             {
-                fputs ("Unterminated variable.\n", ErrOut);
+                DBog0( "Unterminated variable." );
                 break;
             }
             s = &s[i+1];
@@ -364,9 +345,8 @@ sep_line (TableT(CString)* args, char* s)
 
 
 static TableT(Command)
-parse_file (FileB* in)
+parse_file (XFileB* xf)
 {
-    XFileB* const xf = &in->xo;
     DeclTable( Command, cmds );
     while (true)
     {
@@ -392,7 +372,7 @@ parse_file (FileB* in)
         else if (line[0] == '$' && line[1] == '(' &&
                  line[2] == '<' && line[3] == '<')
         {
-            inject_include (in, &line[4]);
+            inject_include (xf, &line[4]);
                 /* We don't add a command, just add more file content!*/
             lose_Command (&cmds.s[cmds.sz-1]);
             MPopTable( cmds, 1 );
@@ -532,8 +512,7 @@ write_here_doc_file (const char* name, const char* doc)
     out = fopen (name, "wb");
     if (!out)
     {
-        fprintf (ErrOut, "Cannot open file for writing!:%s\n",
-                 name);
+        DBog1( "Cannot open file for writing!: %s", name );
         return;
     }
     n = strlen (doc);
@@ -556,17 +535,17 @@ setup_commands (TableT(Command)* cmds,
         Command* cmd;
         cmd = &cmds->s[i];
 
-            /* The command defines a HERE document.*/
+        /* The command defines a HERE document.*/
         if (cmd->kind == HereDocCommand)
         {
             SymVal* sym;
             SymValKind kind;
 
-                /* The loop below should not run.*/
-            assert (cmd->args.sz == 0 && "Invariant.");
+            /* The loop below should not run.*/
+            Claim2( cmd->args.sz ,==, 0 ); /* Invariant.*/
 
             kind = parse_sym (cmd->line);
-            assert (kind == HereDocVal);
+            Claim2( kind ,==, HereDocVal);
             sym = getf_SymVal (map, cmd->line);
             sym->kind = kind;
             sym->as.here_doc = cmd->doc;
@@ -584,7 +563,7 @@ setup_commands (TableT(Command)* cmds,
                 sym = getf_SymVal (map, cmd->args.s[arg_r]);
                 if (kind == HereDocVal)
                 {
-                    assert (sym->kind == HereDocVal);
+                    Claim2( sym->kind ,==, HereDocVal );
                     cmd->args.s[arg_q] = sym->as.here_doc;
                     ++ arg_q;
                 }
@@ -595,11 +574,11 @@ setup_commands (TableT(Command)* cmds,
                     int fd;
                     if (kind == IHereDocFileVal)
                     {
-                        assert (sym->kind == HereDocVal);
+                        Claim2( sym->kind ,==, HereDocVal );
                     }
                     else
                     {
-                        assert (sym->kind == ODescVal);
+                        Claim2( sym->kind ,==, ODescVal );
                         sym->kind = NSymValKinds;
                     }
                     fd = sym->as.file_desc;
@@ -633,7 +612,7 @@ setup_commands (TableT(Command)* cmds,
                     }
                     else
                     {
-                        assert (kind == IHereDocFileVal);
+                        Claim2( kind ,==, IHereDocFileVal );
                         cmd->args.s[arg_q] =
                             add_tmp_file_Command (cmd, ntmp_files, tmpdir);
                         ++ ntmp_files;
@@ -648,7 +627,7 @@ setup_commands (TableT(Command)* cmds,
                 else if (kind == OFutureDescVal || kind == OFutureDescFileVal)
                 {
                     int fd;
-                    assert (sym->kind == IFutureDescVal);
+                    Claim2( sym->kind ,==, IFutureDescVal );
                     sym->kind = NSymValKinds;
                     fd = sym->as.file_desc;
 
@@ -680,13 +659,13 @@ setup_commands (TableT(Command)* cmds,
                 {
                     int fd[2];
                     int ret;
-                    assert (sym->kind == NSymValKinds);
+                    Claim2( sym->kind ,==, NSymValKinds );
                     sym->kind = ODescVal;
                     sym->cmd_idx = i;
                     InitDomMax( sym->arg_idx );
 
-                    ret = pipe (fd);
-                    assert (!(ret < 0));
+                    ret = pipe_sysCx (fd);
+                    Claim2( ret ,>=, 0 );
 
                     sym->as.file_desc = fd[0];
                     if (kind == ODescVal || kind == IODescVal)
@@ -705,13 +684,13 @@ setup_commands (TableT(Command)* cmds,
                 {
                     int fd[2];
                     int ret;
-                    assert (sym->kind == NSymValKinds);
+                    Claim2( sym->kind ,==, NSymValKinds );
                     sym->kind = IFutureDescVal;
                     sym->cmd_idx = i;
                     InitDomMax( sym->arg_idx );
 
-                    ret = pipe (fd);
-                    assert (!(ret < 0));
+                    ret = pipe_sysCx (fd);
+                    Claim2( ret ,>=, 0 );
 
                     sym->as.file_desc = fd[1];
                     if (kind == IFutureDescVal)
@@ -746,9 +725,8 @@ setup_commands (TableT(Command)* cmds,
         SymVal* x = (SymVal*) elt_Table (&map->vals, i);
         if (x->kind == ODescVal)
         {
-            fprintf (ErrOut, "%s - Dangling output stream! Symbol:%s\n",
-                     ExeName, x->name.s);
-            assert (x->kind != ODescVal && "A dangling output stream!");
+            DBog1( "Dangling output stream! Symbol: %s", x->name.s );
+            failout_sysCx ("");
         }
 
         lose_SymVal (x);
@@ -817,7 +795,8 @@ readin_fd (int in, bool scrap_newline)
             GrowTable( buf, n - buf.sz );
 
         n = read (in, &buf.s[off], n_per_chunk * sizeof(char));
-        assert (n >= 0 && "Problem reading file descriptor!");
+        if (n < 0)
+            failout_sysCx ("Problem reading file descriptor!");
         if (n == 0)  break;
         off += n;
     }
@@ -840,19 +819,17 @@ readin_fd (int in, bool scrap_newline)
 static void
 fill_dependent_args (Command* cmd)
 {
-    uint i, j;
-    j = 0;
-    UFor( i, cmd->args.sz )
-    {
+    uint j = 0;
+    { BLoop( i, cmd->args.sz )
         if (!cmd->args.s[i])
         {
-            assert (j < cmd->iargs.sz);
+            Claim2( j ,<, cmd->iargs.sz );
             cmd->args.s[i] = readin_fd (cmd->iargs.s[j].fd,
                                         cmd->iargs.s[j].scrap_newline);
             ++ j;
         }
-    }
-    assert (j == cmd->iargs.sz);
+    } BLose()
+    Claim2( j ,==, cmd->iargs.sz );
 }
 
     /** Add the utility bin directory to the PATH environment variable.**/
@@ -884,26 +861,23 @@ add_util_path_env ()
 static void
 show_usage_and_exit ()
 {
-    const char* s;
-    s = "Usage: %s [[-f] SCRIPTFILE | -- SCRIPT]\n";
-    fprintf (ErrOut, s, ExeName);
-    exit (1);
+    printf_OFileB (stderr_OFileB (),
+                   "Usage: %s [[-f] SCRIPTFILE | -- SCRIPT]\n",
+                   exename_of_sysCx ());
+    failout_sysCx ("Bad args...");
 }
 
 int main (int argc, char** argv)
 {
-    FileB in;
+    int argi =
+        (init_sysCx (&argc, &argv),
+         1);
+    FileB in = dflt_FileB ();
     TableT( Command ) cmds;
     uint i;
     int ret;
-    int argi = 0;
     char tmpdir[128];
 
-    init_sys_cx ();
-
-    init_FileB (&in);
-
-    ExeName = argv[argi++];
 
     add_util_path_env ();
 
@@ -911,10 +885,8 @@ int main (int argc, char** argv)
 
     if (!mkdtemp (tmpdir))
     {
-        fprintf (ErrOut, "%s - Unable to create temp directory:%s\n",
-                 ExeName,
-                 strerror (errno));
-        exit (1);
+        DBog1( "Directory: %s", tmpdir );
+        failout_sysCx ("Unable to create temp directory...");
     }
 
     if (argi < argc)
@@ -941,9 +913,8 @@ int main (int argc, char** argv)
             in.f = fopen (arg, "rb");
             if (!in.f)
             {
-                fprintf (ErrOut, "%s - Cannot read script:%s\n",
-                         ExeName, arg);
-                exit (1);
+                DBog1( "Script file: %s", arg );
+                failout_sysCx ("Cannot read script!");
             }
         }
 
@@ -951,10 +922,10 @@ int main (int argc, char** argv)
     }
     else
     {
-        in.f = stdin;
+        set_FILE_FileB (&in, stdin);
     }
 
-    cmds = parse_file (&in);
+    cmds = parse_file (&in.xo);
     lose_FileB (&in);
 
     setup_commands (&cmds, tmpdir);
@@ -962,7 +933,7 @@ int main (int argc, char** argv)
 
     if (false)
         UFor( i, cmds.sz )
-            output_Command (ErrOut, &cmds.s[i]);
+            output_Command (stderr, &cmds.s[i]);
 
     for (i = 0; i < cmds.sz; ++i)
     {
@@ -979,14 +950,14 @@ int main (int argc, char** argv)
             close_Command (cmd);
             continue;
         }
-        assert (!(cmd->pid < 0));
+        Claim2( cmd->pid ,>=, 0 );
 
         UFor( j, cmds.sz )
             if (j != i)
                 close_Command (&cmds.s[j]);
 
-        if (cmd->stdis >= 0)  dup2 (cmd->stdis, 0);
-        if (cmd->stdos >= 0)  dup2 (cmd->stdos, 1);
+        if (cmd->stdis >= 0)  dup2_sysCx (cmd->stdis, 0);
+        if (cmd->stdos >= 0)  dup2_sysCx (cmd->stdos, 1);
 
         if (cmd->exec_fd >= 0)
         {
@@ -1003,13 +974,9 @@ int main (int argc, char** argv)
         fill_dependent_args (cmd);
 
         PushTable( cmd->args, 0 );
-        execvp (cmd->args.s[0], cmd->args.s);
-        ret = errno;
-
-        fprintf (ErrOut, "%s - Error executing:%s\n", ExeName, cmd->args.s[0]);
-        fprintf (ErrOut, "  Reason:%s\n", strerror (ret));
-        assert (0);
-        exit (1);
+        execvp_sysCx (cmd->args.s);
+        DBog1( "File: %s", cmd->args.s[0] );
+        failout_sysCx ("Could not execvp()...");
     }
 
     UFor( i, cmds.sz )
@@ -1022,9 +989,9 @@ int main (int argc, char** argv)
 
     ret = rmdir (tmpdir);
     if (ret != 0)
-        fprintf (ErrOut, "Temp directory not removed: %s\n", tmpdir);
+        DBog1( "Temp directory not removed: %s", tmpdir );
 
-    lose_sys_cx ();
+    lose_sysCx ();
     return 0;
 }
 

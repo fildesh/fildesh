@@ -1,6 +1,6 @@
 
+#include "cx/syscx.h"
 #include "cx/fileb.h"
-#include "cx/sys-cx.h"
 
 static real
 sum_line (XFileB* xf)
@@ -14,13 +14,21 @@ sum_line (XFileB* xf)
     return x;
 }
 
-int main ()
+int main (int argc, char** argv)
 {
+    int argi =
+        (init_sysCx (&argc, &argv),
+         1);
     XFileB* xf;
     OFileB* of;
     char* s;
 
-    init_sys_cx ();
+    if (argi < argc)
+    {
+        DBog0( "Just run without arguments and type numbers." );
+        DBog0( "You'll figure it out." );
+        failout_sysCx ("No arguments expected...");
+    }
 
     xf = stdin_XFileB ();
     of = stdout_OFileB ();
@@ -36,7 +44,7 @@ int main ()
         flush_OFileB (of);
     }
 
-    lose_sys_cx ();
+    lose_sysCx ();
     return 0;
 }
 

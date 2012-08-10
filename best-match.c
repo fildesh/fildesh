@@ -1,27 +1,23 @@
 
+#include "cx/syscx.h"
 #include "cx/fileb.h"
-#include "cx/sys-cx.h"
 
-#include <assert.h>
 #include <ctype.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
-static const char* ExeName = 0;
-#define ErrOut stderr
-
 static void
 show_usage_and_exit ()
 {
-    const char* s;
-    s = "Usage: %s TABLE QUERIES [OPTION]*\n";
-    fprintf (ErrOut, s, ExeName);
-    s = "    TABLE is a file used for lookup.\n";
-    fputs (s, ErrOut);
-    s = "    QUERIES is a file, each line prompts an output of the closest match from TABLE.\n";
-    fputs (s, ErrOut);
-    exit (1);
+    OFileB* of = stderr_OFileB ();
+    printf_OFileB (of, "Usage: %s TABLE QUERIES [OPTION]*\n",
+                   exename_of_sysCx ());
+#define f(s)  dump_cstr_OFileB (of, s); dump_char_OFileB (of, '\n')
+    f( "    TABLE is a file used for lookup." );
+    f( "    QUERIES is a file, each line prompts an output of the closest match from TABLE." );
+#undef f
+    failout_sysCx ("");
 }
 
     /** Open a file for reading or writing.
@@ -43,11 +39,10 @@ open_file_arg (const char* arg, bool writing)
     }
     if (!f)
     {
-        fprintf (ErrOut, "%s - Cannot open file for %s:%s\n",
-                 ExeName,
-                 writing ? "writing" : "reading",
-                 arg);
-        exit (1);
+        DBog2( "Cannot open file for %s: %s\n",
+               writing ? "writing" : "reading",
+               arg );
+        failout_sysCx ("");
     }
     return f;
 }
@@ -98,7 +93,7 @@ lcs_count (uint* a, uint width, const char* x, const char* y)
     memset (a, 0, width * sizeof (uint));
     m = strlen (x);
     n = strlen (y);
-    assert (n <= width);
+    Claim2( n ,<=, width );
 
     if (m == 0 || n == 0)  return 0;
 
@@ -149,21 +144,17 @@ matching_line (uint* a, uint width, const char* s, char* const* lines)
 
 int main (int argc, char** argv)
 {
+    int argi =
+        (init_sysCx (&argc, &argv),
+         1);
     uint* lcs_array;
-    FileB lookup_in;
-    FileB stream_in;
+    FileB lookup_in = dflt_FileB ();
+    FileB stream_in = dflt_FileB ();
     FILE* out;
     char* buf;
     char* s;
     char** lines;
     uint width;
-    int argi = 1;
-
-    init_sys_cx ();
-    ExeName = argv[0];
-
-    init_FileB (&lookup_in);
-    init_FileB (&stream_in);
 
     if (argi >= argc)
         show_usage_and_exit ();
@@ -189,7 +180,7 @@ int main (int argc, char** argv)
         }
         else
         {
-            fprintf (ErrOut, "%s - Unknown argument:%s\n", ExeName, arg);
+            DBog1( "Unknown argument: %s", arg );
             show_usage_and_exit ();
         }
     }
@@ -209,7 +200,7 @@ int main (int argc, char** argv)
     free (lines);
     lose_FileB (&lookup_in);
     lose_FileB (&stream_in);
-    lose_sys_cx ();
+    lose_sysCx ();
     return 0;
 }
 

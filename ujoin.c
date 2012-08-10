@@ -1,14 +1,10 @@
 
+#include "cx/syscx.h"
 #include "cx/associa.h"
 #include "cx/fileb.h"
-#include "cx/sys-cx.h"
 
-#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
-
-static const char* ExeName = 0;
-#define ErrOut stderr
 
 typedef struct LineJoin LineJoin;
 struct LineJoin
@@ -40,7 +36,8 @@ static void
 show_usage_and_exit ()
 {
     OFileB* of = stderr_OFileB ();
-    printf_OFileB (of, "Usage: %s SMALL LARGE [OPTION]*\n", ExeName);
+    printf_OFileB (of, "Usage: %s SMALL LARGE [OPTION]*\n",
+                   exename_of_sysCx ());
 #define f(s)  dump_cstr_OFileB (of, s); dump_char_OFileB (of, '\n')
     f("    SMALL is a file used for lookup.");
     f("    LARGE can be a stream, which tries to match the fields in SMALL.");
@@ -52,7 +49,7 @@ show_usage_and_exit ()
     f("    -nomatch FILE  Put lines whose fields could not be matched here.");
     f("    -dupmatch FILE  Put fields who got matched here.");
 #undef f
-    fail_exit_sys_cx (0);
+    failout_sysCx ("");
 }
 
     /** Open a file for reading or writing.
@@ -74,11 +71,10 @@ open_file_arg (const char* arg, bool writing)
     }
     if (!f)
     {
-        fprintf (ErrOut, "%s - Cannot open file for %s:%s\n",
-                 ExeName,
-                 writing ? "writing" : "reading",
-                 arg);
-        exit (1);
+        DBog2( "Cannot open file for %s: %s\n",
+               writing ? "writing" : "reading",
+               arg );
+        failout_sysCx ("");
     }
     return f;
 }
@@ -181,7 +177,7 @@ compare_lines (XFileB* xf, Associa* map, const char* delim,
             }
             else
             {
-                fprintf (ErrOut, "Already a match for:%s\n", line);
+                DBog1( "Already a match for: %s", line );
             }
         }
         else if (!payload)
@@ -205,25 +201,22 @@ compare_lines (XFileB* xf, Associa* map, const char* delim,
 
 int main (int argc, char** argv)
 {
+    int argi =
+        (init_sysCx (&argc, &argv),
+         1);
     const char* delim = "\t";
     const char* dflt_record = 0;
     bool keep_join_field = true;
     bool stream_on_left = false;
     FILE* nomatch_file = 0;
     FILE* dupmatch_file = 0;
-    FileB lookup_in;
-    FileB stream_in;
+    FileB lookup_in = dflt_FileB ();
+    FileB stream_in = dflt_FileB ();
     FILE* out = stdout;
-    int argi = 1;
     uint i;
     TableT(LineJoin) table;
     DecloStack( Associa, map );
 
-    init_sys_cx ();
-    ExeName = argv[0];
-
-    init_FileB (&lookup_in);
-    init_FileB (&stream_in);
 
     if (argi >= argc)
         show_usage_and_exit ();
@@ -231,11 +224,7 @@ int main (int argc, char** argv)
     lookup_in.f = open_file_arg (argv[argi++], false);
 
     if (argi >= argc)
-    {
-        fprintf (ErrOut, "%s - Not enough arguments (need 2 files).\n",
-                 ExeName);
-        exit (1);
-    }
+        failout_sysCx ("Not enough arguments (need 2 files).");
 
     stream_in.f = open_file_arg (argv[argi++], false);
 
@@ -250,11 +239,7 @@ int main (int argc, char** argv)
         else if (0 == strcmp (arg, "-o"))
         {
             if (argi >= argc)
-            {
-                fprintf (ErrOut, "%s - Output (-o) needs an argument.\n",
-                         ExeName);
-                exit (1);
-            }
+                failout_sysCx ("Output (-o) needs an argument.");
             out = open_file_arg (argv[argi++], true);
         }
         else if (0 == strcmp (arg, "-x"))
@@ -272,47 +257,31 @@ int main (int argc, char** argv)
         else if (0 == strcmp (arg, "-d"))
         {
             if (argi >= argc)
-            {
-                fprintf (ErrOut, "%s - Delimiter (-d) needs an argument.\n",
-                         ExeName);
-                exit (1);
-            }
+                failout_sysCx ("Delimiter (-d) needs an argument.\n");
             delim = argv[argi++];
-            assert (strlen (delim) > 0);
+            Claim2( strlen (delim) ,>, 0 );
         }
         else if (0 == strcmp (arg, "-p"))
         {
             if (argi >= argc)
-            {
-                fprintf (ErrOut, "%s - Need argument for default record (-p).\n",
-                         ExeName);
-                exit (1);
-            }
+                failout_sysCx ("Need argument for default record (-p).");
             dflt_record = argv[argi++];
         }
         else if (0 == strcmp (arg, "-nomatch"))
         {
             if (argi >= argc)
-            {
-                fprintf (ErrOut, "%s - Need argument for nomatch file (-nomatch).\n",
-                         ExeName);
-                exit (1);
-            }
+                failout_sysCx ("Need argument for nomatch file (-nomatch).");
             nomatch_file = open_file_arg (argv[argi++], true);
         }
         else if (0 == strcmp (arg, "-dupmatch"))
         {
             if (argi >= argc)
-            {
-                fprintf (ErrOut, "%s - Need argument for dupmatch file (-dupmatch).\n",
-                         ExeName);
-                exit (1);
-            }
+                failout_sysCx ("Need argument for dupmatch file (-dupmatch).");
             dupmatch_file = open_file_arg (argv[argi++], true);
         }
         else
         {
-            fprintf (ErrOut, "%s - Unknown argument:%s\n", ExeName, arg);
+            DBog1( "Unknown argument: %s", arg );
             show_usage_and_exit ();
         }
     }
@@ -374,7 +343,7 @@ int main (int argc, char** argv)
 
     LoseTable( table );
     lose_Associa (map);
-    lose_sys_cx ();
+    lose_sysCx ();
     return 0;
 }
 

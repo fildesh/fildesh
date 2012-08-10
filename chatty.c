@@ -1,34 +1,35 @@
-
-    /* It seems like an async_read() will read
-     * all it can until an async_suspend() is called.
-     * The async_suspend will return when some amount
-     * of data has been read.
-     */
-#define POSIX_C_SOURCE 1
-
-#include "cx/def.h"
-#include "cx/fileb.h"
-#include "cx/sys-cx.h"
+/**
+ * \file chatty.c
+ * Async socket example.
+ *
+ * It seems like an aio_read() will read
+ * all it can until an aio_suspend() is called.
+ * The aio_suspend() will return when some amount
+ * of data has been read.
+ **/
+#define POSIX_SOURCE
 
 #include <aio.h>
+#include "cx/syscx.h"
+#include "cx/def.h"
+#include "cx/fileb.h"
+#include "cx/ospc.h"
+
 #include <errno.h>
 #include <netdb.h>
-#include <signal.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include <unistd.h>
 #include <sys/socket.h>
-#include <sys/types.h>
-#include <sys/wait.h>
 
 
-int main ()
+int main (int argc, char** argv)
 {
+    int argi =
+        (init_sysCx (&argc, &argv),
+         1);
     bool good = true;
-    pid_t pid;
     int istat = 0;
-    int io[2];
     const char* host = "127.0.0.1";
     const char* service = "1337";
 
@@ -37,11 +38,8 @@ int main ()
     struct addrinfo* addr = 0;
     DecloStack( struct aiocb, aio );
 
-    init_sys_cx ();
-
     memset (&crit, 0, sizeof (crit));
     memset (aio, 0, sizeof (*aio));
-
 
         /* crit.ai_family = AF_INET6; */
     crit.ai_family   = AF_INET;
@@ -52,6 +50,10 @@ int main ()
         /* crit.ai_flags    = AI_PASSIVE; */
         /* crit.ai_socktype = SOCK_DGRAM; */
         /* crit.ai_protocol = IPPROTO_UDP; */
+
+
+    if (argi < argc && !eql_cstr (argv[argi], "-connect"))
+        failout_sysCx ("I take no arguments from humans.");
 
     BInit();
 
@@ -64,30 +66,18 @@ int main ()
         DBog0( "Host could bind to multiple!" );
     }
 
-    istat = pipe (io);
-    BCasc( istat == 0, good, "pipe()" );
-
-    pid = fork ();
-    BCasc( pid >= 0, good, "fork()" );
-
-    if (pid == 0)
+    if (argi < argc && eql_cstr (argv[argi], "-connect"))
     {
         int sock = -1;
-        DecloStack( OFileB, of );
-        *of = dflt_OFileB ();
+        DecloStack1( OFileB, of, dflt_OFileB () );
 
         BInit();
 
-        close (io[1]);
-
         dump_cstr_OFileB (of, "hi");
 
-            /* Wait for parent proc to be ready.*/
-        {
-            byte tmp;
-            read (io[0], &tmp, 1);
-        }
-        close (io[0]);
+        /* Wait for parent proc to be ready.*/
+        load_XFileB (stdin_XFileB ());
+        close_XFileB (stdin_XFileB ());
 
         sock = socket (addr->ai_family,
                        addr->ai_socktype,
@@ -118,16 +108,21 @@ int main ()
     }
     else
     {
+        DecloStack1( OSPc, ospc, dflt_OSPc () );
         int sock = -1;
         int sock1 = -1;
         struct sockaddr_storage client_addr;
         socklen_t client_addr_nbytes = sizeof (client_addr);
-
         DeclTable( byte, msg );
 
         BInit();
 
-        close (io[0]);
+        ospc->cmd = cons1_AlphaTab (exename_of_sysCx ());
+        PushTable( ospc->args, cons1_AlphaTab ("-connect") );
+
+        stdxpipe_OSPc (ospc);
+        good = spawn_OSPc (ospc);
+        BCasc( istat == 0, good, "spawn()" );
 
         EnsizeTable( msg, 1024 );
 
@@ -142,8 +137,9 @@ int main ()
         istat = listen (sock, SOMAXCONN);
         BCasc( istat == 0, good, "listen()" );
 
-        close (io[1]);
-        io[1] = -1;
+        /* Tell spawned process that we are listening.*/
+        close_OFileB (ospc->of);
+
         sock1 = accept (sock,
                         (struct sockaddr*) &client_addr,
                         &client_addr_nbytes);
@@ -171,7 +167,6 @@ int main ()
             msg.sz = nbytes;
             BLose();
         }
-
         BCasc( 1, good, 0 );
 
         fputs ("got:", stdout);
@@ -181,13 +176,12 @@ int main ()
         BLose();
 
         LoseTable( msg );
-
-        if (io[1] >= 0)  close (io[1]);
-        waitpid (pid, &istat, 0);
+        lose_OSPc (ospc);
 
         if (sock1 >= 0)  close (sock1);
         if (sock >= 0)  close (sock);
     }
+    BCasc( 1, good, 0 );
 
     BLose();
 
@@ -195,7 +189,7 @@ int main ()
         freeaddrinfo (list);
 
     memset (aio, 0, sizeof (*aio));
-    lose_sys_cx ();
+    lose_sysCx ();
     return 0;
 }
 

@@ -1,15 +1,16 @@
 
 CC = gcc
-CFLAGS = -ansi -pedantic
-CFLAGS += -Wall -Wextra -Wstrict-aliasing
+CFLAGS =
 CFLAGS += -g
 #CFLAGS += -pg -O2
 #CFLAGS += -O3
+CFLAGS += -ansi -pedantic
+CFLAGS += -Wall -Wextra -Wstrict-aliasing
 
 cx_path = ../cx
 bin_path = ../bin
 
-IFLAGS = -I$(cx_path)/..
+IFLAGS = -I..
 
 CFLAGS += $(IFLAGS)
 
@@ -22,15 +23,15 @@ all: $(exe_list)
 
 $(bin_path)/lace: lace.c \
 	$(cx_path)/fileb.o $(cx_path)/bstree.o \
-	$(cx_path)/rbtree.o $(cx_path)/sys-cx.o
-	$(CC) $(CFLAGS) -D_SVID_SOURCE \
+	$(cx_path)/rbtree.o $(cx_path)/syscx.o
+	$(CC) $(CFLAGS) \
 		"-DUtilBin=\"$(abspath $(bin_path))\"" \
 		-o $@ $^
 
-$(bin_path)/add: add.c $(cx_path)/fileb.o $(cx_path)/sys-cx.o
+$(bin_path)/add: add.c $(cx_path)/fileb.o $(cx_path)/syscx.o
 	$(CC) $(CFLAGS) -o $@ $^
 
-$(bin_path)/best-match: best-match.c $(cx_path)/fileb.o $(cx_path)/sys-cx.o
+$(bin_path)/best-match: best-match.c $(cx_path)/fileb.o $(cx_path)/syscx.o
 	$(CC) $(CFLAGS) -o $@ $^
 
 $(bin_path)/xpipe: xpipe.c
@@ -42,26 +43,22 @@ $(bin_path)/void: void.c
 $(bin_path)/cat1: cat1.c
 	$(CC) $(CFLAGS) -o $@ $^
 
-$(bin_path)/ssh-all: ssh-all.c
+$(bin_path)/ssh-all: ssh-all.c $(cx_path)/fileb.o $(cx_path)/ospc.o $(cx_path)/syscx.o
 	$(CC) $(CFLAGS) -o $@ $^
 
 $(bin_path)/ujoin: ujoin.c \
 	$(cx_path)/fileb.o $(cx_path)/bstree.o $(cx_path)/rbtree.o \
-	$(cx_path)/sys-cx.o
+	$(cx_path)/syscx.o
 	$(CC) $(CFLAGS) -o $@ $^
 
 $(bin_path)/godo: godo.c
 	$(CC) $(CFLAGS) -o $@ $^
 
-$(bin_path)/waitdo: waitdo.c $(cx_path)/fileb.o $(cx_path)/sys-cx.o
+$(bin_path)/waitdo: waitdo.c $(cx_path)/fileb.o $(cx_path)/syscx.o
 	$(CC) $(CFLAGS) -o $@ $^
 
-$(bin_path)/chatty: chatty.c $(cx_path)/fileb.o $(cx_path)/sys-cx.o
+$(bin_path)/chatty: chatty.c $(cx_path)/fileb.o $(cx_path)/ospc.o $(cx_path)/syscx.o
 	$(CC) $(filter-out -ansi,$(CFLAGS)) $^ -o $@ -lrt $(LFLAGS)
-
-.PHONY: $(cx_path)
-$(cx_path):
-	$(MAKE) -C $(cx_path)
 
 %.o: %.c
 	$(CC) -c $(CFLAGS) $^ -o $@
@@ -73,5 +70,5 @@ $(bin_path):
 
 .PHONY: clean
 clean:
-	rm -f *.o $(exe_list)
+	rm -f *.o $(cx_path)/*.o $(exe_list)
 
