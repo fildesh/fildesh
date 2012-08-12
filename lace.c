@@ -521,14 +521,24 @@ write_here_doc_file (const char* name, const char* doc)
 }
 
 static void
+walkfn_lose_SymVal (Assoc* a, void* dat)
+{
+    SymVal* x = (SymVal*) val_of_Assoc (a);
+    (void) dat;
+    if (x->kind == ODescVal)
+    {
+        DBog1( "Dangling output stream! Symbol: %s", x->name.s );
+        failout_sysCx ("");
+    }
+    lose_SymVal (x);
+}
+
+static void
 setup_commands (TableT(Command)* cmds,
                 const char* tmpdir)
 {
     uint ntmp_files = 0;
-    DecloStack( Associa, map );
-
-    init3_Associa (map, sizeof(AlphaTab), sizeof(SymVal),
-                   (SwappedFn) swapped_AlphaTab);
+    DeclAssocia( AlphaTab, SymVal, map, (SwappedFn) swapped_AlphaTab );
 
     { BLoop( i, cmds->sz )
         uint arg_q = 0, arg_r = 0;
@@ -721,17 +731,7 @@ setup_commands (TableT(Command)* cmds,
             cmd->args.sz = arg_q;
     } BLose()
 
-    { BLoop( i, map->vals.sz )
-        SymVal* x = (SymVal*) elt_Table (&map->vals, i);
-        if (x->kind == ODescVal)
-        {
-            DBog1( "Dangling output stream! Symbol: %s", x->name.s );
-            failout_sysCx ("");
-        }
-
-        lose_SymVal (x);
-    } BLose()
-
+    walk_Associa (map, walkfn_lose_SymVal, 0);
     lose_Associa (map);
 }
 

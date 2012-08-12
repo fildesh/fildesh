@@ -215,7 +215,7 @@ int main (int argc, char** argv)
     FILE* out = stdout;
     uint i;
     TableT(LineJoin) table;
-    DecloStack( Associa, map );
+    DeclAssocia( AlphaTab, LineJoin*, map, (SwappedFn) swapped_AlphaTab );
 
 
     if (argi >= argc)
@@ -288,8 +288,6 @@ int main (int argc, char** argv)
 
     table = setup_lookup_table (&lookup_in.xo, delim);
     lose_FileB (&lookup_in);
-    init3_Associa (map, sizeof(AlphaTab), sizeof(LineJoin*),
-                   (SwappedFn) swapped_AlphaTab);
     { BLoop( i, table.sz )
         LineJoin* join = &table.s[i];
         insert_Associa (map, &join->field, &join);
