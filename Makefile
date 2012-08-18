@@ -1,74 +1,82 @@
 
-CC = gcc
-CFLAGS =
-CFLAGS += -g
-#CFLAGS += -pg -O2
-#CFLAGS += -O3
-CFLAGS += -ansi -pedantic
-CFLAGS += -Wall -Wextra -Wstrict-aliasing
+default: all
 
-cx_path = ../cx
-bin_path = ../bin
+CC = gcc
+
+CONFIG += ansi
+CONFIG += debug
 
 IFLAGS = -I..
 
 CFLAGS += $(IFLAGS)
 
-exe_list = lace add best-match xpipe void cat1 ssh-all ujoin \
-		   godo waitdo \
-		   chatty
-exe_list := $(addprefix $(bin_path)/,$(exe_list))
+CxPath = ../cx
+BinPath = ../bin
+PfxBldPath = ../lace-bld
+BldPath = $(PfxBldPath)/lace
 
-all: $(exe_list)
+ExeList = lace add best-match xpipe void cat1 ssh-all ujoin \
+		  godo waitdo \
+		  chatty
+Deps := $(ExeList)
+ExeList := $(addprefix $(BinPath)/,$(ExeList))
+Objs = $(addprefix $(BldPath)/,$(addsuffix .o,$(Deps)))
 
-$(bin_path)/lace: lace.c \
-	$(cx_path)/fileb.o $(cx_path)/bstree.o \
-	$(cx_path)/rbtree.o $(cx_path)/syscx.o
-	$(CC) $(CFLAGS) \
-		"-DUtilBin=\"$(abspath $(bin_path))\"" \
-		-o $@ $^
+include $(CxPath)/include.mk
 
-$(bin_path)/add: add.c $(cx_path)/fileb.o $(cx_path)/syscx.o
+all: $(ExeList)
+
+$(BinPath)/lace: $(BldPath)/lace.o \
+	$(addprefix $(CxBldPath)/, fileb.o bstree.o rbtree.o syscx.o)
 	$(CC) $(CFLAGS) -o $@ $^
 
-$(bin_path)/best-match: best-match.c $(cx_path)/fileb.o $(cx_path)/syscx.o
+$(BinPath)/add: $(BldPath)/add.o \
+	$(addprefix $(CxBldPath)/, fileb.o syscx.o)
 	$(CC) $(CFLAGS) -o $@ $^
 
-$(bin_path)/xpipe: xpipe.c
+$(BinPath)/best-match: $(BldPath)/best-match.o \
+	$(addprefix $(CxBldPath)/, fileb.o syscx.o)
 	$(CC) $(CFLAGS) -o $@ $^
 
-$(bin_path)/void: void.c
+$(BinPath)/xpipe: $(BldPath)/xpipe.o
 	$(CC) $(CFLAGS) -o $@ $^
 
-$(bin_path)/cat1: cat1.c
+$(BinPath)/void: $(BldPath)/void.o
 	$(CC) $(CFLAGS) -o $@ $^
 
-$(bin_path)/ssh-all: ssh-all.c $(cx_path)/fileb.o $(cx_path)/ospc.o $(cx_path)/syscx.o
+$(BinPath)/cat1: $(BldPath)/cat1.o
 	$(CC) $(CFLAGS) -o $@ $^
 
-$(bin_path)/ujoin: ujoin.c \
-	$(cx_path)/fileb.o $(cx_path)/bstree.o $(cx_path)/rbtree.o \
-	$(cx_path)/syscx.o
+$(BinPath)/ssh-all: $(BldPath)/ssh-all.o \
+	$(addprefix $(CxBldPath)/, fileb.o ospc.o syscx.o)
 	$(CC) $(CFLAGS) -o $@ $^
 
-$(bin_path)/godo: godo.c
+$(BinPath)/ujoin: $(BldPath)/ujoin.o \
+	$(addprefix $(CxBldPath)/, bstree.o fileb.o ospc.o rbtree.o syscx.o)
 	$(CC) $(CFLAGS) -o $@ $^
 
-$(bin_path)/waitdo: waitdo.c $(cx_path)/fileb.o $(cx_path)/syscx.o
+$(BinPath)/godo: $(BldPath)/godo.o
 	$(CC) $(CFLAGS) -o $@ $^
 
-$(bin_path)/chatty: chatty.c $(cx_path)/fileb.o $(cx_path)/ospc.o $(cx_path)/syscx.o
-	$(CC) $(filter-out -ansi,$(CFLAGS)) $^ -o $@ -lrt $(LFLAGS)
+$(BinPath)/waitdo: $(BldPath)/waitdo.o \
+	$(addprefix $(CxBldPath)/, fileb.o syscx.o)
+	$(CC) $(CFLAGS) -o $@ $^
 
-%.o: %.c
-	$(CC) -c $(CFLAGS) $^ -o $@
+$(BinPath)/chatty: $(BldPath)/chatty.o \
+	$(addprefix $(CxBldPath)/, fileb.o ospc.o syscx.o)
+	$(CC) $(CFLAGS) $^ -o $@ -lrt
 
-$(exe_list): | $(bin_path)
 
-$(bin_path):
-	mkdir -p $(bin_path)
+$(BldPath)/lace.o: lace.c
+	$(CC) -c $(CFLAGS) -I. \
+		"-DUtilBin=\"$(abspath $(BinPath))\"" \
+		$< -o $@
+
+$(BldPath)/chatty.o: chatty.c
+	$(CC) -c $(filter-out -ansi,$(CFLAGS)) -I. $< -o $@
 
 .PHONY: clean
 clean:
-	rm -f *.o $(cx_path)/*.o $(exe_list)
+	rm -fr $(PfxBldPath)
+	rm -f $(ExeList)
 
