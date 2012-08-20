@@ -6,10 +6,6 @@ CC = gcc
 CONFIG += ansi
 CONFIG += debug
 
-IFLAGS = -I..
-
-CFLAGS += $(IFLAGS)
-
 CxPath = ../cx
 BinPath = ../bin
 PfxBldPath = ../lace-bld
@@ -55,7 +51,8 @@ $(BinPath)/ujoin: $(BldPath)/ujoin.o \
 	$(addprefix $(CxBldPath)/, bstree.o fileb.o ospc.o rbtree.o syscx.o)
 	$(CC) $(CFLAGS) -o $@ $^
 
-$(BinPath)/godo: $(BldPath)/godo.o
+$(BinPath)/godo: $(BldPath)/godo.o \
+	$(addprefix $(CxBldPath)/, fileb.o syscx.o)
 	$(CC) $(CFLAGS) -o $@ $^
 
 $(BinPath)/waitdo: $(BldPath)/waitdo.o \
@@ -67,13 +64,13 @@ $(BinPath)/chatty: $(BldPath)/chatty.o \
 	$(CC) $(CFLAGS) $^ -o $@ -lrt
 
 
-$(BldPath)/lace.o: lace.c
-	$(CC) -c $(CFLAGS) -I. \
+$(BldPath)/lace.o: $(BldPath)/lace.c
+	$(CC) -c $(CFLAGS) \
 		"-DUtilBin=\"$(abspath $(BinPath))\"" \
 		$< -o $@
 
-$(BldPath)/chatty.o: chatty.c
-	$(CC) -c $(filter-out -ansi,$(CFLAGS)) -I. $< -o $@
+$(BldPath)/chatty.o: $(BldPath)/chatty.c
+	$(CC) -c $(filter-out -ansi,$(CFLAGS)) $< -o $@
 
 .PHONY: clean
 clean:
