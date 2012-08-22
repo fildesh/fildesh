@@ -8,8 +8,7 @@ CONFIG += debug
 
 CxPath = ../cx
 BinPath = ../bin
-PfxBldPath = ../lace-bld
-BldPath = $(PfxBldPath)/lace
+BldPath = lace
 
 ExeList = lace add best-match xpipe void cat1 ssh-all ujoin \
 		  godo waitdo \
