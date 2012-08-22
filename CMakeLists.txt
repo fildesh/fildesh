@@ -23,7 +23,7 @@ list (APPEND CFiles
 
 include (${CxPath}/include.cmake)
 
-set (RUNTIME_OUTPUT_DIRECTORY ${BinPath})
+set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${BinPath})
 
 add_executable (lace ${BldPath}/lace.c ${CxFullCFiles})
 get_filename_component (d ${BinPath} ABSOLUTE)
