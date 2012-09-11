@@ -1,78 +1,49 @@
 
-    /** This program functions somewhat like /xargs/ but simply forks a
-     * process for each different line of input and forwards that line of input
-     * to the forked process' stdin.
-     **/
+/** This program functions somewhat like /xargs/ but simply spawns a
+ * process for each different line of input and forwards that line of input
+ * to the spawned process' stdin.
+ **/
 
-#define POSIX_C_SOURCE 1
+#include "cx/syscx.h"
 
-#include <assert.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#include <errno.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-
-    /** Bail out.**/
-static void
-errxit (const char* msg)
-{
-    FILE* errout = stderr;
-    fprintf (errout, "%s: %s\n", msg, strerror (errno));
-    exit (1);
-}
+#include "cx/ospc.h"
 
 int main(int argc, char** argv)
 {
-    FILE* errout = stderr;
-    const int n = 8192;
-    char buf[8192];
-    int argoff = 1;
-    int ret;
+    int argi =
+        (init_sysCx (&argc, &argv),
+         1);
+    XFileB* xf = stdin_XFileB ();
+    DecloStack1( OSPc, ospc, dflt_OSPc () );
 
-    if (argc <= 1)
+    if (argi >= argc)
+        failout_sysCx ("Need at least one argument.");
+
+    stdxpipe_OSPc (ospc);
+
+    ospc->cmd = cons1_AlphaTab (argv[argi++]);
+    while (argi < argc)
+        PushTable( ospc->args, cons1_AlphaTab (argv[argi++]) );
+
+    for (const char* s = getline_XFileB (xf);
+         s;
+         s = getline_XFileB (xf))
     {
-        fprintf (errout, "%s: Need at least one argument.\n", argv[0]);
-        return 1;
-    }
+        if (!spawn_OSPc (ospc))
+            failout_sysCx ("spawn() failed!");
 
-    while (fgets (buf, n, stdin))
-    {
-        pid_t pid;
-        int io[2];
-
-        ret = pipe (io);
-        if (ret < 0)  errxit ("Pipe failed!");
-
-        pid = fork ();
-        if (pid > 0)
+        dump_cstr_OFileB (ospc->of, s);
+        dump_char_OFileB (ospc->of, '\n');
+        if (!close_OSPc (ospc))
+            failout_sysCx ("Wait failed!");
+        if (ospc->status != 0)
         {
-            int status = 0;
-            close (io[0]);
-            write (io[1], buf, strlen (buf) * sizeof (char));
-            close (io[1]);
-            ret = waitpid (pid, &status, 0);
-            if (ret < 0)  errxit ("Wait failed!");
-            if (status != 0)
-            {
-                fprintf (errout, "Child exited with status:%d, exiting!\n",
-                         status);
-                exit (status);
-            }
-            continue;
+            DBog1( "Child exited with status:%d, exiting!", ospc->status );
+            failout_sysCx ("");
         }
-
-        if (pid != 0)  errxit ("Fork failed!");
-
-        close  (io[1]);
-        dup2 (io[0], 0);
-        execvp (argv[argoff], &argv[argoff]);
-        errxit ("Exec failed!");
     }
 
+    lose_sysCx ();
     return 0;
 }
 

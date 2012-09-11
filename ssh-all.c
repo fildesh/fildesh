@@ -35,7 +35,6 @@ spawn_ssh (const char* cmd, const char* host)
     DeclTable( const_cstr, args );
     DecloStack1( OSPc, ospc, dflt_OSPc () );
     bool good = true;
-    int ret;
 
     ospc->cmd = cons1_AlphaTab ("ssh");
     PushTable( args, "-o" );
@@ -56,8 +55,8 @@ spawn_ssh (const char* cmd, const char* host)
     AssertSafe( good, "spawn()" );
 
     dump_cstr_OFileB (ospc->of, cmd);
-    ret = close_OSPc (ospc);
-    AssertSafe( ret >= 0, "close_OSPc()" );
+    good = close_OSPc (ospc);
+    AssertSafe( good, "close_OSPc()" );
 
     lose_OSPc (ospc);
     LoseTable( args );

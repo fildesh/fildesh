@@ -1,0 +1,4 @@
+#!/bin/env lace
+
+echo 'hello'
+

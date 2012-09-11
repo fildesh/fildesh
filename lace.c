@@ -5,9 +5,6 @@
  * This code is public domain - no restrictions.
  **/
 
-/* stdlib.h  mkdtemp() */
-#define _BSD_SOURCE
-
 #include "cx/syscx.h"
 #include "cx/associa.h"
 #include "cx/fileb.h"
@@ -17,10 +14,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <errno.h>
-#include <unistd.h>
-#include <sys/stat.h>
-#include <sys/wait.h>
 
 
 enum SymValKind
@@ -118,12 +111,12 @@ static void
 close_Command (Command* cmd)
 {
     uint i;
-    if (cmd->stdis >= 0)  close (cmd->stdis);
-    if (cmd->stdos >= 0)  close (cmd->stdos);
+    if (cmd->stdis >= 0)  closefd_sysCx (cmd->stdis);
+    if (cmd->stdos >= 0)  closefd_sysCx (cmd->stdos);
     if (cmd->is.sz > 0)
     {
         UFor( i, cmd->is.sz )
-            close (cmd->is.s[i]);
+            closefd_sysCx (cmd->is.s[i]);
     }
     LoseTable( cmd->is );
     InitTable( cmd->is );
@@ -131,17 +124,27 @@ close_Command (Command* cmd)
     if (cmd->os.sz > 0)
     {
         UFor( i, cmd->os.sz )
-            close (cmd->os.s[i]);
+            closefd_sysCx (cmd->os.s[i]);
     }
     LoseTable( cmd->os );
     InitTable( cmd->os );
 
     if (cmd->exec_fd >= 0)
     {
-        close (cmd->exec_fd);
+        closefd_sysCx (cmd->exec_fd);
         cmd->exec_fd = -1;
     }
     cmd->exec_doc = 0;
+}
+
+static void
+cloexec_Command (Command* cmd, bool b)
+{
+    if (cmd->stdis >= 0)  cloexec_sysCx (cmd->stdis, b);
+    if (cmd->stdos >= 0)  cloexec_sysCx (cmd->stdos, b);
+    for (ujint i = 0; i < cmd->is.sz; ++i)  cloexec_sysCx (cmd->is.s[i], b);
+    for (ujint i = 0; i < cmd->os.sz; ++i)  cloexec_sysCx (cmd->os.s[i], b);
+    if (cmd->exec_fd >= 0)  cloexec_sysCx (cmd->exec_fd, b);
 }
 
 static void
@@ -655,15 +658,15 @@ setup_commands (TableT(Command)* cmds,
                 if (kind == ODescVal || kind == ODescFileVal ||
                     kind == IODescVal)
                 {
-                    int fd[2];
-                    int ret;
+                    fd_t fd[2];
+                    bool good;
                     Claim2( sym->kind ,==, NSymValKinds );
                     sym->kind = ODescVal;
                     sym->cmd_idx = i;
                     InitDomMax( sym->arg_idx );
 
-                    ret = pipe_sysCx (fd);
-                    Claim2( ret ,>=, 0 );
+                    good = pipe_sysCx (fd);
+                    Claim( good );
 
                     sym->as.file_desc = fd[0];
                     if (kind == ODescVal || kind == IODescVal)
@@ -680,15 +683,15 @@ setup_commands (TableT(Command)* cmds,
                 }
                 else if (kind == IFutureDescVal || kind == IFutureDescFileVal)
                 {
-                    int fd[2];
-                    int ret;
+                    fd_t fd[2];
+                    bool good;
                     Claim2( sym->kind ,==, NSymValKinds );
                     sym->kind = IFutureDescVal;
                     sym->cmd_idx = i;
                     InitDomMax( sym->arg_idx );
 
-                    ret = pipe_sysCx (fd);
-                    Claim2( ret ,>=, 0 );
+                    good = pipe_sysCx (fd);
+                    Claim( good );
 
                     sym->as.file_desc = fd[1];
                     if (kind == IFutureDescVal)
@@ -753,85 +756,7 @@ output_Command (FILE* out, const Command* cmd)
     fputc ('\n', out);
 }
 
-    /** Read from the file descriptor /in/ and write to file /name/.
-     * If the input stream contains no data, the file will not be
-     * written (or overwritten).
-     **/
-static void
-pipe_to_file (int in, const char* name)
-{
-    FILE* out = 0;
-
-    while (true)
-    {
-        ssize_t sz;
-        byte buf[BUFSIZ];
-
-        sz = read (in, buf, BUFSIZ);
-
-        if (sz <= 0)  break;
-        if (!out)  out = fopen (name, "wb");
-
-        fwrite (buf, 1, sz, out);
-    }
-
-    close (in);
-    if (out)  fclose (out);
-}
-
     /** Read everything from the file descriptor /in/.**/
-static char*
-readin_fd (int in, bool scrap_newline)
-{
-    const uint n_per_chunk = 8192;
-    DeclTable( char, buf );
-    uint off = 0;
-
-    while (1)
-    {
-        ssize_t n;
-        n = off + n_per_chunk + 1;
-        if (buf.sz < (size_t) n)
-            GrowTable( buf, n - buf.sz );
-
-        n = read (in, &buf.s[off], n_per_chunk * sizeof(char));
-        if (n < 0)
-            failout_sysCx ("Problem reading file descriptor!");
-        if (n == 0)  break;
-        off += n;
-    }
-    close (in);
-
-    MPopTable( buf, buf.sz - off + 1 );
-    buf.s[off] = '\0';
-    if (scrap_newline && off > 0 && buf.s[off-1] == '\n')
-    {
-        buf.s[--off] = '\0';
-        if (off > 0 && buf.s[off-1] == '\r')
-            buf.s[--off] = '\0';
-    }
-    return buf.s;
-}
-
-    /** Fill in all NULL arguments, they should be
-     * filled by the output of another command.
-     **/
-static void
-fill_dependent_args (Command* cmd)
-{
-    uint j = 0;
-    { BLoop( i, cmd->args.sz )
-        if (!cmd->args.s[i])
-        {
-            Claim2( j ,<, cmd->iargs.sz );
-            cmd->args.s[i] = readin_fd (cmd->iargs.s[j].fd,
-                                        cmd->iargs.s[j].scrap_newline);
-            ++ j;
-        }
-    } BLose()
-    Claim2( j ,==, cmd->iargs.sz );
-}
-
     /** Add the utility bin directory to the PATH environment variable.**/
 static void
 add_util_path_env ()
@@ -842,20 +767,7 @@ add_util_path_env ()
 #endif
     static const char path[] = UtilBin;
 #undef UtilBin
-    char* v;
-    DeclTable( char, dec );
-
-    v = getenv (k);
-    if (!v)
-    {
-        setenv (k, path, 1);
-        return;
-    }
-
-    GrowTable( dec, strlen (path) + 1 + strlen (v) + 1 );
-    sprintf (dec.s, "%s:%s", path, v);
-    setenv (k, dec.s, 1);
-    LoseTable( dec );
+    tacenv_sysCx (k, path);
 }
 
 static void
@@ -867,6 +779,123 @@ show_usage_and_exit ()
     failout_sysCx ("Bad args...");
 }
 
+static void
+remove_tmppath (AlphaTab* tmppath)
+{
+    if (!rmdir_sysCx (cstr_AlphaTab (tmppath)))
+        DBog1( "Temp directory not removed: %s", cstr_AlphaTab (tmppath) );
+    lose_AlphaTab (tmppath);
+}
+
+static void
+spawn_commands (TableT(Command) cmds)
+{
+    typedef struct { ujint s[2]; } ujint2;
+    DeclTableT( ujint2, ujint2 );
+
+    DeclTable( cstr, argv );
+    DeclTable( ujint2, fdargs );
+
+    for (uint i = 0; i < cmds.sz; ++i)
+        cloexec_Command (&cmds.s[i], true);
+
+    for (uint i = 0; i < cmds.sz; ++i)
+    {
+        Command* cmd = &cmds.s[i];
+
+        if (cmd->kind != RunCommand)  continue;
+
+        cloexec_Command (cmd, false);
+
+        for (uint argi = 0; argi < cmd->args.sz; ++argi)
+        {
+            if (!cmd->args.s[argi])
+            {
+                ujint2 p;
+                Claim2( fdargs.sz ,<, cmd->iargs.sz );
+                p.s[0] = argi;
+                p.s[1] = cmd->iargs.s[fdargs.sz].fd;
+                PushTable( fdargs, p );
+            }
+        }
+        Claim2( fdargs.sz ,==, cmd->iargs.sz );
+        if (cmd->exec_fd >= 0)
+        {
+            ujint2 p;
+            p.s[0] = 0;
+            p.s[1] = cmd->exec_fd;
+            PushTable( fdargs, p );
+        }
+
+        PushTable( argv, dup_cstr (exename_of_sysCx ()) );
+        PushTable( argv, dup_cstr (MagicArgv1_sysCx) );
+
+        if (cmd->stdis >= 0)
+        {
+            PushTable( argv, dup_cstr ("-stdxfd") );
+            PushTable( argv, itoa_dup_cstr (cmd->stdis) );
+        }
+        if (cmd->stdos >= 0)
+        {
+            PushTable( argv, dup_cstr ("-stdofd") );
+            PushTable( argv, itoa_dup_cstr (cmd->stdos) );
+        }
+
+        PushTable( argv, dup_cstr ("-exec") );
+        PushTable( argv, dup_cstr ("-exe") );
+
+        if (fdargs.sz > 0)
+            PushTable( argv, dup_cstr ("execfd") );
+        else
+            PushTable( argv, dup_cstr (cmd->args.s[0]) );
+
+        PushTable( argv, dup_cstr ("--") );
+
+        if (fdargs.sz > 0)
+        {
+            PushTable( argv, dup_cstr ("-exe") );
+            PushTable( argv, dup_cstr (cmd->args.s[0]) );
+
+            for (uint j = 0; j < fdargs.sz; ++j)
+            {
+                ujint2 p = fdargs.s[j];
+                PushTable( cmd->extra_args, itoa_dup_cstr (p.s[1]) );
+                cmd->args.s[p.s[0]] = *TopTable( cmd->extra_args );
+                PushTable( argv, itoa_dup_cstr (p.s[0]) );
+            }
+
+            PushTable( argv, dup_cstr ("--") );
+            PushTable( argv, dup_cstr (cmd->args.s[0]) );
+        }
+
+        for (uint j = 1; j < cmd->args.sz; ++j)
+            PushTable( argv, dup_cstr (cmd->args.s[j]) );
+
+        PushTable( argv, 0 );
+
+        if (cmd->exec_doc)
+        {
+            cmd->exec_doc = 0;
+            chmodu_sysCx (cmd->args.s[0], true, true, true);
+        }
+
+        cmd->pid = spawnvp_sysCx (argv.s);
+        if (cmd->pid < 0)
+        {
+            DBog1( "File: %s", argv.s[0] );
+            failout_sysCx ("Could not spawnvp()...");
+        }
+        close_Command (cmd);
+
+        fdargs.sz = 0;
+        for (uint argi = 0; argi < argv.sz; ++argi)
+            free (argv.s[argi]);
+        argv.sz = 0;
+    }
+    LoseTable( argv );
+    LoseTable( fdargs );
+}
+
 int main (int argc, char** argv)
 {
     int argi =
@@ -874,20 +903,15 @@ int main (int argc, char** argv)
          1);
     FileB in = dflt_FileB ();
     TableT( Command ) cmds;
-    uint i;
-    int ret;
-    char tmpdir[128];
-
+    DecloStack1( AlphaTab, tmppath, cons1_AlphaTab ("lace") );
 
     add_util_path_env ();
 
-    strcpy (tmpdir, "/tmp/lace-XXXXXX");
+    mktmppath_sysCx (tmppath);
 
-    if (!mkdtemp (tmpdir))
-    {
-        DBog1( "Directory: %s", tmpdir );
+    if (tmppath->sz == 0)
         failout_sysCx ("Unable to create temp directory...");
-    }
+    push_losefn1_sysCx ((void (*) (void*)) remove_tmppath, tmppath);
 
     if (argi < argc)
     {
@@ -928,68 +952,23 @@ int main (int argc, char** argv)
     cmds = parse_file (&in.xo);
     lose_FileB (&in);
 
-    setup_commands (&cmds, tmpdir);
+    setup_commands (&cmds, cstr_AlphaTab (tmppath));
 
 
     if (false)
-        UFor( i, cmds.sz )
+        for (uint i = 0; i < cmds.sz; ++i)
             output_Command (stderr, &cmds.s[i]);
 
-    for (i = 0; i < cmds.sz; ++i)
-    {
-        uint j;
-        Command* cmd;
+    spawn_commands (cmds);
 
-        cmd = &cmds.s[i];
-
-        if (cmd->kind != RunCommand)  continue;
-
-        cmd->pid = fork ();
-        if (cmd->pid > 0)
-        {
-            close_Command (cmd);
-            continue;
-        }
-        Claim2( cmd->pid ,>=, 0 );
-
-        UFor( j, cmds.sz )
-            if (j != i)
-                close_Command (&cmds.s[j]);
-
-        if (cmd->stdis >= 0)  dup2_sysCx (cmd->stdis, 0);
-        if (cmd->stdos >= 0)  dup2_sysCx (cmd->stdos, 1);
-
-        if (cmd->exec_fd >= 0)
-        {
-            pipe_to_file (cmd->exec_fd, cmd->args.s[0]);
-            cmd->exec_fd = -1;
-            chmod (cmd->args.s[0], S_IRUSR | S_IWUSR | S_IXUSR);
-        }
-        if (cmd->exec_doc)
-        {
-            cmd->exec_doc = 0;
-            chmod (cmd->args.s[0], S_IRUSR | S_IWUSR | S_IXUSR);
-        }
-
-        fill_dependent_args (cmd);
-
-        PushTable( cmd->args, 0 );
-        execvp_sysCx (cmd->args.s);
-        DBog1( "File: %s", cmd->args.s[0] );
-        failout_sysCx ("Could not execvp()...");
-    }
-
-    UFor( i, cmds.sz )
+    for (uint i = 0; i < cmds.sz; ++i)
     {
         if (cmds.s[i].kind == RunCommand)
-            ret = waitpid (cmds.s[i].pid, 0, 0);
+            waitpid_sysCx (cmds.s[i].pid, 0);
+
         lose_Command (&cmds.s[i]);
     }
     LoseTable( cmds );
-
-    ret = rmdir (tmpdir);
-    if (ret != 0)
-        DBog1( "Temp directory not removed: %s", tmpdir );
 
     lose_sysCx ();
     return 0;
