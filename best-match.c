@@ -13,7 +13,7 @@ show_usage_and_exit ()
     OFileB* of = stderr_OFileB ();
     printf_OFileB (of, "Usage: %s TABLE QUERIES [OPTION]*\n",
                    exename_of_sysCx ());
-#define f(s)  dump_cstr_OFileB (of, s); dump_char_OFileB (of, '\n')
+#define f(s)  oput_cstr_OFileB (of, s); oput_char_OFileB (of, '\n')
     f( "    TABLE is a file used for lookup." );
     f( "    QUERIES is a file, each line prompts an output of the closest match from TABLE." );
 #undef f
@@ -164,7 +164,7 @@ int main (int argc, char** argv)
     if (argi >= argc)
         show_usage_and_exit ();
 
-    buf = load_FileB (&lookup_in);
+    buf = xget_FileB (&lookup_in);
     lines = split_lines (buf, &width);
     lcs_array = AllocT( uint, width );
 

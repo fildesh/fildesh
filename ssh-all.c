@@ -17,7 +17,7 @@ show_usage_and_exit ()
 {
     OFileB* of = stderr_OFileB ();
     printf_OFileB (of, "Usage: %s FILE COMMAND\n", exename_of_sysCx ());
-#define f( s )  dump_cstr_OFileB (of, s); dump_char_OFileB (of, '\n')
+#define f( s )  oput_cstr_OFileB (of, s); oput_char_OFileB (of, '\n')
     f( "  Where /FILE/ contains a machine name on each line." );
     f( "  It can be '-' for stdin." );
     f( "  The /COMMAND/ is processed by /bin/sh, so escape it!" );
@@ -54,7 +54,7 @@ spawn_ssh (const char* cmd, const char* host)
     good = spawn_OSPc (ospc);
     AssertSafe( good, "spawn()" );
 
-    dump_cstr_OFileB (ospc->of, cmd);
+    oput_cstr_OFileB (ospc->of, cmd);
     good = close_OSPc (ospc);
     AssertSafe( good, "close_OSPc()" );
 

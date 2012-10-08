@@ -73,10 +73,10 @@ int main (int argc, char** argv)
 
         BInit();
 
-        dump_cstr_OFileB (of, "hi");
+        oput_cstr_OFileB (of, "hi");
 
         /* Wait for parent proc to be ready.*/
-        load_XFileB (stdin_XFileB ());
+        xget_XFileB (stdin_XFileB ());
         close_XFileB (stdin_XFileB ());
 
         sock = socket (addr->ai_family,

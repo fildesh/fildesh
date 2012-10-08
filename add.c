@@ -6,7 +6,7 @@ static real
 sum_line (XFileB* xf)
 {
     real x = 0, y = 0;
-    while (load_real_XFileB (xf, &y))
+    while (xget_real_XFileB (xf, &y))
         x += y;
     skipds_XFileB (xf, 0);
     if (cstr_XFileB (xf) [0] != '\0')

@@ -37,12 +37,12 @@ main (int argc, char** argv)
 
     while (argi < argc)
     {
-        dump_cstr_OFileB (of, argv[argi++]);
+        oput_cstr_OFileB (of, argv[argi++]);
         if (space && argi < argc)
-            dump_char_OFileB (of, ' ');
+            oput_char_OFileB (of, ' ');
     }
     if (newline)
-        dump_char_OFileB (of, '\n');
+        oput_char_OFileB (of, '\n');
     lose_sysCx ();
     return 0;
 }

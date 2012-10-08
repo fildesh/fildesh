@@ -9,7 +9,7 @@ static void
 show_usage_and_exit ()
 {
     OFileB* of = stderr_OFileB ();
-#define f(s)  dump_cstr_OFileB (of, s); dump_char_OFileB (of, '\n');
+#define f(s)  oput_cstr_OFileB (of, s); oput_char_OFileB (of, '\n');
 
     printf_OFileB (of, "Usage: %s [-exe name] [argi]* -- [arg|fd]*\n",
                    exename_of_sysCx ());
@@ -99,7 +99,7 @@ int main (int argc, char** argv)
         {
             exe = argv[++argi];
         }
-        else if (load_uint_cstr (&idx, argv[argi]))
+        else if (xget_uint_cstr (&idx, argv[argi]))
         {
             set1_BitTable (bt, idx);
         }
@@ -117,7 +117,7 @@ int main (int argc, char** argv)
         if (test_BitTable (bt, argi-off))
         {
             uint fd = 0;
-            if (!load_uint_cstr (&fd, argv[argi]))
+            if (!xget_uint_cstr (&fd, argv[argi]))
             {
                 DBog1( "Cannot parse fd from arg: %s", argv[argi] );
                 show_usage_and_exit ();

@@ -38,7 +38,7 @@ show_usage_and_exit ()
     OFileB* of = stderr_OFileB ();
     printf_OFileB (of, "Usage: %s SMALL LARGE [OPTION]*\n",
                    exename_of_sysCx ());
-#define f(s)  dump_cstr_OFileB (of, s); dump_char_OFileB (of, '\n')
+#define f(s)  oput_cstr_OFileB (of, s); oput_char_OFileB (of, '\n')
     f("    SMALL is a file used for lookup.");
     f("    LARGE can be a stream, which tries to match the fields in SMALL.");
     f("    -x  Nix the join field.");

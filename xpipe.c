@@ -32,8 +32,8 @@ int main(int argc, char** argv)
         if (!spawn_OSPc (ospc))
             failout_sysCx ("spawn() failed!");
 
-        dump_cstr_OFileB (ospc->of, s);
-        dump_char_OFileB (ospc->of, '\n');
+        oput_cstr_OFileB (ospc->of, s);
+        oput_char_OFileB (ospc->of, '\n');
         if (!close_OSPc (ospc))
             failout_sysCx ("Wait failed!");
         if (ospc->status != 0)
