@@ -110,12 +110,11 @@ init_Command (Command* cmd)
 static void
 close_Command (Command* cmd)
 {
-    uint i;
     if (cmd->stdis >= 0)  closefd_sysCx (cmd->stdis);
     if (cmd->stdos >= 0)  closefd_sysCx (cmd->stdos);
     if (cmd->is.sz > 0)
     {
-        UFor( i, cmd->is.sz )
+        for (i ; cmd->is.sz)
             closefd_sysCx (cmd->is.s[i]);
     }
     LoseTable( cmd->is );
@@ -123,7 +122,7 @@ close_Command (Command* cmd)
 
     if (cmd->os.sz > 0)
     {
-        UFor( i, cmd->os.sz )
+        for (i ; cmd->os.sz)
             closefd_sysCx (cmd->os.s[i]);
     }
     LoseTable( cmd->os );
@@ -150,7 +149,6 @@ cloexec_Command (Command* cmd, bool b)
 static void
 lose_Command (Command* cmd)
 {
-    uint i;
     close_Command (cmd);
     free (cmd->line);
     if (cmd->kind == RunCommand)
@@ -158,12 +156,11 @@ lose_Command (Command* cmd)
     else if (cmd->kind == HereDocCommand)
         free (cmd->doc);
 
-    UFor( i, cmd->extra_args.sz )
+    for (i ; cmd->extra_args.sz )
         free (cmd->extra_args.s[i]);
     LoseTable( cmd->extra_args );
 
-    UFor( i, cmd->tmp_files.sz )
-    {
+    {:for (i ; cmd->tmp_files.sz )
         remove (cmd->tmp_files.s[i]);
         free (cmd->tmp_files.s[i]);
     }
@@ -531,7 +528,7 @@ setup_commands (TableT(Command)* cmds,
     DeclAssocia( AlphaTab, SymVal, map, (SwappedFn) swapped_AlphaTab );
     Assoc* assoc;
 
-    { BLoop( i, cmds->sz )
+    {:for (i ; cmds->sz)
         uint arg_q = 0, arg_r = 0;
         Command* cmd;
         cmd = &cmds->s[i];
@@ -720,7 +717,7 @@ setup_commands (TableT(Command)* cmds,
 
         if (cmd->args.sz > 0)
             cmd->args.sz = arg_q;
-    } BLose()
+    }
 
     for (assoc = beg_Associa (map);
          assoc;
@@ -741,12 +738,10 @@ setup_commands (TableT(Command)* cmds,
 static void
 output_Command (FILE* out, const Command* cmd)
 {
-    uint i = 0;
     if (cmd->kind != RunCommand)  return;
 
     fputs ("COMMAND: ", out);
-    UFor( i, cmd->args.sz )
-    {
+    {:for (i ; cmd->args.sz )
         if (i > 0)  fputc (' ', out);
         if (cmd->args.s[i])
             fputs (cmd->args.s[i], out);

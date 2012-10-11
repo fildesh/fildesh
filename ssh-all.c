@@ -46,9 +46,9 @@ spawn_ssh (const char* cmd, const char* host)
     PushTable( args, "-s" );
     PushTable( args, host );
 
-    { BLoop( i, args.sz )
+    {:for (i ; args.sz)
         PushTable( ospc->args, cons1_AlphaTab (args.s[i]) );
-    } BLose()
+    }
 
     stdxpipe_OSPc (ospc);
     good = spawn_OSPc (ospc);

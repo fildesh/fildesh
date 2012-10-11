@@ -213,7 +213,6 @@ int main (int argc, char** argv)
     FileB lookup_in = dflt_FileB ();
     FileB stream_in = dflt_FileB ();
     FILE* out = stdout;
-    uint i;
     TableT(LineJoin) table;
     DeclAssocia( AlphaTab, LineJoin*, map, (SwappedFn) swapped_AlphaTab );
 
@@ -288,18 +287,17 @@ int main (int argc, char** argv)
 
     table = setup_lookup_table (&lookup_in.xo, delim);
     lose_FileB (&lookup_in);
-    { BLoop( i, table.sz )
+    {:for (i ; table.sz)
         LineJoin* join = &table.s[i];
         insert_Associa (map, &join->field, &join);
-    } BLose()
+    }
     flush_OFileB (stderr_OFileB ());
     compare_lines (&stream_in.xo, map, delim, nomatch_file, dupmatch_file);
 
     lose_FileB (&stream_in);
 
     if (!delim)  delim = "\t";
-    UFor( i, table.sz )
-    {
+    {:for (i ; table.sz)
         LineJoin* join = &table.s[i];
         const char* stream_line = join->stream_line;
         if (!stream_line && dflt_record)
