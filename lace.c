@@ -785,9 +785,6 @@ remove_tmppath (AlphaTab* tmppath)
 static void
 spawn_commands (TableT(Command) cmds)
 {
-    typedef struct { ujint s[2]; } ujint2;
-    DeclTableT( ujint2, ujint2 );
-
     DeclTable( cstr, argv );
     DeclTable( ujint2, fdargs );
 
