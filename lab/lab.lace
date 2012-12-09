@@ -5,7 +5,7 @@
 ## Non-hostnames in the map must start with exclamation points.
 ## You should have auto-login to these hosts.
 
-$(H: lab-file) lab.txt
+$(H: lab-file) lab112.txt
 
  $(O a) cat $(H lab-file)
 $(XO a) sed \

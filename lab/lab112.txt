@@ -1,0 +1,13 @@
+!                                                                   !NORTH_WHITEBOARD                                          !door
+! c28-0112-17.ad.mtu.edu    c28-0112-13.ad.mtu.edu ! c28-0112-09.ad.mtu.edu    c28-0112-05.ad.mtu.edu ! c28-0112-01.ad.mtu.edu !
+! c28-0112-18.ad.mtu.edu    c28-0112-14.ad.mtu.edu ! c28-0112-10.ad.mtu.edu    c28-0112-06.ad.mtu.edu ! c28-0112-02.ad.mtu.edu !
+!                                                                                                                              !
+! c28-0112-19.ad.mtu.edu    c28-0112-15.ad.mtu.edu ! c28-0112-11.ad.mtu.edu    c28-0112-07.ad.mtu.edu ! c28-0112-03.ad.mtu.edu !
+! c28-0112-20.ad.mtu.edu    c28-0112-16.ad.mtu.edu ! c28-0112-12.ad.mtu.edu    c28-0112-08.ad.mtu.edu ! c28-0112-04.ad.mtu.edu !
+!                                                                                                                              !
+! c28-112a-19.ad.mtu.edu    c28-112a-15.ad.mtu.edu ! c28-112a-10.ad.mtu.edu    c28-112a-07.ad.mtu.edu ! c28-112a-03.ad.mtu.edu !
+! c28-112a-18.ad.mtu.edu    c28-112a-14.ad.mtu.edu ! c28-112a-11.ad.mtu.edu    c28-112a-06.ad.mtu.edu ! c28-112a-02.ad.mtu.edu !
+!                                                                                                                              !
+! c28-112a-17.ad.mtu.edu    c28-112a-13.ad.mtu.edu ! c28-112a-09.ad.mtu.edu    c28-112a-05.ad.mtu.edu ! c28-112a-01.ad.mtu.edu !
+! c28-112a-16.ad.mtu.edu    c28-112a-12.ad.mtu.edu ! c28-112a-08.ad.mtu.edu    c28-112a-04.ad.mtu.edu ! c28-112a-00.ad.mtu.edu !
+!                                                                   !SOUTH_WHITEBOARD                                          !door
