@@ -20,6 +20,7 @@ list (APPEND CFiles
     waitdo.c
     execfd.c
     echo.c
+    transpose.c
 #   chatty.c
     )
 
@@ -44,6 +45,7 @@ addbinexe (godo)
 addbinexe (waitdo)
 addbinexe (execfd)
 addbinexe (echo)
+addbinexe (transpose)
 
 #add_executable (chatty ${BldPath}/chatty.c ${CxFullCFiles})
 #target_link_libraries (chatty rt)

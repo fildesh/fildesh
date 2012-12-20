@@ -12,7 +12,7 @@ BinPath = ../bin
 BldPath = lace
 
 ExeList = lace add best-match xpipe void cat1 ssh-all ujoin \
-		  godo waitdo execfd echo
+		  godo waitdo execfd echo transpose
 
 ifeq (,$(filter wine,$(CONFIG)))
 	ifeq (,$(filter winegcc,$(CONFIG)))
@@ -71,6 +71,10 @@ $(call binexe,execfd): $(BldPath)/execfd.o \
 	$(CC) $(CFLAGS) -o $@ $^
 
 $(call binexe,echo): $(BldPath)/echo.o \
+	$(addprefix $(CxBldPath)/, fileb.o syscx.o)
+	$(CC) $(CFLAGS) -o $@ $^
+
+$(call binexe,transpose): $(BldPath)/transpose.o \
 	$(addprefix $(CxBldPath)/, fileb.o syscx.o)
 	$(CC) $(CFLAGS) -o $@ $^
 
