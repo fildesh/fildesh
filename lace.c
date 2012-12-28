@@ -525,8 +525,10 @@ setup_commands (TableT(Command)* cmds,
                 const char* tmpdir)
 {
     uint ntmp_files = 0;
-    DeclAssocia( AlphaTab, SymVal, map, (SwappedFn) swapped_AlphaTab );
+    Associa map[1];
     Assoc* assoc;
+
+    InitAssocia( AlphaTab, SymVal, *map, swapped_AlphaTab );
 
     {:for (i ; cmds->sz)
         uint arg_q = 0, arg_r = 0;

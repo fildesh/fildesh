@@ -214,7 +214,9 @@ int main (int argc, char** argv)
     FileB stream_in = dflt_FileB ();
     FILE* out = stdout;
     TableT(LineJoin) table;
-    DeclAssocia( AlphaTab, LineJoin*, map, (SwappedFn) swapped_AlphaTab );
+    Associa map[1];
+
+    InitAssocia( AlphaTab, LineJoin*, *map, swapped_AlphaTab );
 
 
     if (argi >= argc)
