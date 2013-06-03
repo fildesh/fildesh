@@ -29,19 +29,19 @@ include $(CxPath)/include.mk
 all: $(ExeList)
 
 $(call binexe,lace): $(BldPath)/lace.o \
-	$(addprefix $(CxBldPath)/, fileb.o bstree.o rbtree.o syscx.o)
+	$(addprefix $(CxBldPath)/, alphatab.o fileb.o bstree.o rbtree.o syscx.o)
 	$(CC) $(CFLAGS) -o $@ $^
 
 $(call binexe,add): $(BldPath)/add.o \
-	$(addprefix $(CxBldPath)/, fileb.o syscx.o)
+	$(addprefix $(CxBldPath)/, alphatab.o fileb.o syscx.o)
 	$(CC) $(CFLAGS) -o $@ $^
 
 $(call binexe,best-match): $(BldPath)/best-match.o \
-	$(addprefix $(CxBldPath)/, fileb.o syscx.o)
+	$(addprefix $(CxBldPath)/, alphatab.o fileb.o syscx.o)
 	$(CC) $(CFLAGS) -o $@ $^
 
 $(call binexe,xpipe): $(BldPath)/xpipe.o \
-	$(addprefix $(CxBldPath)/, fileb.o syscx.o ospc.o)
+	$(addprefix $(CxBldPath)/, alphatab.o fileb.o syscx.o ospc.o)
 	$(CC) $(CFLAGS) -o $@ $^
 
 $(call binexe,void): $(BldPath)/void.o
@@ -51,35 +51,35 @@ $(call binexe,cat1): $(BldPath)/cat1.o
 	$(CC) $(CFLAGS) -o $@ $^
 
 $(call binexe,ssh-all): $(BldPath)/ssh-all.o \
-	$(addprefix $(CxBldPath)/, fileb.o ospc.o syscx.o)
+	$(addprefix $(CxBldPath)/, alphatab.o fileb.o ospc.o syscx.o)
 	$(CC) $(CFLAGS) -o $@ $^
 
 $(call binexe,ujoin): $(BldPath)/ujoin.o \
-	$(addprefix $(CxBldPath)/, bstree.o fileb.o ospc.o rbtree.o syscx.o)
+	$(addprefix $(CxBldPath)/, alphatab.o bstree.o fileb.o ospc.o rbtree.o syscx.o)
 	$(CC) $(CFLAGS) -o $@ $^
 
 $(call binexe,godo): $(BldPath)/godo.o \
-	$(addprefix $(CxBldPath)/, fileb.o syscx.o)
+	$(addprefix $(CxBldPath)/, alphatab.o fileb.o syscx.o)
 	$(CC) $(CFLAGS) -o $@ $^
 
 $(call binexe,waitdo): $(BldPath)/waitdo.o \
-	$(addprefix $(CxBldPath)/, fileb.o syscx.o)
+	$(addprefix $(CxBldPath)/, alphatab.o fileb.o syscx.o)
 	$(CC) $(CFLAGS) -o $@ $^
 
 $(call binexe,execfd): $(BldPath)/execfd.o \
-	$(addprefix $(CxBldPath)/, fileb.o syscx.o)
+	$(addprefix $(CxBldPath)/, alphatab.o fileb.o syscx.o)
 	$(CC) $(CFLAGS) -o $@ $^
 
 $(call binexe,echo): $(BldPath)/echo.o \
-	$(addprefix $(CxBldPath)/, fileb.o syscx.o)
+	$(addprefix $(CxBldPath)/, alphatab.o fileb.o syscx.o)
 	$(CC) $(CFLAGS) -o $@ $^
 
 $(call binexe,transpose): $(BldPath)/transpose.o \
-	$(addprefix $(CxBldPath)/, fileb.o syscx.o)
+	$(addprefix $(CxBldPath)/, alphatab.o fileb.o syscx.o)
 	$(CC) $(CFLAGS) -o $@ $^
 
 $(call binexe,chatty): $(BldPath)/chatty.o \
-	$(addprefix $(CxBldPath)/, fileb.o ospc.o syscx.o)
+	$(addprefix $(CxBldPath)/, alphatab.o fileb.o ospc.o syscx.o)
 	$(CC) $(CFLAGS) $^ -o $@ -lrt
 
 $(BldPath)/lace.o: $(BldPath)/lace.c
