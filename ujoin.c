@@ -35,10 +35,10 @@ lose_LineJoin (LineJoin* join)
 static void
 show_usage_and_exit ()
 {
-    OFileB* of = stderr_OFileB ();
-    printf_OFileB (of, "Usage: %s SMALL LARGE [OPTION]*\n",
-                   exename_of_sysCx ());
-#define f(s)  oput_cstr_OFileB (of, s); oput_char_OFileB (of, '\n')
+    OFile* of = stderr_OFile ();
+    printf_OFile (of, "Usage: %s SMALL LARGE [OPTION]*\n",
+                  exename_of_sysCx ());
+#define f(s)  oput_cstr_OFile (of, s); oput_char_OFile (of, '\n')
     f("    SMALL is a file used for lookup.");
     f("    LARGE can be a stream, which tries to match the fields in SMALL.");
     f("    -x  Nix the join field.");
@@ -80,15 +80,15 @@ open_file_arg (const char* arg, bool writing)
 }
 
 static TableT(LineJoin)
-setup_lookup_table (XFileB* xf, const char* delim)
+setup_lookup_table (XFile* xf, const char* delim)
 {
     DeclTable( LineJoin, table );
     const uint delim_sz = delim ? strlen (delim) : 0;
     char* s;
 
-    for (s = getline_XFileB (xf);
+    for (s = getline_XFile (xf);
          s;
-         s = getline_XFileB (xf))
+         s = getline_XFile (xf))
     {
         LineJoin* join;
 
@@ -122,16 +122,16 @@ setup_lookup_table (XFileB* xf, const char* delim)
 }
 
 static void
-compare_lines (XFileB* xf, Associa* map, const char* delim,
+compare_lines (XFile* xf, Associa* map, const char* delim,
                FILE* nomatch_out, FILE* dupmatch_out)
 {
     const uint delim_sz = delim ? strlen (delim) : 0;
     uint line_no = 0;
     char* line;
 
-    for (line = getline_XFileB (xf);
+    for (line = getline_XFile (xf);
          line;
-         line = getline_XFileB (xf))
+         line = getline_XFile (xf))
     {
         char* field = line;
         char* payload;
@@ -210,24 +210,25 @@ int main (int argc, char** argv)
     bool stream_on_left = false;
     FILE* nomatch_file = 0;
     FILE* dupmatch_file = 0;
-    FileB lookup_in = dflt_FileB ();
-    FileB stream_in = dflt_FileB ();
+    XFileB lookup_in[1];
+    XFileB stream_in[1];
     FILE* out = stdout;
     TableT(LineJoin) table;
     Associa map[1];
 
     InitAssocia( AlphaTab, LineJoin*, *map, swapped_AlphaTab );
-
+    init_XFileB (lookup_in);
+    init_XFileB (stream_in);
 
     if (argi >= argc)
         show_usage_and_exit ();
 
-    lookup_in.f = open_file_arg (argv[argi++], false);
+    set_FILE_FileB (&lookup_in->fb, open_file_arg (argv[argi++], false));
 
     if (argi >= argc)
         failout_sysCx ("Not enough arguments (need 2 files).");
 
-    stream_in.f = open_file_arg (argv[argi++], false);
+    set_FILE_FileB (&stream_in->fb, open_file_arg (argv[argi++], false));
 
     while (argi < argc)
     {
@@ -287,16 +288,16 @@ int main (int argc, char** argv)
         }
     }
 
-    table = setup_lookup_table (&lookup_in.xo, delim);
-    lose_FileB (&lookup_in);
+    table = setup_lookup_table (&lookup_in->xf, delim);
+    lose_XFileB (lookup_in);
     {:for (i ; table.sz)
         LineJoin* join = &table.s[i];
         insert_Associa (map, &join->field, &join);
     }
-    flush_OFileB (stderr_OFileB ());
-    compare_lines (&stream_in.xo, map, delim, nomatch_file, dupmatch_file);
+    flush_OFile (stderr_OFile ());
+    compare_lines (&stream_in->xf, map, delim, nomatch_file, dupmatch_file);
 
-    lose_FileB (&stream_in);
+    lose_XFileB (stream_in);
 
     if (!delim)  delim = "\t";
     {:for (i ; table.sz)

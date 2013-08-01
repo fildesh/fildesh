@@ -221,7 +221,7 @@ trim_trailing_ws (char* s)
      * $(H: var_name) value
      **/
 static char*
-parse_here_doc (XFileB* in, const char* term)
+parse_here_doc (XFile* in, const char* term)
 {
     DeclTable( char, delim );
     char* s;
@@ -242,35 +242,36 @@ parse_here_doc (XFileB* in, const char* term)
     delim.s[0] = '\n';
     strcpy (&delim.s[1], term);
 
-    s = getlined_XFileB (in, delim.s);
+    s = getlined_XFile (in, delim.s);
     LoseTable( delim );
     return dup_cstr (s);
 }
 
 static void
-inject_include (XFileB* in, char* name)
+inject_include (XFile* in, char* name)
 {
-    FileB src = dflt_FileB ();
+  XFileB src[1];
+  init_XFileB (src);
 
-    name = &name[count_ws (name)];
-    name[strcspn (name, ")")] = '\0';
+  name = &name[count_ws (name)];
+  name[strcspn (name, ")")] = '\0';
 
-    if (!open_FileB (&src, 0, name))
-        DBog1( "Failed to include file: %s", name );
+  if (!open_FileB (&src->fb, 0, name))
+    DBog1( "Failed to include file: %s", name );
 
-    inject_XFileB (in, &src.xo, "\n");
-    lose_FileB (&src);
+  inject_XFile (in, &src->xf, "\n");
+  lose_XFileB (src);
 }
 
 static char*
-parse_line (XFileB* xf)
+parse_line (XFile* xf)
 {
     DeclTable( char, line );
     char* s;
 
-    for (s = getline_XFileB (xf);
+    for (s = getline_XFile (xf);
          s;
-         s = getline_XFileB (xf))
+         s = getline_XFile (xf))
     {
         uint i, n;
         bool multiline = false;
@@ -345,7 +346,7 @@ sep_line (TableT(cstr)* args, char* s)
 
 
 static TableT(Command)
-parse_file (XFileB* xf)
+parse_file (XFile* xf)
 {
     DeclTable( Command, cmds );
     while (true)
@@ -770,10 +771,10 @@ add_util_path_env ()
 static void
 show_usage_and_exit ()
 {
-    printf_OFileB (stderr_OFileB (),
-                   "Usage: %s [[-f] SCRIPTFILE | -- SCRIPT]\n",
-                   exename_of_sysCx ());
-    failout_sysCx ("Bad args...");
+  printf_OFile (stderr_OFile (),
+                "Usage: %s [[-f] SCRIPTFILE | -- SCRIPT]\n",
+                exename_of_sysCx ());
+  failout_sysCx ("Bad args...");
 }
 
 static void
@@ -892,79 +893,81 @@ spawn_commands (TableT(Command) cmds)
 
 int main (int argc, char** argv)
 {
-    int argi =
-        (init_sysCx (&argc, &argv),
-         1);
-    FileB in = dflt_FileB ();
-    TableT( Command ) cmds;
-    DecloStack1( AlphaTab, tmppath, cons1_AlphaTab ("lace") );
+  int argi =
+    (init_sysCx (&argc, &argv),
+     1);
+  XFileB in[1];
+  TableT( Command ) cmds;
+  DecloStack1( AlphaTab, tmppath, cons1_AlphaTab ("lace") );
 
-    add_util_path_env ();
+  init_XFileB (in);
 
-    mktmppath_sysCx (tmppath);
+  add_util_path_env ();
 
-    if (tmppath->sz == 0)
-        failout_sysCx ("Unable to create temp directory...");
-    push_losefn1_sysCx ((void (*) (void*)) remove_tmppath, tmppath);
+  mktmppath_sysCx (tmppath);
 
-    if (argi < argc)
+  if (tmppath->sz == 0)
+    failout_sysCx ("Unable to create temp directory...");
+  push_losefn1_sysCx ((void (*) (void*)) remove_tmppath, tmppath);
+
+  if (argi < argc)
+  {
+    const char* arg;
+    arg = argv[argi++];
+    if (0 == strcmp (arg, "--"))
     {
-        const char* arg;
-        arg = argv[argi++];
-        if (0 == strcmp (arg, "--"))
-        {
-            if (argi >= argc)  show_usage_and_exit ();
-            arg = argv[argi++];
-            SizeTable( in.xo.buf, strlen (arg) + 1 );
-            memcpy (in.xo.buf.s, arg, in.xo.buf.sz);
-            PackTable( in.xo.buf );
-        }
-        else
-        {
-                /* Optional -f flag.*/
-            if (0 == strcmp (arg, "-f"))
-            {
-                if (argi >= argc)  show_usage_and_exit ();
-                arg = argv[argi++];
-            }
-
-            in.f = fopen (arg, "rb");
-            if (!in.f)
-            {
-                DBog1( "Script file: %s", arg );
-                failout_sysCx ("Cannot read script!");
-            }
-        }
-
-        if (argi < argc)  show_usage_and_exit ();
+      if (argi >= argc)  show_usage_and_exit ();
+      arg = argv[argi++];
+      SizeTable( in->xf.buf, strlen (arg) + 1 );
+      memcpy (in->xf.buf.s, arg, in->xf.buf.sz);
+      PackTable( in->xf.buf );
     }
     else
     {
-        set_FILE_FileB (&in, stdin);
+      /* Optional -f flag.*/
+      if (0 == strcmp (arg, "-f"))
+      {
+        if (argi >= argc)  show_usage_and_exit ();
+        arg = argv[argi++];
+      }
+
+      set_FILE_FileB (&in->fb, fopen (arg, "rb"));
+      if (!in->fb.f)
+      {
+        DBog1( "Script file: %s", arg );
+        failout_sysCx ("Cannot read script!");
+      }
     }
 
-    cmds = parse_file (&in.xo);
-    lose_FileB (&in);
+    if (argi < argc)  show_usage_and_exit ();
+  }
+  else
+  {
+    set_FILE_FileB (&in->fb, stdin);
+  }
 
-    setup_commands (&cmds, cstr_AlphaTab (tmppath));
+  cmds = parse_file (&in->xf);
+  lose_XFileB (in);
+
+  setup_commands (&cmds, cstr_AlphaTab (tmppath));
 
 
-    if (false)
-        for (uint i = 0; i < cmds.sz; ++i)
-            output_Command (stderr, &cmds.s[i]);
-
-    spawn_commands (cmds);
-
+  if (false)
     for (uint i = 0; i < cmds.sz; ++i)
-    {
-        if (cmds.s[i].kind == RunCommand)
-            waitpid_sysCx (cmds.s[i].pid, 0);
+      output_Command (stderr, &cmds.s[i]);
 
-        lose_Command (&cmds.s[i]);
-    }
-    LoseTable( cmds );
+  spawn_commands (cmds);
 
-    lose_sysCx ();
-    return 0;
+  for (uint i = 0; i < cmds.sz; ++i)
+  {
+    if (cmds.s[i].kind == RunCommand)
+      waitpid_sysCx (cmds.s[i].pid, 0);
+
+    lose_Command (&cmds.s[i]);
+  }
+  LoseTable( cmds );
+
+  lose_sysCx ();
+  return 0;
 }
 

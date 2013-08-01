@@ -67,12 +67,13 @@ int main (int argc, char** argv)
     if (argi < argc && eql_cstr (argv[argi], "-connect"))
     {
       int sock = -1;
-      DecloStack1( OFileB, of, dflt_OFileB () );
+      OFile of[1];
+      init_OFile (of);
 
-      oput_cstr_OFileB (of, "hi");
+      oput_cstr_OFile (of, "hi");
 
       /* Wait for parent proc to be ready.*/
-      xget_XFileB (stdin_XFileB ());
+      xget_XFile (stdin_XFile ());
       close_XFileB (stdin_XFileB ());
 
       sock = socket (addr->ai_family,
@@ -100,7 +101,7 @@ int main (int argc, char** argv)
       {}
 
       if (sock >= 0)  close (sock);
-      lose_OFileB (of);
+      lose_OFile (of);
     }
     else
     {
@@ -133,7 +134,7 @@ int main (int argc, char** argv)
       if (LegitCk( istat == 0, good, "listen()" ))
       {
         /* Tell spawned process that we are listening.*/
-        close_OFileB (ospc->of);
+        close_OFile (ospc->of);
 
         sock1 = accept (sock,
                         (struct sockaddr*) &client_addr,

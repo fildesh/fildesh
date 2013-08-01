@@ -13,6 +13,7 @@ BldPath = lace
 
 ExeList = lace add best-match xpipe void cat1 ssh-all ujoin \
 		  godo waitdo execfd echo transpose
+#tex2html
 
 ifeq (,$(filter wine,$(CONFIG)))
 	ifeq (,$(filter winegcc,$(CONFIG)))
@@ -29,19 +30,17 @@ include $(CxPath)/include.mk
 all: $(ExeList)
 
 $(call binexe,lace): $(BldPath)/lace.o \
-	$(addprefix $(CxBldPath)/, alphatab.o fileb.o bstree.o rbtree.o syscx.o)
+	$(CxStdObjs) $(addprefix $(CxBldPath)/, bstree.o rbtree.o)
 	$(CC) $(CFLAGS) -o $@ $^
 
-$(call binexe,add): $(BldPath)/add.o \
-	$(addprefix $(CxBldPath)/, alphatab.o fileb.o syscx.o)
+$(call binexe,add): $(BldPath)/add.o $(CxStdObjs)
 	$(CC) $(CFLAGS) -o $@ $^
 
-$(call binexe,best-match): $(BldPath)/best-match.o \
-	$(addprefix $(CxBldPath)/, alphatab.o fileb.o syscx.o)
+$(call binexe,best-match): $(BldPath)/best-match.o $(CxStdObjs)
 	$(CC) $(CFLAGS) -o $@ $^
 
 $(call binexe,xpipe): $(BldPath)/xpipe.o \
-	$(addprefix $(CxBldPath)/, alphatab.o fileb.o syscx.o ospc.o)
+	$(CxStdObjs) $(addprefix $(CxBldPath)/, ospc.o)
 	$(CC) $(CFLAGS) -o $@ $^
 
 $(call binexe,void): $(BldPath)/void.o
@@ -51,35 +50,30 @@ $(call binexe,cat1): $(BldPath)/cat1.o
 	$(CC) $(CFLAGS) -o $@ $^
 
 $(call binexe,ssh-all): $(BldPath)/ssh-all.o \
-	$(addprefix $(CxBldPath)/, alphatab.o fileb.o ospc.o syscx.o)
+	$(CxStdObjs) $(addprefix $(CxBldPath)/, ospc.o)
 	$(CC) $(CFLAGS) -o $@ $^
 
 $(call binexe,ujoin): $(BldPath)/ujoin.o \
-	$(addprefix $(CxBldPath)/, alphatab.o bstree.o fileb.o ospc.o rbtree.o syscx.o)
+	$(CxStdObjs) $(addprefix $(CxBldPath)/, bstree.o ospc.o rbtree.o)
 	$(CC) $(CFLAGS) -o $@ $^
 
-$(call binexe,godo): $(BldPath)/godo.o \
-	$(addprefix $(CxBldPath)/, alphatab.o fileb.o syscx.o)
+$(call binexe,godo): $(BldPath)/godo.o $(CxStdObjs)
 	$(CC) $(CFLAGS) -o $@ $^
 
-$(call binexe,waitdo): $(BldPath)/waitdo.o \
-	$(addprefix $(CxBldPath)/, alphatab.o fileb.o syscx.o)
+$(call binexe,waitdo): $(BldPath)/waitdo.o $(CxStdObjs)
 	$(CC) $(CFLAGS) -o $@ $^
 
-$(call binexe,execfd): $(BldPath)/execfd.o \
-	$(addprefix $(CxBldPath)/, alphatab.o fileb.o syscx.o)
+$(call binexe,execfd): $(BldPath)/execfd.o $(CxStdObjs)
 	$(CC) $(CFLAGS) -o $@ $^
 
-$(call binexe,echo): $(BldPath)/echo.o \
-	$(addprefix $(CxBldPath)/, alphatab.o fileb.o syscx.o)
+$(call binexe,echo): $(BldPath)/echo.o $(CxStdObjs)
 	$(CC) $(CFLAGS) -o $@ $^
 
-$(call binexe,transpose): $(BldPath)/transpose.o \
-	$(addprefix $(CxBldPath)/, alphatab.o fileb.o syscx.o)
+$(call binexe,transpose): $(BldPath)/transpose.o $(CxStdObjs)
 	$(CC) $(CFLAGS) -o $@ $^
 
 $(call binexe,chatty): $(BldPath)/chatty.o \
-	$(addprefix $(CxBldPath)/, alphatab.o fileb.o ospc.o syscx.o)
+	$(CxStdObjs) $(addprefix $(CxBldPath)/, ospc.o)
 	$(CC) $(CFLAGS) $^ -o $@ -lrt
 
 $(BldPath)/lace.o: $(BldPath)/lace.c
@@ -89,6 +83,10 @@ $(BldPath)/lace.o: $(BldPath)/lace.c
 
 $(BldPath)/chatty.o: $(BldPath)/chatty.c
 	$(CC) -c $(filter-out -ansi,$(CFLAGS)) $< -o $@
+
+#$(call binexe,tex2html): $(BldPath)/tex2html.o \
+#	$(addprefix $(CxBldPath)/, alphatab.o fileb.o syscx.o)
+#	$(CC) $(CFLAGS) $^ -o $@
 
 .PHONY: clean
 clean:

@@ -10,14 +10,14 @@
 static void
 show_usage_and_exit ()
 {
-    OFileB* of = stderr_OFileB ();
-    printf_OFileB (of, "Usage: %s TABLE QUERIES [OPTION]*\n",
-                   exename_of_sysCx ());
-#define f(s)  oput_cstr_OFileB (of, s); oput_char_OFileB (of, '\n')
-    f( "    TABLE is a file used for lookup." );
-    f( "    QUERIES is a file, each line prompts an output of the closest match from TABLE." );
+  OFile* of = stderr_OFile ();
+  printf_OFile (of, "Usage: %s TABLE QUERIES [OPTION]*\n",
+                exename_of_sysCx ());
+#define f(s)  oput_cstr_OFile (of, s); oput_char_OFile (of, '\n')
+  f( "    TABLE is a file used for lookup." );
+  f( "    QUERIES is a file, each line prompts an output of the closest match from TABLE." );
 #undef f
-    failout_sysCx ("");
+  failout_sysCx ("");
 }
 
     /** Open a file for reading or writing.
@@ -144,63 +144,66 @@ matching_line (uint* a, uint width, const char* s, char* const* lines)
 
 int main (int argc, char** argv)
 {
-    int argi =
-        (init_sysCx (&argc, &argv),
-         1);
-    uint* lcs_array;
-    FileB lookup_in = dflt_FileB ();
-    FileB stream_in = dflt_FileB ();
-    FILE* out;
-    char* buf;
-    char* s;
-    char** lines;
-    uint width;
+  int argi =
+    (init_sysCx (&argc, &argv),
+     1);
+  uint* lcs_array;
+  XFileB lookup_in[1];
+  XFileB stream_in[1];
+  FILE* out;
+  char* buf;
+  char* s;
+  char** lines;
+  uint width;
 
-    if (argi >= argc)
-        show_usage_and_exit ();
+  init_XFileB (lookup_in);
+  init_XFileB (stream_in);
 
-    lookup_in.f = open_file_arg (argv[argi++], false);
+  if (argi >= argc)
+    show_usage_and_exit ();
 
-    if (argi >= argc)
-        show_usage_and_exit ();
+  set_FILE_FileB (&lookup_in->fb, open_file_arg (argv[argi++], false));
 
-    buf = xget_FileB (&lookup_in);
-    lines = split_lines (buf, &width);
-    lcs_array = AllocT( uint, width );
+  if (argi >= argc)
+    show_usage_and_exit ();
 
-    stream_in.f = open_file_arg (argv[argi++], false);
+  buf = xget_XFileB (lookup_in);
+  lines = split_lines (buf, &width);
+  lcs_array = AllocT( uint, width );
 
-    while (argi < argc)
+  set_FILE_FileB (&stream_in->fb, open_file_arg (argv[argi++], false));
+
+  while (argi < argc)
+  {
+    const char* arg = argv[argi];
+    ++ argi;
+    if (0 == strcmp (arg, "-h"))
     {
-        const char* arg = argv[argi];
-        ++ argi;
-        if (0 == strcmp (arg, "-h"))
-        {
-            show_usage_and_exit ();
-        }
-        else
-        {
-            DBog1( "Unknown argument: %s", arg );
-            show_usage_and_exit ();
-        }
+      show_usage_and_exit ();
     }
-
-    out = stdout;
-    for (s = getline_XFileB (&stream_in.xo);
-         s;
-         s = getline_XFileB (&stream_in.xo))
+    else
     {
-        uint i;
-        i = matching_line (lcs_array, width, s, lines);
-        fputs (lines[i], out);
-        fputc ('\n', out);
+      DBog1( "Unknown argument: %s", arg );
+      show_usage_and_exit ();
     }
+  }
 
-    free (lcs_array);
-    free (lines);
-    lose_FileB (&lookup_in);
-    lose_FileB (&stream_in);
-    lose_sysCx ();
-    return 0;
+  out = stdout;
+  for (s = getline_XFile (&stream_in->xf);
+       s;
+       s = getline_XFile (&stream_in->xf))
+  {
+    uint i;
+    i = matching_line (lcs_array, width, s, lines);
+    fputs (lines[i], out);
+    fputc ('\n', out);
+  }
+
+  free (lcs_array);
+  free (lines);
+  lose_XFileB (lookup_in);
+  lose_XFileB (stream_in);
+  lose_sysCx ();
+  return 0;
 }
 
