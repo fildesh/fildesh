@@ -13,7 +13,6 @@ BldPath = lace
 
 ExeList = lace add best-match xpipe void cat1 ssh-all ujoin \
 		  godo waitdo execfd echo transpose
-#tex2html
 
 ifeq (,$(filter wine,$(CONFIG)))
 	ifeq (,$(filter winegcc,$(CONFIG)))
@@ -83,10 +82,6 @@ $(BldPath)/lace.o: $(BldPath)/lace.c
 
 $(BldPath)/chatty.o: $(BldPath)/chatty.c
 	$(CC) -c $(filter-out -ansi,$(CFLAGS)) $< -o $@
-
-#$(call binexe,tex2html): $(BldPath)/tex2html.o \
-#	$(addprefix $(CxBldPath)/, alphatab.o fileb.o syscx.o)
-#	$(CC) $(CFLAGS) $^ -o $@
 
 .PHONY: clean
 clean:
