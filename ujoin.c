@@ -155,7 +155,7 @@ compare_lines (XFile* xf, Associa* map, const char* delim,
         {
             AlphaTab ts = dflt1_AlphaTab (field);
             Assoc* assoc = lookup_Associa (map, &ts);
-            join = (assoc ? *(LineJoin**) val_of_Assoc (assoc) : 0);
+            join = (assoc ? *(LineJoin**) val_of_Assoc (map, assoc) : 0);
         }
 
         if (!join)
@@ -216,7 +216,7 @@ int main (int argc, char** argv)
     TableT(LineJoin) table;
     Associa map[1];
 
-    InitAssocia( AlphaTab, LineJoin*, *map, swapped_AlphaTab );
+    InitAssocia( AlphaTab, LineJoin*, *map, cmp_AlphaTab );
     init_XFileB (lookup_in);
     init_XFileB (stream_in);
 

@@ -181,7 +181,7 @@ getf_SymVal (Associa* map, const char* s)
     ts = dflt1_AlphaTab (s);
 
     assoc = ensure_Associa (map, &ts);
-    x = (SymVal*) val_of_Assoc (assoc);
+    x = (SymVal*) val_of_Assoc (map, assoc);
     if (map->nodes.sz > sz)
     {
         init_SymVal (x);
@@ -529,7 +529,7 @@ setup_commands (TableT(Command)* cmds,
     Associa map[1];
     Assoc* assoc;
 
-    InitAssocia( AlphaTab, SymVal, *map, swapped_AlphaTab );
+    InitAssocia( AlphaTab, SymVal, *map, cmp_AlphaTab );
 
     {:for (i ; cmds->sz)
         uint arg_q = 0, arg_r = 0;
@@ -726,7 +726,7 @@ setup_commands (TableT(Command)* cmds,
          assoc;
          assoc = next_Assoc (assoc))
     {
-        SymVal* x = (SymVal*) val_of_Assoc (assoc);
+        SymVal* x = (SymVal*) val_of_Assoc (map, assoc);
         if (x->kind == ODescVal)
         {
             DBog1( "Dangling output stream! Symbol: %s", x->name.s );
