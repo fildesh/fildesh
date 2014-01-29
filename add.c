@@ -39,7 +39,7 @@ int main (int argc, char** argv)
   {
     real x;
     XFile olay[1];
-    olay_XFile (olay, xf, IdxEltTable( xf->buf, s ));
+    olay_txt_XFile (olay, xf, IdxEltTable( xf->buf, s ));
     x = sum_line (olay);
     printf_OFile (of, "%f\n", x);
     flush_OFile (of);
