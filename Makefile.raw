@@ -12,7 +12,7 @@ BinPath = ../bin
 BldPath = lace
 
 ExeList = lace add best-match xpipe void cat1 ssh-all ujoin \
-		  godo waitdo execfd echo transpose
+		  godo waitdo execfd echo time2sec transpose
 
 ifeq (,$(filter wine,$(CONFIG)))
 	ifeq (,$(filter winegcc,$(CONFIG)))
@@ -66,6 +66,9 @@ $(call binexe,execfd): $(BldPath)/execfd.o $(CxStdObjs)
 	$(CC) $(CFLAGS) -o $@ $^
 
 $(call binexe,echo): $(BldPath)/echo.o $(CxStdObjs)
+	$(CC) $(CFLAGS) -o $@ $^
+
+$(call binexe,time2sec): $(BldPath)/time2sec.o $(CxStdObjs)
 	$(CC) $(CFLAGS) -o $@ $^
 
 $(call binexe,transpose): $(BldPath)/transpose.o $(CxStdObjs)
