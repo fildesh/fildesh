@@ -31,7 +31,12 @@ set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${BinPath})
 addbinexe (lace lace.c)
 
 get_filename_component (d ${BinPath} ABSOLUTE)
-set_property(SOURCE ${BldPath}/lace.c
+
+#add_definitions (-DUtilBin="${d}")
+## The following causes CMake to segfault.
+#set_property(SOURCE ${BldPath}/lace.c
+#  APPEND PROPERTY COMPILE_DEFINITIONS UtilBin="${d}")
+set_property(TARGET lace
   APPEND PROPERTY COMPILE_DEFINITIONS UtilBin="${d}")
 
 addbinexe (add add.c)
