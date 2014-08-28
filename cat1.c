@@ -25,8 +25,8 @@ int main(int argc, char** argv)
     }
 
     for (i = 1; i < argc-1; ++i)
-        fputs (argv[i], out); 
-    
+        fputs (argv[i], out);
+
     do
     {
 #define N 8192

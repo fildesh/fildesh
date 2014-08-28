@@ -19,7 +19,7 @@ main (int argc, char** argv)
     if (eql_cstr (arg, "--"))
     {
       break;
-    }  
+    }
     else if (eql_cstr (arg, "-s"))
     {
       space = false;

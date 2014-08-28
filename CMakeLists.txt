@@ -1,5 +1,7 @@
 
 cmake_minimum_required (VERSION 2.8)
+set(CMAKE_DISABLE_SOURCE_CHANGES ON)
+set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 
 project (lace)
 
@@ -20,8 +22,9 @@ list (APPEND CFiles
   waitdo.c
   execfd.c
   echo.c
+  time2sec.c
   transpose.c
-  #   chatty.c
+  chatty.c
   )
 
 include (${CxPath}/include.cmake)
@@ -50,8 +53,13 @@ addbinexe (godo godo.c)
 addbinexe (waitdo waitdo.c)
 addbinexe (execfd execfd.c)
 addbinexe (echo echo.c)
+addbinexe (time2sec time2sec.c)
 addbinexe (transpose transpose.c)
 
-#add_executable (chatty ${BldPath}/chatty.c ${CxFullCFiles})
-#target_link_libraries (chatty rt)
+if (UNIX)
+  addbinexe (chatty chatty.c)
+  target_link_libraries (chatty rt)
+  set_property (TARGET chatty
+    APPEND PROPERTY COMPILE_DEFINITIONS _POSIX_C_SOURCE=199309L)
+endif ()
 
