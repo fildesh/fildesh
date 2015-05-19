@@ -6,7 +6,7 @@ It is a string variable with "llo" in it.
 This is the end.
 $(H heredoc) tag
 
-echo -e hello\nup\njello $(O echo) $(H heredoc) \
+/bin/echo -e hello\nup\njello $(O echo) $(H heredoc) \
      d e\nyellow\n$(H heredoc)
 grep llo $(X echo) $(O grep)
 
