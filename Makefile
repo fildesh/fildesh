@@ -1,5 +1,8 @@
 
 BldPath=bld
+TopBldPath=$(BldPath)/ext
+BinPath=bin
+
 SrcPath=src
 DepPath=dep
 CxPath=$(DepPath)/cx
@@ -8,35 +11,43 @@ CMAKE=cmake
 GODO=$(CMAKE) -E chdir
 MKDIR=$(CMAKE) -E make_directory
 
-.PHONY: default
+.PHONY: default all cmake proj test clean distclean init update
+
 default:
-	if [ ! -d $(BldPath) ] ; then $(MAKE) cmake ; fi
-	if [ ! -x bin/cx ] ; then $(MAKE) cx ; fi
+	$(MAKE) init
+	if [ ! -d $(TopBldPath) ] ; then $(MAKE) cmake ; fi
 	$(MAKE) proj
 
-.PHONY: all
 all:
+	$(MAKE) init
 	$(MAKE) cmake
-	$(MAKE) cx
 	$(MAKE) proj
 
-.PHONY: cmake
 cmake:
 	if [ ! -d $(BldPath) ] ; then $(MKDIR) $(BldPath) ; fi
-	$(GODO) $(BldPath) $(CMAKE) ../$(SrcPath)
+	if [ ! -d $(TopBldPath) ] ; then $(MKDIR) $(TopBldPath) ; fi
+	$(GODO) $(TopBldPath) $(CMAKE) ../..
 
-.PHONY: cx
-cx:
-	if [ ! -d $(CxPath)/bld ] ; then $(MKDIR) $(CxPath)/bld ; fi
-	$(GODO) $(CxPath)/bld $(CMAKE) ..
-	$(GODO) $(CxPath)/bld $(MAKE)
-
-.PHONY: proj
 proj:
+	$(GODO) $(TopBldPath) $(MAKE)
 	$(GODO) $(BldPath) $(MAKE)
 
-.PHONY: clean
-clean:
-	$(GODO) $(BldPath) $(MAKE) clean
+test:
+	$(GODO) $(BldPath) $(MAKE) test
 
+clean:
+	$(GODO) $(TopBldPath) $(MAKE) clean
+
+distclean:
+	rm -fr $(BldPath) $(BinPath)
+
+init:
+	if [ ! -f $(CxPath)/cx.c ] ; then git submodule init dep/cx ; git submodule update dep/cx ; fi
+	if [ ! -f $(CxPath)-pp/cx.c ] ; then git submodule init dep/cx-pp ; git submodule update dep/cx-pp ; fi
+
+update:
+	git pull
+	git submodule update
+	git submodule foreach git checkout master
+	git submodule foreach git merge --ff-only origin/master
 
