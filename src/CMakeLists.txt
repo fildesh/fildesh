@@ -5,7 +5,7 @@ set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 
 project (lace)
 
-set (CxPath ${CMAKE_CURRENT_SOURCE_DIR}/../dep/cx)
+set (CxPath ${CMAKE_CURRENT_SOURCE_DIR}/../dep/cx/src)
 set (BinPath ${CMAKE_CURRENT_SOURCE_DIR}/../bin)
 set (BldPath lace)
 

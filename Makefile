@@ -11,7 +11,9 @@ CMAKE=cmake
 GODO=$(CMAKE) -E chdir
 MKDIR=$(CMAKE) -E make_directory
 
-.PHONY: default all cmake proj test clean distclean init update
+.PHONY: default all cmake proj \
+	test clean distclean \
+	init update pull
 
 default:
 	$(MAKE) init
@@ -36,13 +38,13 @@ test:
 	$(GODO) $(BldPath) $(MAKE) test
 
 clean:
-	$(GODO) $(TopBldPath) $(MAKE) clean
+	$(GODO) $(BldPath) $(MAKE) clean
 
 distclean:
 	rm -fr $(BldPath) $(BinPath)
 
 init:
-	if [ ! -f $(CxPath)/cx.c ] ; then git submodule init dep/cx ; git submodule update dep/cx ; fi
+	if [ ! -f $(CxPath)/src/cx.c ] ; then git submodule init dep/cx ; git submodule update dep/cx ; fi
 	if [ ! -f $(CxPath)-pp/cx.c ] ; then git submodule init dep/cx-pp ; git submodule update dep/cx-pp ; fi
 
 update:
@@ -50,4 +52,8 @@ update:
 	git submodule update
 	git submodule foreach git checkout master
 	git submodule foreach git merge --ff-only origin/master
+
+pull:
+	git pull
+	git submodule foreach git pull
 
