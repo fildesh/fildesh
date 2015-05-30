@@ -14,9 +14,12 @@ int main (int argc, char** argv)
   const char* ExeName = argv[0];
   FILE* in = stdin;
   FILE* ErrOut = stderr;
-  bool good = true;
+  DeclLegit( good );
 
-  if (LegitCk( argi < argc, good, 0 ))
+  DoLegitLine( "Need a command!" )
+    argi < argc;
+
+  DoLegitP( in, "File open." )
   {
     if (0 == strcmp (argv[argi], "-x"))
     {
@@ -27,13 +30,16 @@ int main (int argc, char** argv)
       ++ argi;
     }
   }
-  if (LegitCk( in, good, "File open." ))
-  {}
-  if (LegitCk( argi < argc, good, 0 ))
+
+  DoLegitLine( "Need a command!" )
+    argi < argc;
+
+  DoLegitP( argi < argc, "Need a command!" )
   {
     if (0 == strcmp (argv[argi], "--"))  ++ argi;
   }
-  if (LegitCk( argi < argc, good, "Need a command!" ))
+
+  if (good)
   {
     while (! feof (in) && ! ferror (in))  fgetc (in);
     fclose (in);

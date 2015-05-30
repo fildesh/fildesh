@@ -28,8 +28,7 @@ int main (int argc, char** argv)
   int argi =
     (init_sysCx (&argc, &argv),
      1);
-  bool good = true;
-  bool bstat = true;
+  DeclLegit( good );
   int istat = 0;
   const char* host = "127.0.0.1";
   const char* service = "1337";
@@ -56,8 +55,10 @@ int main (int argc, char** argv)
   if (argi < argc && !eql_cstr (argv[argi], "-connect"))
     failout_sysCx ("I take no arguments from humans.");
 
-  istat = getaddrinfo (host, service, &crit, &list);
-  if (LegitCk( istat == 0, good, "getaddrinfo()" ))
+  DoLegitP( istat == 0, "getaddrinfo()" )
+    istat = getaddrinfo (host, service, &crit, &list);
+
+  DoLegit( 0 )
   {
     addr = list;
     if (addr->ai_next)
@@ -76,29 +77,30 @@ int main (int argc, char** argv)
       xget_XFile (stdin_XFile ());
       close_XFileB (stdin_XFileB ());
 
-      sock = socket (addr->ai_family,
-                     addr->ai_socktype,
-                     addr->ai_protocol);
-      if (LegitCk( sock >= 0, good, "socket()" ))
+      DoLegitP( sock >= 0, "socket()" )
+        sock = socket (addr->ai_family,
+                       addr->ai_socktype,
+                       addr->ai_protocol);
+      DoLegitP( istat >= 0, "connect()" )
         istat = connect (sock, addr->ai_addr, addr->ai_addrlen);
-      if (LegitCk( istat >= 0, good, "connect()" ))
+
+      DoLegitP( istat == 0, "aio_write()" )
       {
         aio->aio_fildes = sock;
         aio->aio_buf = of->buf.s;
         aio->aio_nbytes = of->off;
         istat = aio_write (aio);
       }
-      if (LegitCk( istat == 0, good, "aio_write()" ))
+      DoLegitP( istat == 0, "aio_suspend()" )
       {
         do {
           const struct aiocb* tmp = aio;
           istat = aio_suspend (&tmp, 1, 0);
         } while (istat != 0 && errno == EINTR);
       }
-      if (LegitCk( istat == 0, good, "aio_suspend()" ))
-      {}
-      if (LegitCk( aio_return (aio) == (ssize_t) aio->aio_nbytes, good, "aio_return()" ))
-      {}
+
+      DoLegitLine( "aio_return()" )
+        aio_return (aio) == (ssize_t) aio->aio_nbytes;
 
       if (sock >= 0)  close (sock);
       lose_OFile (of);
@@ -111,13 +113,17 @@ int main (int argc, char** argv)
       struct sockaddr_storage client_addr;
       socklen_t client_addr_nbytes = sizeof (client_addr);
       DeclTable( byte, msg );
+      ssize_t nbytes = 0;
 
       ospc->cmd = cons1_AlphaTab (exename_of_sysCx ());
       PushTable( ospc->args, cons1_AlphaTab ("-connect") );
 
       stdxpipe_OSPc (ospc);
-      bstat = spawn_OSPc (ospc);
-      if (LegitCk( bstat, good, "spawn()" ))
+
+      DoLegitLine( "spawn()" )
+        spawn_OSPc (ospc);
+
+      DoLegitP( sock >= 0, "socket()" )
       {
         EnsizeTable( msg, 1024 );
 
@@ -125,13 +131,13 @@ int main (int argc, char** argv)
                        addr->ai_socktype,
                        addr->ai_protocol);
       }
-      if (LegitCk( sock >= 0, good, "socket()" ))
+      DoLegitP( istat == 0, "bind()" )
         istat = bind (sock, addr->ai_addr, addr->ai_addrlen);
 
-      if (LegitCk( istat == 0, good, "bind()" ))
+      DoLegitP( istat == 0, "listen()" )
         istat = listen (sock, SOMAXCONN);
 
-      if (LegitCk( istat == 0, good, "listen()" ))
+      DoLegitP( sock1 >= 0, "accept()" )
       {
         /* Tell spawned process that we are listening.*/
         close_OFile (ospc->of);
@@ -140,7 +146,8 @@ int main (int argc, char** argv)
                         (struct sockaddr*) &client_addr,
                         &client_addr_nbytes);
       }
-      if (LegitCk( sock1 >= 0, good, "accept()" ))
+
+      DoLegitP( istat == 0, "aio_read()" )
       {
         aio->aio_fildes = sock1;
         aio->aio_buf = msg.s;
@@ -148,24 +155,24 @@ int main (int argc, char** argv)
 
         istat = aio_read (aio);
       }
-      if (LegitCk( istat == 0, good, "aio_read()" ))
+
+      DoLegitP( istat == 0, "aio_suspend()" )
       {
         do {
           const struct aiocb* tmp = aio;
           istat = aio_suspend (&tmp, 1, 0);
         } while (istat < 0 && errno == EINTR);
       }
-      if (LegitCk( istat == 0, good, "aio_suspend()" ))
-      {
-        ssize_t nbytes = aio_return (aio);
 
-        if (LegitCk( nbytes > 0, good, "aio_return()" ))
-        {
-          msg.sz = nbytes;
-          fputs ("got:", stdout);
-          fwrite (msg.s, sizeof(char), msg.sz, stdout);
-          fputc ('\n', stdout);
-        }
+      DoLegitP( nbytes > 0, "aio_return()" )
+        nbytes = aio_return (aio);
+
+      DoLegit( 0 )
+      {
+        msg.sz = nbytes;
+        fputs ("got:", stdout);
+        fwrite (msg.s, sizeof(char), msg.sz, stdout);
+        fputc ('\n', stdout);
       }
 
       LoseTable( msg );
@@ -181,6 +188,6 @@ int main (int argc, char** argv)
 
   memset (aio, 0, sizeof (*aio));
   lose_sysCx ();
-  return 0;
+  return good ? 0 : 1;
 }
 
