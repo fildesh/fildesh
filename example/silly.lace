@@ -1,0 +1,23 @@
+#!/usr/bin/env lace
+
+# Run from this directory to list all the .c files in ../src,
+# but their .c is changed to .h by {sed}.
+
+# Things are done in a pretty silly way.
+
+ $(O a) godo .. ls src
+$(XO a) grep '\.c$'
+
+$(H silly)
+sed -e 's/c$/h/'
+$(H silly)
+
+# For each line of input, a new instance of {lace} is spawned to execute
+# the {sed} command. We could have just used the {sed} command directly.
+$(XO a) xpipe lace -- $(H silly)
+
+# Interpret the {a} stream as a file to give to {cat1} in order to print it.
+# We could have just used "$(X a)" in the line above to print to stdout.
+# It is pretty silly.
+cat1 $(XF a)
+

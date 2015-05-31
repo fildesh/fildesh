@@ -1,4 +1,4 @@
-#!/bin/env lace
+#!/usr/bin/env lace
 
 # Take a file with pairs of people in it,
 # and a username/fullname file which has a specific order to it,

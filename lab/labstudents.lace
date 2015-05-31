@@ -1,4 +1,4 @@
-#!/bin/env lace
+#!/usr/bin/env lace
 
 $(H lab-file)
 lab112.txt

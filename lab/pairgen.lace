@@ -1,4 +1,4 @@
-#!/bin/env lace
+#!/usr/bin/env lace
 
 ## This generates the pairs file.
 ## It also copies labconf.lace to the grading directory,

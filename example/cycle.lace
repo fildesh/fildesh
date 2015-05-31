@@ -1,4 +1,4 @@
-#!/bin/env lace
+#!/usr/bin/env lace
 
 # Compute the sum from 1 to N
 # by generating lines containing 1 to N, 1 to N-1, ..., 1 to 2, 1

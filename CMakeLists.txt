@@ -5,6 +5,7 @@ set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 include(ExternalProject)
 
 set (TopPath ${CMAKE_CURRENT_SOURCE_DIR})
+set (ProjBuldPath ${CMAKE_CURRENT_BINARY_DIR}/..)
 set (DepPath ${TopPath}/dep)
 set (BinPath ${TopPath}/bin)
 
@@ -27,13 +28,13 @@ ExternalProject_Add(cx
   INSTALL_COMMAND echo "No install step."
   )
 
-ExternalProject_Add(exc
+ExternalProject_Add(lace
   DEPENDS cx
   PREFIX ${CMAKE_CURRENT_BINARY_DIR}/external/src
   SOURCE_DIR ${TopPath}/src
-  BINARY_DIR ${TopPath}/bld
-  CONFIGURE_COMMAND ${CMAKE_COMMAND}
-  ../src
+  BINARY_DIR ${ProjBuldPath}
+  CONFIGURE_COMMAND ${CMAKE_COMMAND} ${TopPath}/src
+  BUILD_COMMAND echo "No build step."
   INSTALL_COMMAND echo "No install step."
   )
 
