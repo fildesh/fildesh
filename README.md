@@ -2,13 +2,22 @@
 # The Lace Programming Language
 
 This is a domain-specific language meant to simplify complex pipelines between programs.
-It allows multiple inputs and outputs, undirected cycles, and even directed cycles ([example/cycle.lace](blob/master/example/cycle.lace)).
+It allows multiple inputs and outputs, undirected cycles, and even directed cycles ([example/cycle.lace](example/cycle.lace)).
 Though when the dataflow graph has undirected cycles, you should use the `elastic` utility to avoid deadlocks.
+
+## How to Use
+
+```
+make
+./bin/lace < example/hello.lace
+```
+
+Hopefully that worked, the only real dependencies are `git` (for pulling submodules), `cmake`, a C compiler, and the POSIX librt for the `elastic` tool.
 
 ## Motivating Example
 
 Let's walk through a fairly useful script!
-Open [example/whophys.lace](blob/master/example/whophys.lace) in a new window and follow along.
+Open [example/whophys.lace](example/whophys.lace) in a new window and follow along.
 
 The `whophys` script is made for instructors to easily (or magically) learn the names of students sitting in a computer lab.
 It does this by taking the layout of the computer lab as a variable `lab` and replacing each machine name with the username of whoever is logged in.
