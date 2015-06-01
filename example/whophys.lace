@@ -1,0 +1,70 @@
+#!/usr/bin/env lace
+
+## This code replaces all the names of computers in a lab
+## with the user id on each machine!
+## Non-hostnames in the map must start with exclamation points.
+## You should have auto-login to these hosts.
+
+# Layout of a computer lab (with identical localhost machines...).
+$(H lab)
+ !door!  localhost   127.0.0.1     !door
+      !  localhost   localhost     !
+      !  localhost   localhost     !
+      !                            !
+      !          !projector        !
+      !                            !
+      !  localhost   localhost     !door
+$(H lab)
+
+# Create a stream {a} to with the lab text.
+ $(O a) echo $(H lab)
+
+## To read standard input instead of {lab},
+## Uncomment this {cat1} line and comment the above {echo} line.
+# $(O a) cat1 -
+
+# Split off another stream {b} to use later.
+$(XO a) tee $(OF b)
+
+# We need an elastic buffer on the slow side of a {tee}.
+$(XO b) elastic
+
+
+$(XO a) sed \
+    -e 's/^[[:space:]]\+/ /' \
+    -e 's/^ //' \
+    -e 's/ $//'
+
+$(XO a) tr ' ' '\n'
+$(XO a) grep -v -e '^!' -e '^$'
+
+
+## You can easily inspect a stream by catting it here,
+## voiding out the other streams,
+## and ignoring the rest of the file.
+#cat1 $(XF a)
+#$(X b) void
+#$(H ignore)
+
+
+$(H clientcmd)
+who | awk '{ print "host " $0 ; }'
+$(H clientcmd)
+
+$(X a) $(O users) xargs -n 1 -Ihost \
+    ssh \
+    -o StrictHostKeyChecking=no \
+    -o PasswordAuthentication=no \
+    host \
+    sh -c $(H clientcmd)
+
+
+$(H subst)
+{ printf ("s/\\<%s\\>/%-*s/\n", $1, length($1), $2); }
+$(H subst)
+
+$(X users) $(O substitutions) awk $(H subst)
+
+$(X b) sed -f $(XF substitutions)
+#$(H ignore)
+

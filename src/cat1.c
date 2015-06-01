@@ -3,28 +3,29 @@
 int main(int argc, char** argv)
 {
     int i;
+    int argi = argc-1;
     size_t nread;
     FILE* in;
     FILE* out = stdout;
 
-    if (argc == 1)
+    if (argi < 1)
     {
         fprintf (stderr, "%s: Need file argument!\n", argv[0]);
         return 1;
     }
 
-    if (argv[argc-1][0] == '-' && argv[argc-1][1] == '\0')
+    if (argv[argi][0] == '-' && argv[argi][1] == '\0')
         in = stdin;
     else
-        in = fopen (argv[argc-1], "rb");
+        in = fopen (argv[argi], "rb");
 
     if (!in)
     {
-        fprintf (stderr, "%s: Cannot open file! %s\n", argv[0], argv[argc-1]);
+        fprintf (stderr, "%s: Cannot open file! %s\n", argv[0], argv[argi]);
         return 1;
     }
 
-    for (i = 1; i < argc-1; ++i)
+    for (i = 1; i < argi; ++i)
         fputs (argv[i], out);
 
     do

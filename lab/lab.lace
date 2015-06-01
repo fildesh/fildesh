@@ -12,6 +12,7 @@ $(XO a) sed \
     -e 's/^[[:space:]]\+/ /' \
     -e 's/^ //' \
     -e 's/ $//'
+
 $(XO a) tr ' ' '\n'
 $(XO a) grep -v -e '^!' -e '^$'
 

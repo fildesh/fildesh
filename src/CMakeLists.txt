@@ -16,6 +16,7 @@ list (APPEND CFiles
   xpipe.c
   void.c
   cat1.c
+  elastic.c
   ssh-all.c
   ujoin.c
   godo.c
@@ -55,6 +56,14 @@ addbinexe (execfd execfd.c)
 addbinexe (echo echo.c)
 addbinexe (time2sec time2sec.c)
 addbinexe (transpose transpose.c)
+
+if (UNIX)
+  addbinexe (elastic elastic.c)
+  target_link_libraries (elastic rt)
+  set_property (TARGET elastic
+    APPEND PROPERTY COMPILE_DEFINITIONS _POSIX_C_SOURCE=199309L)
+endif ()
+
 
 if (UNIX)
   addbinexe (chatty chatty.c)
