@@ -26,7 +26,11 @@ enum SymValKind
     HereDocVal, IHereDocFileVal,
     NSymValKinds
 };
-enum CommandKind { RunCommand, HereDocCommand, NCommandKinds };
+enum CommandKind {
+  RunCommand, HereDocCommand,
+  StdinCommand, StdoutCommand,
+  NCommandKinds
+};
 
 typedef enum SymValKind SymValKind;
 typedef enum CommandKind CommandKind;
@@ -69,6 +73,7 @@ struct SymVal
     AlphaTab name;
     SymValKind kind;
     uint arg_idx;  /**< If a file.**/
+    uint ios_idx;
     uint cmd_idx;
     union SymVal_union
     {
@@ -460,14 +465,20 @@ parse_sym (char* s)
     return kind;
 }
 
-static void
+static uint
 add_ios_Command (Command* cmd, int in, int out)
 {
-    if (in >= 0)
-        PushTable( cmd->is, in );
+  uint idx = Max_uint;
+  if (in >= 0) {
+    idx = cmd->is.sz;
+    PushTable( cmd->is, in );
+  }
 
-    if (out >= 0)
-        PushTable( cmd->os, out );
+  if (out >= 0) {
+    idx = cmd->os.sz;
+    PushTable( cmd->os, out );
+  }
+  return idx;
 }
 
 static void
@@ -525,217 +536,254 @@ static void
 setup_commands (TableT(Command)* cmds,
                 const char* tmpdir)
 {
-    uint ntmp_files = 0;
-    Associa map[1];
-    Assoc* assoc;
+  uint ntmp_files = 0;
+  Associa map[1];
+  Assoc* assoc;
 
-    InitAssocia( AlphaTab, SymVal, *map, cmp_AlphaTab );
+  InitAssocia( AlphaTab, SymVal, *map, cmp_AlphaTab );
 
-    {:for (i ; cmds->sz)
-        uint arg_q = 0, arg_r = 0;
-        Command* cmd;
-        cmd = &cmds->s[i];
+  {:for (i ; cmds->sz)
+    uint arg_q = 0, arg_r = 0;
+    Command* cmd;
+    cmd = &cmds->s[i];
 
-        /* The command defines a HERE document.*/
-        if (cmd->kind == HereDocCommand)
-        {
-            SymVal* sym;
-            SymValKind kind;
-
-            /* The loop below should not run.*/
-            Claim2( cmd->args.sz ,==, 0 ); /* Invariant.*/
-
-            kind = parse_sym (cmd->line);
-            Claim2( kind ,==, HereDocVal);
-            sym = getf_SymVal (map, cmd->line);
-            sym->kind = kind;
-            sym->as.here_doc = cmd->doc;
-        }
-
-        for (arg_r = 0; arg_r < cmd->args.sz; ++ arg_r)
-        {
-            SymVal* sym;
-            SymValKind kind;
-
-            kind = parse_sym (cmd->args.s[arg_r]);
-
-            if (kind < NSymValKinds)
-            {
-                sym = getf_SymVal (map, cmd->args.s[arg_r]);
-                if (kind == HereDocVal)
-                {
-                    Claim2( sym->kind ,==, HereDocVal );
-                    cmd->args.s[arg_q] = sym->as.here_doc;
-                    ++ arg_q;
-                }
-                if (kind == IDescVal || kind == IDescFileVal ||
-                    kind == IDescArgVal ||
-                    kind == IODescVal || kind == IHereDocFileVal)
-                {
-                    int fd;
-                    if (kind == IHereDocFileVal)
-                    {
-                        Claim2( sym->kind ,==, HereDocVal );
-                    }
-                    else
-                    {
-                        Claim2( sym->kind ,==, ODescVal );
-                        sym->kind = NSymValKinds;
-                    }
-                    fd = sym->as.file_desc;
-
-                    if (kind == IDescVal || kind == IODescVal)
-                    {
-                        cmd->stdis = fd;
-                    }
-                    else if (kind == IDescArgVal)
-                    {
-                        add_iarg_Command (cmd, fd, true);
-                        cmd->args.s[arg_q] = 0;
-                        ++ arg_q;
-                    }
-                    else if (kind == IDescFileVal)
-                    {
-                        add_ios_Command (cmd, fd, -1);
-                        if (arg_q > 0)
-                        {
-                            cmd->args.s[arg_q] = add_fd_arg_Command (cmd, fd);
-                        }
-                        else
-                        {
-                            cmd->args.s[0] = add_tmp_file_Command (cmd, ntmp_files, tmpdir);
-                            ++ ntmp_files;
-                            if (sym->arg_idx < Max_uint)
-                                cmds->s[sym->cmd_idx].args.s[sym->arg_idx] = cmd->args.s[0];
-                            cmd->exec_fd = fd;
-                        }
-                        ++ arg_q;
-                    }
-                    else
-                    {
-                        Claim2( kind ,==, IHereDocFileVal );
-                        cmd->args.s[arg_q] =
-                            add_tmp_file_Command (cmd, ntmp_files, tmpdir);
-                        ++ ntmp_files;
-                            /* Write the temp file now.*/
-                        write_here_doc_file (cmd->args.s[arg_q],
-                                             sym->as.here_doc);
-                        if (arg_q == 0)
-                            cmd->exec_doc = sym->as.here_doc;
-                        ++ arg_q;
-                    }
-                }
-                else if (kind == OFutureDescVal || kind == OFutureDescFileVal)
-                {
-                    int fd;
-                    Claim2( sym->kind ,==, IFutureDescVal );
-                    sym->kind = NSymValKinds;
-                    fd = sym->as.file_desc;
-
-                    if (kind == OFutureDescVal)
-                    {
-                        cmd->stdos = fd;
-                    }
-                    else
-                    {
-                        add_ios_Command (cmd, fd, -1);
-                        if (sym->arg_idx > 0)
-                        {
-                            cmd->args.s[arg_q] = add_fd_arg_Command (cmd, fd);
-                        }
-                        else
-                        {
-                            char* s;
-                            s = add_tmp_file_Command (&cmds->s[sym->cmd_idx],
-                                                      ntmp_files, tmpdir);
-                            ++ ntmp_files;
-                            cmds->s[sym->cmd_idx].args.s[0] = s;
-                            cmd->args.s[arg_q] = s;
-                        }
-                        ++ arg_q;
-                    }
-                }
-                if (kind == ODescVal || kind == ODescFileVal ||
-                    kind == IODescVal)
-                {
-                    fd_t fd[2];
-                    bool good;
-                    Claim2( sym->kind ,==, NSymValKinds );
-                    sym->kind = ODescVal;
-                    sym->cmd_idx = i;
-                    InitDomMax( sym->arg_idx );
-
-                    good = pipe_sysCx (fd);
-                    Claim( good );
-
-                    sym->as.file_desc = fd[0];
-                    if (kind == ODescVal || kind == IODescVal)
-                    {
-                        cmd->stdos = fd[1];
-                    }
-                    else
-                    {
-                        add_ios_Command (cmd, -1, fd[1]);
-                        cmd->args.s[arg_q] = add_fd_arg_Command (cmd, fd[1]);
-                        sym->arg_idx = arg_q;
-                        ++ arg_q;
-                    }
-                }
-                else if (kind == IFutureDescVal || kind == IFutureDescFileVal)
-                {
-                    fd_t fd[2];
-                    bool good;
-                    Claim2( sym->kind ,==, NSymValKinds );
-                    sym->kind = IFutureDescVal;
-                    sym->cmd_idx = i;
-                    InitDomMax( sym->arg_idx );
-
-                    good = pipe_sysCx (fd);
-                    Claim( good );
-
-                    sym->as.file_desc = fd[1];
-                    if (kind == IFutureDescVal)
-                    {
-                        cmd->stdis = fd[0];
-                    }
-                    else
-                    {
-                        add_ios_Command (cmd, -1, fd[0]);
-                        cmd->args.s[arg_q] = add_fd_arg_Command (cmd, fd[0]);
-                        if (arg_q == 0)
-                        {
-                            sym->arg_idx = 0;
-                            cmd->exec_fd = fd[0];
-                        }
-                        ++ arg_q;
-                    }
-                }
-            }
-            else
-            {
-                cmd->args.s[arg_q] = cmd->args.s[arg_r];
-                ++ arg_q;
-            }
-        }
-
-        if (cmd->args.sz > 0)
-            cmd->args.sz = arg_q;
-    }
-
-    for (assoc = beg_Associa (map);
-         assoc;
-         assoc = next_Assoc (assoc))
+    /* The command defines a HERE document.*/
+    if (cmd->kind == HereDocCommand)
     {
-        SymVal* x = (SymVal*) val_of_Assoc (map, assoc);
-        if (x->kind == ODescVal)
-        {
-            DBog1( "Dangling output stream! Symbol: %s", x->name.s );
-            failout_sysCx ("");
-        }
-        lose_SymVal (x);
+      SymVal* sym;
+      SymValKind kind;
+
+      /* The loops should not run.*/
+      Claim2( cmd->args.sz ,==, 0 ); /* Invariant.*/
+
+      kind = parse_sym (cmd->line);
+      Claim2( kind ,==, HereDocVal);
+      sym = getf_SymVal (map, cmd->line);
+      sym->kind = kind;
+      sym->as.here_doc = cmd->doc;
     }
 
-    lose_Associa (map);
+    for (arg_r = 0; arg_r < cmd->args.sz; ++ arg_r) {
+      char* arg = cmd->args.s[arg_r];
+      if (arg_q == 0 && eq_cstr("stdin", arg)) {
+        cmd->kind = StdinCommand;
+        break;
+      }
+      else if (arg_q == 0 && eq_cstr("stdout", arg)) {
+        cmd->kind = StdoutCommand;
+        break;
+      }
+    }
+
+    for (arg_r = 0; arg_r < cmd->args.sz; ++ arg_r)
+    {
+      SymVal* sym = 0;
+      char* arg = cmd->args.s[arg_r];
+      const SymValKind kind = parse_sym (arg);
+
+      if (kind < NSymValKinds) {
+        sym = getf_SymVal (map, arg);
+      }
+
+      if (kind == HereDocVal)
+      {
+        Claim2( sym->kind ,==, HereDocVal );
+        cmd->args.s[arg_q] = sym->as.here_doc;
+        ++ arg_q;
+      }
+      else if (cmd->kind == StdoutCommand && kind == IDescVal)
+      {
+        Command* last = &cmds->s[sym->cmd_idx];
+        Claim2( last->kind ,==, RunCommand );
+
+        closefd_sysCx (sym->as.file_desc);
+
+        if (sym->ios_idx < last->os.sz) {
+          dup2_sysCx (1, last->os.s[sym->ios_idx]);
+        }
+        else {
+          last->stdos = 1;
+        }
+        sym->kind = NSymValKinds;
+      }
+      else if (kind == IDescVal || kind == IDescFileVal ||
+               kind == IDescArgVal ||
+               kind == IODescVal || kind == IHereDocFileVal)
+      {
+        int fd;
+        if (kind == IHereDocFileVal)
+        {
+          Claim2( sym->kind ,==, HereDocVal );
+        }
+        else
+        {
+          Claim2( sym->kind ,==, ODescVal );
+          sym->kind = NSymValKinds;
+        }
+        fd = sym->as.file_desc;
+
+        if (kind == IDescVal || kind == IODescVal)
+        {
+          cmd->stdis = fd;
+        }
+        else if (kind == IDescArgVal)
+        {
+          add_iarg_Command (cmd, fd, true);
+          cmd->args.s[arg_q] = 0;
+          ++ arg_q;
+        }
+        else if (kind == IDescFileVal)
+        {
+          add_ios_Command (cmd, fd, -1);
+          if (arg_q > 0)
+          {
+            cmd->args.s[arg_q] = add_fd_arg_Command (cmd, fd);
+          }
+          else
+          {
+            cmd->args.s[0] = add_tmp_file_Command (cmd, ntmp_files, tmpdir);
+            ++ ntmp_files;
+            if (sym->arg_idx < Max_uint)
+              cmds->s[sym->cmd_idx].args.s[sym->arg_idx] = cmd->args.s[0];
+            cmd->exec_fd = fd;
+          }
+          ++ arg_q;
+        }
+        else
+        {
+          Claim2( kind ,==, IHereDocFileVal );
+          cmd->args.s[arg_q] =
+            add_tmp_file_Command (cmd, ntmp_files, tmpdir);
+          ++ ntmp_files;
+          /* Write the temp file now.*/
+          write_here_doc_file (cmd->args.s[arg_q],
+                               sym->as.here_doc);
+          if (arg_q == 0)
+            cmd->exec_doc = sym->as.here_doc;
+          ++ arg_q;
+        }
+      }
+      else if (kind == OFutureDescVal || kind == OFutureDescFileVal)
+      {
+        int fd;
+        Claim2( sym->kind ,==, IFutureDescVal );
+        sym->kind = NSymValKinds;
+        fd = sym->as.file_desc;
+
+        if (kind == OFutureDescVal)
+        {
+          cmd->stdos = fd;
+        }
+        else
+        {
+          add_ios_Command (cmd, fd, -1);
+          if (sym->arg_idx > 0)
+          {
+            cmd->args.s[arg_q] = add_fd_arg_Command (cmd, fd);
+          }
+          else
+          {
+            char* s;
+            s = add_tmp_file_Command (&cmds->s[sym->cmd_idx],
+                                      ntmp_files, tmpdir);
+            ++ ntmp_files;
+            cmds->s[sym->cmd_idx].args.s[0] = s;
+            cmd->args.s[arg_q] = s;
+          }
+          ++ arg_q;
+        }
+      }
+
+      if (cmd->kind == StdinCommand && kind == ODescVal)
+      {
+        sym->kind = ODescVal;
+        sym->cmd_idx = i;
+        sym->as.file_desc = dup_sysCx (0);
+        InitDomMax( sym->arg_idx );
+        InitDomMax( sym->ios_idx );
+      }
+      else if (kind == ODescVal || kind == ODescFileVal ||
+               kind == IODescVal)
+      {
+        fd_t fd[2];
+        bool good = true;
+        Claim2( sym->kind ,==, NSymValKinds );
+        sym->kind = ODescVal;
+        sym->cmd_idx = i;
+        InitDomMax( sym->arg_idx );
+        InitDomMax( sym->ios_idx );
+
+        good = pipe_sysCx (fd);
+        Claim( good );
+
+        sym->as.file_desc = fd[0];
+        if (kind == ODescVal || kind == IODescVal)
+        {
+          cmd->stdos = fd[1];
+        }
+        else
+        {
+          sym->ios_idx = add_ios_Command (cmd, -1, fd[1]);
+          cmd->args.s[arg_q] = add_fd_arg_Command (cmd, fd[1]);
+          sym->arg_idx = arg_q;
+          ++ arg_q;
+        }
+      }
+      else if (kind == IFutureDescVal || kind == IFutureDescFileVal)
+      {
+        fd_t fd[2];
+        bool good;
+        Claim2( sym->kind ,==, NSymValKinds );
+        sym->kind = IFutureDescVal;
+        sym->cmd_idx = i;
+        InitDomMax( sym->arg_idx );
+        InitDomMax( sym->ios_idx );
+
+        good = pipe_sysCx (fd);
+        Claim( good );
+
+        sym->as.file_desc = fd[1];
+        if (kind == IFutureDescVal)
+        {
+          cmd->stdis = fd[0];
+        }
+        else
+        {
+          sym->ios_idx = add_ios_Command (cmd, -1, fd[0]);
+          cmd->args.s[arg_q] = add_fd_arg_Command (cmd, fd[0]);
+          if (arg_q == 0)
+          {
+            sym->arg_idx = 0;
+            cmd->exec_fd = fd[0];
+          }
+          ++ arg_q;
+        }
+      }
+
+      if (kind == NSymValKinds) {
+        cmd->args.s[arg_q] = arg;
+        ++ arg_q;
+      }
+    }
+
+    if (cmd->args.sz > 0)
+      cmd->args.sz = arg_q;
+  }
+
+  for (assoc = beg_Associa (map);
+       assoc;
+       assoc = next_Assoc (assoc))
+  {
+    SymVal* x = (SymVal*) val_of_Assoc (map, assoc);
+    if (x->kind == ODescVal)
+    {
+      DBog1( "Dangling output stream! Symbol: %s", x->name.s );
+      failout_sysCx ("");
+    }
+    lose_SymVal (x);
+  }
+
+  lose_Associa (map);
 }
 
 static void
@@ -793,6 +841,9 @@ spawn_commands (TableT(Command) cmds)
 
     for (uint i = 0; i < cmds.sz; ++i)
         cloexec_Command (&cmds.s[i], true);
+
+    cloexec_sysCx (0, true);
+    cloexec_sysCx (1, true);
 
     for (uint i = 0; i < cmds.sz; ++i)
     {

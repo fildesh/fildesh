@@ -16,8 +16,6 @@ $(H silly)
 # the {sed} command. We could have just used the {sed} command directly.
 $(XO a) xpipe lace -- $(H silly)
 
-# Interpret the {a} stream as a file to give to {cat1} in order to print it.
-# We could have just used "$(X a)" in the line above to print to stdout.
-# It is pretty silly.
-cat1 $(XF a)
+# Finally direct the {a} stream to standard output.
+$(X a) stdout
 

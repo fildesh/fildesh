@@ -28,7 +28,7 @@ All variables are referenced this way, where the prefix (`H` in this case) indic
 
 Next, an `echo` command prints the lab text to a stream `a`.
 The stream is defined by `$(O a)`, where the `O` indicates output.
-Notice from the next comment that we could alternatively use `cat1` to read a lab description from standard input.
+Notice from the next comment that we could alternatively use `stdin` to read a lab description from standard input.
 
 We will need to reference the lab description twice, so use `tee` to make a copy of the `a` stream to a stream `b`.
 This line uses `$(XO a)` to say that `a` is used for both input (`X`) and output (`O`).
@@ -42,4 +42,5 @@ The next 3 lines just `grep` out the hostnames in the lab description.
 These are piped to `xargs` which runs `ssh` to execute `clientcmd` on every host.
 At this point, each line has a hostname and a username which are then transformed by `awk` into a `sed` script to do a bunch of search and replace operations.
 The `b` stream holding a copy of the lab description is finally used here when `sed` replaces hostnames with usernames.
+This output is then piped to `stdout` to display.
 

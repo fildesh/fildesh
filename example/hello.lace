@@ -1,4 +1,5 @@
 #!/usr/bin/env lace
 
-echo 'hello'
+$(O a) echo 'hello'
+$(X a) stdout
 

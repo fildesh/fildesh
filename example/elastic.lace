@@ -1,0 +1,11 @@
+#!/usr/bin/env lace
+
+## Echo each line as it is typed.
+## This shows a simple usage of input, output, and the {elastic} utility.
+
+ $(O a) stdin
+
+$(XO a) elastic
+
+$(X a) stdout
+

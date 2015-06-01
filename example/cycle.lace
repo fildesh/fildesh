@@ -109,5 +109,7 @@ wc -l $(X a) $(O sum)
 
 echo -n 'The sum of 1 to' $(H N) 'is ' $(O a)
 
-cat $(XF a) $(XF sum)
+$(XO sum) cat1 $(XA a) -
+
+$(X sum) stdout
 

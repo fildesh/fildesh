@@ -20,8 +20,8 @@ $(H lab)
  $(O a) echo $(H lab)
 
 ## To read standard input instead of {lab},
-## Uncomment this {cat1} line and comment the above {echo} line.
-# $(O a) cat1 -
+## Uncomment this {stdin} line and comment the above {echo} line.
+# $(O a) stdin
 
 # Split off another stream {b} to use later.
 $(XO a) tee $(OF b)
@@ -39,10 +39,10 @@ $(XO a) tr ' ' '\n'
 $(XO a) grep -v -e '^!' -e '^$'
 
 
-## You can easily inspect a stream by catting it here,
+## You can easily inspect a stream by showing it here,
 ## voiding out the other streams,
 ## and ignoring the rest of the file.
-#cat1 $(XF a)
+#$(X a) stdout
 #$(X b) void
 #$(H ignore)
 
@@ -65,6 +65,7 @@ $(H subst)
 
 $(X users) $(O substitutions) awk $(H subst)
 
-$(X b) sed -f $(XF substitutions)
+$(XO b) sed -f $(XF substitutions)
+$(X b) stdout
 #$(H ignore)
 

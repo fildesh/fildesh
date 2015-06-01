@@ -21,5 +21,7 @@ $(H script)
 { print "prefix " $0; }
 $(H script)
 
-awk $(H script) $(X sed)
+$(O a) awk $(H script) $(X sed)
+
+$(X a) stdout
 

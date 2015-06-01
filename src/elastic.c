@@ -12,6 +12,12 @@
 #include <errno.h>
 #include <stdio.h>
 
+//#define DEBUGGING
+
+#ifndef DEBUGGING
+#undef BailOut
+#define BailOut(ret, msg)  (void) 0
+#endif
 
 int main (int argc, char** argv)
 {
@@ -67,7 +73,10 @@ int main (int argc, char** argv)
       break;
     }
 
-    if (pending_o && 0 == aio_error (aio_o)) {
+    if (pending_o) {
+      istat = aio_error (aio_o);
+    }
+    if (pending_o && istat == 0) {
       sstat = aio_return (aio_o);
       if (sstat < 0) {
         BailOut( 1, "aio_return(write)" );
@@ -104,8 +113,15 @@ int main (int argc, char** argv)
         break;
       }
     }
+    else if (pending_o && istat != EINPROGRESS) {
+      BailOut( 1, "aio_error(write)" );
+      break;
+    }
 
-    if (pending_x && 0 == aio_error (aio_x)) {
+    if (pending_x) {
+      istat = aio_error (aio_x);
+    }
+    if (pending_x && istat == 0) {
       sstat = aio_return (aio_x);
       if (sstat <= 0) {
         pending_x = 0;
@@ -140,6 +156,10 @@ int main (int argc, char** argv)
           pending_x = 0;
         }
       }
+    }
+    else if (pending_x && istat != EINPROGRESS) {
+      BailOut( 1, "aio_error(read)" );
+      break;
     }
   }
 
