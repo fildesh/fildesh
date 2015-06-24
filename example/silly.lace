@@ -1,19 +1,24 @@
 #!/usr/bin/env lace
 
-# Run from this directory to list all the .c files in ../src,
+# Run from the parent directory to list all the .c files src/,
 # but their .c is changed to .h by {sed}.
 
 # Things are done in a pretty silly way.
 
- $(O a) godo .. ls src
+ $(O a) godo src ls
 $(XO a) grep '\.c$'
 
+# We could use this commented line, but let's be more convoluted.
+#$(XO a) sed -e 's/c$/h/'
+
+# Create a string containing a {lace} program that runs {sed}.
 $(H silly)
-sed -e 's/c$/h/'
+ $(O b) stdin
+$(XO b) sed -e 's/c$/h/'
+$(X  b) stdout
 $(H silly)
 
-# For each line of input, a new instance of {lace} is spawned to execute
-# the {sed} command. We could have just used the {sed} command directly.
+# For each line of input, have {lace} execute the {silly} script.
 $(XO a) xpipe lace -- $(H silly)
 
 # Finally direct the {a} stream to standard output.

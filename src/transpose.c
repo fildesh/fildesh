@@ -32,7 +32,7 @@ int main(int argc, char** argv)
     const char* field;
     uint rowi = 0;
     XFile olay[1];
-    olay_XFile (olay, xf, IdxEltTable( xf->buf, line ));
+    olay_txt_XFile (olay, xf, IdxEltTable( xf->buf, line ));
 
     for (field = getlined_XFile (olay, delim);
          field;
