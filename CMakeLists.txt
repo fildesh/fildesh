@@ -9,22 +9,10 @@ set (ProjBuldPath ${CMAKE_CURRENT_BINARY_DIR}/..)
 set (DepPath ${TopPath}/dep)
 set (BinPath ${TopPath}/bin)
 
-ExternalProject_Add(cx-pp
-  PREFIX ${CMAKE_CURRENT_BINARY_DIR}/external/cx-pp
-  SOURCE_DIR ${DepPath}/cx-pp
-  BUILD_IN_SOURCE 1
-  CONFIGURE_COMMAND echo "No configure step."
-  BUILD_COMMAND echo "No build step."
-  INSTALL_COMMAND echo "No install step."
-  )
-
 ExternalProject_Add(cx
-  DEPENDS cx-pp
   PREFIX ${CMAKE_CURRENT_BINARY_DIR}/external/cx
   SOURCE_DIR ${DepPath}/cx/src
-  CONFIGURE_COMMAND ${CMAKE_COMMAND}
-  -D BinPath:string=${BinPath}
-  ${DepPath}/cx/src
+  BINARY_DIR ${DepPath}/cx/bld
   INSTALL_COMMAND echo "No install step."
   )
 
