@@ -201,9 +201,7 @@ compare_lines (XFile* xf, Associa* map, const char* delim,
 
 int main (int argc, char** argv)
 {
-    int argi =
-        (init_sysCx (&argc, &argv),
-         1);
+    int argi = init_sysCx (&argc, &argv);
     const char* delim = "\t";
     const char* dflt_record = 0;
     bool keep_join_field = true;

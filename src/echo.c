@@ -5,9 +5,7 @@
   int
 main (int argc, char** argv)
 {
-  int argi =
-    (init_sysCx (&argc, &argv),
-     1);
+  int argi = init_sysCx (&argc, &argv);
   OFile* of = stdout_OFile ();
   bool space = true;
   bool newline = true;

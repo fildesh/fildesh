@@ -21,9 +21,7 @@
 
 int main (int argc, char** argv)
 {
-  int argi =
-    (init_sysCx (&argc, &argv),
-     1);
+  int argi = init_sysCx (&argc, &argv);
   int istat = 0;
 
   struct aiocb aio_x[1];

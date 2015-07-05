@@ -8,9 +8,7 @@
 
 int main (int argc, char** argv)
 {
-  int argi =
-    (init_sysCx (&argc, &argv),
-     1);
+  int argi = init_sysCx (&argc, &argv);
   const char* ExeName = argv[0];
   FILE* in = stdin;
   FILE* ErrOut = stderr;

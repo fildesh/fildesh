@@ -7,9 +7,7 @@
 
 int main(int argc, char** argv)
 {
-  int argi =
-    (init_sysCx (&argc, &argv),
-     1);
+  int argi = init_sysCx (&argc, &argv);
   DeclTableT( cstr_row, TableT(cstr) );
   DeclTable( cstr_row, mat );
   XFile* xf = stdin_XFile ();

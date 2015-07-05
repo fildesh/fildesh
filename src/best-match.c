@@ -144,9 +144,7 @@ matching_line (uint* a, uint width, const char* s, char* const* lines)
 
 int main (int argc, char** argv)
 {
-  int argi =
-    (init_sysCx (&argc, &argv),
-     1);
+  int argi = init_sysCx (&argc, &argv);
   uint* lcs_array;
   XFileB lookup_in[1];
   XFileB stream_in[1];

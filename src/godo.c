@@ -7,9 +7,7 @@
 
 int main (int argc, char** argv)
 {
-  int argi =
-    (init_sysCx (&argc, &argv),
-     1);
+  int argi = init_sysCx (&argc, &argv);
 
   if (argc < 3)
   {

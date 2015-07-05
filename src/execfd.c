@@ -84,9 +84,7 @@ readin_fd (fd_t in, bool scrap_newline)
 
 int main (int argc, char** argv)
 {
-  int argi =
-    (init_sysCx (&argc, &argv),
-     1);
+  int argi = init_sysCx (&argc, &argv);
   int off = 0;
   BitTable bt = cons2_BitTable (argc, 0);
   char* exe = 0;

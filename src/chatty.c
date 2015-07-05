@@ -25,9 +25,7 @@
 
 int main (int argc, char** argv)
 {
-  int argi =
-    (init_sysCx (&argc, &argv),
-     1);
+  int argi = init_sysCx (&argc, &argv);
   DeclLegit( good );
   int istat = 0;
   const char* host = "127.0.0.1";

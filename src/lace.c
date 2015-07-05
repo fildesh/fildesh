@@ -944,9 +944,7 @@ spawn_commands (TableT(Command) cmds)
 
 int main (int argc, char** argv)
 {
-  int argi =
-    (init_sysCx (&argc, &argv),
-     1);
+  int argi = init_sysCx (&argc, &argv);
   XFileB in[1];
   TableT( Command ) cmds;
   DecloStack1( AlphaTab, tmppath, cons1_AlphaTab ("lace") );
