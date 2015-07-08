@@ -154,24 +154,30 @@ cloexec_Command (Command* cmd, bool b)
 static void
 lose_Command (Command* cmd)
 {
-    close_Command (cmd);
-    free (cmd->line);
-    if (cmd->kind == RunCommand)
-        LoseTable( cmd->args );
-    else if (cmd->kind == HereDocCommand)
-        free (cmd->doc);
+  close_Command (cmd);
+  free (cmd->line);
+  switch (cmd->kind) {
+  case RunCommand:
+  case StdinCommand:
+  case StdoutCommand:
+    LoseTable( cmd->args );
+    break;
+  case HereDocCommand:
+    free (cmd->doc);
+    break;
+  default:
+    break;
+  }
 
-    for (i ; cmd->extra_args.sz )
-        free (cmd->extra_args.s[i]);
-    LoseTable( cmd->extra_args );
+  for (i ; cmd->extra_args.sz )
+    free (cmd->extra_args.s[i]);
+  LoseTable( cmd->extra_args );
 
-    {:for (i ; cmd->tmp_files.sz )
-        remove (cmd->tmp_files.s[i]);
-        free (cmd->tmp_files.s[i]);
-    }
-    LoseTable( cmd->tmp_files );
-
-    LoseTable( cmd->iargs );
+  {:for (i ; cmd->tmp_files.sz )
+    remove (cmd->tmp_files.s[i]);
+    free (cmd->tmp_files.s[i]);
+  }
+  LoseTable( cmd->tmp_files );
 }
 
 
@@ -963,19 +969,29 @@ int main (int argc, char** argv)
   {
     const char* arg;
     arg = argv[argi++];
-    if (0 == strcmp (arg, "--"))
-    {
+    if (eq_cstr (arg, "--")) {
       if (argi >= argc)  show_usage_and_exit ();
-      arg = argv[argi++];
-      SizeTable( in->xf.buf, strlen (arg) + 1 );
-      memcpy (in->xf.buf.s, arg, in->xf.buf.sz);
+      while (argi < argc) {
+        ujint off;
+        ujint sz;
+
+        arg = argv[argi++];
+
+        Claim2( in->xf.buf.sz ,>, 0 );
+        off = in->xf.buf.sz - 1;
+        sz = strlen (arg);
+
+        GrowTable( in->xf.buf, sz+1 );
+
+        RepliT( char, &in->xf.buf.s[off], arg, sz );
+        in->xf.buf.s[off+sz] = '\n';
+        in->xf.buf.s[off+sz+1] = '\0';
+      }
       PackTable( in->xf.buf );
     }
-    else
-    {
+    else {
       /* Optional -f flag.*/
-      if (0 == strcmp (arg, "-f"))
-      {
+      if (eq_cstr (arg, "-x") || eq_cstr (arg, "-f")) {
         if (argi >= argc)  show_usage_and_exit ();
         arg = argv[argi++];
       }
