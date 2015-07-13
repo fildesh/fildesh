@@ -34,14 +34,14 @@ $(H N)
 
 
 # Create a sequence of numbers from 1 to {N}.
-|< seq 1 $(H N)
+|< seq 1 $(N)
 # Split off a new stream called {fivesum}.
 |- tee $(OF fivesum)
 
 # Add up all the numbers.
 |- tr '\n' ' '
 |- add
-|- zec / 'The sum of 1 to ' $(H N) ' is ' / -
+|- zec / 'The sum of 1 to ' $(N) ' is ' / -
 |> zec $(O allsum)
 
 
@@ -51,7 +51,7 @@ $(H N)
 |- grep -e '[05]$'
 |- tr '\n' ' '
 |- add
-|- zec / 'The sum of 1 to ' $(H N) ' by 5 is ' / -
+|- zec / 'The sum of 1 to ' $(N) ' by 5 is ' / -
 |> zec $(O fivesum)
 
 # Below, a two streams from the same source are being joined in order.

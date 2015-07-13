@@ -1,6 +1,6 @@
 #!/usr/bin/env lace
 
- $(O a) du -a
-$(XO a) sort -n
-$(X a) stdout
+|< du -a
+| sort -n
+|> stdout
 

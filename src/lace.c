@@ -439,7 +439,18 @@ parse_sym (char* s, bool firstarg)
   if (!(s[0] == '$' && s[1] == '('))  return NSymValKinds;
 
   i = count_non_ws (s);
-  if (s[i] == '\0')  return NSymValKinds;
+  if (s[i] == '\0') {
+    uint n = i-1;
+
+    if (s[n] != ')')
+      return NSymValKinds;
+
+    i = 2;
+    n -= 2;
+    memmove (s, &s[i], n);
+    s[n] = '\0';
+    return HereDocVal;
+  }
 
   /* Offset into string.*/
   o = 2;
@@ -622,10 +633,20 @@ setup_commands (TableT(Command)* cmds,
         sym = getf_SymVal (map, arg);
       }
 
-      if (kind == HereDocVal)
+      if (kind == HereDocVal || kind == IDescArgVal)
       {
-        Claim2( sym->kind ,==, HereDocVal );
-        cmd->args.s[arg_q] = sym->as.here_doc;
+        if (sym->kind == HereDocVal) {
+          cmd->args.s[arg_q] = sym->as.here_doc;
+        }
+        else if (sym->kind == ODescVal) {
+          fd_t fd = sym->as.file_desc;
+          sym->kind = NSymValKinds;
+          add_iarg_Command (cmd, fd, true);
+          cmd->args.s[arg_q] = 0;
+        }
+        else {
+          Claim( 0 && "Unknown source for argument." );
+        }
         ++ arg_q;
       }
       else if (cmd->kind == StdoutCommand && kind == IDescVal)
@@ -644,7 +665,6 @@ setup_commands (TableT(Command)* cmds,
         sym->kind = NSymValKinds;
       }
       else if (kind == IDescVal || kind == IDescFileVal ||
-               kind == IDescArgVal ||
                kind == IODescVal || kind == IHereDocFileVal)
       {
         int fd;
@@ -662,12 +682,6 @@ setup_commands (TableT(Command)* cmds,
         if (kind == IDescVal || kind == IODescVal)
         {
           cmd->stdis = fd;
-        }
-        else if (kind == IDescArgVal)
-        {
-          add_iarg_Command (cmd, fd, true);
-          cmd->args.s[arg_q] = 0;
-          ++ arg_q;
         }
         else if (kind == IDescFileVal)
         {

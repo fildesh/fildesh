@@ -14,9 +14,9 @@ llo
 $(H low)
 
 # Concatenate the above
-$(O echo) zec / "hello\nup\njello " $(H heredoc) \
-  " d e\nyel" $(H low) \
-  "\nfel" $(H low) '\no' "break\nyesbreak" /
+$(O echo) zec / "hello\nup\njello " $(heredoc) \
+  " d e\nyel" $(low) \
+  "\nfel" $(low) '\no' "break\nyesbreak" /
 
 grep llo $(X echo) $(O grep)
 
@@ -25,13 +25,13 @@ $(H heredoc) b
 s/llo/cko/
 $(H heredoc) b
 
-sed -e $(H heredoc) $(X grep) $(O sed)
+sed -e $(heredoc) $(X grep) $(O sed)
 
 $(H script)
 { print "prefix " $0; }
 $(H script)
 
-$(O a) awk $(H script) $(X sed)
+$(O a) awk $(script) $(X sed)
 
 $(X a) stdout
 

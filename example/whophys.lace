@@ -17,7 +17,7 @@ $(H lab)
 $(H lab)
 
 # Create a stream {a} to with the lab text.
- $(O a) zec / $(H lab) "\n" /
+ $(O a) zec / $(lab) "\n" /
 
 ## To read standard input instead of {lab},
 ## Uncomment this {stdin} line and comment the above {zek} line.
@@ -56,14 +56,14 @@ $(X a) $(O users) xargs -n 1 -Ihost \
     -o StrictHostKeyChecking=no \
     -o PasswordAuthentication=no \
     host \
-    sh -c $(H clientcmd)
+    sh -c $(clientcmd)
 
 
 $(H subst)
 { printf ("s/\\<%s\\>/%-*s/\n", $1, length($1), $2); }
 $(H subst)
 
-$(X users) $(O substitutions) awk $(H subst)
+$(X users) $(O substitutions) awk $(subst)
 
 $(XO b) sed -f $(XF substitutions)
 $(X b) stdout

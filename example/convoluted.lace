@@ -76,19 +76,19 @@ $(H prog)
 
 
 ## Begin pipeline.
-|< seq 1 $(H N)
-|- zec / $(H N) "\n" / - $(XFv pump)
+|< seq 1 $(N)
+|- zec / $(N) "\n" / - $(XFv pump)
 #|- tee inspect1.txt
 
-# To use awk, comment the next line and uncomment the last $(H comment).
+# To use awk, comment the next line and uncomment the last $(comment).
 $(H comment)
-|- awk $(H script)
+|- awk $(script)
 # Use this command if fflush() not implemented in your awk.
-#stdbuf -oL awk $(X a) $(H script) $(O a)
+#stdbuf -oL awk $(X a) $(script) $(O a)
 $(H comment)
 
 # Instead of awk script, use a C program!
-$(O exe) zec / $(H prog) /
+$(O exe) zec / $(prog) /
 $(X exe) gcc -O3 -o $(OF exe) -xc -
 |- $(XF exe)
 #$(H comment)
@@ -96,7 +96,7 @@ $(X exe) gcc -O3 -o $(OF exe) -xc -
 |- tee $(OF^ pump)
 #|- tee inspect2.txt
 |- wc -l
-|- zec / 'The sum of 1 to ' $(H N) ' is ' / -
+|- zec / 'The sum of 1 to ' $(N) ' is ' / -
 |> stdout
 
 
