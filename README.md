@@ -2,7 +2,7 @@
 # The Lace Programming Language
 
 This is a domain-specific language meant to simplify complex pipelines between programs.
-It allows multiple inputs and outputs, undirected cycles, and even directed cycles ([example/cycle.lace](example/cycle.lace)).
+It allows multiple inputs and outputs, undirected cycles ([example/familiar.lace](example/familiar.lace)), and even directed cycles ([example/cycle.lace](example/cycle.lace)).
 Though when the dataflow graph has undirected cycles, you should use the `elastic` utility to avoid deadlocks.
 
 ## How to Use
@@ -26,7 +26,7 @@ The `lab` is defined as a Here document, much like in shell scripting.
 The entire text between two occurrences of `$(H lab)` (on separate lines) is then stored in that variable.
 All variables are referenced this way, where the prefix (`H` in this case) indicates both type and intent.
 
-Next, an `echo` command prints the lab text to a stream `a`.
+Next, a `zec` command prints the lab text to a stream `a`.
 The stream is defined by `$(O a)`, where the `O` indicates output.
 Notice from the next comment that we could alternatively use `stdin` to read a lab description from standard input.
 

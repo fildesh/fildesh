@@ -1,0 +1,2 @@
+The sum of 1 to 100 is 5050
+The sum of 1 to 100 by 5 is 1050

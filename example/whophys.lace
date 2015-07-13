@@ -17,10 +17,10 @@ $(H lab)
 $(H lab)
 
 # Create a stream {a} to with the lab text.
- $(O a) echo $(H lab)
+ $(O a) zec / $(H lab) "\n" /
 
 ## To read standard input instead of {lab},
-## Uncomment this {stdin} line and comment the above {echo} line.
+## Uncomment this {stdin} line and comment the above {zek} line.
 # $(O a) stdin
 
 # Split off another stream {b} to use later.
@@ -39,9 +39,9 @@ $(XO a) tr ' ' '\n'
 $(XO a) grep -v -e '^!' -e '^$'
 
 
-## You can easily inspect a stream by showing it here,
-## voiding out the other streams,
-## and ignoring the rest of the file.
+# You can easily inspect a stream by showing it here,
+# voiding out the other streams,
+# and ignoring the rest of the file.
 #$(X a) stdout
 #$(X b) void
 #$(H ignore)

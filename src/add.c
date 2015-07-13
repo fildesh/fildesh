@@ -2,14 +2,26 @@
 #include "cx/syscx.h"
 #include "cx/fileb.h"
 
+static int
+sum_int_line (XFile* xf)
+{
+  int x = 0, y = 0;
+  while (xget_int_XFile (xf, &y))
+    x += y;
+  skipds_XFile (xf, 0);
+  if (ccstr_of_XFile (xf) [0] != '\0')
+    fputs ("Line is no good!\n", stderr);
+  return x;
+}
+
 static real
-sum_line (XFile* xf)
+sum_real_line (XFile* xf)
 {
   real x = 0, y = 0;
   while (xget_real_XFile (xf, &y))
     x += y;
   skipds_XFile (xf, 0);
-  if (cstr_XFile (xf) [0] != '\0')
+  if (ccstr_of_XFile (xf) [0] != '\0')
     fputs ("Line is no good!\n", stderr);
   return x;
 }
@@ -17,9 +29,9 @@ sum_line (XFile* xf)
 int main (int argc, char** argv)
 {
   int argi = init_sysCx (&argc, &argv);
-  XFile* xf;
-  OFile* of;
-  char* s;
+  XFile* xfile;
+  OFile* ofile;
+  XFile olay[1];
 
   if (argi < argc)
   {
@@ -28,19 +40,21 @@ int main (int argc, char** argv)
     failout_sysCx ("No arguments expected...");
   }
 
-  xf = stdin_XFile ();
-  of = stdout_OFile ();
+  xfile = stdin_XFile ();
+  ofile = stdout_OFile ();
 
-  for (s = getline_XFile (xf);
-       s;
-       s = getline_XFile (xf))
-  {
-    real x;
-    XFile olay[1];
-    olay_txt_XFile (olay, xf, IdxEltTable( xf->buf, s ));
-    x = sum_line (olay);
-    printf_OFile (of, "%f\n", x);
-    flush_OFile (of);
+  while (getlined_olay_XFile (olay, xfile, 0)) {
+    const char* line = ccstr_of_XFile (olay);
+    if (!line[strcspn (line, ".Ee")]) {
+      int x = sum_int_line (olay);
+      oput_int_OFile (ofile, x);
+      oput_char_OFile (ofile, '\n');
+    }
+    else {
+      real x = sum_real_line (olay);
+      printf_OFile (ofile, "%f\n", x);
+    }
+    flush_OFile (ofile);
   }
 
   lose_sysCx ();

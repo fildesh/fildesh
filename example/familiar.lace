@@ -1,0 +1,65 @@
+#!/usr/bin/env lace
+
+# This shows how to use a familiar pipeline notation when it is convenient.
+# Take a look at the pseudocode and then relate it to the rest of the file.
+#
+# The {zec} command may be new to you.
+# It is like {cat}, but it echoes the strings given between slashes.
+
+
+# The following pseudocode shows how the program works at a high level.
+# First a sequence from 1 to 100 is generated and split into 2 streams.
+# Numbers in the left stream are directly summed,
+# whereas only multiples of 5 are summed from the right stream.
+# The two sums are then merged into one stream and printed to standard output.
+#
+##  seq 1 100  o
+##             |
+##   tee  o    x   o
+##        |        |
+##   add  x o      |
+##          |    o x  grep '[05]$'
+##          |    |
+##          |    x o  add
+##          |      |
+##      cat x   o  x
+##              |
+##      stdout  x
+
+
+# Declare {N} to be 100.
+$(H N)
+100
+$(H N)
+
+
+# Create a sequence of numbers from 1 to {N}.
+|< seq 1 $(H N)
+# Split off a new stream called {fivesum}.
+|- tee $(OF fivesum)
+
+# Add up all the numbers.
+|- tr '\n' ' '
+|- add
+|- zec / 'The sum of 1 to ' $(H N) ' is ' / -
+|> zec $(O allsum)
+
+
+# For the {fivesum} stream,
+# add up all the numbers divisible by 5.
+|< zec $(X fivesum)
+|- grep -e '[05]$'
+|- tr '\n' ' '
+|- add
+|- zec / 'The sum of 1 to ' $(H N) ' by 5 is ' / -
+|> zec $(O fivesum)
+
+# Below, a two streams from the same source are being joined in order.
+# Since {fivesum} is used last, we should pipe it through {elastic} in order
+# to avoid deadlocks caused by buffering.
+# (Without it, we won't actually see a deadlock since buffers are big enough.)
+$(XO fivesum) elastic
+
+|< zec $(XF allsum) $(XF fivesum)
+|> stdout
+

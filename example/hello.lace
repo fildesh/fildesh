@@ -1,5 +1,5 @@
 #!/usr/bin/env lace
 
-$(O a) echo 'hello'
+$(O a) zec / "hello\n" /
 $(X a) stdout
 

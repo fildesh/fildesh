@@ -1,5 +1,6 @@
 #!/usr/bin/env lace
 
+# Define a {heredoc} variable with some text.
 $(H heredoc) tag
 
 Check out this document.
@@ -7,10 +8,19 @@ It is a string variable with "llo" in it.
 This is the end.
 $(H heredoc) tag
 
-/bin/echo -e hello\nup\njello $(O echo) $(H heredoc) \
-     d e\nyellow\n$(H heredoc)
+# Define a {low} variable that contains the string "low".
+$(H low)
+llo
+$(H low)
+
+# Concatenate the above
+$(O echo) zec / "hello\nup\njello " $(H heredoc) \
+  " d e\nyel" $(H low) \
+  "\nfel" $(H low) '\no' "break\nyesbreak" /
+
 grep llo $(X echo) $(O grep)
 
+# Redefine the {heredoc} variable.
 $(H heredoc) b
 s/llo/cko/
 $(H heredoc) b

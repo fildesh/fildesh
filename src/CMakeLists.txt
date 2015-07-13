@@ -17,14 +17,13 @@ list (APPEND CFiles
   best-match.c
   xpipe.c
   void.c
-  cat1.c
+  zec.c
   elastic.c
   ssh-all.c
   ujoin.c
   godo.c
   waitdo.c
   execfd.c
-  echo.c
   time2sec.c
   transpose.c
   chatty.c
@@ -35,6 +34,7 @@ include (${CxTopPath}/src/include.cmake)
 set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${BinPath})
 
 addbinexe (lace lace.c)
+set (lace_exe "$<TARGET_FILE:lace>")
 
 get_filename_component (d ${BinPath} ABSOLUTE)
 
@@ -49,15 +49,16 @@ addbinexe (add add.c)
 addbinexe (best-match best-match.c)
 addbinexe (xpipe xpipe.c)
 addbinexe (void void.c)
-addbinexe (cat1 cat1.c)
+addbinexe (zec zec.c)
 addbinexe (ssh-all ssh-all.c)
 addbinexe (ujoin ujoin.c)
 addbinexe (godo godo.c)
 addbinexe (waitdo waitdo.c)
 addbinexe (execfd execfd.c)
-addbinexe (echo echo.c)
 addbinexe (time2sec time2sec.c)
 addbinexe (transpose transpose.c)
+
+set (zec_exe "$<TARGET_FILE:zec>")
 
 if (UNIX)
   addbinexe (elastic elastic.c)
@@ -73,4 +74,30 @@ if (UNIX)
   set_property (TARGET chatty
     APPEND PROPERTY COMPILE_DEFINITIONS _POSIX_C_SOURCE=199309L)
 endif ()
+
+
+enable_testing ()
+set (TestPath ${TopPath}/test)
+
+## Ensure that the example we distribute actually works.
+foreach (f hello test familiar cycle convoluted)
+  add_test (NAME example_${f}
+    COMMAND
+    comparispawn ${TestPath}/expect/${f}.txt
+    ${lace_exe} -x ${TopPath}/example/${f}.lace
+    )
+endforeach ()
+
+add_test (NAME example_silly
+  WORKING_DIRECTORY ${TopPath}
+  COMMAND
+  comparispawn ${TestPath}/expect/silly.txt
+  ${lace_exe} -x ${TopPath}/example/silly.lace
+  )
+
+add_test (NAME cli_hello
+  COMMAND
+  comparispawn ${TestPath}/expect/hello.txt
+  ${lace_exe} -stdout - -- "|< ${zec_exe} / 'hello'"
+  )
 

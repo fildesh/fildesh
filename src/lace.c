@@ -184,21 +184,16 @@ lose_Command (Command* cmd)
 static SymVal*
 getf_SymVal (Associa* map, const char* s)
 {
-    AlphaTab ts;
-    Assoc* assoc;
-    ujint sz = map->nodes.sz;
-    SymVal* x;
+  ujint sz = map->nodes.sz;
+  AlphaTab ts = dflt1_AlphaTab (s);
+  Assoc* assoc = ensure_Associa (map, &ts);
+  SymVal* x = (SymVal*) val_of_Assoc (map, assoc);
 
-    ts = dflt1_AlphaTab (s);
-
-    assoc = ensure_Associa (map, &ts);
-    x = (SymVal*) val_of_Assoc (map, assoc);
-    if (map->nodes.sz > sz)
-    {
-        init_SymVal (x);
-        x->name = ts;
-    }
-    return x;
+  if (map->nodes.sz > sz) {
+    init_SymVal (x);
+    x->name = ts;
+  }
+  return x;
 }
 
 static uint
@@ -310,165 +305,201 @@ parse_line (XFile* xf)
 static void
 sep_line (TableT(cstr)* args, char* s)
 {
-    while (1)
-    {
-        uint i;
+  while (1)
+  {
+    s = &s[count_ws (s)];
+    if (s[0] == '\0')  break;
 
-        i = count_ws (s);
-        s = &s[i];
-        if (s[0] == '\0')  break;
-
-        if (s[0] == '\'')
-        {
-            s = &s[1];
-            PushTable( *args, s );
-            i = strcspn (s, "'");
-            if (s[i] == '\0')
-            {
-                DBog0( "Unterminated single quote." );
-                break;
-            }
-            s = &s[i];
-        }
-        else if (s[0] == '$' && s[1] == '(')
-        {
-            PushTable( *args, s );
-            s = &s[2];
-            i = strcspn (s, ")");
-            if (s[i] == '\0')
-            {
-                DBog0( "Unterminated variable." );
-                break;
-            }
-            s = &s[i+1];
-        }
-        else
-        {
-            PushTable( *args, s );
-            i = count_non_ws (s);
-            s = &s[i];
-        }
-        if (s[0] == '\0')  break;
-        s[0] = '\0';
-        s = &s[1];
+    if (s[0] == '\'') {
+      uint i;
+      s = &s[1];
+      PushTable( *args, s );
+      i = strcspn (s, "'");
+      if (s[i] == '\0') {
+        DBog0( "Unterminated single quote." );
+        break;
+      }
+      s = &s[i];
     }
-    PackTable( *args );
+    else if (s[0] == '"') {
+      uint i = 0;
+      uint j = 0;
+      s = &s[1];
+      PushTable( *args, s );
+
+      while (s[j] != '\0' && s[j] != '"') {
+        if (s[j] == '\\') {
+          j += 1;
+#define C( c, d )  case c: s[j] = d; break;
+          switch (s[j])
+          {
+            C( 'n', '\n' );
+            C( 't', '\t' );
+            default: break;
+          }
+#undef C
+        }
+        s[i] = s[j];
+        i += 1;
+        j += 1;
+      }
+
+      if (s[j] == '\0') {
+        DBog0( "Unterminated double quote." );
+        break;
+      }
+      s[i] = '\0';
+      s = &s[j];
+    }
+    else if (s[0] == '$' && s[1] == '(') {
+      uint i;
+      PushTable( *args, s );
+      s = &s[2];
+      i = strcspn (s, ")");
+      if (s[i] == '\0')
+      {
+        DBog0( "Unterminated variable." );
+        break;
+      }
+      s = &s[i+1];
+    }
+    else {
+      PushTable( *args, s );
+      s = &s[count_non_ws (s)];
+    }
+    if (s[0] == '\0')  break;
+    s[0] = '\0';
+    s = &s[1];
+  }
+  PackTable( *args );
 }
 
 
-static TableT(Command)
-parse_file (XFile* xf)
+static void
+parse_file (TableT(Command)* cmds, XFile* xf)
 {
-    DeclTable( Command, cmds );
-    while (true)
+  while (true)
+  {
+    char* line;
+    Command* cmd;
+    line = parse_line (xf);
+    if (line[0] == '\0')
     {
-        char* line;
-        Command* cmd;
-        line = parse_line (xf);
-        if (line[0] == '\0')
-        {
-            free (line);
-            break;
-        }
-        GrowTable( cmds, 1 );
-        cmd = &cmds.s[cmds.sz - 1];
-        init_Command (cmd);
-        cmd->line = line;
-
-        if (line[0] == '$' && line[1] == '(' &&
-            line[2] == 'H' && line[3] != 'F')
-        {
-            cmd->kind = HereDocCommand;
-            cmd->doc = parse_here_doc (xf, line);
-        }
-        else if (line[0] == '$' && line[1] == '(' &&
-                 line[2] == '<' && line[3] == '<')
-        {
-            inject_include (xf, &line[4]);
-                /* We don't add a command, just add more file content!*/
-            lose_Command (&cmds.s[cmds.sz-1]);
-            MPopTable( cmds, 1 );
-        }
-        else
-        {
-            cmd->kind = RunCommand;
-            sep_line (&cmd->args, cmd->line);
-        }
+      free (line);
+      break;
     }
-    PackTable( cmds );
-    return cmds;
+    GrowTable( *cmds, 1 );
+    cmd = &cmds->s[cmds->sz - 1];
+    init_Command (cmd);
+    cmd->line = line;
+
+    if (line[0] == '$' && line[1] == '(' &&
+        line[2] == 'H' && line[3] != 'F')
+    {
+      cmd->kind = HereDocCommand;
+      cmd->doc = parse_here_doc (xf, line);
+    }
+    else if (line[0] == '$' && line[1] == '(' &&
+             line[2] == '<' && line[3] == '<')
+    {
+      inject_include (xf, &line[4]);
+      /* We don't add a command, just add more file content!*/
+      lose_Command (&cmds->s[cmds->sz-1]);
+      MPopTable( *cmds, 1 );
+    }
+    else
+    {
+      cmd->kind = RunCommand;
+      sep_line (&cmd->args, cmd->line);
+    }
+  }
 }
 
 static SymValKind
-parse_sym (char* s)
+parse_sym (char* s, bool firstarg)
 {
-    uint i, o;
-    SymValKind kind = NSymValKinds;
+  uint i, o;
+  SymValKind kind = NSymValKinds;
 
-    if (!(s[0] == '$' && s[1] == '('))  return NSymValKinds;
+  if (firstarg && s[0] == '|') {
+    if (s[1] == '-')
+      kind = IODescVal;
+    else if (s[1] == '<')
+      kind = ODescVal;
+    else if (s[1] == '>')
+      kind = IDescVal;
 
-    i = count_non_ws (s);
-    if (s[i] == '\0')  return NSymValKinds;
-
-        /* Offset into string.*/
-    o = 2;
-
-    if (s[o] == 'X')
-    {
-        if (s[o+1] == 'O')
-        {
-            kind = IODescVal;
-        }
-        else if (s[o+1] == 'A')
-        {
-            kind = IDescArgVal;
-        }
-        else if (s[o+1] == 'F')
-        {
-            if (s[o+2] == 'v')  kind = IFutureDescFileVal;
-            else                kind = IDescFileVal;
-        }
-        else
-        {
-            if (s[o+1] == 'v')  kind = IFutureDescVal;
-            else                kind = IDescVal;
-        }
-    }
-    if (s[o] == 'O')
-    {
-        if (s[o+1] == 'F')
-        {
-            if (s[o+2] == '^')  kind = OFutureDescFileVal;
-            else                kind = ODescFileVal;
-        }
-        else
-        {
-            if (s[o+1] == '^')  kind = OFutureDescVal;
-            else                kind = ODescVal;
-        }
-    }
-    if (s[o] == 'H')
-    {
-        if (s[o+1] == 'F')  kind = IHereDocFileVal;
-        else                kind = HereDocVal;
-    }
-
-    if (kind != NSymValKinds)
-    {
-        uint n;
-        i += count_ws (&s[i]);
-        n = strcspn (&s[i], ")");
-        if (s[i+n] == ')')
-        {
-            memmove (s, &s[i], n * sizeof (char));
-            s[n] = '\0';
-        }
-        else
-        {
-            kind = NSymValKinds;
-        }
+    if (kind != NSymValKinds) {
+      s[0] = '-';
+      s[1] = '\0';
     }
     return kind;
+  }
+
+  if (!(s[0] == '$' && s[1] == '('))  return NSymValKinds;
+
+  i = count_non_ws (s);
+  if (s[i] == '\0')  return NSymValKinds;
+
+  /* Offset into string.*/
+  o = 2;
+
+  if (s[o] == 'X')
+  {
+    if (s[o+1] == 'O')
+    {
+      kind = IODescVal;
+    }
+    else if (s[o+1] == 'A')
+    {
+      kind = IDescArgVal;
+    }
+    else if (s[o+1] == 'F')
+    {
+      if (s[o+2] == 'v')  kind = IFutureDescFileVal;
+      else                kind = IDescFileVal;
+    }
+    else
+    {
+      if (s[o+1] == 'v')  kind = IFutureDescVal;
+      else                kind = IDescVal;
+    }
+  }
+  else if (s[o] == 'O')
+  {
+    if (s[o+1] == 'F')
+    {
+      if (s[o+2] == '^')  kind = OFutureDescFileVal;
+      else                kind = ODescFileVal;
+    }
+    else
+    {
+      if (s[o+1] == '^')  kind = OFutureDescVal;
+      else                kind = ODescVal;
+    }
+  }
+  else if (s[o] == 'H')
+  {
+    if (s[o+1] == 'F')  kind = IHereDocFileVal;
+    else                kind = HereDocVal;
+  }
+
+  if (kind != NSymValKinds)
+  {
+    uint n;
+    i += count_ws (&s[i]);
+    n = strcspn (&s[i], ")");
+    if (s[i+n] == ')')
+    {
+      memmove (s, &s[i], n * sizeof (char));
+      s[n] = '\0';
+    }
+    else
+    {
+      kind = NSymValKinds;
+    }
+  }
+  return kind;
 }
 
 static uint
@@ -562,7 +593,7 @@ setup_commands (TableT(Command)* cmds,
       /* The loops should not run.*/
       Claim2( cmd->args.sz ,==, 0 ); /* Invariant.*/
 
-      kind = parse_sym (cmd->line);
+      kind = parse_sym (cmd->line, false);
       Claim2( kind ,==, HereDocVal);
       sym = getf_SymVal (map, cmd->line);
       sym->kind = kind;
@@ -585,7 +616,7 @@ setup_commands (TableT(Command)* cmds,
     {
       SymVal* sym = 0;
       char* arg = cmd->args.s[arg_r];
-      const SymValKind kind = parse_sym (arg);
+      const SymValKind kind = parse_sym (arg, (arg_r == 0));
 
       if (kind < NSymValKinds) {
         sym = getf_SymVal (map, arg);
@@ -952,7 +983,10 @@ int main (int argc, char** argv)
 {
   int argi = init_sysCx (&argc, &argv);
   XFileB in[1];
-  TableT( Command ) cmds;
+  DeclTable( Command, cmds );
+  const char* stdin_sym = 0;
+  const char* stdout_sym = 0;
+  bool use_stdin = true;
   DecloStack1( AlphaTab, tmppath, cons1_AlphaTab ("lace") );
 
   init_XFileB (in);
@@ -965,11 +999,11 @@ int main (int argc, char** argv)
     failout_sysCx ("Unable to create temp directory...");
   push_losefn1_sysCx ((void (*) (void*)) remove_tmppath, tmppath);
 
-  if (argi < argc)
-  {
+  while (argi < argc) {
     const char* arg;
     arg = argv[argi++];
     if (eq_cstr (arg, "--")) {
+      use_stdin = false;
       if (argi >= argc)  show_usage_and_exit ();
       while (argi < argc) {
         ujint off;
@@ -989,7 +1023,19 @@ int main (int argc, char** argv)
       }
       PackTable( in->xf.buf );
     }
+    else if (eq_cstr (arg, "-stdio")) {
+      arg = argv[argi++];
+      stdin_sym = arg;
+      stdout_sym = arg;
+    }
+    else if (eq_cstr (arg, "-stdin")) {
+      stdin_sym = argv[argi++];
+    }
+    else if (eq_cstr (arg, "-stdout")) {
+      stdout_sym = argv[argi++];
+    }
     else {
+      use_stdin = false;
       /* Optional -f flag.*/
       if (eq_cstr (arg, "-x") || eq_cstr (arg, "-f")) {
         if (argi >= argc)  show_usage_and_exit ();
@@ -1003,16 +1049,38 @@ int main (int argc, char** argv)
         failout_sysCx ("Cannot read script!");
       }
     }
-
-    if (argi < argc)  show_usage_and_exit ();
   }
-  else
-  {
+
+  if (use_stdin)
     set_FILE_FileB (&in->fb, stdin);
+
+  if (stdin_sym) {
+    Command* cmd = Grow1Table( cmds );
+    DeclAlphaTab( line );
+    init_Command (cmd);
+    cat_cstr_AlphaTab (&line, "$(O ");
+    cat_cstr_AlphaTab (&line, stdin_sym);
+    cat_cstr_AlphaTab (&line, ") stdin");
+    cmd->line = forget_AlphaTab (&line);
+    cmd->kind = RunCommand;
+    sep_line (&cmd->args, cmd->line);
   }
 
-  cmds = parse_file (&in->xf);
+  parse_file (&cmds, &in->xf);
   lose_XFileB (in);
+
+  if (stdout_sym) {
+    Command* cmd = Grow1Table( cmds );
+    DeclAlphaTab( line );
+    init_Command (cmd);
+    cat_cstr_AlphaTab (&line, "$(X ");
+    cat_cstr_AlphaTab (&line, stdout_sym);
+    cat_cstr_AlphaTab (&line, ") stdout");
+    cmd->line = forget_AlphaTab (&line);
+    cmd->kind = RunCommand;
+    sep_line (&cmd->args, cmd->line);
+  }
+  PackTable( cmds );
 
   setup_commands (&cmds, cstr_AlphaTab (tmppath));
 

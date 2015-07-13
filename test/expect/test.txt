@@ -1,0 +1,5 @@
+prefix hecko
+prefix jecko 
+prefix It is a string variable with "cko" in it.
+prefix yelcko
+prefix felcko\nobreak

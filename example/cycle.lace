@@ -1,115 +1,48 @@
 #!/usr/bin/env lace
 
-# Compute the sum from 1 to N
-# by generating lines containing 1 to N, 1 to N-1, ..., 1 to 2, 1
-# and counting the total number of lines!
+# Compute the sum from 1 to N  by essentially implementing
+# the {seq} tool and calling {add} on all the numbers.
+# The following is essentially what's happening.
+#
+#     echo N  o
+#             |      ____
+#             |     |    |
+#        cat  x  o  x    |
+#                |       | # Going up!
+#                |       |
+#       o  tee   x  o    |
+#      /            |    |
+#     |   decrement x o  |
+#     |                \_|
+#     |
+#     x tr '\n' ' ' o
+#                   |
+#           add  o  x
+#                |
+#        stdout  x
 
-$(H description)
 
-  seq 1 N  o
-           |  ___
-           | |  |
-  cat  o   x x  |
-       |        |
-       |        | # Going up!
-  awk  x o      |
-         |      |
-         |      |
-  tee    o  o   |
-         |   \__|
-         |
-  wc -l  x  # Prints N*(N+1)/2.
-
-$(H description)
-
+# Initialize the number {N}.
 $(H N)
 10
 $(H N)
 
-$(H script)
-BEGIN {
-    getline n;
-}
-
-{
-    i = int($0);
-    if (i <= n)  print $0;
-    if (i == n)
-    {
-        -- n;
-        # Flush the current round of numbers to avoid deadlock.
-        # If fflush() is not available, wrap the awk command with
-        #    stdbuf -oL
-        fflush();
-        if (n == 0)  exit(0);
-    }
-}
-$(H script)
-
-# This C program should be equivalent to the script above.
-$(H prog)
-#include <assert.h>
-#include <stdio.h>
-#define NMaxLineChars BUFSIZ
-int main ()
-{
-    char line[NMaxLineChars];
-    char* s;
-    int n;
-
-    s = fgets (line, NMaxLineChars, stdin);
-    assert (s);
-    n = atoi (line);
-
-    while (1)
-    {
-        char* s;
-        int i;
-        s = fgets (line, NMaxLineChars, stdin);
-        if (!s)  break;
-        i = atoi (line);
-        if (i <= n)  fputs (line, stdout);
-        if (i == n)
-        {
-            -- n;
-            fflush (stdout);
-            if (n == 0)  break;
-        }
-    }
-    return 0;
-}
-$(H prog)
-
-
 ## Begin pipeline.
-echo $(H N) $(O echo)
-seq 1 $(H N) $(O seq)
-cat $(XF echo) $(XF seq) $(XFv pump) $(O a)
 
-#tee $(X a) out $(O a)
+# Start at {N} and read subsequent values from {pump}.
+|< zec / $(H N) "\n" / -   $(Xv pump)
+# Loop until we hit 1.
+|- sed -u -e '/^1$/q'
+|- tee $(OF i)
+|- zec -paste - / ' -1' /
+|- add
+|- tee inspect1.txt
+|> zec $(O^ pump)
 
-$(H comment)
-awk $(X a) $(H script) $(O a)
-# Use this command if fflush() not implemented in your awk.
-#stdbuf -oL awk $(X a) $(H script) $(O a)
-
-$(H comment)
-
-# Instead of running awk, the next block can be used.
-echo $(H prog) $(O exe)
-gcc $(X exe) -O3 -o $(OF exe) -xc -
-$(XF exe) $(X a) $(O a)
-#$(H comment)
-
-tee $(X a) $(OF^ pump) $(O a)
-
-#tee $(X a) out $(O a)
-
-wc -l $(X a) $(O sum)
-
-echo -n 'The sum of 1 to' $(H N) 'is ' $(O a)
-
-$(XO sum) cat1 $(XA a) -
-
-$(X sum) stdout
+# Sum up all the numbers we encounter in the loop.
+|< zec $(X i)
+|- tr '\n' ' '
+|- add
+|- zec / 'The sum of 1 to ' $(H N) ' is ' / -
+|> stdout
 
