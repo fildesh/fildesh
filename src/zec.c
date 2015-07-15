@@ -2,17 +2,8 @@
  * Paste is also supported!
  **/
 
-#include <string.h>
-#include <stdlib.h>
-
-#include "cx/def.h"
-
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
-
-typedef int fd_t;
+#include "cx/syscx.h"
+#include "cx/alphatab.h"
 
 typedef struct FInput FInput;
 struct FInput {
@@ -150,12 +141,10 @@ cat_next_line (fd_t o_fd, FInput* in)
 }
 
 
-#define eq_cstr 0==strcmp
-
 int main(int argc, char** argv)
 {
   int i;
-  int argi = 1;
+  int argi = init_sysCx (&argc, &argv);
   int beg_slash = argc;
   int end_slash = argc;
   fd_t o_fd = 1;
@@ -174,6 +163,28 @@ int main(int argc, char** argv)
     else if (eq_cstr (arg, "-h")) {
       show_usage ();
       return 0;
+    }
+    else if (eq_cstr (arg, "-o")) {
+      arg = argv[argi++];
+      if (!arg) {
+        show_usage ();
+        failout_sysCx ("Need a filename after -o.");
+      }
+      if (eq_cstr (arg, "-")) {
+        o_fd = 1;
+      }
+      else {
+        int mode
+          = S_IWUSR | S_IWGRP | S_IWOTH
+          | S_IRUSR | S_IRGRP | S_IROTH;
+        o_fd = open (arg, O_WRONLY | O_CREAT | O_TRUNC, mode);
+        if (o_fd < 0) {
+          fdputs (2, "Cannot open file for writing! ");
+          fdputs (2, arg);
+          fdputs (2, "\n");
+          exit(1);
+        }
+      }
     }
     else if (eq_cstr (arg, "-paste")) {
       paste_mode = 1;
@@ -260,8 +271,10 @@ int main(int argc, char** argv)
       cat_the_file (o_fd, &inputs[nbegs+i]);
   }
 
+  close (o_fd);
   free (inputs);
   free (mid_buf);
+  lose_sysCx ();
   return 0;
 }
 
