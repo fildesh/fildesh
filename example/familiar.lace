@@ -5,6 +5,9 @@
 #
 # The {zec} command may be new to you.
 # It is like {cat}, but it echoes the strings given between slashes.
+#
+# The {elastic} command may be new as well.
+# It is ilke {tee}, but it won't cause deadlocks.
 
 
 # The following pseudocode shows how the program works at a high level.
@@ -36,7 +39,7 @@ $(H N)
 # Create a sequence of numbers from 1 to {N}.
 |< seq 1 $(N)
 # Split off a new stream called {fivesum}.
-|- tee $(OF fivesum)
+|- elastic $(OF fivesum)
 
 # Add up all the numbers.
 |- tr '\n' ' '

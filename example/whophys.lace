@@ -24,11 +24,7 @@ $(H lab)
 # $(O a) stdin
 
 # Split off another stream {b} to use later.
-$(XO a) tee $(OF b)
-
-# We need an elastic buffer on the slow side of a {tee}.
-$(XO b) elastic
-
+$(XO a) elastic $(OF b)
 
 $(XO a) sed \
     -e 's/^[[:space:]]\+/ /' \

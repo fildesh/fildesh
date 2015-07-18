@@ -14,164 +14,221 @@
 
 //#define DEBUGGING
 
-#ifndef DEBUGGING
-#undef BailOut
-#define BailOut(ret, msg)  (void) 0
+#ifdef DEBUGGING
+#define StateMsg(msg)  DBog0(msg)
+#else
+#define StateMsg(msg)
 #endif
+
+typedef struct IOState IOState;
+
+struct IOState
+{
+  struct aiocb aio;
+  Bool pending;
+  Bool done;
+  ujint off;
+
+  /** Buffer being used for asynchronous operations.*/
+  TableT(byte) buf;
+
+  /** Buffer that was read.*/
+  TableT(byte) xbuf;
+};
+
+DeclTableT(IOState, IOState);
+
+Bool all_done (const TableT(IOState)* ios)
+{
+  for (uint i = 1; i < ios->sz; ++i) {
+    if (!ios->s[i].done)
+      return 0;
+  }
+  return 1;
+}
 
 int main (int argc, char** argv)
 {
   int argi = init_sysCx (&argc, &argv);
   int istat = 0;
-
-  struct aiocb aio_x[1];
-  struct aiocb aio_o[1];
-
-  Bool pending_x = 1;
-  Bool pending_o = 0;
+  DeclTable( IOState, ios );
   const ujint xbuf_inc = 1024;
-  DeclTable( byte, xbuf );
-  DeclTable( byte, obuf );
-  ujint xbuf_off = 0;
-  ujint obuf_off = 0;
+  const struct aiocb** aiocb_buf;
+  IOState* x; /* Input.*/
 
-  if (argi != 1) {
-    fprintf (stderr, "%s: I do not take arguments from humans.\n", argv[0]);
-    return 1;
+  GrowTable( ios, 2 );
+  Zeroize( ios.s[0] );
+  ios.s[0].aio.aio_fildes = 0;
+  Zeroize( ios.s[1] );
+  ios.s[1].aio.aio_fildes = 1;
+
+  while (argi < argc) {
+    const char* arg = argv[argi++];
+    const int flags
+      = O_WRONLY | O_CREAT | O_TRUNC | O_ASYNC | O_APPEND;
+    const int mode
+      = S_IWUSR | S_IWGRP | S_IWOTH
+      | S_IRUSR | S_IRGRP | S_IROTH;
+    fd_t fd = open (arg, flags, mode);
+    IOState* o;
+    if (fd < 0) {
+      fprintf (stderr, "%s: failed to open: %s\n", argv[0], arg);
+      return 1;
+    }
+
+    GrowTable( ios, 1 );
+    o = TopTable( ios );
+    Zeroize( *o );
+    o->aio.aio_fildes = fd;
   }
 
-  memset (aio_x, 0, sizeof (*aio_x));
-  memset (aio_o, 0, sizeof (*aio_o));
+  aiocb_buf = AllocT(const struct aiocb*, ios.sz);
 
-  aio_x->aio_fildes = 0;
-  aio_o->aio_fildes = 1;
+  x = &ios.s[0];
+  GrowTable( x->buf, xbuf_inc );
 
-  GrowTable( xbuf, xbuf_inc );
-  aio_x->aio_buf = xbuf.s;
-  aio_x->aio_nbytes = xbuf.sz;
-  istat = aio_read (aio_x);
-
-  if (istat != 0) {
-    BailOut( 1, "aio_read()" );
-    return 0;
-  }
-
-  while (pending_x || pending_o) {
+  while (!all_done (&ios)) {
     ssize_t sstat;
 
+    /* Initiate read.*/
+    if (!x->pending && !x->done) {
+      x->aio.aio_buf = x->buf.s;
+      x->aio.aio_nbytes = x->buf.sz;
+      istat = aio_read (&x->aio);
+      if (istat == 0) {
+        x->pending = 1;
+      }
+      else {
+        x->done = 1;
+        ClearTable( x->buf );
+      }
+    }
+
+    /* Initiate writes.*/
+    for (uint i = 1; i < ios.sz; ++i) {
+      IOState* o = &ios.s[i];
+      if (o->pending || o->done)  continue;
+      CatTable( o->buf, o->xbuf );
+      ClearTable( o->xbuf );
+      if (o->buf.sz == 0) {
+        o->done = x->done;
+        continue;
+      }
+
+      o->aio.aio_buf = o->buf.s;
+      o->aio.aio_nbytes = o->buf.sz;
+      istat = aio_write (&o->aio);
+      if (istat == 0) {
+        o->pending = 1;
+      }
+      else {
+        o->done = 1;
+        ClearTable( o->buf );
+      }
+    }
+
+    /* Wait for read/write.*/
     do {
-      const struct aiocb* tmp[2] = { 0, 0 };
-      if (pending_x)  tmp[0] = aio_x;
-      if (pending_o)  tmp[1] = aio_o;
-      istat = aio_suspend (tmp, 2, 0);
+      uint n = 0;
+      for (uint i = 0; i < ios.sz; ++i) {
+        IOState* io = &ios.s[i];
+        if (io->pending) {
+          aiocb_buf[n++] = &io->aio;
+        }
+      }
+      istat = aio_suspend (aiocb_buf, n, 0);
     } while (istat != 0 && errno == EINTR);
 
     if (istat != 0) {
-      BailOut( 1, "aio_suspend()");
+      StateMsg( "aio_suspend()" );
       break;
     }
 
-    if (pending_o) {
-      istat = aio_error (aio_o);
-    }
-    if (pending_o && istat == 0) {
-      sstat = aio_return (aio_o);
-      if (sstat < 0) {
-        BailOut( 1, "aio_return(write)" );
-        break;
-      }
-      else if (obuf_off + (ujint)sstat < obuf.sz) {
-        obuf_off += (ujint) sstat;
-        aio_o->aio_buf = &obuf.s[obuf_off];
-        aio_o->aio_nbytes = obuf.sz - obuf_off;
-        istat = aio_write (aio_o);
-        if (istat != 0) {
-          BailOut( 1, "aio_write()");
-          break;
-        }
-      }
-      else if (pending_x) {
-        // Everything has been written.
-        pending_o = 0;
-      }
-      else if (xbuf_off > 0) {
-        SizeTable( xbuf, xbuf_off );
-        CopyTable( obuf, xbuf );
-        aio_o->aio_buf = &obuf.s[obuf_off];
-        aio_o->aio_nbytes = obuf.sz - obuf_off;
-        istat = aio_write (aio_o);
-        if (istat != 0) {
-          BailOut( 1, "aio_write()");
-          break;
-        }
-        xbuf_off = 0;
-      }
-      else {
-        // Everything has been written and reading has finished.
-        break;
-      }
-    }
-    else if (pending_o && istat != EINPROGRESS) {
-      BailOut( 1, "aio_error(write)" );
-      break;
-    }
+    /* Handle reading.*/
+    /* If statement that we break from...*/
+    if (x->pending) do {
+      ujint sz;
+      istat = aio_error (&x->aio);
 
-    if (pending_x) {
-      istat = aio_error (aio_x);
-    }
-    if (pending_x && istat == 0) {
-      sstat = aio_return (aio_x);
+      if (istat == EINPROGRESS) {
+        break;
+      }
+
+      x->pending = 0;
+      if (istat != 0) {
+        StateMsg( "aio_error(read)" );
+        x->done = 1;
+        ClearTable( x->buf );
+        break;
+      }
+      sstat = aio_return (&x->aio);
       if (sstat <= 0) {
-        pending_x = 0;
-      }
-      else {
-        xbuf_off += (ujint) sstat;
-      }
-
-      if (!pending_o && xbuf_off > 0) {
-        SizeTable( xbuf, xbuf_off );
-        CopyTable( obuf, xbuf );
-        aio_o->aio_buf = &obuf.s[obuf_off];
-        aio_o->aio_nbytes = obuf.sz - obuf_off;
-        istat = aio_write (aio_o);
-        if (istat != 0) {
-          BailOut( 1, "aio_write()");
-          break;
-        }
-        pending_o = 1;
-        xbuf_off = 0;
+        x->done = 1;
+        ClearTable( x->buf );
+        break;
       }
 
-      if (!pending_x) {
-        SizeTable( xbuf, 0 );
+      sz = x->buf.sz;
+      x->buf.sz = sstat;
+      for (uint i = 1; i < ios.sz; ++i) {
+        IOState* o = &ios.s[i];
+        if (o->done)  continue;
+        CatTable( o->xbuf, x->buf );
+      }
+      x->buf.sz = sz;
+    } while (0);
+
+
+    /* Handle some writing.*/
+    for (uint i = 1; i < ios.sz; ++i) {
+      IOState* o = &ios.s[i];
+
+      if (!o->pending || o->done)  continue;
+      istat = aio_error (&o->aio);
+
+      if (istat == EINPROGRESS) {
+        continue;
+      }
+
+      o->pending = 0;
+      if (istat != 0) {
+        StateMsg( "aio_error(write)" );
+        o->done = 1;
+        ClearTable( o->buf );
+        ClearTable( o->xbuf );
+        continue;
+      }
+
+      sstat = aio_return (&o->aio);
+      if (sstat < 0) {
+        StateMsg( "aio_return(write)" );
+        o->done = 1;
+        ClearTable( o->buf );
+        ClearTable( o->xbuf );
+        continue;
+      }
+
+      if ((ujint)sstat == o->buf.sz) {
+        ClearTable( o->buf );
       }
       else {
-        SizeTable( xbuf, xbuf_off + xbuf_inc );
-        aio_x->aio_buf = &xbuf.s[xbuf_off];
-        aio_x->aio_nbytes = xbuf.sz - xbuf_off;
-        istat = aio_read (aio_x);
-        if (istat != 0) {
-          pending_x = 0;
-        }
+        ujint sz = o->buf.sz - (ujint) sstat;
+        memmove (o->buf.s, &o->buf.s[sstat], sz);
+        ResizeTable( o->buf, sz );
       }
-    }
-    else if (pending_x && istat != EINPROGRESS) {
-      BailOut( 1, "aio_error(read)" );
-      break;
     }
   }
 
-  if (pending_x)  aio_cancel (0, aio_x);
-  if (pending_o)  aio_cancel (1, aio_o);
-
-  close (0);
-  close (1);
-
-  memset (aio_x, 0, sizeof (*aio_x));
-  memset (aio_o, 0, sizeof (*aio_o));
-
-  LoseTable( xbuf );
-  LoseTable( obuf );
+  for (i ; ios.sz) {
+    fd_t fd = ios.s[i].aio.aio_fildes;
+    if (ios.s[i].pending) {
+      aio_cancel (fd, &ios.s[i].aio);
+    }
+    close (fd);
+    LoseTable( ios.s[i].buf );
+    LoseTable( ios.s[i].xbuf );
+  }
+  LoseTable( ios );
 
   lose_sysCx ();
   return 0;
