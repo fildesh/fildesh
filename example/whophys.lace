@@ -20,11 +20,11 @@ $(H lab)
  $(O a) zec / $(lab) "\n" /
 
 ## To read standard input instead of {lab},
-## Uncomment this {stdin} line and comment the above {zek} line.
+## Uncomment this {stdin} line and comment the above {zec} line.
 # $(O a) stdin
 
 # Split off another stream {b} to use later.
-$(XO a) elastic $(OF b)
+$(XO a) elastic - $(OF b)
 
 $(XO a) sed \
     -e 's/^[[:space:]]\+/ /' \

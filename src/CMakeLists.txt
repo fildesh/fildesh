@@ -80,7 +80,7 @@ enable_testing ()
 set (TestPath ${TopPath}/test)
 
 ## Ensure that the example we distribute actually works.
-foreach (f hello test familiar cycle convoluted)
+foreach (f hello test name familiar cycle convoluted)
   add_test (NAME example_${f}
     COMMAND
     comparispawn ${TestPath}/expect/${f}.txt

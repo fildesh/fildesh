@@ -24,11 +24,13 @@ enum SymValKind
     IFutureDescVal, OFutureDescVal,
     IFutureDescFileVal, OFutureDescFileVal,
     HereDocVal, IHereDocFileVal,
+    DefVal,
     NSymValKinds
 };
 enum CommandKind {
   RunCommand, HereDocCommand,
   StdinCommand, StdoutCommand,
+  DefCommand,
   NCommandKinds
 };
 
@@ -133,6 +135,9 @@ close_Command (Command* cmd)
     LoseTable( cmd->os );
     InitTable( cmd->os );
 
+    LoseTable( cmd->iargs );
+    InitTable( cmd->iargs );
+
     if (cmd->exec_fd >= 0)
     {
         closefd_sysCx (cmd->exec_fd);
@@ -157,6 +162,7 @@ lose_Command (Command* cmd)
   close_Command (cmd);
   free (cmd->line);
   switch (cmd->kind) {
+  case DefCommand:
   case RunCommand:
   case StdinCommand:
   case StdoutCommand:
@@ -254,7 +260,7 @@ parse_here_doc (XFile* in, const char* term)
 }
 
 static void
-inject_include (XFile* in, char* name)
+inject_include (XFile* in, const char* dirname, char* name)
 {
   XFileB src[1];
   init_XFileB (src);
@@ -262,7 +268,7 @@ inject_include (XFile* in, char* name)
   name = &name[count_ws (name)];
   name[strcspn (name, ")")] = '\0';
 
-  if (!open_FileB (&src->fb, 0, name))
+  if (!open_FileB (&src->fb, dirname, name))
     DBog1( "Failed to include file: %s", name );
 
   inject_XFile (in, &src->xf, "\n");
@@ -348,6 +354,7 @@ sep_line (TableT(cstr)* args, char* s)
         DBog0( "Unterminated double quote." );
         break;
       }
+      j += 1;
       s[i] = '\0';
       s = &s[j];
     }
@@ -376,7 +383,7 @@ sep_line (TableT(cstr)* args, char* s)
 
 
 static void
-parse_file (TableT(Command)* cmds, XFile* xf)
+parse_file (TableT(Command)* cmds, XFile* xf, const char* dirname)
 {
   while (true)
   {
@@ -388,8 +395,7 @@ parse_file (TableT(Command)* cmds, XFile* xf)
       free (line);
       break;
     }
-    GrowTable( *cmds, 1 );
-    cmd = &cmds->s[cmds->sz - 1];
+    cmd = Grow1Table( *cmds );
     init_Command (cmd);
     cmd->line = line;
 
@@ -402,10 +408,54 @@ parse_file (TableT(Command)* cmds, XFile* xf)
     else if (line[0] == '$' && line[1] == '(' &&
              line[2] == '<' && line[3] == '<')
     {
-      inject_include (xf, &line[4]);
+      inject_include (xf, dirname, &line[4]);
       /* We don't add a command, just add more file content!*/
       lose_Command (&cmds->s[cmds->sz-1]);
       MPopTable( *cmds, 1 );
+    }
+    else if (pfxeq_cstr ("$(>", line) ||
+             pfxeq_cstr ("$(set", line))
+    {
+      char* begline;
+      char* sym = line;
+
+      cmd->kind = RunCommand;
+
+      sym = &sym[count_non_ws (sym)];
+      sym = &sym[count_ws(sym)];
+      begline = strchr (sym, ')');
+      Claim( begline && "Unclosed paren in variable def." );
+
+      begline[0] = '\0';
+      begline = &begline[1];
+
+      PushTable( cmd->args, (char*) "zec" );
+      PushTable( cmd->args, (char*) "/" );
+      sep_line (&cmd->args, begline);
+      PushTable( cmd->args, (char*) "/" );
+
+      {
+        DeclAlphaTab( oname );
+        cat_cstr_AlphaTab (&oname, "$(O ");
+        cat_cstr_AlphaTab (&oname, sym);
+        cat_cstr_AlphaTab (&oname, ")");
+        PushTable( cmd->extra_args, forget_AlphaTab (&oname));
+      }
+      PushTable( cmd->args, *TopTable( cmd->extra_args ) );
+
+      cmd = Grow1Table( *cmds );
+      init_Command (cmd);
+      cmd->kind = DefCommand;
+      PushTable( cmd->args, (char*) "elastic" );
+      {
+        DeclAlphaTab( xname );
+        cat_cstr_AlphaTab (&xname, "$(X ");
+        cat_cstr_AlphaTab (&xname, sym);
+        cat_cstr_AlphaTab (&xname, ")");
+        PushTable( cmd->extra_args, forget_AlphaTab (&xname));
+      }
+      PushTable( cmd->args, *TopTable( cmd->extra_args ) );
+      cmd->line = dup_cstr (sym);
     }
     else
     {
@@ -534,8 +584,8 @@ add_iarg_Command (Command* cmd, int in, bool scrap_newline)
 {
     add_ios_Command (cmd, in, -1);
     GrowTable( cmd->iargs, 1 );
-    cmd->iargs.s[cmd->iargs.sz-1].fd = in;
-    cmd->iargs.s[cmd->iargs.sz-1].scrap_newline = scrap_newline;
+    TopTable( cmd->iargs )->fd = in;
+    TopTable( cmd->iargs )->scrap_newline = scrap_newline;
 }
 
 static char*
@@ -642,6 +692,20 @@ setup_commands (TableT(Command)* cmds,
           fd_t fd = sym->as.file_desc;
           sym->kind = NSymValKinds;
           add_iarg_Command (cmd, fd, true);
+          cmd->args.s[arg_q] = 0;
+        }
+        else if (sym->kind == DefVal) {
+          fd_t fd[2];
+          bool good;
+          Command* xcmd = &cmds->s[sym->cmd_idx];
+
+          good = pipe_sysCx (fd);
+          Claim( good );
+
+          add_ios_Command (xcmd, -1, fd[1]);
+          PushTable( xcmd->args, add_fd_arg_Command (xcmd, fd[1]) );
+
+          add_iarg_Command (cmd, fd[0], true);
           cmd->args.s[arg_q] = 0;
         }
         else {
@@ -758,7 +822,7 @@ setup_commands (TableT(Command)* cmds,
       {
         fd_t fd[2];
         bool good = true;
-        Claim2( sym->kind ,==, NSymValKinds );
+        Claim( sym->kind==NSymValKinds || sym->kind==HereDocVal || sym->kind==DefVal );
         sym->kind = ODescVal;
         sym->cmd_idx = i;
         InitDomMax( sym->arg_idx );
@@ -819,6 +883,12 @@ setup_commands (TableT(Command)* cmds,
 
     if (cmd->args.sz > 0)
       cmd->args.sz = arg_q;
+
+    if (cmd->kind == DefCommand) {
+      SymVal* sym = getf_SymVal (map, cmd->line);
+      sym->kind = DefVal;
+      sym->cmd_idx = i;
+    }
   }
 
   for (assoc = beg_Associa (map);
@@ -900,7 +970,7 @@ spawn_commands (TableT(Command) cmds)
     {
         Command* cmd = &cmds.s[i];
 
-        if (cmd->kind != RunCommand)  continue;
+        if (cmd->kind != RunCommand && cmd->kind != DefCommand)  continue;
 
         cloexec_Command (cmd, false);
 
@@ -1056,8 +1126,7 @@ int main (int argc, char** argv)
         arg = argv[argi++];
       }
 
-      set_FILE_FileB (&in->fb, fopen (arg, "rb"));
-      if (!in->fb.f)
+      if (!open_FileB (&in->fb, 0, arg))
       {
         DBog1( "Script file: %s", arg );
         failout_sysCx ("Cannot read script!");
@@ -1080,7 +1149,7 @@ int main (int argc, char** argv)
     sep_line (&cmd->args, cmd->line);
   }
 
-  parse_file (&cmds, &in->xf);
+  parse_file (&cmds, &in->xf, ccstr_of_AlphaTab (&in->fb.pathname));
   lose_XFileB (in);
 
   if (stdout_sym) {

@@ -1,0 +1,8 @@
+
+# This file is made to be included from name.lace.
+# It contains some configuration parameters.
+
+$(H: username) grencez
+
+$(H: password) iamr00t
+

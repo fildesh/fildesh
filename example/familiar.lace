@@ -39,7 +39,7 @@ $(H N)
 # Create a sequence of numbers from 1 to {N}.
 |< seq 1 $(N)
 # Split off a new stream called {fivesum}.
-|- elastic $(OF fivesum)
+|- elastic - $(OF fivesum)
 
 # Add up all the numbers.
 |- tr '\n' ' '
@@ -56,12 +56,6 @@ $(H N)
 |- add
 |- zec / 'The sum of 1 to ' $(N) ' by 5 is ' / -
 |> zec $(O fivesum)
-
-# Below, a two streams from the same source are being joined in order.
-# Since {fivesum} is used last, we should pipe it through {elastic} in order
-# to avoid deadlocks caused by buffering.
-# (Without it, we won't actually see a deadlock since buffers are big enough.)
-$(XO fivesum) elastic
 
 |< zec $(XF allsum) $(XF fivesum)
 |> stdout

@@ -33,10 +33,10 @@ $(H N)
 |< zec / $(N) "\n" / -   $(Xv pump)
 # Loop until we hit 1.
 |- sed -u -e '/^1$/q'
-|- elastic $(OF i)
+|- elastic - $(OF i)
 |- zec -paste - / ' -1' /
 |- add
-#|- elastic inspect1.txt
+#|- elastic - inspect1.txt
 |> zec $(O^ pump)
 
 # Sum up all the numbers we encounter in the loop.

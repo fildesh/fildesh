@@ -7,6 +7,7 @@
 
 #include <aio.h>
 #include "cx/syscx.h"
+#include "cx/alphatab.h"
 #include "cx/table.h"
 
 #include <errno.h>
@@ -56,11 +57,15 @@ int main (int argc, char** argv)
   const struct aiocb** aiocb_buf;
   IOState* x; /* Input.*/
 
-  GrowTable( ios, 2 );
+  GrowTable( ios, 1 );
   Zeroize( ios.s[0] );
   ios.s[0].aio.aio_fildes = 0;
-  Zeroize( ios.s[1] );
-  ios.s[1].aio.aio_fildes = 1;
+
+  if (argi == argc) {
+    IOState* o = Grow1Table( ios );
+    Zeroize( *o );
+    o->aio.aio_fildes = 1;
+  }
 
   while (argi < argc) {
     const char* arg = argv[argi++];
@@ -69,8 +74,16 @@ int main (int argc, char** argv)
     const int mode
       = S_IWUSR | S_IWGRP | S_IWOTH
       | S_IRUSR | S_IRGRP | S_IROTH;
-    fd_t fd = open (arg, flags, mode);
     IOState* o;
+    fd_t fd;
+
+    if (eq_cstr (arg, "-")) {
+      fd = 1;
+    }
+    else {
+      fd = open (arg, flags, mode);
+    }
+
     if (fd < 0) {
       fprintf (stderr, "%s: failed to open: %s\n", argv[0], arg);
       return 1;

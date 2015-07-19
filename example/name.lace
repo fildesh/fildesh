@@ -1,0 +1,21 @@
+#!/usr/bin/env lace
+
+# This is a test of includes and variables.
+# A file can be included by:
+#   $(<< filename)
+# A variable is declared/assigned by:
+#   $(> varname) 'The variable' " content."
+
+$(<< includetest.lace)
+
+$(> msg) "Hello there " $(username) '!'
+
+$(> passmsg) $(msg) "\nYour password is " $(password) '!'
+
+$(> greetmsg) $(msg) "\nHow are you today?"
+
+|< zec / $(greetmsg) "\n" /
+|- zec - / $(passmsg) "\n" /
+|> stdout
+
+
