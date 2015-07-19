@@ -45,28 +45,29 @@ DeclTableT( iargs, struct { int fd; bool scrap_newline; } );
 
 struct Command
 {
-    char* line;
-    CommandKind kind;
-    TableT(cstr) args;
-    TableT(cstr) extra_args;
-    TableT(cstr) tmp_files;
-    pid_t pid;
-    int stdis; /**< Standard input stream.**/
-    TableT( int ) is; /**< Input streams.**/
-    int stdos; /**< Standard output stream.**/
-    TableT( int ) os; /** Output streams.**/
-    /** If >= 0, this is a file descriptor that will
-     * close when the program command is safe to run.
-     **/
-    int exec_fd;
-    /** If != 0, this is the contents of a file to execute.**/
-    const char* exec_doc;
+  char* line;
+  uint line_num;
+  CommandKind kind;
+  TableT(cstr) args;
+  TableT(cstr) extra_args;
+  TableT(cstr) tmp_files;
+  pid_t pid;
+  int stdis; /**< Standard input stream.**/
+  TableT( int ) is; /**< Input streams.**/
+  int stdos; /**< Standard output stream.**/
+  TableT( int ) os; /** Output streams.**/
+  /** If >= 0, this is a file descriptor that will
+   * close when the program command is safe to run.
+   **/
+  int exec_fd;
+  /** If != 0, this is the contents of a file to execute.**/
+  const char* exec_doc;
 
-    /** Use these input streams to fill corresponding (null) arguments.**/
-    TableT( iargs ) iargs;
+  /** Use these input streams to fill corresponding (null) arguments.**/
+  TableT( iargs ) iargs;
 
-    /** Use this if it's a HERE document.**/
-    char* doc;
+  /** Use this if it's a HERE document.**/
+  char* doc;
 };
 
 struct SymVal
@@ -100,17 +101,18 @@ lose_SymVal (SymVal* v)
 static void
 init_Command (Command* cmd)
 {
-    cmd->kind = NCommandKinds;
-    InitTable( cmd->args );
-    InitTable( cmd->extra_args );
-    InitTable( cmd->tmp_files );
-    cmd->exec_fd = -1;
-    cmd->exec_doc = 0;
-    cmd->stdis = -1;
-    InitTable( cmd->is );
-    cmd->stdos = -1;
-    InitTable( cmd->os );
-    InitTable( cmd->iargs );
+  cmd->kind = NCommandKinds;
+  cmd->line_num = 0;
+  InitTable( cmd->args );
+  InitTable( cmd->extra_args );
+  InitTable( cmd->tmp_files );
+  cmd->exec_fd = -1;
+  cmd->exec_doc = 0;
+  cmd->stdis = -1;
+  InitTable( cmd->is );
+  cmd->stdos = -1;
+  InitTable( cmd->os );
+  InitTable( cmd->iargs );
 }
 
 static void
@@ -220,6 +222,22 @@ trim_trailing_ws (char* s)
     return n;
 }
 
+static void
+failout_Command (const Command* cmd, const char* msg, const char* msg2)
+{
+  FILE* out = stderr;
+  fprintf (out, "lace: Problem on line %u\n", cmd->line_num);
+  if (msg) {
+    fprintf (out, " \\- %s", msg);
+    if (msg2) {
+      fprintf (out, ": %s", msg2);
+    }
+    fputc ('\n', out);
+  }
+  lose_sysCx ();
+  exit (1);
+}
+
     /** HERE document is created by
      * $(H var_name) Optional identifying stuff.
      * Line 1 in here.
@@ -258,53 +276,34 @@ parse_here_doc (XFile* in, const char* term)
     return dup_cstr (s);
 }
 
-static void
-inject_include (XFile* in, const char* dirname, char* name)
-{
-  XFileB src[1];
-  init_XFileB (src);
-
-  name = &name[count_ws (name)];
-  name[strcspn (name, ")")] = '\0';
-
-  if (!open_FileB (&src->fb, dirname, name))
-    DBog1( "Failed to include file: %s", name );
-
-  inject_XFile (in, &src->xf, "\n");
-  lose_XFileB (src);
-}
-
 static char*
-parse_line (XFile* xf)
+parse_line (XFile* xf, ujint* text_nlines)
 {
-    DeclTable( char, line );
-    char* s;
+  DeclAlphaTab( line );
+  char* s;
 
-    for (s = getline_XFile (xf);
-         s;
-         s = getline_XFile (xf))
-    {
-        uint i, n;
-        bool multiline = false;
+  for (s = getline_XFile (xf);
+       s;
+       s = getline_XFile (xf))
+  {
+    uint n;
+    bool multiline = false;
+    *text_nlines += 1;
 
-        s = &s[count_ws (s)];
-        if (s[0] == '#' || s[0] == '\0')  continue;
+    s = &s[count_ws (s)];
+    if (s[0] == '#' || s[0] == '\0')  continue;
 
-        n = trim_trailing_ws (s);
+    n = trim_trailing_ws (s);
 
-        multiline = s[n-1] == '\\';
-        if (multiline)  --n;
+    multiline = s[n-1] == '\\';
+    if (multiline)
+      --n;
 
-        i = line.sz;
-        GrowTable( line, n );
-        memcpy (&line.s[i], s, n * sizeof (char));
+    cat1_cstr_AlphaTab (&line, s, n);
 
-        if (!multiline)  break;
-    }
-    GrowTable( line, 1 );
-    line.s[line.sz-1] = '\0';
-    PackTable( line );
-    return line.s;
+    if (!multiline)  break;
+  }
+  return forget_AlphaTab (&line);
 }
 
 static void
@@ -380,23 +379,26 @@ sep_line (TableT(cstr)* args, char* s)
   PackTable( *args );
 }
 
-
 static void
 parse_file (TableT(Command)* cmds, XFile* xf, const char* dirname)
 {
+  ujint text_nlines = 0;
   while (true)
   {
     char* line;
     Command* cmd;
-    line = parse_line (xf);
-    if (line[0] == '\0')
-    {
+    line = parse_line (xf, &text_nlines);
+    if (!line) {
+      break;
+    }
+    else if (line[0] == '\0') {
       free (line);
       break;
     }
     cmd = Grow1Table( *cmds );
     init_Command (cmd);
     cmd->line = line;
+    cmd->line_num = text_nlines;
 
     if (line[0] == '$' && line[1] == '(' &&
         line[2] == 'H' && line[3] != 'F')
@@ -404,13 +406,28 @@ parse_file (TableT(Command)* cmds, XFile* xf, const char* dirname)
       cmd->kind = HereDocCommand;
       cmd->doc = parse_here_doc (xf, line);
     }
-    else if (line[0] == '$' && line[1] == '(' &&
-             line[2] == '<' && line[3] == '<')
+    else if (pfxeq_cstr ("$(<<", line))
     {
-      inject_include (xf, dirname, &line[4]);
-      /* We don't add a command, just add more file content!*/
-      lose_Command (&cmds->s[cmds->sz-1]);
+      char* filename = &line[4];
+      XFileB src[1];
+
+      init_XFileB (src);
+      filename = &filename[count_ws (filename)];
+      filename[strcspn (filename, ")")] = '\0';
+
+      if (!open_FileB (&src->fb, dirname, filename))
+        failout_Command (cmd, "Failed to include file", filename);
+
+      lose_Command (TopTable( *cmds ));
       MPopTable( *cmds, 1 );
+
+      if (1) {
+        parse_file (cmds, &src->xf, ccstr_of_AlphaTab (&src->fb.pathname));
+      }
+      else {
+        inject_XFile (xf, &src->xf, "\n");
+      }
+      lose_XFileB (src);
     }
     else if (pfxeq_cstr ("$(>", line) ||
              pfxeq_cstr ("$(set", line))
@@ -423,7 +440,9 @@ parse_file (TableT(Command)* cmds, XFile* xf, const char* dirname)
       sym = &sym[count_non_ws (sym)];
       sym = &sym[count_ws(sym)];
       begline = strchr (sym, ')');
-      Claim( begline && "Unclosed paren in variable def." );
+      if (!begline) {
+        failout_Command (cmd, "Unclosed paren in variable def.", 0);
+      }
 
       begline[0] = '\0';
       begline = &begline[1];
@@ -445,6 +464,7 @@ parse_file (TableT(Command)* cmds, XFile* xf, const char* dirname)
       cmd = Grow1Table( *cmds );
       init_Command (cmd);
       cmd->kind = DefCommand;
+      cmd->line_num = text_nlines;
       PushTable( cmd->args, (char*) "elastic" );
       {
         DeclAlphaTab( xname );
@@ -699,7 +719,8 @@ setup_commands (TableT(Command)* cmds,
           Command* xcmd = &cmds->s[sym->cmd_idx];
 
           good = pipe_sysCx (fd);
-          Claim( good );
+          if (!good)
+            failout_Command (cmd, "Failed to create pipe for variable", arg);
 
           add_ios_Command (xcmd, -1, fd[1]);
           PushTable( xcmd->args, add_fd_arg_Command (xcmd, fd[1]) );
@@ -708,14 +729,16 @@ setup_commands (TableT(Command)* cmds,
           cmd->args.s[arg_q] = 0;
         }
         else {
-          Claim( 0 && "Unknown source for argument." );
+          failout_Command (cmd, "Unknown source for argument", arg);
         }
         ++ arg_q;
       }
       else if (cmd->kind == StdoutCommand && kind == IDescVal)
       {
         Command* last = &cmds->s[sym->cmd_idx];
-        Claim2( last->kind ,==, RunCommand );
+
+        if (last->kind != RunCommand)
+          failout_Command (cmd, "Stdout stream not coming from a command?", arg);
 
         closefd_sysCx (sym->as.file_desc);
 
@@ -733,11 +756,15 @@ setup_commands (TableT(Command)* cmds,
         int fd;
         if (kind == IHereDocFileVal)
         {
-          Claim2( sym->kind ,==, HereDocVal );
+          if (sym->kind != HereDocVal) {
+            failout_Command (cmd, "Unknown HERE doc", arg);
+          }
         }
         else
         {
-          Claim2( sym->kind ,==, ODescVal );
+          if (sym->kind != ODescVal) {
+            failout_Command (cmd, "Unknown source for", arg);
+          }
           sym->kind = NSymValKinds;
         }
         fd = sym->as.file_desc;
@@ -765,7 +792,9 @@ setup_commands (TableT(Command)* cmds,
         }
         else
         {
-          Claim2( kind ,==, IHereDocFileVal );
+          if (kind != IHereDocFileVal) {
+            failout_Command (cmd, "Not a HERE doc file?", arg);
+          }
           cmd->args.s[arg_q] =
             add_tmp_file_Command (cmd, ntmp_files, tmpdir);
           ++ ntmp_files;
@@ -780,7 +809,10 @@ setup_commands (TableT(Command)* cmds,
       else if (kind == OFutureDescVal || kind == OFutureDescFileVal)
       {
         int fd;
-        Claim2( sym->kind ,==, IFutureDescVal );
+
+        if (sym->kind != IFutureDescVal)
+          failout_Command (cmd, "Argument should be a stream to the past", arg);
+
         sym->kind = NSymValKinds;
         fd = sym->as.file_desc;
 
@@ -821,14 +853,17 @@ setup_commands (TableT(Command)* cmds,
       {
         fd_t fd[2];
         bool good = true;
-        Claim( sym->kind==NSymValKinds || sym->kind==HereDocVal || sym->kind==DefVal );
+        if (!(sym->kind==NSymValKinds || sym->kind==HereDocVal || sym->kind==DefVal)) {
+          failout_Command (cmd, "Trying to overwrite an existing stream variable", arg);
+        }
         sym->kind = ODescVal;
         sym->cmd_idx = i;
         InitDomMax( sym->arg_idx );
         InitDomMax( sym->ios_idx );
 
         good = pipe_sysCx (fd);
-        Claim( good );
+        if (!good)
+          failout_Command (cmd, "Failed to create pipe for variable", arg);
 
         sym->as.file_desc = fd[0];
         if (kind == ODescVal || kind == IODescVal)
@@ -847,14 +882,17 @@ setup_commands (TableT(Command)* cmds,
       {
         fd_t fd[2];
         bool good;
-        Claim2( sym->kind ,==, NSymValKinds );
+        if (!(sym->kind==NSymValKinds || sym->kind==HereDocVal || sym->kind==DefVal)) {
+          failout_Command (cmd, "Trying to overwrite an existing stream variable", arg);
+        }
         sym->kind = IFutureDescVal;
         sym->cmd_idx = i;
         InitDomMax( sym->arg_idx );
         InitDomMax( sym->ios_idx );
 
         good = pipe_sysCx (fd);
-        Claim( good );
+        if (!good)
+          failout_Command (cmd, "Failed to create pipe for variable", arg);
 
         sym->as.file_desc = fd[1];
         if (kind == IFutureDescVal)
