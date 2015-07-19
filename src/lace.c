@@ -1,8 +1,7 @@
 /** \file lace.c
  *
- * This is the lace utility
- * as written by Alex Klinkhamer.
- * This code is public domain - no restrictions.
+ * This code is written by Alex Klinkhamer.
+ * It uses the ISC license (see the LICENSE file in the top-level directory).
  **/
 
 #include "cx/syscx.h"
