@@ -214,6 +214,14 @@ count_non_ws (const char* s)
     return strcspn (s, WhiteSpaceChars);
 }
 static uint
+count_newlines (const char* s)
+{
+  uint n = 0;
+  for (s = strchr (s, '\n'); s; s = strchr (&s[1], '\n'))
+    n += 1;
+  return n;
+}
+static uint
 trim_trailing_ws (char* s)
 {
     uint n = strlen (s);
@@ -238,42 +246,42 @@ failout_Command (const Command* cmd, const char* msg, const char* msg2)
   exit (1);
 }
 
-    /** HERE document is created by
-     * $(H var_name) Optional identifying stuff.
-     * Line 1 in here.
-     * Line 2 in here.
-     * ...
-     * Line n in here.
-     * $(H var_name) Optional identifying stuff.
-     *
-     * OR it could look like:
-     * $(H: var_name) value
-     **/
+/** HERE document is created by
+ * $(H var_name) Optional identifying stuff.
+ * Line 1 in here.
+ * Line 2 in here.
+ * ...
+ * Line n in here.
+ * $(H var_name) Optional identifying stuff.
+ *
+ * OR it could look like:
+ * $(H: var_name) value
+ **/
 static char*
-parse_here_doc (XFile* in, const char* term)
+parse_here_doc (XFile* in, const char* term, ujint* text_nlines)
 {
-    DeclTable( char, delim );
-    char* s;
+  DeclAlphaTab( delim );
+  char* s;
 
-        /* Check for the single-line case.*/
-    if (term[3] == ':')
-    {
-        term = strchr (term, ')');
-        if (!term)  return dup_cstr ("");
-        term = &term[1];
-        term = &term[count_ws (term)];
-        s = dup_cstr (term);
-        trim_trailing_ws (s);
-        return s;
-    }
+  /* Check for the single-line case.*/
+  if (term[3] == ':')
+  {
+    term = strchr (term, ')');
+    if (!term)  return dup_cstr ("");
+    term = &term[1];
+    term = &term[count_ws (term)];
+    s = dup_cstr (term);
+    trim_trailing_ws (s);
+    return s;
+  }
 
-    GrowTable( delim, 1 + strlen(term) + 1 );
-    delim.s[0] = '\n';
-    strcpy (&delim.s[1], term);
+  cat_char_AlphaTab (&delim, '\n');
+  cat_cstr_AlphaTab (&delim, term);
 
-    s = getlined_XFile (in, delim.s);
-    LoseTable( delim );
-    return dup_cstr (s);
+  s = getlined_XFile (in, ccstr_of_AlphaTab (&delim));
+  *text_nlines += 1 + count_newlines (s);
+  lose_AlphaTab (&delim);
+  return dup_cstr (s);
 }
 
 static char*
@@ -404,7 +412,7 @@ parse_file (TableT(Command)* cmds, XFile* xf, const char* dirname)
         line[2] == 'H' && line[3] != 'F')
     {
       cmd->kind = HereDocCommand;
-      cmd->doc = parse_here_doc (xf, line);
+      cmd->doc = parse_here_doc (xf, line, &text_nlines);
     }
     else if (pfxeq_cstr ("$(<<", line))
     {
@@ -655,14 +663,16 @@ setup_commands (TableT(Command)* cmds,
 {
   uint ntmp_files = 0;
   Associa map[1];
+  Associa add_map[1]; /* Temporarily hold new symbols for the current line.*/
   Assoc* assoc;
 
   InitAssocia( AlphaTab, SymVal, *map, cmp_AlphaTab );
+  InitAssocia( AlphaTab, SymVal, *add_map, cmp_AlphaTab );
 
   {:for (i ; cmds->sz)
-    uint arg_q = 0, arg_r = 0;
-    Command* cmd;
-    cmd = &cmds->s[i];
+    uint arg_q = 0;
+    uint arg_r = 0;
+    Command* cmd = &cmds->s[i];
 
     /* The command defines a HERE document.*/
     if (cmd->kind == HereDocCommand)
@@ -694,16 +704,13 @@ setup_commands (TableT(Command)* cmds,
 
     for (arg_r = 0; arg_r < cmd->args.sz; ++ arg_r)
     {
-      SymVal* sym = 0;
       char* arg = cmd->args.s[arg_r];
       const SymValKind kind = parse_sym (arg, (arg_r == 0));
 
-      if (kind < NSymValKinds) {
-        sym = getf_SymVal (map, arg);
-      }
 
       if (kind == HereDocVal || kind == IDescArgVal)
       {
+        SymVal* sym = getf_SymVal (map, arg);
         if (sym->kind == HereDocVal) {
           cmd->args.s[arg_q] = sym->as.here_doc;
         }
@@ -735,6 +742,7 @@ setup_commands (TableT(Command)* cmds,
       }
       else if (cmd->kind == StdoutCommand && kind == IDescVal)
       {
+        SymVal* sym = getf_SymVal (map, arg);
         Command* last = &cmds->s[sym->cmd_idx];
 
         if (last->kind != RunCommand)
@@ -753,6 +761,7 @@ setup_commands (TableT(Command)* cmds,
       else if (kind == IDescVal || kind == IDescFileVal ||
                kind == IODescVal || kind == IHereDocFileVal)
       {
+        SymVal* sym = getf_SymVal (map, arg);
         int fd;
         if (kind == IHereDocFileVal)
         {
@@ -808,6 +817,7 @@ setup_commands (TableT(Command)* cmds,
       }
       else if (kind == OFutureDescVal || kind == OFutureDescFileVal)
       {
+        SymVal* sym = getf_SymVal (map, arg);
         int fd;
 
         if (sym->kind != IFutureDescVal)
@@ -842,6 +852,7 @@ setup_commands (TableT(Command)* cmds,
 
       if (cmd->kind == StdinCommand && kind == ODescVal)
       {
+        SymVal* sym = getf_SymVal (add_map, arg);
         sym->kind = ODescVal;
         sym->cmd_idx = i;
         sym->as.file_desc = dup_sysCx (0);
@@ -853,9 +864,7 @@ setup_commands (TableT(Command)* cmds,
       {
         fd_t fd[2];
         bool good = true;
-        if (!(sym->kind==NSymValKinds || sym->kind==HereDocVal || sym->kind==DefVal)) {
-          failout_Command (cmd, "Trying to overwrite an existing stream variable", arg);
-        }
+        SymVal* sym = getf_SymVal (add_map, arg);
         sym->kind = ODescVal;
         sym->cmd_idx = i;
         InitDomMax( sym->arg_idx );
@@ -882,9 +891,7 @@ setup_commands (TableT(Command)* cmds,
       {
         fd_t fd[2];
         bool good;
-        if (!(sym->kind==NSymValKinds || sym->kind==HereDocVal || sym->kind==DefVal)) {
-          failout_Command (cmd, "Trying to overwrite an existing stream variable", arg);
-        }
+        SymVal* sym = getf_SymVal (add_map, arg);
         sym->kind = IFutureDescVal;
         sym->cmd_idx = i;
         InitDomMax( sym->arg_idx );
@@ -926,6 +933,23 @@ setup_commands (TableT(Command)* cmds,
       sym->kind = DefVal;
       sym->cmd_idx = i;
     }
+
+    assoc = beg_Associa (add_map);
+    if (assoc) do {
+      AlphaTab* add_key = (AlphaTab*) key_of_Assoc (map, assoc);
+      SymVal* add_sym = (SymVal*) val_of_Assoc (map, assoc);
+      Assoc* tmp_assoc = assoc;
+      SymVal* sym = getf_SymVal (map, ccstr_of_AlphaTab (add_key));
+
+      if (!(sym->kind==NSymValKinds || sym->kind==HereDocVal || sym->kind==DefVal)) {
+        failout_Command (cmd, "Trying to overwrite an existing stream variable",
+                         ccstr_of_AlphaTab (add_key));
+      }
+
+      *sym = *add_sym;
+      assoc = next_Assoc (assoc);
+      give_Associa (add_map, tmp_assoc);
+    } while (assoc);
   }
 
   for (assoc = beg_Associa (map);
@@ -942,6 +966,7 @@ setup_commands (TableT(Command)* cmds,
   }
 
   lose_Associa (map);
+  lose_Associa (add_map);
 }
 
 static void

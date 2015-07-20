@@ -25,13 +25,14 @@ $(H heredoc) b
 s/llo/cko/
 $(H heredoc) b
 
-sed -e $(heredoc) $(X grep) $(O sed)
+# Test specifying a output before an input of the same name.
+$(O grep) sed -e $(heredoc) $(X grep)
 
 $(H script)
 { print "prefix " $0; }
 $(H script)
 
-$(O a) awk $(script) $(X sed)
+$(O awk) awk $(script) $(X grep)
 
-$(X a) stdout
+$(X awk) stdout
 
