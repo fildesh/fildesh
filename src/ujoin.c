@@ -1,5 +1,5 @@
 
-#include "cx/syscx.h"
+#include "utilace.h"
 #include "cx/associa.h"
 #include "cx/fileb.h"
 
@@ -199,9 +199,8 @@ compare_lines (XFile* xf, Associa* map, const char* delim,
 }
 
 
-int main (int argc, char** argv)
+LaceUtilMain(ujoin)
 {
-    int argi = init_sysCx (&argc, &argv);
     const char* delim = "\t";
     const char* dflt_record = 0;
     bool keep_join_field = true;

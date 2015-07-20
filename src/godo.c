@@ -1,14 +1,12 @@
 
-#include "cx/syscx.h"
+#include "utilace.h"
 #include "cx/ofile.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 
-int main (int argc, char** argv)
+LaceUtilMain(godo)
 {
-  int argi = init_sysCx (&argc, &argv);
-
   if (argc < 3)
   {
     printf_OFile (stderr_OFile (),
@@ -24,6 +22,11 @@ int main (int argc, char** argv)
   }
   ++ argi;
 
+  {
+    int ret = lace_util_main (argi, argc, argv);
+    if (ret >= 0)
+      return ret;
+  }
   execvp_sysCx (&argv[argi]);
   // Flow should not actually get here.
   lose_sysCx ();

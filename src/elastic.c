@@ -4,9 +4,8 @@
  **/
 #define POSIX_SOURCE
 
-
 #include <aio.h>
-#include "cx/syscx.h"
+#include "utilace.h"
 #include "cx/alphatab.h"
 #include "cx/table.h"
 
@@ -48,9 +47,8 @@ Bool all_done (const TableT(IOState)* ios)
   return 1;
 }
 
-int main (int argc, char** argv)
+LaceUtilMain(elastic)
 {
-  int argi = init_sysCx (&argc, &argv);
   int istat = 0;
   DeclTable( IOState, ios );
   const ujint xbuf_inc = 1024;

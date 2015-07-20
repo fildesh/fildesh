@@ -4,13 +4,12 @@
  * to the spawned process' stdin.
  **/
 
-#include "cx/syscx.h"
+#include "utilace.h"
 
 #include "cx/ospc.h"
 
-int main(int argc, char** argv)
+LaceUtilMain(xpipe)
 {
-  int argi = init_sysCx (&argc, &argv);
   XFile* xf = stdin_XFile ();
   DecloStack1( OSPc, ospc, dflt_OSPc () );
 

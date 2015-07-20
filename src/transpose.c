@@ -1,13 +1,12 @@
 
 /** Simple utility to transpose based on a delimiter.**/
 
-#include "cx/syscx.h"
+#include "utilace.h"
 #include "cx/xfile.h"
 #include "cx/ofile.h"
 
-int main(int argc, char** argv)
+LaceUtilMain(transpose)
 {
-  int argi = init_sysCx (&argc, &argv);
   DeclTableT( cstr_row, TableT(cstr) );
   DeclTable( cstr_row, mat );
   XFile* xf = stdin_XFile ();

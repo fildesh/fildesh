@@ -1,5 +1,5 @@
 
-#include "cx/syscx.h"
+#include "utilace.h"
 #include "cx/fileb.h"
 
 #include <ctype.h>
@@ -142,9 +142,8 @@ matching_line (uint* a, uint width, const char* s, char* const* lines)
     return match_idx;
 }
 
-int main (int argc, char** argv)
+LaceUtilMain(best_match)
 {
-  int argi = init_sysCx (&argc, &argv);
   uint* lcs_array;
   XFileB lookup_in[1];
   XFileB stream_in[1];

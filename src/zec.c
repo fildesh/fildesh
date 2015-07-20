@@ -2,7 +2,7 @@
  * Paste is also supported!
  **/
 
-#include "cx/syscx.h"
+#include "utilace.h"
 #include "cx/alphatab.h"
 
 typedef struct FInput FInput;
@@ -141,10 +141,9 @@ cat_next_line (fd_t o_fd, FInput* in)
 }
 
 
-int main(int argc, char** argv)
+LaceUtilMain(zec)
 {
   int i;
-  int argi = init_sysCx (&argc, &argv);
   int beg_slash = argc;
   int end_slash = argc;
   fd_t o_fd = 1;

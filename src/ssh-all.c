@@ -1,5 +1,5 @@
 
-#include "cx/syscx.h"
+#include "utilace.h"
 #include "cx/fileb.h"
 #include "cx/ospc.h"
 
@@ -62,9 +62,8 @@ spawn_ssh (const char* cmd, const char* host)
     LoseTable( args );
 }
 
-int main (int argc, char** argv)
+LaceUtilMain(ssh_all)
 {
-  int argi = init_sysCx (&argc, &argv);
   XFileB xfb[1];
   XFile* xf = 0;
   char* line;

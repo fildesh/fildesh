@@ -11,7 +11,7 @@ set (DepPath ${TopPath}/dep)
 set (CxTopPath ${DepPath}/cx)
 set (BldPath lace)
 
-list (APPEND CFiles
+set (LaceCFiles
   lace.c
   add.c
   best-match.c
@@ -26,24 +26,28 @@ list (APPEND CFiles
   execfd.c
   time2sec.c
   transpose.c
+  )
+
+set (CFiles
+  ${LaceCFiles}
   chatty.c
   )
+
+list (APPEND HFiles
+  utilace.h)
 
 include (${CxTopPath}/src/include.cmake)
 
 set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${BinPath})
 
-addbinexe (lace lace.c)
+addbinexe (lace ${LaceCFiles})
 set (lace_exe "$<TARGET_FILE:lace>")
 
-get_filename_component (d ${BinPath} ABSOLUTE)
-
-#add_definitions (-DUtilBin="${d}")
-## The following causes CMake to segfault.
-#set_property(SOURCE ${BldPath}/lace.c
-#  APPEND PROPERTY COMPILE_DEFINITIONS UtilBin="${d}")
 set_property(TARGET lace
-  APPEND PROPERTY COMPILE_DEFINITIONS UtilBin="${d}")
+  APPEND PROPERTY COMPILE_DEFINITIONS MAIN_LACE_EXECUTABLE)
+set_property (TARGET lace
+  APPEND PROPERTY COMPILE_DEFINITIONS _POSIX_C_SOURCE=199309L)
+target_link_libraries (lace rt)
 
 addbinexe (add add.c)
 addbinexe (best-match best-match.c)

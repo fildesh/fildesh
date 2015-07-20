@@ -1,5 +1,5 @@
 
-#include "cx/syscx.h"
+#include "utilace.h"
 #include "cx/fileb.h"
 
 static int
@@ -26,13 +26,13 @@ sum_real_line (XFile* xf)
   return x;
 }
 
-int main (int argc, char** argv)
+LaceUtilMain(add)
 {
-  int argi = init_sysCx (&argc, &argv);
   XFile* xfile;
   OFile* ofile;
   XFile olay[1];
 
+  (void) argv;
   if (argi < argc)
   {
     DBog0( "Just run without arguments and type numbers." );

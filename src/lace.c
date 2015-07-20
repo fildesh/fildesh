@@ -4,7 +4,7 @@
  * It uses the ISC license (see the LICENSE file in the top-level directory).
  **/
 
-#include "cx/syscx.h"
+#include "utilace.h"
 #include "cx/associa.h"
 #include "cx/fileb.h"
 
@@ -1016,113 +1016,167 @@ remove_tmppath (AlphaTab* tmppath)
     lose_AlphaTab (tmppath);
 }
 
+
+int main_add (int argi, int argc, char** argv);
+int main_best_match (int argi, int argc, char** argv);
+int main_elastic (int argi, int argc, char** argv);
+int main_execfd (int argi, int argc, char** argv);
+int main_godo (int argi, int argc, char** argv);
+int main_ssh_all (int argi, int argc, char** argv);
+int main_time2sec (int argi, int argc, char** argv);
+int main_transpose (int argi, int argc, char** argv);
+int main_ujoin (int argi, int argc, char** argv);
+int main_void (int argi, int argc, char** argv);
+int main_waitdo (int argi, int argc, char** argv);
+int main_xpipe (int argi, int argc, char** argv);
+int main_zec (int argi, int argc, char** argv);
+
+int (*lace_specific_util (const char* arg)) (int, int, char**)
+{
+#define C(str, name) \
+  if (eq_cstr (arg, str))  return &main_##name
+
+  C( "add", add );
+  C( "best-match", best_match );
+  C( "elastic", elastic );
+  C( "execfd", execfd );
+  C( "godo", godo );
+  C( "ssh-all", ssh_all );
+  C( "time2sec", time2sec );
+  C( "transpose", transpose );
+  C( "ujoin", ujoin );
+  C( "void", void );
+  C( "waitdo", waitdo );
+  C( "xpipe", xpipe );
+  C( "zec", zec );
+#undef C
+  return 0;
+}
+
+int lace_util_main (int argi, int argc, char** argv)
+{
+  const char* arg = argv[argi];
+  int (*f) (int, int, char**);
+  argv = &argv[argi];
+  argc -= argi;
+  argi = 1;
+  f = lace_specific_util (arg);
+  if (!f)
+    return -1;
+  return f (argi, argc, argv);
+}
+
+
 static void
 spawn_commands (TableT(Command) cmds)
 {
-    DeclTable( cstr, argv );
-    DeclTable( ujint2, fdargs );
+  DeclTable( cstr, argv );
+  DeclTable( ujint2, fdargs );
 
-    for (uint i = 0; i < cmds.sz; ++i)
-        cloexec_Command (&cmds.s[i], true);
+  for (uint i = 0; i < cmds.sz; ++i)
+    cloexec_Command (&cmds.s[i], true);
 
-    cloexec_sysCx (0, true);
-    cloexec_sysCx (1, true);
+  cloexec_sysCx (0, true);
+  cloexec_sysCx (1, true);
 
-    for (uint i = 0; i < cmds.sz; ++i)
+  for (uint i = 0; i < cmds.sz; ++i)
+  {
+    Command* cmd = &cmds.s[i];
+
+    if (cmd->kind != RunCommand && cmd->kind != DefCommand)  continue;
+
+    cloexec_Command (cmd, false);
+
+    for (uint argi = 0; argi < cmd->args.sz; ++argi)
     {
-        Command* cmd = &cmds.s[i];
-
-        if (cmd->kind != RunCommand && cmd->kind != DefCommand)  continue;
-
-        cloexec_Command (cmd, false);
-
-        for (uint argi = 0; argi < cmd->args.sz; ++argi)
-        {
-            if (!cmd->args.s[argi])
-            {
-                ujint2 p;
-                Claim2( fdargs.sz ,<, cmd->iargs.sz );
-                p.s[0] = argi;
-                p.s[1] = cmd->iargs.s[fdargs.sz].fd;
-                PushTable( fdargs, p );
-            }
-        }
-        Claim2( fdargs.sz ,==, cmd->iargs.sz );
-        if (cmd->exec_fd >= 0)
-        {
-            ujint2 p;
-            p.s[0] = 0;
-            p.s[1] = cmd->exec_fd;
-            PushTable( fdargs, p );
-        }
-
-        PushTable( argv, dup_cstr (exename_of_sysCx ()) );
-        PushTable( argv, dup_cstr (MagicArgv1_sysCx) );
-
-        if (cmd->stdis >= 0)
-        {
-            PushTable( argv, dup_cstr ("-stdxfd") );
-            PushTable( argv, itoa_dup_cstr (cmd->stdis) );
-        }
-        if (cmd->stdos >= 0)
-        {
-            PushTable( argv, dup_cstr ("-stdofd") );
-            PushTable( argv, itoa_dup_cstr (cmd->stdos) );
-        }
-
-        PushTable( argv, dup_cstr ("-exec") );
-        PushTable( argv, dup_cstr ("-exe") );
-
-        if (fdargs.sz > 0)
-            PushTable( argv, dup_cstr ("execfd") );
-        else
-            PushTable( argv, dup_cstr (cmd->args.s[0]) );
-
-        PushTable( argv, dup_cstr ("--") );
-
-        if (fdargs.sz > 0)
-        {
-            PushTable( argv, dup_cstr ("-exe") );
-            PushTable( argv, dup_cstr (cmd->args.s[0]) );
-
-            for (uint j = 0; j < fdargs.sz; ++j)
-            {
-                ujint2 p = fdargs.s[j];
-                PushTable( cmd->extra_args, itoa_dup_cstr (p.s[1]) );
-                cmd->args.s[p.s[0]] = *TopTable( cmd->extra_args );
-                PushTable( argv, itoa_dup_cstr (p.s[0]) );
-            }
-
-            PushTable( argv, dup_cstr ("--") );
-            PushTable( argv, dup_cstr (cmd->args.s[0]) );
-        }
-
-        for (uint j = 1; j < cmd->args.sz; ++j)
-            PushTable( argv, dup_cstr (cmd->args.s[j]) );
-
-        PushTable( argv, 0 );
-
-        if (cmd->exec_doc)
-        {
-            cmd->exec_doc = 0;
-            chmodu_sysCx (cmd->args.s[0], true, true, true);
-        }
-
-        cmd->pid = spawnvp_sysCx (argv.s);
-        if (cmd->pid < 0)
-        {
-            DBog1( "File: %s", argv.s[0] );
-            failout_sysCx ("Could not spawnvp()...");
-        }
-        close_Command (cmd);
-
-        fdargs.sz = 0;
-        for (uint argi = 0; argi < argv.sz; ++argi)
-            free (argv.s[argi]);
-        argv.sz = 0;
+      if (!cmd->args.s[argi])
+      {
+        ujint2 p;
+        Claim2( fdargs.sz ,<, cmd->iargs.sz );
+        p.s[0] = argi;
+        p.s[1] = cmd->iargs.s[fdargs.sz].fd;
+        PushTable( fdargs, p );
+      }
     }
-    LoseTable( argv );
-    LoseTable( fdargs );
+    Claim2( fdargs.sz ,==, cmd->iargs.sz );
+    if (cmd->exec_fd >= 0)
+    {
+      ujint2 p;
+      p.s[0] = 0;
+      p.s[1] = cmd->exec_fd;
+      PushTable( fdargs, p );
+    }
+
+    PushTable( argv, dup_cstr (exename_of_sysCx ()) );
+    PushTable( argv, dup_cstr (MagicArgv1_sysCx) );
+
+    if (cmd->stdis >= 0)
+    {
+      PushTable( argv, dup_cstr ("-stdxfd") );
+      PushTable( argv, itoa_dup_cstr (cmd->stdis) );
+    }
+    if (cmd->stdos >= 0)
+    {
+      PushTable( argv, dup_cstr ("-stdofd") );
+      PushTable( argv, itoa_dup_cstr (cmd->stdos) );
+    }
+
+    if (fdargs.sz > 0) {
+      PushTable( argv, dup_cstr ("--") );
+      PushTable( argv, dup_cstr ("-as") );
+      PushTable( argv, dup_cstr ("execfd") );
+      PushTable( argv, dup_cstr ("-exe") );
+      PushTable( argv, dup_cstr (cmd->args.s[0]) );
+
+      for (uint j = 0; j < fdargs.sz; ++j)
+      {
+        ujint2 p = fdargs.s[j];
+        PushTable( cmd->extra_args, itoa_dup_cstr (p.s[1]) );
+        cmd->args.s[p.s[0]] = *TopTable( cmd->extra_args );
+        PushTable( argv, itoa_dup_cstr (p.s[0]) );
+      }
+
+      PushTable( argv, dup_cstr ("--") );
+      PushTable( argv, dup_cstr (cmd->args.s[0]) );
+    }
+    else if (lace_specific_util (cmd->args.s[0])) {
+      PushTable( argv, dup_cstr ("--") );
+      PushTable( argv, dup_cstr ("-as") );
+      PushTable( argv, dup_cstr (cmd->args.s[0]));
+    }
+    else {
+      PushTable( argv, dup_cstr ("-exec") );
+      PushTable( argv, dup_cstr ("-exe") );
+      PushTable( argv, dup_cstr (cmd->args.s[0]));
+      PushTable( argv, dup_cstr ("--") );
+    }
+
+    for (uint j = 1; j < cmd->args.sz; ++j)
+      PushTable( argv, dup_cstr (cmd->args.s[j]) );
+
+    PushTable( argv, 0 );
+
+    if (cmd->exec_doc)
+    {
+      cmd->exec_doc = 0;
+      chmodu_sysCx (cmd->args.s[0], true, true, true);
+    }
+
+    cmd->pid = spawnvp_sysCx (argv.s);
+    if (cmd->pid < 0)
+    {
+      DBog1( "File: %s", argv.s[0] );
+      failout_sysCx ("Could not spawnvp()...");
+    }
+    close_Command (cmd);
+
+    fdargs.sz = 0;
+    for (uint argi = 0; argi < argv.sz; ++argi)
+      free (argv.s[argi]);
+    argv.sz = 0;
+  }
+  LoseTable( argv );
+  LoseTable( fdargs );
 }
 
 int main (int argc, char** argv)
@@ -1168,6 +1222,12 @@ int main (int argc, char** argv)
         in->xf.buf.s[off+sz+1] = '\0';
       }
       PackTable( in->xf.buf );
+    }
+    else if (eq_cstr (arg, "-as")) {
+      int ret = lace_util_main (argi, argc, argv);
+      if (ret < 0)
+        failout_sysCx ("Unknown tool name!");
+      return ret;
     }
     else if (eq_cstr (arg, "-stdio")) {
       arg = argv[argi++];

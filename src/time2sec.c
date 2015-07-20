@@ -3,7 +3,7 @@
  * The longer time intervals like days or hours need not be present
  * for this to work properly. Field widths are not fixed either.
  */
-#include "cx/syscx.h"
+#include "utilace.h"
 #include "cx/fileb.h"
 
 static uint
@@ -34,9 +34,8 @@ conv_line (XFile* xf)
   return x;
 }
 
-int main (int argc, char** argv)
+LaceUtilMain(time2sec)
 {
-  int argi = init_sysCx (&argc, &argv);
   XFile* xf;
   OFile* of;
   char* s;

@@ -1,14 +1,13 @@
 
-#include "cx/syscx.h"
+#include "utilace.h"
 #include "cx/def.h"
 
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 
-int main (int argc, char** argv)
+LaceUtilMain(waitdo)
 {
-  int argi = init_sysCx (&argc, &argv);
   const char* ExeName = argv[0];
   FILE* in = stdin;
   FILE* ErrOut = stderr;
@@ -42,6 +41,11 @@ int main (int argc, char** argv)
     while (! feof (in) && ! ferror (in))  fgetc (in);
     fclose (in);
 
+    {
+      int ret = lace_util_main (argi, argc, argv);
+      if (ret >= 0)
+        return ret;
+    }
     execvp_sysCx (&argv[argi]);
 
     fprintf (ErrOut, "%s - Failed to execute:%s\n", ExeName, argv[2]);

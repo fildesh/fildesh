@@ -1,5 +1,5 @@
 
-#include "cx/syscx.h"
+#include "utilace.h"
 #include "cx/fileb.h"
 #include "cx/bittable.h"
 
@@ -82,9 +82,8 @@ readin_fd (fd_t in, bool scrap_newline)
   return buf.s;
 }
 
-int main (int argc, char** argv)
+LaceUtilMain(execfd)
 {
-  int argi = init_sysCx (&argc, &argv);
   int off = 0;
   BitTable bt = cons2_BitTable (argc, 0);
   char* exe = 0;
@@ -140,6 +139,11 @@ int main (int argc, char** argv)
     ++ argi;
   }
 
+  {
+    int ret = lace_util_main (off, argc, argv);
+    if (ret >= 0)
+      return ret;
+  }
   execvp_sysCx (&argv[off]);
 
   lose_sysCx ();
