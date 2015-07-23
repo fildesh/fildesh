@@ -148,6 +148,7 @@ LaceUtilMain(zec)
   int end_slash = argc;
   fd_t o_fd = 1;
   Bool paste_mode = 0;
+  const char* unless_arg = 0;
   FInput* inputs;
   size_t mid_sz;
   char* mid_buf;
@@ -188,16 +189,30 @@ LaceUtilMain(zec)
     else if (eq_cstr (arg, "-paste")) {
       paste_mode = 1;
     }
+    else if (eq_cstr (arg, "-unless")) {
+      unless_arg = argv[argi++];
+      if (!unless_arg) {
+        show_usage ();
+        failout_sysCx ("Need a string after -unless.");
+      }
+    }
     else {
       argi -= 1;
       break;
     }
   }
 
+  if (unless_arg && unless_arg[0]) {
+    fdputs (o_fd, unless_arg);
+    lose_sysCx ();
+    return 0;
+  }
+
   if (argi == argc) {
     FInput in[1];
     open_input_file (in, 0);
     cat_the_file (o_fd, in);
+    lose_sysCx ();
     return 0;
   }
 

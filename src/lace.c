@@ -1183,6 +1183,7 @@ int main (int argc, char** argv)
 {
   int argi = init_sysCx (&argc, &argv);
   XFileB in[1];
+  DeclTable( AlphaTab, script_args );
   DeclTable( Command, cmds );
   const char* stdin_sym = 0;
   const char* stdout_sym = 0;
@@ -1241,23 +1242,67 @@ int main (int argc, char** argv)
       stdout_sym = argv[argi++];
     }
     else {
-      use_stdin = false;
       /* Optional -f flag.*/
       if (eq_cstr (arg, "-x") || eq_cstr (arg, "-f")) {
         if (argi >= argc)  show_usage_and_exit ();
         arg = argv[argi++];
       }
-
+      if (eq_cstr (arg, "-"))
+        break;
+      use_stdin = false;
+      PushTable( script_args, cons1_AlphaTab (arg) );
       if (!open_FileB (&in->fb, 0, arg))
       {
         DBog1( "Script file: %s", arg );
         failout_sysCx ("Cannot read script!");
       }
+      break;
     }
   }
 
-  if (use_stdin)
+  if (use_stdin) {
     set_FILE_FileB (&in->fb, stdin);
+    PushTable( script_args, cons1_AlphaTab ("-") );
+  }
+
+  while (argi < argc) {
+    const char* arg = argv[argi++];
+    PushTable( script_args, cons1_AlphaTab (arg) );
+  }
+
+  if (script_args.sz > 0)
+  {
+    Command* cmd = Grow1Table( cmds );
+    DeclAlphaTab( line );
+    DeclAlphaTab( doc );
+    cat_cstr_AlphaTab (&line, "$(H: #)");
+    cat_uint_AlphaTab (&doc, script_args.sz-1);
+
+    init_Command (cmd);
+    cmd->kind = HereDocCommand;
+    cmd->line_num = 0;
+    cmd->line = forget_AlphaTab (&line);
+    cmd->doc = forget_AlphaTab (&doc);
+
+    while (script_args.sz < 10) {
+      PushTable( script_args, cons1_AlphaTab ("") );
+    }
+  }
+
+  for (i ; script_args.sz) {
+    Command* cmd = Grow1Table( cmds );
+    DeclAlphaTab( line );
+    cat_cstr_AlphaTab (&line, "$(H: ");
+    cat_uint_AlphaTab (&line, i);
+    cat_cstr_AlphaTab (&line, ")");
+
+    init_Command (cmd);
+    cmd->kind = HereDocCommand;
+    cmd->line_num = 0;
+    cmd->line = forget_AlphaTab (&line);
+    cmd->doc = forget_AlphaTab (&script_args.s[i]);
+  }
+  LoseTable( script_args );
 
   if (stdin_sym) {
     Command* cmd = Grow1Table( cmds );

@@ -1,0 +1,10 @@
+Hello! My name is: example/args.lace
+You provided 2 arguments.
+The first two are '2' and '7'.
+Let's count from 2 to 7.
+2
+3
+4
+5
+6
+7

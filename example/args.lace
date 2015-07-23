@@ -1,0 +1,22 @@
+#!/usr/bin/env lace
+
+$(> greet) 'Hello! My name is: ' $(0) \
+  "\nYou provided " $(#) " arguments." \
+  "\nThe first two are '" $(1) "' and '" $(2) "'."
+
+$(H: default_beg) 1
+$(H: default_end) 5
+
+
+$(O beg) zec -unless $(1) / $(default_beg) /
+$(O end) zec -unless $(2) / $(default_end) /
+
+$(> beg) $(XA beg)
+$(> end) $(XA end)
+
+$(> msg) "Let's count from " $(beg) ' to ' $(end) '.'
+
+|< seq $(beg) $(end)
+|- zec / $(greet) "\n" $(msg) "\n" / -
+|> stdout
+
