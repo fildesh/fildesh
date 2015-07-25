@@ -618,8 +618,8 @@ add_iarg_Command (Command* cmd, int in, bool scrap_newline)
 static char*
 add_extra_arg_Command (Command* cmd, const char* s)
 {
-    PushTable( cmd->extra_args, dup_cstr (s) );
-    return cmd->extra_args.s[cmd->extra_args.sz - 1];
+  PushTable( cmd->extra_args, dup_cstr (s) );
+  return *TopTable( cmd->extra_args );
 }
 
 static char*
@@ -858,6 +858,10 @@ setup_commands (TableT(Command)* cmds,
         sym->as.file_desc = dup_sysCx (0);
         InitDomMax( sym->arg_idx );
         InitDomMax( sym->ios_idx );
+      }
+      else if (kind == ODescFileVal && eq_cstr (arg, "VOID")) {
+        cmd->args.s[arg_q] = add_extra_arg_Command (cmd, "/dev/null");
+        arg_q += 1;
       }
       else if (kind == ODescVal || kind == ODescFileVal ||
                kind == IODescVal)
