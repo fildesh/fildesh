@@ -40,6 +40,7 @@ LaceUtilMain(xpipe)
     }
   }
 
+  lose_OSPc (ospc);
   lose_sysCx ();
   return 0;
 }

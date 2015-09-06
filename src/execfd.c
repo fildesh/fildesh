@@ -134,11 +134,13 @@ LaceUtilMain(execfd)
       else
       {
         argv[argi] = readin_fd (fd, true);
+        push_losefn1_sysCx ((void (*) (void*)) free, argv[argi]);
       }
     }
     ++ argi;
   }
 
+  lose_BitTable (&bt);
   {
     int ret = lace_util_main (off, argc, argv);
     if (ret >= 0)

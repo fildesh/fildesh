@@ -185,6 +185,19 @@ lose_Command (Command* cmd)
     free (cmd->tmp_files.s[i]);
   }
   LoseTable( cmd->tmp_files );
+  cmd->kind = NCommandKinds;
+}
+
+static void
+lose_Commands (TableT(Command)* cmds)
+{
+  for (i ; cmds->sz) {
+    if (cmds->s[i].kind == RunCommand)
+      kill (cmds->s[i].pid, SIGINT);
+    if (cmds->s[i].kind != NCommandKinds)
+      lose_Command (&cmds->s[i]);
+  }
+  LoseTable (*cmds);
 }
 
 
@@ -989,7 +1002,6 @@ output_Command (FILE* out, const Command* cmd)
     fputc ('\n', out);
 }
 
-    /** Read everything from the file descriptor /in/.**/
     /** Add the utility bin directory to the PATH environment variable.**/
 static void
 add_util_path_env ()
@@ -1192,17 +1204,16 @@ int main (int argc, char** argv)
   const char* stdin_sym = 0;
   const char* stdout_sym = 0;
   bool use_stdin = true;
-  DecloStack1( AlphaTab, tmppath, cons1_AlphaTab ("lace") );
+  AlphaTab tmppath[1];
 
   init_XFileB (in);
 
-  add_util_path_env ();
+  /* add_util_path_env (); */
+  (void) add_util_path_env;
 
-  mktmppath_sysCx (tmppath);
-
-  if (tmppath->sz == 0)
-    failout_sysCx ("Unable to create temp directory...");
-  push_losefn1_sysCx ((void (*) (void*)) remove_tmppath, tmppath);
+  signal (SIGQUIT, lose_sysCx);
+  signal (SIGINT, lose_sysCx);
+  signal (SIGSEGV, lose_sysCx);
 
   while (argi < argc) {
     const char* arg;
@@ -1263,6 +1274,13 @@ int main (int argc, char** argv)
       break;
     }
   }
+
+  *tmppath = cons1_AlphaTab ("lace");
+  mktmppath_sysCx (tmppath);
+  if (tmppath->sz == 0)
+    failout_sysCx ("Unable to create temp directory...");
+  push_losefn1_sysCx ((void (*) (void*)) remove_tmppath, tmppath);
+  push_losefn1_sysCx ((void (*) (void*)) lose_Commands, &cmds);
 
   if (use_stdin) {
     set_FILE_FileB (&in->fb, stdin);
@@ -1352,7 +1370,6 @@ int main (int argc, char** argv)
 
     lose_Command (&cmds.s[i]);
   }
-  LoseTable( cmds );
 
   lose_sysCx ();
   return 0;
