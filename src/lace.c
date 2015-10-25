@@ -273,7 +273,7 @@ failout_Command (const Command* cmd, const char* msg, const char* msg2)
 static char*
 parse_here_doc (XFile* in, const char* term, ujint* text_nlines)
 {
-  default AlphaTab delim;
+  AlphaTab delim = default;
   char* s;
 
   /* Check for the single-line case.*/
@@ -300,7 +300,7 @@ parse_here_doc (XFile* in, const char* term, ujint* text_nlines)
 static char*
 parse_line (XFile* xf, ujint* text_nlines)
 {
-  default AlphaTab line;
+  AlphaTab line = default;
   char* s;
 
   while ((s = getline_XFile (xf)))
@@ -428,9 +428,8 @@ parse_file (TableT(Command)* cmds, XFile* xf, const char* dirname)
     else if (pfxeq_cstr ("$(<<", line))
     {
       char* filename = &line[4];
-      XFileB src[1];
+      XFileB src[] = default;
 
-      init_XFileB (src);
       filename = &filename[count_ws (filename)];
       filename[strcspn (filename, ")")] = '\0';
 
@@ -472,7 +471,7 @@ parse_file (TableT(Command)* cmds, XFile* xf, const char* dirname)
       PushTable( cmd->args, (char*) "/" );
 
       {
-        default AlphaTab oname;
+        AlphaTab oname = default;
         cat_cstr_AlphaTab (&oname, "$(O ");
         cat_cstr_AlphaTab (&oname, sym);
         cat_cstr_AlphaTab (&oname, ")");
@@ -486,7 +485,7 @@ parse_file (TableT(Command)* cmds, XFile* xf, const char* dirname)
       cmd->line_num = text_nlines;
       PushTable( cmd->args, (char*) "elastic" );
       {
-        default AlphaTab xname;
+        AlphaTab xname = default;
         cat_cstr_AlphaTab (&xname, "$(X ");
         cat_cstr_AlphaTab (&xname, sym);
         cat_cstr_AlphaTab (&xname, ")");
@@ -1196,15 +1195,13 @@ spawn_commands (TableT(Command) cmds)
 int main (int argc, char** argv)
 {
   int argi = init_sysCx (&argc, &argv);
-  XFileB in[1];
+  XFileB in[] = default;
   DeclTable( AlphaTab, script_args );
   DeclTable( Command, cmds );
   const char* stdin_sym = 0;
   const char* stdout_sym = 0;
   bool use_stdin = true;
   AlphaTab tmppath[1];
-
-  init_XFileB (in);
 
   /* add_util_path_env (); */
   (void) add_util_path_env;
@@ -1293,8 +1290,8 @@ int main (int argc, char** argv)
   if (script_args.sz > 0)
   {
     Command* cmd = Grow1Table( cmds );
-    default AlphaTab line;
-    default AlphaTab doc;
+    AlphaTab line = default;
+    AlphaTab doc = default;
     cat_cstr_AlphaTab (&line, "$(H: #)");
     cat_uint_AlphaTab (&doc, script_args.sz-1);
 
@@ -1311,7 +1308,7 @@ int main (int argc, char** argv)
 
   for (i ; script_args.sz) {
     Command* cmd = Grow1Table( cmds );
-    default AlphaTab line;
+    AlphaTab line = default;
     cat_cstr_AlphaTab (&line, "$(H: ");
     cat_uint_AlphaTab (&line, i);
     cat_cstr_AlphaTab (&line, ")");
@@ -1326,7 +1323,7 @@ int main (int argc, char** argv)
 
   if (stdin_sym) {
     Command* cmd = Grow1Table( cmds );
-    default AlphaTab line;
+    AlphaTab line = default;
     init_Command (cmd);
     cat_cstr_AlphaTab (&line, "$(O ");
     cat_cstr_AlphaTab (&line, stdin_sym);
@@ -1341,7 +1338,7 @@ int main (int argc, char** argv)
 
   if (stdout_sym) {
     Command* cmd = Grow1Table( cmds );
-    default AlphaTab line;
+    AlphaTab line = default;
     init_Command (cmd);
     cat_cstr_AlphaTab (&line, "$(X ");
     cat_cstr_AlphaTab (&line, stdout_sym);

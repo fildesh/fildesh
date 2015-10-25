@@ -207,15 +207,13 @@ LaceUtilMain(ujoin)
     bool stream_on_left = false;
     FILE* nomatch_file = 0;
     FILE* dupmatch_file = 0;
-    XFileB lookup_in[1];
-    XFileB stream_in[1];
+    XFileB lookup_in[] = default;
+    XFileB stream_in[] = default;
     FILE* out = stdout;
     TableT(LineJoin) table;
     Associa map[1];
 
     InitAssocia( AlphaTab, LineJoin*, *map, cmp_AlphaTab );
-    init_XFileB (lookup_in);
-    init_XFileB (stream_in);
 
     if (argi >= argc)
         show_usage_and_exit ();

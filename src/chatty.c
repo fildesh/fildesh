@@ -34,10 +34,10 @@ int main (int argc, char** argv)
   struct addrinfo crit;
   struct addrinfo* list = 0;
   struct addrinfo* addr = 0;
-  DecloStack( struct aiocb, aio );
+  struct aiocb aio[1];
 
-  memset (&crit, 0, sizeof (crit));
-  memset (aio, 0, sizeof (*aio));
+  Zeroize( crit );
+  Zeroize( *aio );
 
   /* crit.ai_family = AF_INET6; */
   crit.ai_family   = AF_INET;
@@ -66,8 +66,7 @@ int main (int argc, char** argv)
     if (argi < argc && eql_cstr (argv[argi], "-connect"))
     {
       int sock = -1;
-      OFile of[1];
-      init_OFile (of);
+      OFile of[] = default;
 
       oput_cstr_OFile (of, "hi");
 
@@ -105,7 +104,7 @@ int main (int argc, char** argv)
     }
     else
     {
-      DecloStack1( OSPc, ospc, dflt_OSPc () );
+      OSPc ospc[] = default;
       int sock = -1;
       int sock1 = -1;
       struct sockaddr_storage client_addr;
@@ -184,7 +183,7 @@ int main (int argc, char** argv)
   if (list)
     freeaddrinfo (list);
 
-  memset (aio, 0, sizeof (*aio));
+  Zeroize( *aio );
   lose_sysCx ();
   return good ? 0 : 1;
 }

@@ -33,7 +33,7 @@ static void
 spawn_ssh (const char* cmd, const char* host)
 {
     DeclTable( const_cstr, args );
-    DecloStack1( OSPc, ospc, dflt_OSPc () );
+    OSPc ospc[] = default;
     bool good = true;
 
     ospc->cmd = cons1_AlphaTab ("ssh");
@@ -64,11 +64,9 @@ spawn_ssh (const char* cmd, const char* host)
 
 LaceUtilMain(ssh_all)
 {
-  XFileB xfb[1];
+  XFileB xfb[] = default;
   XFile* xf = 0;
   char* line;
-
-  init_XFileB (xfb);
 
   if (argi >= argc)  show_usage_and_exit ();
 

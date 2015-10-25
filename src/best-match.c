@@ -145,16 +145,13 @@ matching_line (uint* a, uint width, const char* s, char* const* lines)
 LaceUtilMain(best_match)
 {
   uint* lcs_array;
-  XFileB lookup_in[1];
-  XFileB stream_in[1];
+  XFileB lookup_in[] = default;
+  XFileB stream_in[] = default;
   FILE* out;
   char* buf;
   char* s;
   char** lines;
   uint width;
-
-  init_XFileB (lookup_in);
-  init_XFileB (stream_in);
 
   if (argi >= argc)
     show_usage_and_exit ();
