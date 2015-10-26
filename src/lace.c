@@ -1228,7 +1228,7 @@ int main (int argc, char** argv)
 
         GrowTable( in->xf.buf, sz+1 );
 
-        RepliT( char, &in->xf.buf.s[off], arg, sz );
+        Replac( &in->xf.buf.s[off], arg, sz );
         in->xf.buf.s[off+sz] = '\n';
         in->xf.buf.s[off+sz+1] = '\0';
       }

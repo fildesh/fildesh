@@ -65,7 +65,7 @@ split_lines (char* buf, uint* ret_max_len)
         s = &s[1];
     }
 
-    lines = AllocT( char*, n+1 );
+    AllocTo( lines, n+1 );
     lines[n] = 0;
 
     s = buf;
@@ -163,7 +163,7 @@ LaceUtilMain(best_match)
 
   buf = xget_XFileB (lookup_in);
   lines = split_lines (buf, &width);
-  lcs_array = AllocT( uint, width );
+  AllocTo( lcs_array, width );
 
   set_FILE_FileB (&stream_in->fb, open_file_arg (argv[argi++], false));
 

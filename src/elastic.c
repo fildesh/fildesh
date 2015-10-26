@@ -93,7 +93,7 @@ LaceUtilMain(elastic)
     o->aio.aio_fildes = fd;
   }
 
-  aiocb_buf = AllocT(const struct aiocb*, ios.sz);
+  AllocTo( aiocb_buf, ios.sz );
 
   x = &ios.s[0];
   GrowTable( x->buf, xbuf_inc );
