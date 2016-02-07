@@ -32,7 +32,7 @@ pipe_to_file (fd_t in, const char* name)
 
   while (true)
   {
-    jint sz;
+    long sz;
     byte buf[BUFSIZ];
 
     sz = read_sysCx (in, buf, BUFSIZ);
@@ -58,8 +58,7 @@ readin_fd (fd_t in, bool scrap_newline)
 
   while (1)
   {
-    jint n;
-    n = off + n_per_chunk + 1;
+    long n = off + n_per_chunk + 1;
     if (buf.sz < (size_t) n)
       GrowTable( buf, n - buf.sz );
 

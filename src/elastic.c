@@ -27,7 +27,7 @@ struct IOState
   struct aiocb aio;
   Bool pending;
   Bool done;
-  ujint off;
+  zuint off;
 
   /** Buffer being used for asynchronous operations.*/
   TableT(byte) buf;
@@ -51,7 +51,7 @@ LaceUtilMain(elastic)
 {
   int istat = 0;
   DeclTable( IOState, ios );
-  const ujint xbuf_inc = 1024;
+  const zuint xbuf_inc = 1024;
   const struct aiocb** aiocb_buf;
   IOState* x; /* Input.*/
 
@@ -158,7 +158,7 @@ LaceUtilMain(elastic)
     /* Handle reading.*/
     /* If statement that we break from...*/
     if (x->pending) do {
-      ujint sz;
+      zuint sz;
       istat = aio_error (&x->aio);
 
       if (istat == EINPROGRESS) {
@@ -219,11 +219,11 @@ LaceUtilMain(elastic)
         continue;
       }
 
-      if ((ujint)sstat == o->buf.sz) {
+      if ((zuint)sstat == o->buf.sz) {
         ClearTable( o->buf );
       }
       else {
-        ujint sz = o->buf.sz - (ujint) sstat;
+        zuint sz = o->buf.sz - (zuint) sstat;
         memmove (o->buf.s, &o->buf.s[sstat], sz);
         ResizeTable( o->buf, sz );
       }

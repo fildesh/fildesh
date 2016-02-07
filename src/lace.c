@@ -152,8 +152,8 @@ cloexec_Command (Command* cmd, bool b)
 {
     if (cmd->stdis >= 0)  cloexec_sysCx (cmd->stdis, b);
     if (cmd->stdos >= 0)  cloexec_sysCx (cmd->stdos, b);
-    for (ujint i = 0; i < cmd->is.sz; ++i)  cloexec_sysCx (cmd->is.s[i], b);
-    for (ujint i = 0; i < cmd->os.sz; ++i)  cloexec_sysCx (cmd->os.s[i], b);
+    for (zuint i = 0; i < cmd->is.sz; ++i)  cloexec_sysCx (cmd->is.s[i], b);
+    for (zuint i = 0; i < cmd->os.sz; ++i)  cloexec_sysCx (cmd->os.s[i], b);
     if (cmd->exec_fd >= 0)  cloexec_sysCx (cmd->exec_fd, b);
 }
 
@@ -204,7 +204,7 @@ lose_Commands (TableT(Command)* cmds)
 static SymVal*
 getf_SymVal (Associa* map, const char* s)
 {
-  ujint sz = map->nodes.sz;
+  zuint sz = map->nodes.sz;
   AlphaTab ts = dflt1_AlphaTab (s);
   Assoc* assoc = ensure_Associa (map, &ts);
   SymVal* x = (SymVal*) val_of_Assoc (map, assoc);
@@ -271,7 +271,7 @@ failout_Command (const Command* cmd, const char* msg, const char* msg2)
  * $(H: var_name) value
  **/
 static char*
-parse_here_doc (XFile* in, const char* term, ujint* text_nlines)
+parse_here_doc (XFile* in, const char* term, zuint* text_nlines)
 {
   AlphaTab delim = default;
   char* s;
@@ -298,7 +298,7 @@ parse_here_doc (XFile* in, const char* term, ujint* text_nlines)
 }
 
 static char*
-parse_line (XFile* xf, ujint* text_nlines)
+parse_line (XFile* xf, zuint* text_nlines)
 {
   AlphaTab line = default;
   char* s;
@@ -401,7 +401,7 @@ sep_line (TableT(cstr)* args, char* s)
 static void
 parse_file (TableT(Command)* cmds, XFile* xf, const char* dirname)
 {
-  ujint text_nlines = 0;
+  zuint text_nlines = 0;
   while (true)
   {
     char* line;
@@ -603,7 +603,7 @@ parse_sym (char* s, bool firstarg)
 static uint
 add_ios_Command (Command* cmd, int in, int out)
 {
-  uint idx = Max_uint;
+  uint idx = UINT_MAX;
   if (in >= 0) {
     idx = cmd->is.sz;
     PushTable( cmd->is, in );
@@ -803,7 +803,7 @@ setup_commands (TableT(Command)* cmds,
           {
             cmd->args.s[0] = add_tmp_file_Command (cmd, ntmp_files, tmpdir);
             ++ ntmp_files;
-            if (sym->arg_idx < Max_uint)
+            if (sym->arg_idx < UINT_MAX)
               cmds->s[sym->cmd_idx].args.s[sym->arg_idx] = cmd->args.s[0];
             cmd->exec_fd = fd;
           }
@@ -1084,7 +1084,7 @@ static void
 spawn_commands (TableT(Command) cmds)
 {
   DeclTable( cstr, argv );
-  DeclTable( ujint2, fdargs );
+  DeclTable( uint2, fdargs );
 
   for (uint i = 0; i < cmds.sz; ++i)
     cloexec_Command (&cmds.s[i], true);
@@ -1104,7 +1104,7 @@ spawn_commands (TableT(Command) cmds)
     {
       if (!cmd->args.s[argi])
       {
-        ujint2 p;
+        uint2 p;
         Claim2( fdargs.sz ,<, cmd->iargs.sz );
         p.s[0] = argi;
         p.s[1] = cmd->iargs.s[fdargs.sz].fd;
@@ -1114,7 +1114,7 @@ spawn_commands (TableT(Command) cmds)
     Claim2( fdargs.sz ,==, cmd->iargs.sz );
     if (cmd->exec_fd >= 0)
     {
-      ujint2 p;
+      uint2 p;
       p.s[0] = 0;
       p.s[1] = cmd->exec_fd;
       PushTable( fdargs, p );
@@ -1143,7 +1143,7 @@ spawn_commands (TableT(Command) cmds)
 
       for (uint j = 0; j < fdargs.sz; ++j)
       {
-        ujint2 p = fdargs.s[j];
+        uint2 p = fdargs.s[j];
         PushTable( cmd->extra_args, itoa_dup_cstr (p.s[1]) );
         cmd->args.s[p.s[0]] = *TopTable( cmd->extra_args );
         PushTable( argv, itoa_dup_cstr (p.s[0]) );
@@ -1217,8 +1217,8 @@ int main (int argc, char** argv)
       use_stdin = false;
       if (argi >= argc)  show_usage_and_exit ();
       while (argi < argc) {
-        ujint off;
-        ujint sz;
+        zuint off;
+        zuint sz;
 
         arg = argv[argi++];
 
