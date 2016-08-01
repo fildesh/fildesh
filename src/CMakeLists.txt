@@ -76,7 +76,7 @@ if (UNIX)
   addbinexe (chatty chatty.c)
   target_link_libraries (chatty rt)
   set_property (TARGET chatty
-    APPEND PROPERTY COMPILE_DEFINITIONS _POSIX_C_SOURCE=199309L)
+    APPEND PROPERTY COMPILE_DEFINITIONS _POSIX_C_SOURCE=201112L)
 endif ()
 
 
