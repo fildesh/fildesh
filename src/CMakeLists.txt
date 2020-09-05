@@ -1,15 +1,25 @@
 
 cmake_minimum_required (VERSION 2.8)
-set(CMAKE_DISABLE_SOURCE_CHANGES ON)
 set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
-
-project (lace)
 
 set (TopPath ${CMAKE_CURRENT_SOURCE_DIR}/..)
 set (BinPath ${TopPath}/bin)
 set (DepPath ${TopPath}/dep)
+
+#### External Project ####
+include(ExternalProject)
+
 set (CxTopPath ${DepPath}/cx)
-set (BldPath lace)
+
+ExternalProject_Add(cx_project
+  PREFIX ${CMAKE_CURRENT_BINARY_DIR}/external/cx
+  SOURCE_DIR ${CxTopPath}/src
+  #BINARY_DIR ${CxTopPath}/bld
+  BUILD_ALWAYS 1
+  INSTALL_COMMAND echo "No install step."
+  )
+
+#### The Rest ####
 
 set (LaceCFiles
   lace.c
@@ -36,7 +46,13 @@ set (CFiles
 list (APPEND HFiles
   utilace.h)
 
+set (BldPath lace)
 include (${CxTopPath}/src/include.cmake)
+
+add_dependencies (cx cx_project)
+add_dependencies (cembed cx_project)
+add_dependencies (cswitch cx_project)
+add_dependencies (comparispawn cx_project)
 
 set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${BinPath})
 
