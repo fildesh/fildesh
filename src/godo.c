@@ -28,7 +28,7 @@ LaceUtilMain(godo)
       return ret;
   }
   execvp_sysCx (&argv[argi]);
-  // Flow should not actually get here.
+  /* Flow should not actually get here. */
   lose_sysCx ();
   return 1;
 }

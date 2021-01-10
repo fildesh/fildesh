@@ -76,12 +76,13 @@ testfn_Table ()
   DeclTableT( V, int );
   DeclTable( V, t );
   Table tmp_table;
+  uint i;
 
   tmp_table = MakeCastTable( t );
   claim_allocsz_Table (&tmp_table);
   XferCastTable( t, tmp_table );
 
-  for (uint i = 0; i < n; ++i) {
+  for (i = 0; i < n; ++i) {
     DeclGrow1Table( V, x, t );
     *x = (int) i;
 
@@ -93,7 +94,7 @@ testfn_Table ()
   PackTable( t );
   Claim2( t.sz - 1 ,==, AllocszTable( t ));
 
-  for (uint i = 0; i < n; ++i) {
+  for (i = 0; i < n; ++i) {
     t.s[t.sz-1] = val;
     MPopTable( t, 1 );
 

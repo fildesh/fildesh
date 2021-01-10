@@ -12,6 +12,7 @@ LaceUtilMain(xpipe)
 {
   XFile* xf = stdin_XFile ();
   OSPc ospc[] = {DEFAULT_OSPc};
+  const char* s;
 
   if (argi >= argc)
     failout_sysCx ("Need at least one argument.");
@@ -22,7 +23,7 @@ LaceUtilMain(xpipe)
   while (argi < argc)
     PushTable( ospc->args, cons1_AlphaTab (argv[argi++]) );
 
-  for (const char* s = getline_XFile (xf);
+  for (s = getline_XFile (xf);
        s;
        s = getline_XFile (xf))
   {

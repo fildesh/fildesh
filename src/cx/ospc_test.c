@@ -43,7 +43,7 @@ testfn_exec ()
   bool good = false;
   argv[0] = exename_of_sysCx ();
   argv[1] = "wait0";
-  argv[2] = "5"; // Special exit code.
+  argv[2] = "5"; /* Special exit code. */
   argv[3] = 0;
 
   fputs ("V spawn() called V\n", stderr);
