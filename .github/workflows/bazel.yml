@@ -16,4 +16,4 @@ jobs:
       uses: actions/checkout@v1
 
     - name: Build and Test
-      run: bazel test //:all
+      run: bazel test ...
