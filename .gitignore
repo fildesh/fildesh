@@ -1,4 +1,9 @@
 
+/bazel-bin
+/bazel-lace
+/bazel-out
+/bazel-testlogs
+
 /bin/
 /bld/
 /clang/
