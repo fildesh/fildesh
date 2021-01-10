@@ -1,7 +1,7 @@
 #!/usr/bin/env lace
 
 # Run from the parent directory to list some .c files in src/,
-# but their .c is changed to .h by {sed}.
+# but their .c is changed to .h by `sed`.
 
 # Things are done in a pretty silly way.
 
@@ -19,15 +19,15 @@
 # We could use this commented line, but let's be more convoluted.
 #|- sed -e 's/c$/h/'
 
-# Create a string containing a {lace} program that runs {sed}.
+# Create a string containing a `lace` program that runs `sed`.
 $(H silly)
 |< stdin
 |- sed -e 's/c$/h/'
 |> stdout
 $(H silly)
 
-# For each line of input, have {lace} execute the {silly} script.
-|- xpipe lace -- $(silly)
+# For each line of input, have `lace` execute the `silly` script.
+|- xpipe bin/lace -- $(silly)
 
 # Construct a stream for a prefix to use for each line.
 # This is silly because the stream is converted to a string on the next line!

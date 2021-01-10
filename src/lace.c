@@ -1042,6 +1042,7 @@ int main_best_match (int argi, int argc, char** argv);
 int main_elastic (int argi, int argc, char** argv);
 int main_execfd (int argi, int argc, char** argv);
 int main_godo (int argi, int argc, char** argv);
+int main_lace(int argi, int argc, char** argv);
 int main_ssh_all (int argi, int argc, char** argv);
 int main_time2sec (int argi, int argc, char** argv);
 int main_transpose (int argi, int argc, char** argv);
@@ -1061,6 +1062,7 @@ int (*lace_specific_util (const char* arg)) (int, int, char**)
   C( "elastic", elastic );
   C( "execfd", execfd );
   C( "godo", godo );
+  C( "lace", lace );
   C( "ssh-all", ssh_all );
   C( "time2sec", time2sec );
   C( "transpose", transpose );
@@ -1201,9 +1203,16 @@ spawn_commands (TableT(Command) cmds)
   LoseTable( fdargs );
 }
 
-int main (int argc, char** argv)
+
+int main(int argc, char** argv)
 {
-  int argi = init_sysCx (&argc, &argv);
+  int argi = init_sysCx(&argc, &argv);
+  return main_lace(argi, argc, argv);
+}
+
+
+int main_lace(int argi, int argc, char** argv)
+{
   XFileB in[] = {DEFAULT_XFileB};
   DeclTable( AlphaTab, script_args );
   DeclTable( Command, cmds );
