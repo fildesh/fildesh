@@ -43,3 +43,14 @@ cc_binary(
     ],
 )
 
+cc_binary(
+    name = "comparispawn",
+    srcs = [
+        "comparispawn.c",
+    ],
+    deps = [
+        "//src/cx:cx_lib",
+    ],
+)
+
+
