@@ -15,6 +15,7 @@ LaceUtilMain(transpose)
   const char* delim;
   uint coli = 0;
   DeclTable( uint, widths );
+  uint i;
 
   if (argi+1 != argc)
     failout_sysCx ("Need exactly one argument.");
@@ -36,15 +37,15 @@ LaceUtilMain(transpose)
          field = getlined_XFile (olay, delim))
     {
       TableT(cstr)* row;
-      {:if (rowi >= mat.sz)
+      if (rowi >= mat.sz) {
         row = Grow1Table( mat );
         InitTable( *row );
       }
-      {:else
+      else {
         row = &mat.s[rowi];
       }
 
-      {:while (coli >= row->sz)
+      while (coli >= row->sz) {
         PushTable( *row, 0 );
       }
 
@@ -55,22 +56,23 @@ LaceUtilMain(transpose)
     ++ coli;
   }
 
-  {:while (widths.sz < coli)
+  while (widths.sz < coli) {
     PushTable( widths, 0 );
   }
 
-  {:for (i ; mat.sz)
+  UFor( i, mat.sz ) {
     TableT(cstr)* row = &mat.s[i];
-    {:for (j ; coli)
+    uint j;
+    UFor( j, coli ) {
       char* field;
-      {:if (j >= row->sz)
+      if (j >= row->sz) {
         PushTable( *row, 0 );
       }
       field = row->s[j];
 
-      {:if (field)
+      if (field) {
         uint w = strlen (field);
-        {:while (w > 0 && strchr (WhiteSpaceChars, field[w-1]))
+        while (w > 0 && strchr (WhiteSpaceChars, field[w-1])) {
           field[--w] = '\0';
         }
         if (w > widths.s[j])
@@ -79,9 +81,10 @@ LaceUtilMain(transpose)
     }
   }
 
-  {:for (i ; mat.sz)
+  UFor( i, mat.sz ) {
     TableT(cstr)* row = &mat.s[i];
-    {:for (j ; row->sz)
+    uint j;
+    UFor( j, row->sz ) {
       char* field = row->s[j];
 
       printf_OFile (of, "%*s%s%s",

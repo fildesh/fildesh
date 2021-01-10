@@ -40,7 +40,8 @@ DeclTableT(IOState, IOState);
 
 Bool all_done (const TableT(IOState)* ios)
 {
-  for (uint i = 1; i < ios->sz; ++i) {
+  uint i;
+  for (i = 1; i < ios->sz; ++i) {
     if (!ios->s[i].done)
       return 0;
   }
@@ -54,6 +55,7 @@ LaceUtilMain(elastic)
   const zuint xbuf_inc = 1024;
   const struct aiocb** aiocb_buf;
   IOState* x; /* Input.*/
+  uint i;
 
   GrowTable( ios, 1 );
   Zeroize( ios.s[0] );
@@ -116,7 +118,7 @@ LaceUtilMain(elastic)
     }
 
     /* Initiate writes.*/
-    for (uint i = 1; i < ios.sz; ++i) {
+    for (i = 1; i < ios.sz; ++i) {
       IOState* o = &ios.s[i];
       if (o->pending || o->done)  continue;
       CatTable( o->buf, o->xbuf );
@@ -141,7 +143,7 @@ LaceUtilMain(elastic)
     /* Wait for read/write.*/
     do {
       uint n = 0;
-      for (uint i = 0; i < ios.sz; ++i) {
+      for (i = 0; i < ios.sz; ++i) {
         IOState* io = &ios.s[i];
         if (io->pending) {
           aiocb_buf[n++] = &io->aio;
@@ -181,7 +183,7 @@ LaceUtilMain(elastic)
 
       sz = x->buf.sz;
       x->buf.sz = sstat;
-      for (uint i = 1; i < ios.sz; ++i) {
+      for (i = 1; i < ios.sz; ++i) {
         IOState* o = &ios.s[i];
         if (o->done)  continue;
         CatTable( o->xbuf, x->buf );
@@ -191,7 +193,7 @@ LaceUtilMain(elastic)
 
 
     /* Handle some writing.*/
-    for (uint i = 1; i < ios.sz; ++i) {
+    for (i = 1; i < ios.sz; ++i) {
       IOState* o = &ios.s[i];
 
       if (!o->pending || o->done)  continue;
@@ -230,7 +232,7 @@ LaceUtilMain(elastic)
     }
   }
 
-  for (i ; ios.sz) {
+  UFor( i, ios.sz ) {
     fd_t fd = ios.s[i].aio.aio_fildes;
     if (ios.s[i].pending) {
       aio_cancel (fd, &ios.s[i].aio);

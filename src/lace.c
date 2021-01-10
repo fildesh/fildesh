@@ -18,14 +18,14 @@
 
 enum SymValKind
 {
-    IDescVal, ODescVal, IODescVal,
-    IDescArgVal,
-    IDescFileVal, ODescFileVal,
-    IFutureDescVal, OFutureDescVal,
-    IFutureDescFileVal, OFutureDescFileVal,
-    HereDocVal, IHereDocFileVal,
-    DefVal,
-    NSymValKinds
+  IDescVal, ODescVal, IODescVal,
+  IDescArgVal,
+  IDescFileVal, ODescFileVal,
+  IFutureDescVal, OFutureDescVal,
+  IFutureDescFileVal, OFutureDescFileVal,
+  HereDocVal, IHereDocFileVal,
+  DefVal,
+  NSymValKinds
 };
 enum CommandKind {
   RunCommand, HereDocCommand,
@@ -73,33 +73,33 @@ struct Command
 
 struct SymVal
 {
-    AlphaTab name;
-    SymValKind kind;
-    uint arg_idx;  /**< If a file.**/
-    uint ios_idx;
-    uint cmd_idx;
-    union SymVal_union
-    {
-        int file_desc;
-        char* here_doc;
-    } as;
+  AlphaTab name;
+  SymValKind kind;
+  uint arg_idx;  /**< If a file.**/
+  uint ios_idx;
+  uint cmd_idx;
+  union SymVal_union
+  {
+    int file_desc;
+    char* here_doc;
+  } as;
 };
 
-static void
+  static void
 init_SymVal (SymVal* v)
 {
-    v->name = dflt_AlphaTab ();
-    v->kind = NSymValKinds;
+  v->name = dflt_AlphaTab ();
+  v->kind = NSymValKinds;
 }
 
-static void
+  static void
 lose_SymVal (SymVal* v)
 {
-    v->name = dflt_AlphaTab ();
-    v->kind = NSymValKinds;
+  v->name = dflt_AlphaTab ();
+  v->kind = NSymValKinds;
 }
 
-static void
+  static void
 init_Command (Command* cmd)
 {
   cmd->kind = NCommandKinds;
@@ -116,72 +116,75 @@ init_Command (Command* cmd)
   InitTable( cmd->iargs );
 }
 
-static void
+  static void
 close_Command (Command* cmd)
 {
-    if (cmd->stdis >= 0)  closefd_sysCx (cmd->stdis);
-    if (cmd->stdos >= 0)  closefd_sysCx (cmd->stdos);
-    if (cmd->is.sz > 0)
-    {
-        for (i ; cmd->is.sz)
-            closefd_sysCx (cmd->is.s[i]);
-    }
-    LoseTable( cmd->is );
-    InitTable( cmd->is );
+  uint i;
+  if (cmd->stdis >= 0)  closefd_sysCx (cmd->stdis);
+  if (cmd->stdos >= 0)  closefd_sysCx (cmd->stdos);
+  if (cmd->is.sz > 0)
+  {
+    UFor( i, cmd->is.sz )
+      closefd_sysCx (cmd->is.s[i]);
+  }
+  LoseTable( cmd->is );
+  InitTable( cmd->is );
 
-    if (cmd->os.sz > 0)
-    {
-        for (i ; cmd->os.sz)
-            closefd_sysCx (cmd->os.s[i]);
-    }
-    LoseTable( cmd->os );
-    InitTable( cmd->os );
+  if (cmd->os.sz > 0)
+  {
+    UFor( i, cmd->os.sz )
+      closefd_sysCx (cmd->os.s[i]);
+  }
+  LoseTable( cmd->os );
+  InitTable( cmd->os );
 
-    LoseTable( cmd->iargs );
-    InitTable( cmd->iargs );
+  LoseTable( cmd->iargs );
+  InitTable( cmd->iargs );
 
-    if (cmd->exec_fd >= 0)
-    {
-        closefd_sysCx (cmd->exec_fd);
-        cmd->exec_fd = -1;
-    }
-    cmd->exec_doc = 0;
+  if (cmd->exec_fd >= 0)
+  {
+    closefd_sysCx (cmd->exec_fd);
+    cmd->exec_fd = -1;
+  }
+  cmd->exec_doc = 0;
 }
 
-static void
+  static void
 cloexec_Command (Command* cmd, bool b)
 {
-    if (cmd->stdis >= 0)  cloexec_sysCx (cmd->stdis, b);
-    if (cmd->stdos >= 0)  cloexec_sysCx (cmd->stdos, b);
-    for (zuint i = 0; i < cmd->is.sz; ++i)  cloexec_sysCx (cmd->is.s[i], b);
-    for (zuint i = 0; i < cmd->os.sz; ++i)  cloexec_sysCx (cmd->os.s[i], b);
-    if (cmd->exec_fd >= 0)  cloexec_sysCx (cmd->exec_fd, b);
+  zuint i;
+  if (cmd->stdis >= 0)  cloexec_sysCx (cmd->stdis, b);
+  if (cmd->stdos >= 0)  cloexec_sysCx (cmd->stdos, b);
+  for (i = 0; i < cmd->is.sz; ++i)  cloexec_sysCx (cmd->is.s[i], b);
+  for (i = 0; i < cmd->os.sz; ++i)  cloexec_sysCx (cmd->os.s[i], b);
+  if (cmd->exec_fd >= 0)  cloexec_sysCx (cmd->exec_fd, b);
 }
 
-static void
+  static void
 lose_Command (Command* cmd)
 {
+  uint i;
   close_Command (cmd);
   free (cmd->line);
   switch (cmd->kind) {
-  case DefCommand:
-  case RunCommand:
-  case StdinCommand:
-  case StdoutCommand:
-    LoseTable( cmd->args );
-    break;
-  case HereDocCommand:
-    free (cmd->doc);
-    break;
-  default:
-    break;
+    case DefCommand:
+    case RunCommand:
+    case StdinCommand:
+    case StdoutCommand:
+      LoseTable( cmd->args );
+      break;
+    case HereDocCommand:
+      free (cmd->doc);
+      break;
+    default:
+      break;
   }
 
-  for (i ; cmd->extra_args.sz )
+  UFor( i, cmd->extra_args.sz )
     free (cmd->extra_args.s[i]);
   LoseTable( cmd->extra_args );
 
-  {:for (i ; cmd->tmp_files.sz )
+  UFor( i, cmd->tmp_files.sz ) {
     remove (cmd->tmp_files.s[i]);
     free (cmd->tmp_files.s[i]);
   }
@@ -189,10 +192,11 @@ lose_Command (Command* cmd)
   cmd->kind = NCommandKinds;
 }
 
-static void
+  static void
 lose_Commands (TableT(Command)* cmds)
 {
-  for (i ; cmds->sz) {
+  uint i;
+  UFor( i, cmds->sz ) {
     if (cmds->s[i].kind == RunCommand)
       kill (cmds->s[i].pid, SIGINT);
     if (cmds->s[i].kind != NCommandKinds)
@@ -202,7 +206,7 @@ lose_Commands (TableT(Command)* cmds)
 }
 
 
-static SymVal*
+  static SymVal*
 getf_SymVal (Associa* map, const char* s)
 {
   zuint sz = map->nodes.sz;
@@ -217,17 +221,17 @@ getf_SymVal (Associa* map, const char* s)
   return x;
 }
 
-static uint
+  static uint
 count_ws (const char* s)
 {
-    return strspn (s, WhiteSpaceChars);
+  return strspn (s, WhiteSpaceChars);
 }
-static uint
+  static uint
 count_non_ws (const char* s)
 {
-    return strcspn (s, WhiteSpaceChars);
+  return strcspn (s, WhiteSpaceChars);
 }
-static uint
+  static uint
 count_newlines (const char* s)
 {
   uint n = 0;
@@ -235,16 +239,16 @@ count_newlines (const char* s)
     n += 1;
   return n;
 }
-static uint
+  static uint
 trim_trailing_ws (char* s)
 {
-    uint n = strlen (s);
-    while (0 < n && strchr (WhiteSpaceChars, s[n-1]))  --n;
-    s[n] = '\0';
-    return n;
+  uint n = strlen (s);
+  while (0 < n && strchr (WhiteSpaceChars, s[n-1]))  --n;
+  s[n] = '\0';
+  return n;
 }
 
-static void
+  static void
 failout_Command (const Command* cmd, const char* msg, const char* msg2)
 {
   FILE* out = stderr;
@@ -271,10 +275,10 @@ failout_Command (const Command* cmd, const char* msg, const char* msg2)
  * OR it could look like:
  * $(H: var_name) value
  **/
-static char*
+  static char*
 parse_here_doc (XFile* in, const char* term, zuint* text_nlines)
 {
-  AlphaTab delim = default;
+  AlphaTab delim = DEFAULT_AlphaTab;
   char* s;
 
   /* Check for the single-line case.*/
@@ -298,10 +302,10 @@ parse_here_doc (XFile* in, const char* term, zuint* text_nlines)
   return dup_cstr (s);
 }
 
-static char*
+  static char*
 parse_line (XFile* xf, zuint* text_nlines)
 {
-  AlphaTab line = default;
+  AlphaTab line = DEFAULT_AlphaTab;
   char* s;
 
   while ((s = getline_XFile (xf)))
@@ -326,7 +330,7 @@ parse_line (XFile* xf, zuint* text_nlines)
   return forget_AlphaTab (&line);
 }
 
-static void
+  static void
 sep_line (TableT(cstr)* args, char* s)
 {
   while (1)
@@ -399,7 +403,7 @@ sep_line (TableT(cstr)* args, char* s)
   PackTable( *args );
 }
 
-static void
+  static void
 parse_file (TableT(Command)* cmds, XFile* xf, const char* dirname)
 {
   zuint text_nlines = 0;
@@ -429,7 +433,7 @@ parse_file (TableT(Command)* cmds, XFile* xf, const char* dirname)
     else if (pfxeq_cstr ("$(<<", line))
     {
       char* filename = &line[4];
-      XFileB src[] = default;
+      XFileB src[] = {DEFAULT_XFileB};
 
       filename = &filename[count_ws (filename)];
       filename[strcspn (filename, ")")] = '\0';
@@ -449,7 +453,7 @@ parse_file (TableT(Command)* cmds, XFile* xf, const char* dirname)
       lose_XFileB (src);
     }
     else if (pfxeq_cstr ("$(>", line) ||
-             pfxeq_cstr ("$(set", line))
+        pfxeq_cstr ("$(set", line))
     {
       char* begline;
       char* sym = line;
@@ -472,7 +476,7 @@ parse_file (TableT(Command)* cmds, XFile* xf, const char* dirname)
       PushTable( cmd->args, (char*) "/" );
 
       {
-        AlphaTab oname = default;
+        AlphaTab oname = DEFAULT_AlphaTab;
         cat_cstr_AlphaTab (&oname, "$(O ");
         cat_cstr_AlphaTab (&oname, sym);
         cat_cstr_AlphaTab (&oname, ")");
@@ -486,7 +490,7 @@ parse_file (TableT(Command)* cmds, XFile* xf, const char* dirname)
       cmd->line_num = text_nlines;
       PushTable( cmd->args, (char*) "elastic" );
       {
-        AlphaTab xname = default;
+        AlphaTab xname = DEFAULT_AlphaTab;
         cat_cstr_AlphaTab (&xname, "$(X ");
         cat_cstr_AlphaTab (&xname, sym);
         cat_cstr_AlphaTab (&xname, ")");
@@ -503,7 +507,7 @@ parse_file (TableT(Command)* cmds, XFile* xf, const char* dirname)
   }
 }
 
-static SymValKind
+  static SymValKind
 parse_sym (char* s, bool firstarg)
 {
   uint i, o;
@@ -601,7 +605,7 @@ parse_sym (char* s, bool firstarg)
   return kind;
 }
 
-static uint
+  static uint
 add_ios_Command (Command* cmd, int in, int out)
 {
   uint idx = UINT_MAX;
@@ -617,70 +621,71 @@ add_ios_Command (Command* cmd, int in, int out)
   return idx;
 }
 
-static void
+  static void
 add_iarg_Command (Command* cmd, int in, bool scrap_newline)
 {
-    add_ios_Command (cmd, in, -1);
-    GrowTable( cmd->iargs, 1 );
-    TopTable( cmd->iargs )->fd = in;
-    TopTable( cmd->iargs )->scrap_newline = scrap_newline;
+  add_ios_Command (cmd, in, -1);
+  GrowTable( cmd->iargs, 1 );
+  TopTable( cmd->iargs )->fd = in;
+  TopTable( cmd->iargs )->scrap_newline = scrap_newline;
 }
 
-static char*
+  static char*
 add_extra_arg_Command (Command* cmd, const char* s)
 {
   PushTable( cmd->extra_args, dup_cstr (s) );
   return *TopTable( cmd->extra_args );
 }
 
-static char*
+  static char*
 add_fd_arg_Command (Command* cmd, int fd)
 {
-    char buf[1024];
-    sprintf (buf, "/dev/fd/%d", fd);
-    return add_extra_arg_Command (cmd, buf);
+  char buf[1024];
+  sprintf (buf, "/dev/fd/%d", fd);
+  return add_extra_arg_Command (cmd, buf);
 }
 
-static char*
+  static char*
 add_tmp_file_Command (Command* cmd, uint x, const char* tmpdir)
 {
-    char buf[1024];
-    sprintf (buf, "%s/%u", tmpdir, x);
-    PushTable( cmd->tmp_files, dup_cstr (buf) );
-    return cmd->tmp_files.s[cmd->tmp_files.sz - 1];
+  char buf[1024];
+  sprintf (buf, "%s/%u", tmpdir, x);
+  PushTable( cmd->tmp_files, dup_cstr (buf) );
+  return cmd->tmp_files.s[cmd->tmp_files.sz - 1];
 }
 
-    /** Write a file /name/ given contents /doc/.**/
-static void
+/** Write a file /name/ given contents /doc/.**/
+  static void
 write_here_doc_file (const char* name, const char* doc)
 {
-    uint n;
-    FILE* out;
+  uint n;
+  FILE* out;
 
-    out = fopen (name, "wb");
-    if (!out)
-    {
-        DBog1( "Cannot open file for writing!: %s", name );
-        return;
-    }
-    n = strlen (doc);
-    fwrite (doc, sizeof (char), n, out);
-    fclose (out);
+  out = fopen (name, "wb");
+  if (!out)
+  {
+    DBog1( "Cannot open file for writing!: %s", name );
+    return;
+  }
+  n = strlen (doc);
+  fwrite (doc, sizeof (char), n, out);
+  fclose (out);
 }
 
-static void
+  static void
 setup_commands (TableT(Command)* cmds,
-                const char* tmpdir)
+    const char* tmpdir)
 {
   uint ntmp_files = 0;
   Associa map[1];
   Associa add_map[1]; /* Temporarily hold new symbols for the current line.*/
   Assoc* assoc;
+  uint i;
 
   InitAssocia( AlphaTab, SymVal, *map, cmp_AlphaTab );
   InitAssocia( AlphaTab, SymVal, *add_map, cmp_AlphaTab );
 
-  {:for (i ; cmds->sz)
+  UFor( i, cmds->sz ) {
     uint arg_q = 0;
     uint arg_r = 0;
     Command* cmd = &cmds->s[i];
@@ -770,7 +775,7 @@ setup_commands (TableT(Command)* cmds,
         sym->kind = NSymValKinds;
       }
       else if (kind == IDescVal || kind == IDescFileVal ||
-               kind == IODescVal || kind == IHereDocFileVal)
+          kind == IODescVal || kind == IHereDocFileVal)
       {
         SymVal* sym = getf_SymVal (map, arg);
         int fd;
@@ -820,7 +825,7 @@ setup_commands (TableT(Command)* cmds,
           ++ ntmp_files;
           /* Write the temp file now.*/
           write_here_doc_file (cmd->args.s[arg_q],
-                               sym->as.here_doc);
+              sym->as.here_doc);
           if (arg_q == 0)
             cmd->exec_doc = sym->as.here_doc;
           ++ arg_q;
@@ -852,7 +857,7 @@ setup_commands (TableT(Command)* cmds,
           {
             char* s;
             s = add_tmp_file_Command (&cmds->s[sym->cmd_idx],
-                                      ntmp_files, tmpdir);
+                ntmp_files, tmpdir);
             ++ ntmp_files;
             cmds->s[sym->cmd_idx].args.s[0] = s;
             cmd->args.s[arg_q] = s;
@@ -875,7 +880,7 @@ setup_commands (TableT(Command)* cmds,
         arg_q += 1;
       }
       else if (kind == ODescVal || kind == ODescFileVal ||
-               kind == IODescVal)
+          kind == IODescVal)
       {
         fd_t fd[2];
         bool good = true;
@@ -958,7 +963,7 @@ setup_commands (TableT(Command)* cmds,
 
       if (!(sym->kind==NSymValKinds || sym->kind==HereDocVal || sym->kind==DefVal)) {
         failout_Command (cmd, "Trying to overwrite an existing stream variable",
-                         ccstr_of_AlphaTab (add_key));
+            ccstr_of_AlphaTab (add_key));
       }
 
       *sym = *add_sym;
@@ -968,8 +973,8 @@ setup_commands (TableT(Command)* cmds,
   }
 
   for (assoc = beg_Associa (map);
-       assoc;
-       assoc = next_Assoc (assoc))
+      assoc;
+      assoc = next_Assoc (assoc))
   {
     SymVal* x = (SymVal*) val_of_Assoc (map, assoc);
     if (x->kind == ODescVal)
@@ -984,50 +989,51 @@ setup_commands (TableT(Command)* cmds,
   lose_Associa (add_map);
 }
 
-static void
+  static void
 output_Command (FILE* out, const Command* cmd)
 {
-    if (cmd->kind != RunCommand)  return;
+  uint i;
+  if (cmd->kind != RunCommand)  return;
 
-    fputs ("COMMAND: ", out);
-    {:for (i ; cmd->args.sz )
-        if (i > 0)  fputc (' ', out);
-        if (cmd->args.s[i])
-            fputs (cmd->args.s[i], out);
-        else
-            fputs ("NULL", out);
-    }
-    fputc ('\n', out);
+  fputs ("COMMAND: ", out);
+  UFor( i, cmd->args.sz ) {
+    if (i > 0)  fputc (' ', out);
+    if (cmd->args.s[i])
+      fputs (cmd->args.s[i], out);
+    else
+      fputs ("NULL", out);
+  }
+  fputc ('\n', out);
 }
 
-    /** Add the utility bin directory to the PATH environment variable.**/
-static void
+/** Add the utility bin directory to the PATH environment variable.**/
+  static void
 add_util_path_env ()
 {
-    static const char k[] = "PATH";
+  static const char k[] = "PATH";
 #ifndef UtilBin
 #define UtilBin "bin"
 #endif
-    static const char path[] = UtilBin;
+  static const char path[] = UtilBin;
 #undef UtilBin
-    tacenv_sysCx (k, path);
+  tacenv_sysCx (k, path);
 }
 
-static void
+  static void
 show_usage_and_exit ()
 {
   printf_OFile (stderr_OFile (),
-                "Usage: %s [[-f] SCRIPTFILE | -- SCRIPT]\n",
-                exename_of_sysCx ());
+      "Usage: %s [[-f] SCRIPTFILE | -- SCRIPT]\n",
+      exename_of_sysCx ());
   failout_sysCx ("Bad args...");
 }
 
-static void
+  static void
 remove_tmppath (AlphaTab* tmppath)
 {
-    if (!rmdir_sysCx (cstr_AlphaTab (tmppath)))
-        DBog1( "Temp directory not removed: %s", cstr_AlphaTab (tmppath) );
-    lose_AlphaTab (tmppath);
+  if (!rmdir_sysCx (cstr_AlphaTab (tmppath)))
+    DBog1( "Temp directory not removed: %s", cstr_AlphaTab (tmppath) );
+  lose_AlphaTab (tmppath);
 }
 
 
@@ -1081,27 +1087,29 @@ int lace_util_main (int argi, int argc, char** argv)
 }
 
 
-static void
+  static void
 spawn_commands (TableT(Command) cmds)
 {
   DeclTable( cstr, argv );
   DeclTable( uint2, fdargs );
+  uint i;
 
-  for (uint i = 0; i < cmds.sz; ++i)
+  for (i = 0; i < cmds.sz; ++i)
     cloexec_Command (&cmds.s[i], true);
 
   cloexec_sysCx (0, true);
   cloexec_sysCx (1, true);
 
-  for (uint i = 0; i < cmds.sz; ++i)
+  for (i = 0; i < cmds.sz; ++i)
   {
     Command* cmd = &cmds.s[i];
+    uint argi, j;
 
     if (cmd->kind != RunCommand && cmd->kind != DefCommand)  continue;
 
     cloexec_Command (cmd, false);
 
-    for (uint argi = 0; argi < cmd->args.sz; ++argi)
+    for (argi = 0; argi < cmd->args.sz; ++argi)
     {
       if (!cmd->args.s[argi])
       {
@@ -1142,7 +1150,7 @@ spawn_commands (TableT(Command) cmds)
       PushTable( argv, dup_cstr ("-exe") );
       PushTable( argv, dup_cstr (cmd->args.s[0]) );
 
-      for (uint j = 0; j < fdargs.sz; ++j)
+      for (j = 0; j < fdargs.sz; ++j)
       {
         uint2 p = fdargs.s[j];
         PushTable( cmd->extra_args, itoa_dup_cstr (p.s[1]) );
@@ -1165,7 +1173,7 @@ spawn_commands (TableT(Command) cmds)
       PushTable( argv, dup_cstr ("--") );
     }
 
-    for (uint j = 1; j < cmd->args.sz; ++j)
+    for (j = 1; j < cmd->args.sz; ++j)
       PushTable( argv, dup_cstr (cmd->args.s[j]) );
 
     PushTable( argv, 0 );
@@ -1185,7 +1193,7 @@ spawn_commands (TableT(Command) cmds)
     close_Command (cmd);
 
     fdargs.sz = 0;
-    for (uint argi = 0; argi < argv.sz; ++argi)
+    for (argi = 0; argi < argv.sz; ++argi)
       free (argv.s[argi]);
     argv.sz = 0;
   }
@@ -1196,13 +1204,14 @@ spawn_commands (TableT(Command) cmds)
 int main (int argc, char** argv)
 {
   int argi = init_sysCx (&argc, &argv);
-  XFileB in[] = default;
+  XFileB in[] = {DEFAULT_XFileB};
   DeclTable( AlphaTab, script_args );
   DeclTable( Command, cmds );
   const char* stdin_sym = 0;
   const char* stdout_sym = 0;
   bool use_stdin = true;
   AlphaTab tmppath[1];
+  uint i;
 
   /* add_util_path_env (); */
   (void) add_util_path_env;
@@ -1291,8 +1300,8 @@ int main (int argc, char** argv)
   if (script_args.sz > 0)
   {
     Command* cmd = Grow1Table( cmds );
-    AlphaTab line = default;
-    AlphaTab doc = default;
+    AlphaTab line = DEFAULT_AlphaTab;
+    AlphaTab doc = DEFAULT_AlphaTab;
     cat_cstr_AlphaTab (&line, "$(H: #)");
     cat_uint_AlphaTab (&doc, script_args.sz-1);
 
@@ -1307,9 +1316,9 @@ int main (int argc, char** argv)
     }
   }
 
-  for (i ; script_args.sz) {
+  UFor( i, script_args.sz ) {
     Command* cmd = Grow1Table( cmds );
-    AlphaTab line = default;
+    AlphaTab line = DEFAULT_AlphaTab;
     cat_cstr_AlphaTab (&line, "$(H: ");
     cat_uint_AlphaTab (&line, i);
     cat_cstr_AlphaTab (&line, ")");
@@ -1324,7 +1333,7 @@ int main (int argc, char** argv)
 
   if (stdin_sym) {
     Command* cmd = Grow1Table( cmds );
-    AlphaTab line = default;
+    AlphaTab line = DEFAULT_AlphaTab;
     init_Command (cmd);
     cat_cstr_AlphaTab (&line, "$(O ");
     cat_cstr_AlphaTab (&line, stdin_sym);
@@ -1339,7 +1348,7 @@ int main (int argc, char** argv)
 
   if (stdout_sym) {
     Command* cmd = Grow1Table( cmds );
-    AlphaTab line = default;
+    AlphaTab line = DEFAULT_AlphaTab;
     init_Command (cmd);
     cat_cstr_AlphaTab (&line, "$(X ");
     cat_cstr_AlphaTab (&line, stdout_sym);
@@ -1354,12 +1363,12 @@ int main (int argc, char** argv)
 
 
   if (false)
-    for (uint i = 0; i < cmds.sz; ++i)
+    for (i = 0; i < cmds.sz; ++i)
       output_Command (stderr, &cmds.s[i]);
 
   spawn_commands (cmds);
 
-  for (uint i = 0; i < cmds.sz; ++i)
+  for (i = 0; i < cmds.sz; ++i)
   {
     if (cmds.s[i].kind == RunCommand)
       waitpid_sysCx (cmds.s[i].pid, 0);

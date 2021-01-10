@@ -66,7 +66,7 @@ int main (int argc, char** argv)
     if (argi < argc && eql_cstr (argv[argi], "-connect"))
     {
       int sock = -1;
-      OFile of[] = default;
+      OFile of[] = {DEFAULT_OFile};
 
       oput_cstr_OFile (of, "hi");
 
@@ -104,7 +104,7 @@ int main (int argc, char** argv)
     }
     else
     {
-      OSPc ospc[] = default;
+      OSPc ospc[] = {DEFAULT_OSPc};
       int sock = -1;
       int sock1 = -1;
       struct sockaddr_storage client_addr;

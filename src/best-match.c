@@ -7,12 +7,12 @@
 #include <stdio.h>
 #include <string.h>
 
-static void
+  static void
 show_usage_and_exit ()
 {
   OFile* of = stderr_OFile ();
   printf_OFile (of, "Usage: %s TABLE QUERIES [OPTION]*\n",
-                exename_of_sysCx ());
+      exename_of_sysCx ());
 #define f(s)  oput_cstr_OFile (of, s); oput_char_OFile (of, '\n')
   f( "    TABLE is a file used for lookup." );
   f( "    QUERIES is a file, each line prompts an output of the closest match from TABLE." );
@@ -20,133 +20,133 @@ show_usage_and_exit ()
   failout_sysCx ("");
 }
 
-    /** Open a file for reading or writing.
-     * Exit with an error status if this is not possible.
-     **/
-static FILE*
+/** Open a file for reading or writing.
+ * Exit with an error status if this is not possible.
+ **/
+  static FILE*
 open_file_arg (const char* arg, bool writing)
 {
-    FILE* f;
-    if (writing)
-    {
-        if (0 == strcmp (arg, "-"))  f = stdout;
-        else                         f = fopen (arg, "wb");
-    }
-    else
-    {
-        if (0 == strcmp (arg, "-"))  f = stdin;
-        else                         f = fopen (arg, "rb");
-    }
-    if (!f)
-    {
-        DBog2( "Cannot open file for %s: %s\n",
-               writing ? "writing" : "reading",
-               arg );
-        failout_sysCx ("");
-    }
-    return f;
+  FILE* f;
+  if (writing)
+  {
+    if (0 == strcmp (arg, "-"))  f = stdout;
+    else                         f = fopen (arg, "wb");
+  }
+  else
+  {
+    if (0 == strcmp (arg, "-"))  f = stdin;
+    else                         f = fopen (arg, "rb");
+  }
+  if (!f)
+  {
+    DBog2( "Cannot open file for %s: %s\n",
+        writing ? "writing" : "reading",
+        arg );
+    failout_sysCx ("");
+  }
+  return f;
 }
 
-static char**
+  static char**
 split_lines (char* buf, uint* ret_max_len)
 {
-    uint i;
-    uint n = 1;
-    uint max_len = 1;
-    char* s = buf;
-    char** lines;
+  uint i;
+  uint n = 1;
+  uint max_len = 1;
+  char* s = buf;
+  char** lines;
 
-    while (1)
-    {
-        s = strchr (s, '\n');
-        if (!s)  break;
-        ++n;
-        s[0] = '\0';
-        s = &s[1];
-    }
+  while (1)
+  {
+    s = strchr (s, '\n');
+    if (!s)  break;
+    ++n;
+    s[0] = '\0';
+    s = &s[1];
+  }
 
-    AllocTo( lines, n+1 );
-    lines[n] = 0;
+  AllocTo( lines, n+1 );
+  lines[n] = 0;
 
-    s = buf;
-    for (i = 0; i < n; ++i)
-    {
-        uint len;
-        lines[i] = s;
-        len = strlen (s);
-        if (len > max_len)  max_len = len;
-        s = &s[1 + len];
-    }
+  s = buf;
+  for (i = 0; i < n; ++i)
+  {
+    uint len;
+    lines[i] = s;
+    len = strlen (s);
+    if (len > max_len)  max_len = len;
+    s = &s[1 + len];
+  }
 
-    *ret_max_len = max_len;
-    return lines;
+  *ret_max_len = max_len;
+  return lines;
 }
 
-    /** Find the length of the longest common subsequence between /x/ and /y/.
-     * /width/ of /a/ must not be less than the length of /y/.
-     **/
-static uint
+/** Find the length of the longest common subsequence between /x/ and /y/.
+ * /width/ of /a/ must not be less than the length of /y/.
+ **/
+  static uint
 lcs_count (uint* a, uint width, const char* x, const char* y)
 {
-    uint i, j, m, n;
+  uint i, j, m, n;
 
-    memset (a, 0, width * sizeof (uint));
-    m = strlen (x);
-    n = strlen (y);
-    Claim2( n ,<=, width );
+  memset (a, 0, width * sizeof (uint));
+  m = strlen (x);
+  n = strlen (y);
+  Claim2( n ,<=, width );
 
-    if (m == 0 || n == 0)  return 0;
+  if (m == 0 || n == 0)  return 0;
 
-    for (i = 0; i < m; ++i)
+  for (i = 0; i < m; ++i)
+  {
+    uint back_j = 0, back_ij = 0;
+    char xc;
+    xc = tolower (x[i]);
+    for (j = 0; j < n; ++j)
     {
-        uint back_j = 0, back_ij = 0;
-        char xc;
-        xc = tolower (x[i]);
-        for (j = 0; j < n; ++j)
-        {
-            uint back_i;
-            char yc;
-            yc = tolower (y[j]);
-            back_i = a[j];
+      uint back_i;
+      char yc;
+      yc = tolower (y[j]);
+      back_i = a[j];
 
-            if (xc == yc)
-                a[j] = back_ij + 1;
-            else if (back_j > back_i)
-                a[j] = back_j;
+      if (xc == yc)
+        a[j] = back_ij + 1;
+      else if (back_j > back_i)
+        a[j] = back_j;
 
-            back_ij = back_i;
-            back_j = a[j];
-        }
+      back_ij = back_i;
+      back_j = a[j];
     }
+  }
 
-    return a[n-1];
+  return a[n-1];
 }
 
-static uint
+  static uint
 matching_line (uint* a, uint width, const char* s, char* const* lines)
 {
-    uint max_count = 0;
-    uint match_idx = 0;
-    uint i;
+  uint max_count = 0;
+  uint match_idx = 0;
+  uint i;
 
-    for (i = 0; lines[i]; ++i)
+  for (i = 0; lines[i]; ++i)
+  {
+    uint count;
+    count = lcs_count (a, width, s, lines[i]);
+    if (count > max_count)
     {
-        uint count;
-        count = lcs_count (a, width, s, lines[i]);
-        if (count > max_count)
-        {
-            max_count = count;
-            match_idx = i;
-        }
+      max_count = count;
+      match_idx = i;
     }
-    return match_idx;
+  }
+  return match_idx;
 }
 
 LaceUtilMain(best_match)
 {
   uint* lcs_array;
-  XFileB lookup_in[] = default;
-  XFileB stream_in[] = default;
+  XFileB lookup_in[] = {DEFAULT_XFileB};
+  XFileB stream_in[] = {DEFAULT_XFileB};
   FILE* out;
   char* buf;
   char* s;
@@ -184,8 +184,8 @@ LaceUtilMain(best_match)
 
   out = stdout;
   for (s = getline_XFile (&stream_in->xf);
-       s;
-       s = getline_XFile (&stream_in->xf))
+      s;
+      s = getline_XFile (&stream_in->xf))
   {
     uint i;
     i = matching_line (lcs_array, width, s, lines);

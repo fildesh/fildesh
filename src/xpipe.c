@@ -11,7 +11,7 @@
 LaceUtilMain(xpipe)
 {
   XFile* xf = stdin_XFile ();
-  OSPc ospc[] = default;
+  OSPc ospc[] = {DEFAULT_OSPc};
 
   if (argi >= argc)
     failout_sysCx ("Need at least one argument.");
