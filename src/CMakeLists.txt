@@ -24,8 +24,6 @@ set_property (TARGET lace
   APPEND PROPERTY COMPILE_DEFINITIONS _POSIX_C_SOURCE=199309L)
 target_link_libraries(lace cx_lib rt)
 
-set (lace_exe "$<TARGET_FILE:lace>")
-
 
 add_executable(add
   add.c
@@ -88,9 +86,6 @@ add_executable(zec
 target_link_libraries(zec cx_lib)
 
 
-set (zec_exe "$<TARGET_FILE:zec>")
-
-
 if (UNIX)
   add_executable(elastic elastic.c utilace.h)
   target_link_libraries (elastic cx_lib rt)
@@ -111,27 +106,3 @@ endif ()
 add_executable(comparispawn
   comparispawn.c)
 target_link_libraries(comparispawn cx_lib)
-
-
-## Ensure that the example we distribute actually works.
-foreach (f hello test args silly name familiar cycle convoluted)
-  add_test (NAME example_${f}
-    WORKING_DIRECTORY ${TopPath}
-    COMMAND
-    comparispawn ${TestPath}/expect/${f}.txt
-    ${lace_exe} -x example/${f}.lace
-    )
-endforeach ()
-
-add_test (NAME example_args2
-  WORKING_DIRECTORY ${TopPath}
-  COMMAND
-  comparispawn ${TestPath}/expect/args2.txt
-  ${lace_exe} -x example/args.lace 2 7
-  )
-
-add_test (NAME cli_hello
-  COMMAND
-  comparispawn ${TestPath}/expect/hello.txt
-  ${lace_exe} -stdout - -- "|< ${zec_exe} / 'hello'"
-  )

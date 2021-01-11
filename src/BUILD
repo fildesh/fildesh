@@ -27,6 +27,19 @@ cc_binary(
     linkopts = [
         "-lrt",
     ],
+    visibility = ["//visibility:public"],
+)
+
+cc_binary(
+    name = "zec",
+    srcs = [
+        "zec.c",
+        "utilace.h",
+    ],
+    deps = [
+        "//src/cx:cx_lib",
+    ],
+    visibility = ["//visibility:public"],
 )
 
 
@@ -51,6 +64,33 @@ cc_binary(
     deps = [
         "//src/cx:cx_lib",
     ],
+    visibility = ["//visibility:public"],
 )
 
+genrule(
+    name = "comparispawn_lace_sh",
+    srcs = [
+        ":comparispawn",
+        ":lace",
+    ],
+    tools = [
+        ":zec",
+    ],
+    cmd = "\"$(location zec)\" -o $@ / 'expect=\"$$1\"; shift; exec \"$(location :comparispawn)\" \"$$expect\" \"$(location :lace)\" \"$$@\"'",
+    outs = ["comparispawn_lace.sh"],
+    executable = True,
+    testonly = True,
+    visibility = ["//visibility:public"],
+)
 
+genrule(
+    name = "exec_sh",
+    tools = [
+        ":zec",
+    ],
+    cmd = "\"$(location zec)\" -o \"$@\" / 'exec \"$$@\"'",
+    outs = ["exec.sh"],
+    executable = True,
+    testonly = True,
+    visibility = ["//visibility:public"],
+)
