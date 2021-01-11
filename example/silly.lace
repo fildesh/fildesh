@@ -1,37 +1,38 @@
 #!/usr/bin/env lace
 
-# Run from the parent directory to list some .c files in src/,
-# but their .c is changed to .h by `sed`.
+# Run from the parent directory to list some .lace files in example/,
+# but their .lace is changed to .txt by `sed`.
+
+$(O lace_exe) zec -unless $(1) / bin/lace /
+$(> lace_exe) $(XA lace_exe)
 
 # Things are done in a pretty silly way.
 
-|<  godo src ls
+|<  godo example ls
 
 # This is used for a test, so let's just some specific files.
 |- grep \
-    -e '^lace.c$' \
-    -e '^elastic.c$' \
-    -e '^zec.c$' \
-    -e '^godo.c$'
+    -e '^hello.lace$' \
+    -e '^cycle.lace$'
 
 |- sort
 
 # We could use this commented line, but let's be more convoluted.
-#|- sed -e 's/c$/h/'
+#|- sed -e 's/lace$/txt/'
 
 # Create a string containing a `lace` program that runs `sed`.
 $(H silly)
 |< stdin
-|- sed -e 's/c$/h/'
+|- sed -e 's/lace$/txt/'
 |> stdout
 $(H silly)
 
 # For each line of input, have `lace` execute the `silly` script.
-|- xpipe bin/lace -- $(silly)
+|- xpipe $(lace_exe) -- $(silly)
 
 # Construct a stream for a prefix to use for each line.
 # This is silly because the stream is converted to a string on the next line!
-$(O pfx) zec / "File in src: " /
+$(O pfx) zec / "File in example: " /
 
 # Add the prefix to all lines.
 |- zec -paste / $(pfx) / -
