@@ -3,9 +3,6 @@
 # Run from the parent directory to list some .lace files in example/,
 # but their .lace is changed to .txt by `sed`.
 
-$(O lace_exe) zec -unless $(1) / bin/lace /
-$(> lace_exe) $(XA lace_exe)
-
 # Things are done in a pretty silly way.
 
 |<  godo example ls
@@ -28,7 +25,7 @@ $(H silly)
 $(H silly)
 
 # For each line of input, have `lace` execute the `silly` script.
-|- xpipe $(lace_exe) -- $(silly)
+|- xpipe lace -- $(silly)
 
 # Construct a stream for a prefix to use for each line.
 # This is silly because the stream is converted to a string on the next line!

@@ -1,0 +1,5 @@
+#!/usr/bin/env lace
+
+|< zec / "hello\ngoodbye"
+|- xpipe xpipe xpipe grep -m 1 -o -E -e ".o+"
+|> stdout

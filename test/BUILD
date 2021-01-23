@@ -53,9 +53,6 @@ lace_expect_test(
     name = "silly_test",
     srcs = ["//example:silly.lace"],
     expect = "//test/expect:silly.txt",
-    args = [
-        "$(location //src:lace)",
-    ],
     data = [
         "//example:args.lace",
         "//example:cycle.lace",
@@ -69,3 +66,8 @@ lace_expect_test(
     expect = "//test/expect:test.txt",
 )
 
+lace_expect_test(
+    name = "xpipe_nested_test",
+    srcs = ["xpipe_nested.lace"],
+    expect = "//test/expect:xpipe_nested.txt",
+)

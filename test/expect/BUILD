@@ -9,4 +9,5 @@ exports_files([
     "name.txt",
     "silly.txt",
     "test.txt",
+    "xpipe_nested.txt",
 ])

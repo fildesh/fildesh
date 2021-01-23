@@ -20,6 +20,11 @@ LaceUtilMain(xpipe)
   stdxpipe_OSPc (ospc);
 
   ospc->cmd = cons1_AlphaTab (argv[argi++]);
+  if (lace_specific_util(ccstr_of_AlphaTab(&ospc->cmd))) {
+    PushTable( ospc->args, cons1_AlphaTab("-as") );
+    PushTable( ospc->args, cons1_AlphaTab(ccstr_of_AlphaTab(&ospc->cmd)) );
+    copy_cstr_AlphaTab(&ospc->cmd, exename_of_sysCx());
+  }
   while (argi < argc)
     PushTable( ospc->args, cons1_AlphaTab (argv[argi++]) );
 
