@@ -140,10 +140,10 @@ LaceUtilMain(execfd)
   }
 
   lose_BitTable (&bt);
+
+  if (lace_specific_util (argv[off]))
   {
-    int ret = lace_util_main (off, argc, argv);
-    if (ret >= 0)
-      return ret;
+    return lace_util_main (off, argc, argv);
   }
   execvp_sysCx (&argv[off]);
 

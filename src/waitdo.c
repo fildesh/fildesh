@@ -41,10 +41,9 @@ LaceUtilMain(waitdo)
     while (! feof (in) && ! ferror (in))  fgetc (in);
     fclose (in);
 
+    if (lace_specific_util(argv[argi]))
     {
-      int ret = lace_util_main (argi, argc, argv);
-      if (ret >= 0)
-        return ret;
+      return lace_util_main (argi, argc, argv);
     }
     execvp_sysCx (&argv[argi]);
 
