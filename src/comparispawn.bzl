@@ -6,12 +6,12 @@ def lace_expect_test(name, srcs, expect, data=[], args=[]):
       data = [
           expect,
           "//src:comparispawn",
-          "//src:lace",
+          "//:lace",
       ] + srcs + data,
       args = [
           "$(location //src:comparispawn)",
           "$(location " + expect + ")",
-          "$(location //src:lace)",
+          "$(location //:lace)",
           "-x",
           "$(location " + srcs[0] + ")",
       ] + args,

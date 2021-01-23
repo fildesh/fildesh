@@ -27,7 +27,7 @@ cc_binary(
     linkopts = [
         "-lrt",
     ],
-    visibility = ["//visibility:public"],
+    visibility = ["//:__pkg__"],
 )
 
 cc_binary(
@@ -64,22 +64,6 @@ cc_binary(
     deps = [
         "//src/cx:cx_lib",
     ],
-    visibility = ["//visibility:public"],
-)
-
-genrule(
-    name = "comparispawn_lace_sh",
-    srcs = [
-        ":comparispawn",
-        ":lace",
-    ],
-    tools = [
-        ":zec",
-    ],
-    cmd = "\"$(location zec)\" -o $@ / 'expect=\"$$1\"; shift; exec \"$(location :comparispawn)\" \"$$expect\" \"$(location :lace)\" \"$$@\"'",
-    outs = ["comparispawn_lace.sh"],
-    executable = True,
-    testonly = True,
     visibility = ["//visibility:public"],
 )
 
