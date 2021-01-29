@@ -1,4 +1,18 @@
 
+config_setting(
+    name = "linux_os",
+    constraint_values = [
+        "@bazel_tools//platforms:linux",
+    ]
+)
+
+config_setting(
+    name = "mac_osx",
+    constraint_values = [
+        "@bazel_tools//platforms:osx",
+    ]
+)
+
 cc_binary(
     name = "lace",
     srcs = [
@@ -24,9 +38,10 @@ cc_binary(
     deps = [
         "//src/cx:cx_lib",
     ],
-    linkopts = [
-        "-lrt",
-    ],
+    linkopts = select({
+        ":linux_os": ["-lrt"],
+        ":mac_osx": ["-lc"],
+    }),
     visibility = ["//:__pkg__"],
 )
 
@@ -51,9 +66,10 @@ cc_binary(
     deps = [
         "//src/cx:cx_lib",
     ],
-    linkopts = [
-        "-lrt",
-    ],
+    linkopts = select({
+        ":linux_os": ["-lrt"],
+        ":mac_osx": ["-lc"],
+    }),
 )
 
 cc_binary(

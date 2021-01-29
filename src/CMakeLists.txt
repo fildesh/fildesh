@@ -1,6 +1,11 @@
 
 add_subdirectory(cx)
 
+set (AIO_LIB "rt")
+if (APPLE)
+  set (AIO_LIB "c")
+endif()
+
 add_executable(lace
   "lace.c"
   "utilace.h"
@@ -20,9 +25,10 @@ add_executable(lace
   )
 set_property(TARGET lace
   APPEND PROPERTY COMPILE_DEFINITIONS MAIN_LACE_EXECUTABLE)
-set_property (TARGET lace
+set_property (SOURCE elastic.c
   APPEND PROPERTY COMPILE_DEFINITIONS _POSIX_C_SOURCE=199309L)
-target_link_libraries(lace cx_lib rt)
+target_link_libraries(lace cx_lib ${AIO_LIB})
+
 
 
 add_executable(add
@@ -88,7 +94,7 @@ target_link_libraries(zec cx_lib)
 
 if (UNIX)
   add_executable(elastic elastic.c utilace.h)
-  target_link_libraries (elastic cx_lib rt)
+  target_link_libraries (elastic cx_lib ${AIO_LIB})
   set_property (TARGET elastic
     APPEND PROPERTY COMPILE_DEFINITIONS _POSIX_C_SOURCE=199309L)
 endif ()
@@ -97,7 +103,7 @@ endif ()
 if (UNIX)
   add_executable(chatty
     chatty.c)
-  target_link_libraries (chatty cx_lib rt)
+  target_link_libraries (chatty cx_lib ${AIO_LIB})
   set_property (TARGET chatty
     APPEND PROPERTY COMPILE_DEFINITIONS _POSIX_C_SOURCE=201112L)
 endif ()
