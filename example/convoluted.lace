@@ -46,6 +46,7 @@ $(H script)
 $(H prog)
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
 #define NMaxLineChars BUFSIZ
 int main ()
 {
