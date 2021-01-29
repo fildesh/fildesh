@@ -12,15 +12,7 @@ foreach (f hello test args name familiar cycle convoluted silly)
     )
 endforeach ()
 
-## Tests in this directory.
-foreach (f xpipe_nested)
-  add_test (NAME ${f}
-    WORKING_DIRECTORY ${TopPath}
-    COMMAND
-    comparispawn ${TestPath}/expect/${f}.txt
-    ${lace_exe} -x ${TestPath}/${f}.lace
-    )
-endforeach ()
+add_subdirectory(builtin)
 
 add_test (NAME cli_hello
   COMMAND

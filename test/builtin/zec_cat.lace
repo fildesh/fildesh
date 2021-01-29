@@ -1,0 +1,3 @@
+|< zec / "hello\n" /
+|- zec - / /
+|> stdout
