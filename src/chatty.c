@@ -7,7 +7,7 @@
  * The aio_suspend() will return when some amount
  * of data has been read.
  **/
-#define POSIX_SOURCE
+#define LACE_POSIX_SOURCE
 
 #include <aio.h>
 #include "cx/syscx.h"

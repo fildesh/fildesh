@@ -2,7 +2,7 @@
  * \file elastic.c
  * Echo stdin to stdout with an arbitrary sized buffer.
  **/
-#define POSIX_SOURCE
+#define LACE_POSIX_SOURCE
 
 #include <aio.h>
 #include "utilace.h"

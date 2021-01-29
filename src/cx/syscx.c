@@ -193,7 +193,7 @@ failout_sysCx (const char* msg)
 
     fprintf (f, "FAILOUT: %s\n", exename_of_sysCx ());
 
-#ifdef POSIX_SOURCE
+#ifdef LACE_POSIX_SOURCE
     {
       char hostname[128];
       uint n = ArraySz(hostname);
@@ -333,7 +333,7 @@ stderr_OFile ()
 pipe_sysCx (fd_t* fds)
 {
   int ret = -1;
-#ifdef POSIX_SOURCE
+#ifdef LACE_POSIX_SOURCE
   ret = pipe (fds);
 #else
   ret = _pipe (fds, BUFSIZ, 0);
@@ -345,7 +345,7 @@ pipe_sysCx (fd_t* fds)
 dup_sysCx (fd_t fd)
 {
   int ret = -1;
-#ifdef POSIX_SOURCE
+#ifdef LACE_POSIX_SOURCE
   ret = dup (fd);
 #else
   ret = _dup (fd);
@@ -357,7 +357,7 @@ dup_sysCx (fd_t fd)
 dup2_sysCx (fd_t oldfd, fd_t newfd)
 {
   int ret = -1;
-#ifdef POSIX_SOURCE
+#ifdef LACE_POSIX_SOURCE
   ret = dup2 (oldfd, newfd);
 #else
   ret = _dup2 (oldfd, newfd);
@@ -368,7 +368,7 @@ dup2_sysCx (fd_t oldfd, fd_t newfd)
   long
 read_sysCx (fd_t fd, void* buf, long sz)
 {
-#ifdef POSIX_SOURCE
+#ifdef LACE_POSIX_SOURCE
   return read (fd, buf, sz);
 #else
   return _read (fd, buf, sz);
@@ -379,7 +379,7 @@ read_sysCx (fd_t fd, void* buf, long sz)
 closefd_sysCx (fd_t fd)
 {
   int ret = -1;
-#ifdef POSIX_SOURCE
+#ifdef LACE_POSIX_SOURCE
   ret = close (fd);
 #else
   ret = _close (fd);
@@ -390,7 +390,7 @@ closefd_sysCx (fd_t fd)
   FILE*
 fdopen_sysCx (fd_t fd, const char* mode)
 {
-#ifdef POSIX_SOURCE
+#ifdef LACE_POSIX_SOURCE
   return fdopen (fd, mode);
 #else
   return _fdopen (fd, mode);
@@ -417,7 +417,7 @@ oput_execvp_args (const char* fn, char* const* argv)
 spawnvp_sysCx (char* const* argv)
 {
   pid_t pid;
-#ifdef POSIX_SOURCE
+#ifdef LACE_POSIX_SOURCE
   pid = fork ();
   if (pid == 0)
   {
@@ -458,7 +458,7 @@ execvp_sysCx (char* const* argv)
       DBog2( "argv[%u] = %s", i, argv[i] );
     }
   }
-#ifdef POSIX_SOURCE
+#ifdef LACE_POSIX_SOURCE
   execvp (argv[0], argv);
 #else
   pid_t pid = -1;
@@ -481,7 +481,7 @@ execvp_sysCx (char* const* argv)
 waitpid_sysCx (pid_t pid, int* status)
 {
   int ret = -1;
-#ifdef POSIX_SOURCE
+#ifdef LACE_POSIX_SOURCE
   ret = waitpid (pid, status, 0);
   if (status)
     *status = WEXITSTATUS( *status );
@@ -498,7 +498,7 @@ waitpid_sysCx (pid_t pid, int* status)
 mktmppath_sysCx (AlphaTab* path)
 {
   const char* v = 0;
-#ifdef POSIX_SOURCE
+#ifdef LACE_POSIX_SOURCE
   pid_t pid = getpid ();
 #else
   pid_t pid = _getpid ();
@@ -507,7 +507,7 @@ mktmppath_sysCx (AlphaTab* path)
   zuint i;
   init_OFile (of);
 
-#ifdef POSIX_SOURCE
+#ifdef LACE_POSIX_SOURCE
   v = getenv ("TMPDIR");
   if (!v)  v = "/tmp";
 #else
@@ -544,7 +544,7 @@ mktmppath_sysCx (AlphaTab* path)
   void
 setenv_sysCx (const char* key, const char* val)
 {
-#ifdef POSIX_SOURCE
+#ifdef LACE_POSIX_SOURCE
   setenv (key, val, 1);
 #else
   SetEnvironmentVariable (key, val);
@@ -555,7 +555,7 @@ setenv_sysCx (const char* key, const char* val)
   void
 tacenv_sysCx (const char* key, const char* val)
 {
-#ifdef POSIX_SOURCE
+#ifdef LACE_POSIX_SOURCE
   const char* sep = ":";
 #else
   const char* sep = ";";
@@ -577,7 +577,7 @@ tacenv_sysCx (const char* key, const char* val)
   void
 cloexec_sysCx (fd_t fd, bool b)
 {
-#ifdef POSIX_SOURCE
+#ifdef LACE_POSIX_SOURCE
   int flags = fcntl (fd, F_GETFD);
 
   if (flags == -1)
@@ -604,7 +604,7 @@ cloexec_sysCx (fd_t fd, bool b)
 chmodu_sysCx (const char* pathname, bool r, bool w, bool x)
 {
   int ret = -1;
-#ifdef POSIX_SOURCE
+#ifdef LACE_POSIX_SOURCE
   chmod (pathname, (r ? S_IRUSR : 0) | (w ? S_IWUSR : 0) | (x ? S_IXUSR : 0));
 #else
   (void) x;
@@ -617,7 +617,7 @@ chmodu_sysCx (const char* pathname, bool r, bool w, bool x)
 mkdir_sysCx (const char* pathname)
 {
   int ret = -1;
-#ifdef POSIX_SOURCE
+#ifdef LACE_POSIX_SOURCE
   ret = mkdir (pathname, 0700);
 #else
   ret = _mkdir (pathname);
@@ -629,7 +629,7 @@ mkdir_sysCx (const char* pathname)
 rmdir_sysCx (const char* pathname)
 {
   int ret = -1;
-#ifdef POSIX_SOURCE
+#ifdef LACE_POSIX_SOURCE
   ret = rmdir (pathname);
 #else
   ret = _rmdir (pathname);
@@ -641,7 +641,7 @@ rmdir_sysCx (const char* pathname)
 chdir_sysCx (const char* pathname)
 {
   int ret = -1;
-#ifdef POSIX_SOURCE
+#ifdef LACE_POSIX_SOURCE
   ret = chdir (pathname);
 #else
   ret = _chdir (pathname);
@@ -652,7 +652,7 @@ chdir_sysCx (const char* pathname)
   Bool
 randomize_sysCx(void* p, uint size)
 {
-#ifdef POSIX_SOURCE
+#ifdef LACE_POSIX_SOURCE
   static byte buf[4096];
   static const uint buf_size = sizeof(buf);
   static uint static_off = sizeof(buf);
