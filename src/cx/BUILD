@@ -22,6 +22,8 @@ cc_library(
         "syscx.c",
         "syscx.h",
         "table.h",
+        "urandom.c",
+        "urandom.h",
         "xfile.c",
         "xfile.h",
     ],

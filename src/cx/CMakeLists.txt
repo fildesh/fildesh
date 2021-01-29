@@ -20,6 +20,8 @@ add_library (cx_lib
   "syscx.c"
   "syscx.h"
   "table.h"
+  "urandom.c"
+  "urandom.h"
   "xfile.c"
   "xfile.h"
   )
