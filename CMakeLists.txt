@@ -1,5 +1,6 @@
 
 cmake_minimum_required (VERSION 2.8)
+#set(CMAKE_DISABLE_SOURCE_CHANGES ON)
 set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 
 project (lace)
@@ -42,4 +43,5 @@ endif ()
 
 add_subdirectory(src)
 add_subdirectory(test)
+add_subdirectory(tool)
 
