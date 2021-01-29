@@ -47,9 +47,8 @@ jobs:
 
     - name: Upload Test Results
       uses: actions/upload-artifact@v2
-      working-directory: ${{runner.workspace}}/bld
       if: always()
       with:
         name: Test Results (${{ matrix.python-version }})
-        path: Testing/
+        path: bld/Testing/
 
