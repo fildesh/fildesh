@@ -15,9 +15,9 @@
 /* #define DEBUGGING */
 
 #ifdef DEBUGGING
-#define StateMsg(fname, status)  DBog2("%s -> %d", fname, status)
+#define StateMsg(msg)  DBog0(msg)
 #else
-#define StateMsg(fname, status)
+#define StateMsg(msg)
 #endif
 
 typedef struct IOState IOState;
@@ -153,7 +153,7 @@ LaceUtilMain(elastic)
     } while (istat != 0 && errno == EINTR);
 
     if (istat != 0) {
-      StateMsg( "aio_suspend()", istat );
+      StateMsg( "aio_suspend()" );
       break;
     }
 
@@ -169,7 +169,7 @@ LaceUtilMain(elastic)
 
       x->pending = 0;
       if (istat != 0) {
-        StateMsg( "aio_error(read)", istat );
+        StateMsg( "aio_error(read)" );
         x->done = 1;
         ClearTable( x->buf );
         break;
@@ -205,7 +205,7 @@ LaceUtilMain(elastic)
 
       o->pending = 0;
       if (istat != 0) {
-        StateMsg( "aio_error(write)", istat );
+        StateMsg( "aio_error(write)" );
         o->done = 1;
         ClearTable( o->buf );
         ClearTable( o->xbuf );
@@ -214,7 +214,7 @@ LaceUtilMain(elastic)
 
       sstat = aio_return (&o->aio);
       if (sstat < 0) {
-        StateMsg( "aio_return(write)", (int)sstat );
+        StateMsg( "aio_return(write)" );
         o->done = 1;
         ClearTable( o->buf );
         ClearTable( o->xbuf );
