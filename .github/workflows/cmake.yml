@@ -44,3 +44,12 @@ jobs:
       # Execute tests defined by the CMake configuration.
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
       run: ctest -C $BUILD_TYPE
+
+    - name: Upload Test Results
+      working-directory: ${{runner.workspace}}/bld
+      if: always()
+      uses: actions/upload-artifact@v2
+      with:
+        name: Test Results (${{ matrix.python-version }})
+        path: Testing/
+
