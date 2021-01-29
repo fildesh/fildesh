@@ -29,6 +29,10 @@ if (NOT APPLE)
   set_property (SOURCE elastic.c
     APPEND PROPERTY COMPILE_DEFINITIONS _POSIX_C_SOURCE=199309L)
 endif()
+if (APPLE)
+  set_property (SOURCE elastic.c
+    APPEND PROPERTY COMPILE_DEFINITIONS DEBUGGING=1)
+endif()
 target_link_libraries(lace cx_lib ${AIO_LIB})
 
 
