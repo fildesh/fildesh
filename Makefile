@@ -1,8 +1,5 @@
 
 BldPath=bld
-BinPath=bin
-
-SrcPath=src
 
 ScanBldPath=clang
 ScanRptPath=$(ScanBldPath)/report
@@ -51,11 +48,11 @@ clean:
 	$(GODO) $(BldPath) $(MAKE) clean
 
 distclean:
-	rm -fr $(BldPath) $(BinPath) $(ScanBldPath) tags
+	rm -fr $(BldPath) $(ScanBldPath) tags
 
 update:
-	git pull origin master
+	git pull origin trunk
 
 pull:
-	git pull origin master
+	git pull origin trunk
 
