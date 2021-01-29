@@ -25,8 +25,10 @@ add_executable(lace
   )
 set_property(TARGET lace
   APPEND PROPERTY COMPILE_DEFINITIONS MAIN_LACE_EXECUTABLE)
-set_property (SOURCE elastic.c
-  APPEND PROPERTY COMPILE_DEFINITIONS _POSIX_C_SOURCE=199309L)
+if (NOT APPLE)
+  set_property (SOURCE elastic.c
+    APPEND PROPERTY COMPILE_DEFINITIONS _POSIX_C_SOURCE=199309L)
+endif()
 target_link_libraries(lace cx_lib ${AIO_LIB})
 
 
@@ -92,7 +94,7 @@ add_executable(zec
 target_link_libraries(zec cx_lib)
 
 
-if (UNIX)
+if (UNIX AND NOT APPLE)
   add_executable(elastic elastic.c utilace.h)
   target_link_libraries (elastic cx_lib ${AIO_LIB})
   set_property (TARGET elastic
@@ -100,7 +102,7 @@ if (UNIX)
 endif ()
 
 
-if (UNIX)
+if (UNIX AND NOT APPLE)
   add_executable(chatty
     chatty.c)
   target_link_libraries (chatty cx_lib ${AIO_LIB})

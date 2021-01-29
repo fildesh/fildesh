@@ -23,7 +23,7 @@ lose_sysCx ();
 /* fileb.h - stdout_OFileB () */
 /* fileb.h - stderr_OFileB () */
 
-#ifndef _WIN32
+#if !defined(_WIN32) && !defined(__APPLE__)
 /* TODO: Figure out the correct POSIX_SOURCE to use!*/
 #ifndef POSIX_SOURCE
 #define POSIX_SOURCE
@@ -37,7 +37,7 @@ lose_sysCx ();
 #endif
 #endif
 
-#ifdef POSIX_SOURCE
+#if defined(POSIX_SOURCE) || defined(__APPLE__)
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/wait.h>
