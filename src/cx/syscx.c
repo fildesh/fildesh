@@ -141,6 +141,12 @@ init_sysCx (int* pargc, char*** pargv)
   stdin_XFileB ();
   stdout_OFileB ();
   signal (SIGSEGV, signal_hook_sysCx);
+#ifndef LACE_POSIX_SOURCE
+  {
+    WSADATA wsaData;
+    WSAStartup(MAKEWORD(2, 2), &wsaData);
+  }
+#endif
   return 1;
 }
 
@@ -173,6 +179,9 @@ lose_sysCx ()
   }
   LoseTable( LoseFns );
 
+#ifndef LACE_POSIX_SOURCE
+  WSACleanup();
+#endif
   lose_XFileB (stdin_XFileB ());
   lose_OFileB (stdout_OFileB ());
   lose_OFileB (stderr_OFileB ());
