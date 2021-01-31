@@ -365,6 +365,34 @@ dup2_sysCx (fd_t oldfd, fd_t newfd)
   return (ret == 0);
 }
 
+  int
+open_lace_xfd(const char* filename)
+{
+#ifdef LACE_POSIX_SOURCE
+  return open(filename, O_RDONLY);
+#else
+  return _open(filename, _O_RDONLY);
+#endif
+}
+
+  int
+open_lace_ofd(const char* filename)
+{
+#ifdef LACE_POSIX_SOURCE
+  const int flags =  O_WRONLY | O_CREAT | O_TRUNC | O_APPEND;
+  const int mode
+    = S_IWUSR | S_IWGRP | S_IWOTH
+    | S_IRUSR | S_IRGRP | S_IROTH;
+  return open(filename, flags, mode);
+#else
+  const int flags = _O_WRONLY | _O_CREAT | _O_TRUNC | O_APPEND;
+  const int mode
+    = _S_IWUSR | _S_IWGRP | _S_IWOTH
+    | _S_IRUSR | _S_IRGRP | _S_IROTH;
+  return _open(filename, flags, mode);
+#endif
+}
+
   long
 read_sysCx (fd_t fd, void* buf, long sz)
 {
@@ -372,6 +400,16 @@ read_sysCx (fd_t fd, void* buf, long sz)
   return read (fd, buf, sz);
 #else
   return _read (fd, buf, sz);
+#endif
+}
+
+  long
+write_sysCx (fd_t fd, const void* buf, long sz)
+{
+#ifdef LACE_POSIX_SOURCE
+  return write (fd, buf, sz);
+#else
+  return _write (fd, buf, sz);
 #endif
 }
 

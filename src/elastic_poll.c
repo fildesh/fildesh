@@ -2,8 +2,6 @@
  * \file elastic_poll.c
  * Echo stdin to stdout with an arbitrary sized buffer.
  **/
-#define LACE_POSIX_SOURCE
-
 #include <poll.h>
 #include "utilace.h"
 #include "cx/alphatab.h"
@@ -39,7 +37,7 @@ close_IOState(IOState* io, struct pollfd* pfd) {
     return;
   }
   io->done = 1;
-  close(pfd->fd);
+  closefd_sysCx(pfd->fd);
   ClearTable( io->buf );
 }
 
@@ -86,12 +84,12 @@ handle_read_write(TableT(IOState) ios, TableT(pollfd) pollfds) {
     IOState* io = &ios.s[i];
     struct pollfd* pfd = &pollfds.s[i];
     int rwerrno = 0;
-    ssize_t sstat = 0;
+    long sstat = 0;
 
     if (io->done) {
       /* Nothing.*/
     } else if ((pfd->revents & POLLIN) == POLLIN) {
-      sstat = read(pfd->fd, io->buf.s, io->buf.sz);
+      sstat = read_sysCx(pfd->fd, io->buf.s, io->buf.sz);
       if (sstat < 0) {
         rwerrno = errno;
       }
@@ -108,7 +106,7 @@ handle_read_write(TableT(IOState) ios, TableT(pollfd) pollfds) {
         io->buf.sz = tmp_sz;
       }
     } else if ((pfd->revents & POLLOUT) == POLLOUT) {
-      sstat = write(pfd->fd, io->buf.s, io->buf.sz);
+      sstat = write_sysCx(pfd->fd, io->buf.s, io->buf.sz);
       if (sstat < 0) {
         rwerrno = errno;
       }
@@ -141,6 +139,7 @@ handle_read_write(TableT(IOState) ios, TableT(pollfd) pollfds) {
     }
   }
 }
+
 
 LaceUtilMain(elastic)
 {
@@ -177,11 +176,7 @@ LaceUtilMain(elastic)
       pfd->fd = 1;
     }
     else {
-      const int flags =  O_WRONLY | O_CREAT | O_TRUNC | O_APPEND;
-      const int mode
-        = S_IWUSR | S_IWGRP | S_IWOTH
-        | S_IRUSR | S_IRGRP | S_IROTH;
-      pfd->fd = open(io->filename, flags, mode);
+      pfd->fd = open_lace_ofd(io->filename);
     }
     if (pfd->fd < 0) {
       fprintf (stderr, "%s: failed to open: %s\n", argv[0], io->filename);

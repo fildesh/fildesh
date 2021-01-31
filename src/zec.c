@@ -19,7 +19,7 @@ write_all (fd_t fd, const char* buf, size_t sz)
 {
   size_t off = 0;
   while (off < sz) {
-    ssize_t nbytes = write (fd, &buf[off], sz - off);
+    long nbytes = write_sysCx(fd, &buf[off], sz - off);
     if (nbytes <= 0)
       return 0;
     off += nbytes;
@@ -62,7 +62,7 @@ open_input_file (FInput* in, const char* filename)
   else if (filename[0] == '-' && filename[1] == '\0')
     in->fd = 0;
   else
-    in->fd = open (filename, O_RDONLY);
+    in->fd = open_lace_xfd(filename);
 
   if (in->fd < 0) {
     fdputs (2, "Cannot open file! ");
@@ -76,20 +76,20 @@ static
   void
 cat_the_file (fd_t o_fd, FInput* in)
 {
-  ssize_t nread;
+  long nread;
   do {
-    nread = read (in->fd, in->buf, sizeof(in->buf) - 1);
+    nread = read_sysCx(in->fd, in->buf, sizeof(in->buf) - 1);
     if (!write_all (o_fd, in->buf, nread))
       break;
   } while (nread > 0);
-  close(in->fd);
+  closefd_sysCx(in->fd);
 }
 
 static
   Bool
 read_more (FInput* in)
 {
-  ssize_t nread = read (in->fd, in->buf, sizeof(in->buf) - 1);
+  long nread = read_sysCx(in->fd, in->buf, sizeof(in->buf) - 1);
   in->off = 0;
   in->sz = (nread > 0) ? nread : 0;
   in->buf[in->sz] = '\0';
@@ -174,10 +174,7 @@ LaceUtilMain(zec)
         o_fd = 1;
       }
       else {
-        int mode
-          = S_IWUSR | S_IWGRP | S_IWOTH
-          | S_IRUSR | S_IRGRP | S_IROTH;
-        o_fd = open (arg, O_WRONLY | O_CREAT | O_TRUNC, mode);
+        o_fd = open_lace_ofd(arg);
         if (o_fd < 0) {
           fdputs (2, "Cannot open file for writing! ");
           fdputs (2, arg);
@@ -270,7 +267,7 @@ LaceUtilMain(zec)
     }
 
     for (i = 0; i < nbegs + nends; ++i)
-      close (inputs[i].fd);
+      closefd_sysCx(inputs[i].fd);
   }
   else {
     Bool good = 1;
@@ -285,7 +282,7 @@ LaceUtilMain(zec)
       cat_the_file (o_fd, &inputs[nbegs+i]);
   }
 
-  close (o_fd);
+  closefd_sysCx(o_fd);
   free (inputs);
   free (mid_buf);
   lose_sysCx ();
