@@ -1,4 +1,25 @@
 
+config_setting(
+    name = "linux_os",
+    constraint_values = [
+        "@bazel_tools//platforms:linux",
+    ]
+)
+
+config_setting(
+    name = "mac_osx",
+    constraint_values = [
+        "@bazel_tools//platforms:osx",
+    ]
+)
+
+config_setting(
+    name = "windows_os",
+    constraint_values = [
+        "@bazel_tools//platforms:windows",
+    ]
+)
+
 cc_library(
     name = "cx_lib",
     srcs = [
@@ -27,6 +48,11 @@ cc_library(
         "xfile.c",
         "xfile.h",
     ],
+    linkopts = select({
+        ":linux_os": [],
+        ":mac_osx": [],
+        ":windows_os": ["-DEFAULTLIB:ws2_32.lib"],
+    }),
     visibility = ["//visibility:public"],
 )
 

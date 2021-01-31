@@ -25,6 +25,9 @@ add_library (cx_lib
   "xfile.c"
   "xfile.h"
   )
+if (WIN32)
+  target_link_libraries(cx_lib ws2_32)
+endif()
 
 add_executable(bittable_test
   "bittable_test.c")

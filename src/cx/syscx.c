@@ -434,6 +434,22 @@ fdopen_sysCx (fd_t fd, const char* mode)
 }
 
   int
+setfd_nonblock_sysCx(fd_t fd)
+{
+#ifdef LACE_POSIX_SOURCE
+  int istat;
+  istat = fcntl(fd, F_GETFD);
+  if (istat < 0) {
+    return istat;
+  }
+  return fcntl(fd, F_SETFD, istat | O_NONBLOCK);
+#else
+  unsigned long arg = 1;
+  return ioctlsocket(fd, FIONBIO, &arg);
+#endif
+}
+
+  int
 poll_sysCx(struct pollfd* pollfds, size_t npollfds, int timeout)
 {
 #ifdef LACE_POSIX_SOURCE

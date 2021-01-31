@@ -40,20 +40,6 @@ cc_binary(
 )
 
 
-#config_setting(
-#    name = "linux_os",
-#    constraint_values = [
-#        "@bazel_tools//platforms:linux",
-#    ]
-#)
-#
-#config_setting(
-#    name = "mac_osx",
-#    constraint_values = [
-#        "@bazel_tools//platforms:osx",
-#    ]
-#)
-#
 #cc_binary(
 #    name = "chatty",
 #    srcs = [

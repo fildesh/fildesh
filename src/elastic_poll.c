@@ -187,15 +187,9 @@ LaceUtilMain(elastic)
   for (i = 0; i < ios.sz; ++i) {
     io = &ios.s[i];
     pfd = &pollfds.s[i];
-    istat = fcntl(pfd->fd, F_GETFD);
+    istat = setfd_nonblock_sysCx(pfd->fd);
     if (istat < 0) {
-      fprintf(stderr, "%s: failed to get flags on: %s\n", argv[0], io->filename);
-      lose_sysCx ();
-      return 1;
-    }
-    istat = fcntl(pfd->fd, F_SETFD, istat | O_NONBLOCK);
-    if (istat < 0) {
-      fprintf(stderr, "%s: failed to set O_NONBLOCK on: %s\n", argv[0], io->filename);
+      fprintf(stderr, "%s: failed to set nonblocking: %s\n", argv[0], io->filename);
       lose_sysCx ();
       return 1;
     }
