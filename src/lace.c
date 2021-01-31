@@ -1245,7 +1245,9 @@ int main_lace(int argi, int argc, char** argv)
   /* add_util_path_env (); */
   (void) add_util_path_env;
 
+#ifdef LACE_POSIX_SOURCE
   signal (SIGQUIT, lose_sysCx);
+#endif
   signal (SIGINT, lose_sysCx);
   signal (SIGSEGV, lose_sysCx);
 

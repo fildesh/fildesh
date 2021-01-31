@@ -2,7 +2,6 @@
  * \file elastic_poll.c
  * Echo stdin to stdout with an arbitrary sized buffer.
  **/
-#include <poll.h>
 #include "utilace.h"
 #include "cx/alphatab.h"
 #include "cx/table.h"
@@ -205,7 +204,7 @@ LaceUtilMain(elastic)
   while (prepare_for_poll(ios, pollfds)) {
     const int infinite_poll_timeout = -1;
 
-    istat = poll(pollfds.s, pollfds.sz, infinite_poll_timeout);
+    istat = poll_sysCx(pollfds.s, pollfds.sz, infinite_poll_timeout);
     if (istat < 0) {
       StateMsg( "poll()", 0, istat );
       break;

@@ -433,6 +433,16 @@ fdopen_sysCx (fd_t fd, const char* mode)
 #endif
 }
 
+  int
+poll_sysCx(struct pollfd* pollfds, size_t npollfds, int timeout)
+{
+#ifdef LACE_POSIX_SOURCE
+  return poll(pollfds, npollfds, timeout);
+#else
+  return WSAPoll(pollfds, npollfds, timeout);
+#endif
+}
+
   static void
 oput_execvp_args (const char* fn, char* const* argv)
 {

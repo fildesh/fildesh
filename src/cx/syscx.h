@@ -45,12 +45,14 @@ lose_sysCx ();
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <poll.h>
 #else
 #include <fcntl.h>
 #include <windows.h>
 #include <direct.h>
 #include <io.h>
 #include <process.h>
+#include <winsock2.h>
 #ifdef _MSC_VER
 typedef intptr_t pid_t;
 #endif
@@ -81,6 +83,8 @@ bool
 closefd_sysCx (fd_t fd);
 FILE*
 fdopen_sysCx (fd_t fd, const char* mode);
+int
+poll_sysCx(struct pollfd* pollfds, size_t npollfds, int timeout);
 pid_t
 spawnvp_sysCx (char* const* argv);
 void
