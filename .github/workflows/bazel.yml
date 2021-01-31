@@ -23,11 +23,11 @@ jobs:
       run: bazel build //...
 
     - name: Test
-      run: bazel test --test_timeout 10 //...
+      run: bazel test --test_timeout 1 //...
 
     - name: Upload Test Results
       uses: actions/upload-artifact@v2
       if: failure()
       with:
         name: Test Results (${{ matrix.platform }})
-        path: $GITHUB_WORKSPACE/bazel-testlogs/
+        path: bazel-out/

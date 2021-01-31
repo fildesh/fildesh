@@ -34,34 +34,40 @@ cc_test(
     name = "bittable_test",
     srcs = ["bittable_test.c"],
     deps = [":cx_lib"],
+    size = "small",
 )
 
 cc_test(
     name = "fileb_test",
     srcs = ["fileb_test.c"],
     deps = [":cx_lib"],
+    size = "small",
 )
 
 cc_test(
     name = "lgtable_test",
     srcs = ["lgtable_test.c"],
     deps = [":cx_lib"],
+    size = "small",
 )
 
 cc_test(
     name = "ospc_test",
     srcs = ["ospc_test.c"],
     deps = [":cx_lib"],
+    size = "small",
 )
 
 cc_test(
     name = "rbtree_test",
     srcs = ["rbtree_test.c"],
     deps = [":cx_lib"],
+    size = "small",
 )
 
 cc_test(
     name = "table_test",
     srcs = ["table_test.c"],
     deps = [":cx_lib"],
+    size = "small",
 )

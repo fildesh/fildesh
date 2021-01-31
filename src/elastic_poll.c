@@ -118,7 +118,10 @@ handle_read_write(TableT(IOState) ios, TableT(pollfd) pollfds) {
         }
         io->buf.sz -= sstat;
       }
-    } else if (pfd->revents != 0) {
+    }
+
+    pfd->revents &= ~(POLLIN | POLLOUT);
+    if (pfd->revents != 0) {
       /* Something happened.*/
       StateMsg("revents", i, pfd->revents);
       close_IOState(io, pfd);
@@ -126,8 +129,10 @@ handle_read_write(TableT(IOState) ios, TableT(pollfd) pollfds) {
 
     if (io->done || rwerrno == 0 || rwerrno == EINTR ||
         rwerrno == EAGAIN || rwerrno == EWOULDBLOCK) {
-      /* Nothing.*/
-      StateMsg("ok", i, rwerrno);
+      if (!io->done) {
+        /* Nothing.*/
+        StateMsg("ok", i, rwerrno);
+      }
     } else {
       errno = rwerrno;
       StateMsg("sstat", i, rwerrno);
