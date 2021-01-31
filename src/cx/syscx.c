@@ -212,7 +212,7 @@ failout_sysCx (const char* msg)
       fprintf (f, "^^^ errno:%d %s\n", err, strerror (err));
 #ifndef LACE_POSIX_SOURCE
     if (wsaerror != 0)
-      fprintf(f, "^^^ wsaerror:%d\n", wsaerror);
+      fprintf(f, "^^^ wsaerror: %d\n", wsaerror);
 #endif
 
   }
@@ -274,7 +274,7 @@ dbglog_printf3 (const char* file,
   }
 #ifndef LACE_POSIX_SOURCE
   if (wsaerror != 0) {
-    fprintf(f, "^^^ wsaerror:%d\n", wsaerror);
+    fprintf_OFile(of, "^^^ wsaerror: %d\n", wsaerror);
     WSASetLastError(0);
   }
 #endif
