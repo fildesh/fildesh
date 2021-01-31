@@ -1,5 +1,5 @@
 /**
- * \file elastic.c
+ * \file elastic_aio.c
  * Echo stdin to stdout with an arbitrary sized buffer.
  **/
 #define LACE_POSIX_SOURCE

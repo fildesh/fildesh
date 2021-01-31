@@ -20,7 +20,7 @@ cc_binary(
         "utilace.h",
         "add.c",
         "best-match.c",
-        "elastic.c",
+        "elastic_poll.c",
         "execfd.c",
         "godo.c",
         "ssh-all.c",
@@ -38,10 +38,6 @@ cc_binary(
     deps = [
         "//src/cx:cx_lib",
     ],
-    linkopts = select({
-        ":linux_os": ["-lrt"],
-        ":mac_osx": ["-lc"],
-    }),
     visibility = ["//:__pkg__"],
 )
 

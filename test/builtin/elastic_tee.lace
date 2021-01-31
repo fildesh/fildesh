@@ -1,0 +1,4 @@
+|< zec / "hello\n" /
+|- elastic - $(OF b)
+|- zec - $(XF b) / /
+|> stdout

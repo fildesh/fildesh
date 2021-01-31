@@ -3,7 +3,13 @@ load("//src:comparispawn.bzl", "lace_expect_test")
 lace_expect_test(
     name = "elastic_cat_test",
     srcs = ["elastic_cat.lace"],
-    expect = "//test/expect:hello.txt",
+    expect = ":hello_newline.txt",
+)
+
+lace_expect_test(
+    name = "elastic_tee_test",
+    srcs = ["elastic_tee.lace"],
+    expect = ":hello_newline_x2.txt",
 )
 
 lace_expect_test(
@@ -15,6 +21,6 @@ lace_expect_test(
 lace_expect_test(
     name = "zec_cat_test",
     srcs = ["zec_cat.lace"],
-    expect = "//test/expect:hello.txt",
+    expect = ":hello_newline.txt",
 )
 

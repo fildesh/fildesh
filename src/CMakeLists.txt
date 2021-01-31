@@ -1,17 +1,12 @@
 
 add_subdirectory(cx)
 
-set (AIO_LIB "rt")
-if (APPLE)
-  set (AIO_LIB "c")
-endif()
-
 add_executable(lace
   "lace.c"
   "utilace.h"
   "add.c"
   "best-match.c"
-  "elastic.c"
+  "elastic_poll.c"
   "execfd.c"
   "godo.c"
   "ssh-all.c"
@@ -25,15 +20,7 @@ add_executable(lace
   )
 set_property(TARGET lace
   APPEND PROPERTY COMPILE_DEFINITIONS MAIN_LACE_EXECUTABLE)
-if (NOT APPLE)
-  set_property (SOURCE elastic.c
-    APPEND PROPERTY COMPILE_DEFINITIONS _POSIX_C_SOURCE=199309L)
-endif()
-if (APPLE)
-  set_property (SOURCE elastic.c
-    APPEND PROPERTY COMPILE_DEFINITIONS DEBUGGING=1)
-endif()
-target_link_libraries(lace cx_lib ${AIO_LIB})
+target_link_libraries(lace cx_lib)
 
 
 
@@ -98,12 +85,20 @@ add_executable(zec
 target_link_libraries(zec cx_lib)
 
 
+set (AIO_LIB "rt")
+if (APPLE)
+  set (AIO_LIB "c")
+endif()
+
 if (UNIX AND NOT APPLE)
-  add_executable(elastic elastic.c utilace.h)
-  target_link_libraries (elastic cx_lib ${AIO_LIB})
-  set_property (TARGET elastic
+  add_executable(elastic_aio elastic_aio.c utilace.h)
+  target_link_libraries (elastic_aio cx_lib ${AIO_LIB})
+  set_property (TARGET elastic_aio
     APPEND PROPERTY COMPILE_DEFINITIONS _POSIX_C_SOURCE=199309L)
 endif ()
+
+add_executable(elastic_poll elastic_poll.c utilace.h)
+target_link_libraries (elastic_poll cx_lib)
 
 
 if (UNIX AND NOT APPLE)
