@@ -30,4 +30,4 @@ jobs:
       if: always()
       with:
         name: Test Results (${{ matrix.platform }})
-        path: bazel-out/
+        path: bazel-testlogs/**/*
