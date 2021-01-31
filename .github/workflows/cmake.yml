@@ -47,8 +47,7 @@ jobs:
 
     - name: Upload Test Results
       uses: actions/upload-artifact@v2
-      if: always()
+      if: failure()
       with:
-        name: Test Results (${{ matrix.python-version }})
+        name: Test Results (${{ matrix.platform }})
         path: ${{runner.workspace}}/bld/Testing/
-

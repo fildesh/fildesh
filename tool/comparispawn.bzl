@@ -2,17 +2,18 @@
 def lace_expect_test(name, srcs, expect, data=[], args=[]):
   native.sh_test(
       name = name,
-      srcs = ["//src:exec.sh"],
+      srcs = ["//tool:exec.sh"],
       data = [
           expect,
-          "//src:comparispawn",
+          "//tool:comparispawn",
           "//:lace",
       ] + srcs + data,
       args = [
-          "$(location //src:comparispawn)",
+          "$(location //tool:comparispawn)",
           "$(location " + expect + ")",
           "$(location //:lace)",
           "-x",
           "$(location " + srcs[0] + ")",
       ] + args,
+      size = "small",
   )

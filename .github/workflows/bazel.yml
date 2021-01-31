@@ -6,7 +6,7 @@ jobs:
   build:
     strategy:
       matrix:
-        platform: [ubuntu-latest]
+        platform: [ubuntu-latest, macos-latest]
 
     runs-on: ${{ matrix.platform }}
 
@@ -24,3 +24,10 @@ jobs:
 
     - name: Test
       run: bazel test //...
+
+    - name: Upload Test Results
+      uses: actions/upload-artifact@v2
+      if: failure()
+      with:
+        name: Test Results (${{ matrix.platform }})
+        path: ${{runner.workspace}}/bazel-testlogs/

@@ -1,18 +1,4 @@
 
-config_setting(
-    name = "linux_os",
-    constraint_values = [
-        "@bazel_tools//platforms:linux",
-    ]
-)
-
-config_setting(
-    name = "mac_osx",
-    constraint_values = [
-        "@bazel_tools//platforms:osx",
-    ]
-)
-
 cc_binary(
     name = "lace",
     srcs = [
@@ -54,39 +40,33 @@ cc_binary(
 )
 
 
-cc_binary(
-    name = "chatty",
-    srcs = [
-        "chatty.c",
-    ],
-    deps = [
-        "//src/cx:cx_lib",
-    ],
-    linkopts = select({
-        ":linux_os": ["-lrt"],
-        ":mac_osx": ["-lc"],
-    }),
-)
-
-cc_binary(
-    name = "comparispawn",
-    srcs = [
-        "comparispawn.c",
-    ],
-    deps = [
-        "//src/cx:cx_lib",
-    ],
-    visibility = ["//visibility:public"],
-)
-
-genrule(
-    name = "exec_sh",
-    tools = [
-        ":zec",
-    ],
-    cmd = "\"$(location zec)\" -o \"$@\" / 'exec \"$$@\"'",
-    outs = ["exec.sh"],
-    executable = True,
-    testonly = True,
-    visibility = ["//visibility:public"],
-)
+#config_setting(
+#    name = "linux_os",
+#    constraint_values = [
+#        "@bazel_tools//platforms:linux",
+#    ]
+#)
+#
+#config_setting(
+#    name = "mac_osx",
+#    constraint_values = [
+#        "@bazel_tools//platforms:osx",
+#    ]
+#)
+#
+#cc_binary(
+#    name = "chatty",
+#    srcs = [
+#        "chatty.c",
+#    ],
+#    deps = [
+#        "//src/cx:cx_lib",
+#    ],
+#    linkopts = select({
+#        ":linux_os": ["-lrt"],
+#        ":mac_osx": ["-lc"],
+#    }),
+#    target_compatible_with = [
+#        "@bazel_tools//platforms:linux",
+#    ],
+#)

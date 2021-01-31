@@ -1,4 +1,4 @@
-load("//src:comparispawn.bzl", "lace_expect_test")
+load("//tool:comparispawn.bzl", "lace_expect_test")
 
 lace_expect_test(
     name = "elastic_cat_test",
