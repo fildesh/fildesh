@@ -274,7 +274,7 @@ dbglog_printf3 (const char* file,
   }
 #ifndef LACE_POSIX_SOURCE
   if (wsaerror != 0) {
-    fprintf_OFile(of, "^^^ wsaerror: %d\n", wsaerror);
+    printf_OFile(of, "^^^ wsaerror: %d\n", wsaerror);
     WSASetLastError(0);
   }
 #endif
