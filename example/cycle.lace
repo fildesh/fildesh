@@ -32,7 +32,7 @@ $(H N)
 # Start at {N} and read subsequent values from {pump}.
 |< zec / $(N) "\n" / -   $(Xv pump)
 # Loop until we hit 1.
-|- sed -u -e '/^1$/q'
+|- sed --line-buffered -e '/^1$/q'
 |- elastic - $(OF i)
 |- zec -paste - / ' -1' /
 |- add

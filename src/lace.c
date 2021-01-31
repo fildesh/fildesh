@@ -1088,6 +1088,25 @@ int lace_util_main (int argi, int argc, char** argv)
   return f (argi, argc, argv);
 }
 
+static
+  void
+fix_known_flags_Command(Command* cmd) {
+  if (eq_cstr("sed", cmd->args.s[0])) {
+    uint i;
+    for (i = 1; i < cmd->args.sz; ++i) {
+      const char* arg = cmd->args.s[i];
+      if (eq_cstr("--line-buffered", arg)) {
+#ifdef __APPLE__
+        const char line_buffering_flag[] = "-l";
+#else
+        const char line_buffering_flag[] = "-u";
+#endif
+        cmd->args.s[i] = add_extra_arg_Command(cmd, line_buffering_flag);
+      }
+    }
+  }
+}
+
 
   static void
 spawn_commands (TableT(Command) cmds)
@@ -1169,6 +1188,7 @@ spawn_commands (TableT(Command) cmds)
       PushTable( argv, dup_cstr (cmd->args.s[0]));
     }
     else {
+      fix_known_flags_Command(cmd);
       PushTable( argv, dup_cstr ("-exec") );
       PushTable( argv, dup_cstr ("-exe") );
       PushTable( argv, dup_cstr (cmd->args.s[0]));

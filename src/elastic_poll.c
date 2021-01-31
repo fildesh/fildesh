@@ -12,7 +12,7 @@
 #include <errno.h>
 #include <stdio.h>
 
-#define DEBUGGING
+/* #define DEBUGGING */
 
 #ifdef DEBUGGING
 #define StateMsg(msg, i, istat)  DBog3("%s %u %d", msg, i, istat)

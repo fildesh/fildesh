@@ -97,6 +97,8 @@ $(X exe) gcc -O3 -o $(OF exe) -xc -
 |- elastic - $(OF^ pump)
 #|- elastic - inspect2.txt
 |- wc -l
+# Remove any weird platform-specific indenting from wordcount.
+|- grep -o -e '[0-9]*'
 |- zec / 'The sum of 1 to ' $(N) ' is ' / -
 |> stdout
 
