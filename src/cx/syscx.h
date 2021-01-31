@@ -48,11 +48,11 @@ lose_sysCx ();
 #include <poll.h>
 #else
 #include <fcntl.h>
+#include <winsock2.h>
 #include <windows.h>
 #include <direct.h>
 #include <io.h>
 #include <process.h>
-#include <winsock2.h>
 #ifdef _MSC_VER
 typedef intptr_t pid_t;
 #endif
