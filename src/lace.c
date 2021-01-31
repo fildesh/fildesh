@@ -198,7 +198,7 @@ lose_Commands (TableT(Command)* cmds)
   uint i;
   UFor( i, cmds->sz ) {
     if (cmds->s[i].kind == RunCommand)
-      kill (cmds->s[i].pid, SIGINT);
+      kill_please_sysCx(cmds->s[i].pid);
     if (cmds->s[i].kind != NCommandKinds)
       lose_Command (&cmds->s[i]);
   }

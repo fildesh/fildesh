@@ -553,6 +553,16 @@ waitpid_sysCx (pid_t pid, int* status)
   return (ret >= 0);
 }
 
+  bool
+kill_please_sysCx(pid_t pid)
+{
+#ifdef LACE_POSIX_SOURCE
+  return (0 == kill(pid, SIGINT));
+#else
+  return TerminateProcess(pid, 1);
+#endif
+}
+
 /**
  * \param path  Return value. Can come in as a hint for the path name.
  **/

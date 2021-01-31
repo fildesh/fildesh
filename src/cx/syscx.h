@@ -93,6 +93,8 @@ void
 execvp_sysCx (char* const* argv);
 bool
 waitpid_sysCx (pid_t pid, int* status);
+bool
+kill_please_sysCx(pid_t pid);
 
 void
 setenv_sysCx (const char* key, const char* val);
