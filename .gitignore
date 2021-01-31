@@ -1,8 +1,5 @@
 
-/bazel-bin
-/bazel-lace
-/bazel-out
-/bazel-testlogs
+/bazel-*
 
 /bld/
 /clang/

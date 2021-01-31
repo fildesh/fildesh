@@ -1292,6 +1292,26 @@ int main_lace(int argi, int argc, char** argv)
     else if (eq_cstr (arg, "-stdout")) {
       stdout_sym = argv[argi++];
     }
+    else if (eq_cstr (arg, "-stdinfile")) {
+      const char* stdin_filepath = argv[argi++];
+      fd_t fd = open_lace_xfd(stdin_filepath);
+      if (fd < 0) {
+        failout_sysCx("Failed to open -stdinfile.");
+      } else if (!dup2_sysCx(fd, 0)) {
+        failout_sysCx("Failed to dup2 -stdinfile.");
+      }
+      closefd_sysCx(fd);
+    }
+    else if (eq_cstr (arg, "-stdoutfile")) {
+      const char* stdout_filepath = argv[argi++];
+      fd_t fd = open_lace_ofd(stdout_filepath);
+      if (fd < 0) {
+        failout_sysCx("Failed to open -stdoutfile.");
+      } else if (!dup2_sysCx(fd, 1)) {
+        failout_sysCx("Failed to dup2 -stdoutfile.");
+      }
+      closefd_sysCx(fd);
+    }
     else {
       /* Optional -f flag.*/
       if (eq_cstr (arg, "-x") || eq_cstr (arg, "-f")) {

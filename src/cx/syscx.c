@@ -388,7 +388,7 @@ dup2_sysCx (fd_t oldfd, fd_t newfd)
 #else
   ret = _dup2 (oldfd, newfd);
 #endif
-  return (ret == 0);
+  return (ret >= 0);
 }
 
   int
