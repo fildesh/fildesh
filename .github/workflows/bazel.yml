@@ -30,4 +30,4 @@ jobs:
       if: failure()
       with:
         name: Test Results (${{ matrix.platform }})
-        path: bazel-testlogs/
+        path: $GITHUB_WORKSPACE/bazel-testlogs/
