@@ -386,9 +386,7 @@ open_lace_ofd(const char* filename)
   return open(filename, flags, mode);
 #else
   const int flags = _O_WRONLY | _O_CREAT | _O_TRUNC | O_APPEND;
-  const int mode
-    = _S_IWUSR | _S_IWGRP | _S_IWOTH
-    | _S_IRUSR | _S_IRGRP | _S_IROTH;
+  const int mode = _S_IREAD | _S_IWRITE;
   return _open(filename, flags, mode);
 #endif
 }
