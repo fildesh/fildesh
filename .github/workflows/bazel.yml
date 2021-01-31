@@ -23,11 +23,11 @@ jobs:
       run: bazel build //...
 
     - name: Test
-      run: bazel test --test_timeout 1 //...
+      run: bazel test --test_timeout 10 //...
 
     - name: Upload Test Results
       uses: actions/upload-artifact@v2
-      if: failure()
+      if: always()
       with:
         name: Test Results (${{ matrix.platform }})
         path: bazel-out/

@@ -38,7 +38,7 @@ jobs:
     - name: Test
       working-directory: ${{runner.workspace}}/bld
       shell: bash
-      run: ctest --timeout 1 -C $BUILD_TYPE
+      run: ctest --timeout 10 -C $BUILD_TYPE
 
     - name: Upload Test Results
       uses: actions/upload-artifact@v2
