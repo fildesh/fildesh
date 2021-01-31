@@ -40,6 +40,6 @@ else ()
 endif ()
 
 add_subdirectory(src)
-add_subdirectory(test)
 add_subdirectory(tool)
+add_subdirectory(test)
 

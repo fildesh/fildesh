@@ -110,9 +110,4 @@ if (UNIX AND NOT APPLE)
 endif ()
 
 
-add_executable(comparispawn
-  comparispawn.c)
-target_link_libraries(comparispawn cx_lib)
-
-
 install(TARGETS lace)
