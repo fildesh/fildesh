@@ -178,9 +178,8 @@ LaceUtilMain(elastic)
       pfd->fd = open_lace_ofd(io->filename);
     }
     if (pfd->fd < 0) {
-      fprintf (stderr, "%s: failed to open: %s\n", argv[0], io->filename);
-      lose_sysCx ();
-      return 1;
+      DBog1("failed to open: %s\n", io->filename);
+      failout_sysCx(0);
     }
   }
 
@@ -189,9 +188,8 @@ LaceUtilMain(elastic)
     pfd = &pollfds.s[i];
     istat = setfd_nonblock_sysCx(pfd->fd);
     if (istat < 0) {
-      fprintf(stderr, "%s: failed to set nonblocking: %s\n", argv[0], io->filename);
-      lose_sysCx ();
-      return 1;
+      DBog1("failed to set nonblocking: %s\n", io->filename);
+      failout_sysCx(0);
     }
   }
 

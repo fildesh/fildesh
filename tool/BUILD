@@ -1,3 +1,5 @@
+load("@bazel_skylib//rules:run_binary.bzl", "run_binary")
+
 cc_binary(
     name = "cembed",
     srcs = [
@@ -28,14 +30,17 @@ cc_binary(
     visibility = ["//visibility:public"],
 )
 
-genrule(
+run_binary(
     name = "exec_sh",
-    tools = [
-        "//src:zec",
+    tool = "//src:zec",
+    args = [
+        "-o",
+        "$(location exec.sh)",
+        "/",
+        "exec \"$@\"",
+        "/",
     ],
-    cmd = "\"$(location //src:zec)\" -o \"$@\" / 'exec \"$$@\"'",
     outs = ["exec.sh"],
-    executable = True,
     testonly = True,
     visibility = ["//visibility:public"],
 )

@@ -184,6 +184,9 @@ failout_sysCx (const char* msg)
   if (msg)
   {
     int err = errno;
+#ifndef LACE_POSIX_SOURCE
+    int wsaerror = WSAGetLastError();
+#endif
     /* Use literal stderr just in case we have memory problems.*/
     FILE* f = stderr;
 
@@ -207,6 +210,11 @@ failout_sysCx (const char* msg)
       fprintf (f, "^^^ Reason: %s\n", msg);
     if (err != 0)
       fprintf (f, "^^^ errno:%d %s\n", err, strerror (err));
+#ifndef LACE_POSIX_SOURCE
+    if (wsaerror != 0)
+      fprintf(f, "^^^ wsaerror:%d\n", wsaerror);
+#endif
+
   }
   lose_sysCx ();
   if (false)
@@ -224,6 +232,9 @@ dbglog_printf3 (const char* file,
 {
   va_list args;
   int err = errno;
+#ifndef LACE_POSIX_SOURCE
+  int wsaerror = WSAGetLastError();
+#endif
   OFile* of = stderr_OFile ();
 
   while (true) {
@@ -261,6 +272,12 @@ dbglog_printf3 (const char* file,
 #endif
     errno = 0;
   }
+#ifndef LACE_POSIX_SOURCE
+  if (wsaerror != 0) {
+    fprintf(f, "^^^ wsaerror:%d\n", wsaerror);
+    WSASetLastError(0);
+  }
+#endif
   flush_OFile (of);
 }
 
@@ -559,7 +576,13 @@ kill_please_sysCx(pid_t pid)
 #ifdef LACE_POSIX_SOURCE
   return (0 == kill(pid, SIGINT));
 #else
-  return TerminateProcess(pid, 1);
+  bool success = false;
+  HANDLE handle = OpenProcess(PROCESS_TERMINATE, false, pid);
+  if (handle) {
+    success = !!TerminateProcess(handle, 1);
+    CloseHandle(handle);
+  }
+  return success;
 #endif
 }
 
