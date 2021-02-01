@@ -151,7 +151,7 @@ static
 write_switch (FILE* out, const char* strname, size_t depth)
 {
   if (depth > 0)  fputc ('\n', out);
-  fprintf(out, "switch (%s[%lu]) {", strname, depth);
+  fprintf(out, "switch (%s[%lu]) {", strname, (unsigned long)depth);
 }
 
 static
@@ -196,7 +196,7 @@ write_switch_file (const char* ofilename,
 
   if (array_name) {
     fprintf (out, "static const char* const %s[%lu] = {",
-             array_name, nlines);
+             array_name, (unsigned long)nlines);
     for (i = 0; i < nlines; ++i) {
       size_t j;
       if (i > 0)  fputc (',', out);
@@ -234,11 +234,11 @@ write_switch_file (const char* ofilename,
       /* Nothing.*/
     }
     else if (!a[depth+1]) {
-      fprintf(out, "if(!%s[%lu])", strname, depth+1);
+      fprintf(out, "if(!%s[%lu])", strname, (unsigned long)depth+1);
     }
     else {
       size_t j;
-      fprintf(out, "if(0==strcmp(&%s[%lu],\"", strname, depth+1);
+      fprintf(out, "if(0==strcmp(&%s[%lu],\"", strname, (unsigned long)depth+1);
       for (j = depth+1; a[j]; ++j) {
         write_escaped_char (out, a[j]);
       }

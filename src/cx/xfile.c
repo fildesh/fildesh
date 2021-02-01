@@ -473,7 +473,16 @@ xget_luint_XFile (XFile* xf, luint* x)
   return true;
 }
 
-bool xget_ujint_XFile (XFile* xf, ujint* x) { return xget_luint_XFile (xf, x); }
+  bool
+xget_ujint_XFile (XFile* xf, ujint* x) {
+  const char* s;
+  skipds_XFile (xf, WhiteSpaceChars);
+  tods_XFile (xf, WhiteSpaceChars);
+  s = xget_ujint_cstr (x, (char*)&xf->buf.s[xf->off]);
+  if (!s)  return false;
+  xf->off = IdxElt( xf->buf.s, s );
+  return true;
+}
 
   bool
 xget_real_XFile (XFile* xf, real* x)

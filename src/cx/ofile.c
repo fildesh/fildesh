@@ -37,6 +37,7 @@ flush_OFile (OFile* of)
 }
 
 static void do_nothing_OFile () {}
+static bool do_nothing_true_OFile () {return true;}
 
   OFile*
 null_OFile ()
@@ -48,7 +49,7 @@ null_OFile ()
   if (!vt_initialized) {
     void (*f) () = do_nothing_OFile;
     memset (&vt, 0, sizeof (vt));
-    vt.flush_fn = (bool (*) (OFile*)) f;
+    vt.flush_fn = (bool (*) (OFile*)) do_nothing_true_OFile;
     vt.free_fn = (void (*) (OFile*)) f;
     vt.close_fn = (void (*) (OFile*)) f;
     vt.oput_int_fn = (void (*) (OFile*, int)) f;

@@ -54,13 +54,19 @@ xget_luint_cstr (luint* ret, const char* in)
   if (out == in)  out = 0;
   if (out)
   {
-    *ret = (zuint) v;
+    *ret = v;
     if (*ret != v)  out = 0;
   }
   return out;
 }
 
-char* xget_ujint_cstr (ujint* ret, const char* in) { return xget_luint_cstr (ret, in); }
+char* xget_ujint_cstr (ujint* ret, const char* in) {
+  luint x;
+  char* out = xget_luint_cstr (&x, in);
+  assert(ret);
+  *ret = x;
+  return out;
+}
 
   char*
 xget_real_cstr (real* ret, const char* in)
