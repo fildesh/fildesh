@@ -142,6 +142,9 @@ init_sysCx (int* pargc, char*** pargv)
   stdout_OFileB ();
   signal (SIGSEGV, signal_hook_sysCx);
 #ifndef LACE_POSIX_SOURCE
+  _setmode(_fileno(stdin), _O_BINARY);
+  _setmode(_fileno(stdout), _O_BINARY);
+  _setmode(_fileno(stderr), _O_BINARY);
   {
     WSADATA wsaData;
     WSAStartup(MAKEWORD(2, 2), &wsaData);
@@ -182,9 +185,9 @@ lose_sysCx ()
 #ifndef LACE_POSIX_SOURCE
   WSACleanup();
 #endif
-  lose_XFileB (stdin_XFileB ());
-  lose_OFileB (stdout_OFileB ());
-  lose_OFileB (stderr_OFileB ());
+  lose_XFileB(stdin_XFileB ());
+  lose_OFileB(stdout_OFileB ());
+  lose_OFileB(stderr_OFileB ());
 }
 
   void
@@ -394,6 +397,13 @@ dup2_sysCx (fd_t oldfd, fd_t newfd)
   int
 open_lace_xfd(const char* filename)
 {
+  static const char dev_fd_prefix[] = "/dev/fd/";
+  if (pfxeq_cstr(dev_fd_prefix, filename)) {
+    int fd = -1;
+    xget_int_cstr(&fd, &filename[strlen(dev_fd_prefix)]);
+    return fd;
+  }
+
 #ifdef LACE_POSIX_SOURCE
   return open(filename, O_RDONLY);
 #else
@@ -404,15 +414,26 @@ open_lace_xfd(const char* filename)
   int
 open_lace_ofd(const char* filename)
 {
+  static const char dev_fd_prefix[] = "/dev/fd/";
 #ifdef LACE_POSIX_SOURCE
   const int flags =  O_WRONLY | O_CREAT | O_TRUNC | O_APPEND;
   const int mode
     = S_IWUSR | S_IWGRP | S_IWOTH
     | S_IRUSR | S_IRGRP | S_IROTH;
-  return open(filename, flags, mode);
 #else
   const int flags = _O_WRONLY | _O_CREAT | _O_TRUNC | O_APPEND;
   const int mode = _S_IREAD | _S_IWRITE;
+#endif
+
+  if (pfxeq_cstr(dev_fd_prefix, filename)) {
+    int fd = -1;
+    xget_int_cstr(&fd, &filename[strlen(dev_fd_prefix)]);
+    return fd;
+  }
+
+#ifdef LACE_POSIX_SOURCE
+  return open(filename, flags, mode);
+#else
   return _open(filename, flags, mode);
 #endif
 }
@@ -440,13 +461,23 @@ write_sysCx (fd_t fd, const void* buf, long sz)
   bool
 closefd_sysCx (fd_t fd)
 {
-  int ret = -1;
+  int istat = -1;
+  if (fd == 0 && stdin_XFileB()->fb.f) {
+    close_XFileB(stdin_XFileB());
+    return true;
+  } else if (fd == 1 && stdout_OFileB()->fb.f) {
+    close_OFileB(stdout_OFileB());
+    return true;
+  } else if (fd == 2 && stderr_OFileB()->fb.f) {
+    close_OFileB(stderr_OFileB());
+    return true;
+  }
 #ifdef LACE_POSIX_SOURCE
-  ret = close (fd);
+  istat = close(fd);
 #else
-  ret = _close (fd);
+  istat = _close(fd);
 #endif
-  return (ret == 0);
+  return (istat == 0);
 }
 
   FILE*
@@ -484,6 +515,23 @@ poll_sysCx(struct pollfd* pollfds, size_t npollfds, int timeout)
   return WSAPoll(pollfds, npollfds, timeout);
 #endif
 }
+
+#ifndef LACE_POSIX_SOURCE
+static
+  char*
+escape_windows_cmd_arg(const char* arg)
+{
+  /* We should escape quotes and backslashes!*/
+  const uint arglen = strlen(arg);
+  DeclTable( char, escaped );
+  EnsizeTable( escaped, arglen + 3 );
+  escaped.s[0] = '\"';
+  memcpy(&escaped.s[1], arg, arglen);
+  escaped.s[arglen+1] = '\"';
+  escaped.s[arglen+2] = '\0';
+  return escaped.s;
+}
+#endif
 
   static void
 oput_execvp_args (const char* fn, char* const* argv)
@@ -527,7 +575,22 @@ spawnvp_sysCx (char* const* argv)
     execvp_sysCx (argv);
   }
 #else
-  pid = _spawnvp (_P_NOWAIT, argv[0], argv);
+  DeclTable( cstr, escaped_args );
+  PushTable( escaped_args, dup_cstr(argv[0]) );
+  while (argv[escaped_args.sz]) {
+    char* escaped_arg = escape_windows_cmd_arg(argv[escaped_args.sz]);
+    PushTable( escaped_args, escaped_arg );
+  }
+  PushTable( escaped_args, 0 );
+
+  pid = _spawnvp (_P_NOWAIT, escaped_args.s[0], escaped_args.s);
+
+  CPopTable( escaped_args, 1 );
+  while (escaped_args.sz > 0) {
+    free(*TopTable(escaped_args));
+    CPopTable(escaped_args, 1);
+  }
+  LoseTable(escaped_args);
 #endif
   if (pid < 0)
   {
@@ -700,7 +763,7 @@ cloexec_sysCx (fd_t fd, bool b)
 #else
   SetHandleInformation ((HANDLE) _get_osfhandle (fd),
       HANDLE_FLAG_INHERIT,
-      b ?  HANDLE_FLAG_INHERIT : 0);
+      b ? 0 : HANDLE_FLAG_INHERIT);
 #endif
 }
 

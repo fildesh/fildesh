@@ -299,9 +299,17 @@ pathname2_AlphaTab (AlphaTab* pathname, const char* opt_dir, const char* filenam
   bool
 open_FileB (FileB* f, const char* pathname, const char* filename)
 {
+  static const char dev_fd_prefix[] = "/dev/fd/";
   uint sepidx = pathname2_AlphaTab (&f->pathname, pathname, filename);
 
-  f->f = fopen (f->pathname.s, (f->sink ? "wb" : "rb"));
+  if (pfxeq_cstr(dev_fd_prefix, f->pathname.s)) {
+    int fd = -1;
+    xget_int_cstr(&fd, &f->pathname.s[strlen(dev_fd_prefix)]);
+    f->fd = fd;
+    f->f = fdopen_sysCx(fd, (f->sink ? "wb" : "rb"));
+  } else {
+    f->f = fopen (f->pathname.s, (f->sink ? "wb" : "rb"));
+  }
 
   assign2_AlphaTab (&f->filename, &f->pathname, sepidx, f->pathname.sz);
   assign2_AlphaTab (&f->pathname, &f->pathname, 0, sepidx);

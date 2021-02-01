@@ -120,8 +120,14 @@ init_Command (Command* cmd)
 close_Command (Command* cmd)
 {
   uint i;
-  if (cmd->stdis >= 0)  closefd_sysCx (cmd->stdis);
-  if (cmd->stdos >= 0)  closefd_sysCx (cmd->stdos);
+  if (cmd->stdis >= 0) {
+    closefd_sysCx(cmd->stdis);
+    cmd->stdis = -1;
+  }
+  if (cmd->stdos >= 0) {
+    closefd_sysCx (cmd->stdos);
+    cmd->stdos = -1;
+  }
   if (cmd->is.sz > 0)
   {
     UFor( i, cmd->is.sz )
@@ -1312,6 +1318,16 @@ int main_lace(int argi, int argc, char** argv)
       }
       closefd_sysCx(fd);
     }
+    else if (eq_cstr (arg, "-stderrfile")) {
+      const char* stdout_filepath = argv[argi++];
+      fd_t fd = open_lace_ofd(stdout_filepath);
+      if (fd < 0) {
+        failout_sysCx("Failed to open -stderrfile.");
+      } else if (!dup2_sysCx(fd, 2)) {
+        failout_sysCx("Failed to dup2 -stderrfile.");
+      }
+      closefd_sysCx(fd);
+    }
     else {
       /* Optional -f flag.*/
       if (eq_cstr (arg, "-x") || eq_cstr (arg, "-f")) {
@@ -1419,10 +1435,10 @@ int main_lace(int argi, int argc, char** argv)
 
   spawn_commands (cmds);
 
-  for (i = 0; i < cmds.sz; ++i)
-  {
-    if (cmds.s[i].kind == RunCommand)
+  for (i = 0; i < cmds.sz; ++i) {
+    if (cmds.s[i].kind == RunCommand) {
       waitpid_sysCx (cmds.s[i].pid, 0);
+    }
 
     lose_Command (&cmds.s[i]);
   }
