@@ -16,8 +16,10 @@
 
 #ifdef DEBUGGING
 #define StateMsg(msg)  DBog0(msg)
+#define StateMsg1(msg, x)  DBog1(msg, x)
 #else
 #define StateMsg(msg)
+#define StateMsg1(msg, x)
 #endif
 
 typedef struct IOState IOState;
@@ -42,9 +44,12 @@ Bool all_done (const TableT(IOState)* ios)
 {
   uint i;
   for (i = 1; i < ios->sz; ++i) {
-    if (!ios->s[i].done)
+    if (!ios->s[i].done) {
+      StateMsg("all done? No");
       return 0;
+    }
   }
+  StateMsg("all done? Yes");
   return 1;
 }
 
@@ -57,43 +62,74 @@ LaceUtilMain(elastic)
   IOState* x; /* Input.*/
   uint i;
 
+  /**** BEGIN ARGUMENT_PARSING ****/
   GrowTable( ios, 1 );
   Zeroize( ios.s[0] );
-  ios.s[0].aio.aio_fildes = 0;
-
-  if (argi == argc) {
-    IOState* o = Grow1Table( ios );
-    Zeroize( *o );
-    o->aio.aio_fildes = 1;
-  }
+  ios.s[0].aio.aio_fildes = -1;
 
   while (argi < argc) {
     const char* arg = argv[argi++];
-    const int flags
-      = O_WRONLY | O_CREAT | O_TRUNC | O_ASYNC | O_APPEND;
-    const int mode
-      = S_IWUSR | S_IWGRP | S_IWOTH
-      | S_IRUSR | S_IRGRP | S_IROTH;
-    IOState* o;
+    IOState* io;
     fd_t fd;
 
-    if (eq_cstr (arg, "-")) {
-      fd = 1;
+    if (eq_cstr (arg, "-x")) {
+      if (argi == argc) {
+        fprintf(stderr, "%s: need input file after -x.\n", argv[0]);
+        return 1;
+      }
+      arg = argv[argi++];
+      fd = open_lace_xfd(arg);
+      io = &ios.s[0];
+    } else if (eq_cstr (arg, "-o")) {
+      if (argi == argc) {
+        fprintf(stderr, "%s: need output file after -o.\n", argv[0]);
+        return 1;
+      }
+      arg = argv[argi++];
+      fd = open_lace_ofd(arg);
+      io = Grow1Table( ios );
+    } else {
+      fd = open_lace_ofd(arg);
+      io = Grow1Table( ios );
     }
-    else {
-      fd = open (arg, flags, mode);
-    }
+    Zeroize( *io );
+    io->aio.aio_fildes = fd;
 
     if (fd < 0) {
       fprintf (stderr, "%s: failed to open: %s\n", argv[0], arg);
       return 1;
     }
-
-    GrowTable( ios, 1 );
-    o = TopTable( ios );
-    Zeroize( *o );
-    o->aio.aio_fildes = fd;
+    if (0 > setfd_async_sysCx(fd)) {
+      fprintf (stderr, "%s: failed to set O_ASYNC on %s.\n", argv[0], arg);
+      return 1;
+    }
   }
+
+  /* Default input is stdin.*/
+  if (ios.s[0].aio.aio_fildes == -1) {
+    fd_t fd = open_lace_xfd("-");
+    IOState* io = &ios.s[0];
+    io->aio.aio_fildes = fd;
+    if (0 > setfd_async_sysCx(fd)) {
+      StateMsg("setfd_async_sysCx(stdin)");
+      fprintf (stderr, "%s: failed to set O_ASYNC on stdin.\n", argv[0]);
+      return 1;
+    }
+  }
+  /* Default output is stdout.*/
+  if (ios.sz == 1) {
+    fd_t fd = open_lace_ofd("-");
+    IOState* io = Grow1Table( ios );
+    Zeroize( *io );
+    io->aio.aio_fildes = fd;
+    if (0 > setfd_async_sysCx(fd)) {
+      StateMsg("setfd_async_sysCx(stdout)");
+      fprintf (stderr, "%s: failed to set O_ASYNC on stdout.\n", argv[0]);
+      return 1;
+    }
+  }
+  StateMsg("Done opening files.");
+  /**** END ARGUMENT_PARSING ****/
 
   AllocTo( aiocb_buf, ios.sz );
 
@@ -107,11 +143,12 @@ LaceUtilMain(elastic)
     if (!x->pending && !x->done) {
       x->aio.aio_buf = x->buf.s;
       x->aio.aio_nbytes = x->buf.sz;
-      istat = aio_read (&x->aio);
+      istat = aio_read(&x->aio);
       if (istat == 0) {
         x->pending = 1;
       }
       else {
+        StateMsg("aio_read() error");
         x->done = 1;
         ClearTable( x->buf );
       }
@@ -130,11 +167,12 @@ LaceUtilMain(elastic)
 
       o->aio.aio_buf = o->buf.s;
       o->aio.aio_nbytes = o->buf.sz;
-      istat = aio_write (&o->aio);
+      istat = aio_write(&o->aio);
       if (istat == 0) {
         o->pending = 1;
       }
       else {
+        StateMsg("aio_write() error");
         o->done = 1;
         ClearTable( o->buf );
       }
@@ -149,7 +187,7 @@ LaceUtilMain(elastic)
           aiocb_buf[n++] = &io->aio;
         }
       }
-      istat = aio_suspend (aiocb_buf, n, 0);
+      istat = aio_suspend(aiocb_buf, n, 0);
     } while (istat != 0 && errno == EINTR);
 
     if (istat != 0) {
@@ -161,7 +199,7 @@ LaceUtilMain(elastic)
     /* If statement that we break from...*/
     if (x->pending) do {
       zuint sz;
-      istat = aio_error (&x->aio);
+      istat = aio_error(&x->aio);
 
       if (istat == EINPROGRESS) {
         break;
@@ -174,12 +212,14 @@ LaceUtilMain(elastic)
         ClearTable( x->buf );
         break;
       }
-      sstat = aio_return (&x->aio);
+      sstat = aio_return(&x->aio);
       if (sstat <= 0) {
         x->done = 1;
         ClearTable( x->buf );
         break;
       }
+      StateMsg1("aio_return() -> %d", (int)sstat);
+      x->aio.aio_offset += sstat;
 
       sz = x->buf.sz;
       x->buf.sz = sstat;
@@ -197,7 +237,7 @@ LaceUtilMain(elastic)
       IOState* o = &ios.s[i];
 
       if (!o->pending || o->done)  continue;
-      istat = aio_error (&o->aio);
+      istat = aio_error(&o->aio);
 
       if (istat == EINPROGRESS) {
         continue;
@@ -212,7 +252,7 @@ LaceUtilMain(elastic)
         continue;
       }
 
-      sstat = aio_return (&o->aio);
+      sstat = aio_return(&o->aio);
       if (sstat < 0) {
         StateMsg( "aio_return(write)" );
         o->done = 1;
@@ -220,13 +260,14 @@ LaceUtilMain(elastic)
         ClearTable( o->xbuf );
         continue;
       }
+      o->aio.aio_offset += sstat;
 
       if ((zuint)sstat == o->buf.sz) {
         ClearTable( o->buf );
       }
       else {
         zuint sz = o->buf.sz - (zuint) sstat;
-        memmove (o->buf.s, &o->buf.s[sstat], sz);
+        memmove(o->buf.s, &o->buf.s[sstat], sz);
         ResizeTable( o->buf, sz );
       }
     }
@@ -235,15 +276,15 @@ LaceUtilMain(elastic)
   UFor( i, ios.sz ) {
     fd_t fd = ios.s[i].aio.aio_fildes;
     if (ios.s[i].pending) {
-      aio_cancel (fd, &ios.s[i].aio);
+      aio_cancel(fd, &ios.s[i].aio);
     }
-    close (fd);
+    close(fd);
     LoseTable( ios.s[i].buf );
     LoseTable( ios.s[i].xbuf );
   }
   LoseTable( ios );
 
-  lose_sysCx ();
+  lose_sysCx();
   return 0;
 }
 

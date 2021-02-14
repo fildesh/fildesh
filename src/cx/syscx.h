@@ -86,6 +86,8 @@ fdopen_sysCx (fd_t fd, const char* mode);
 int
 setfd_nonblock_sysCx(fd_t fd);
 int
+setfd_async_sysCx(fd_t fd);
+int
 poll_sysCx(struct pollfd* pollfds, size_t npollfds, int timeout);
 pid_t
 spawnvp_sysCx (char* const* argv);

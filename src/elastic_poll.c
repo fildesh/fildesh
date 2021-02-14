@@ -91,8 +91,10 @@ handle_read_write(TableT(IOState) ios, TableT(pollfd) pollfds) {
       sstat = read_sysCx(pfd->fd, io->buf.s, io->buf.sz);
       if (sstat < 0) {
         rwerrno = errno;
-      }
-      if (sstat > 0) {
+      } else if (sstat == 0) {
+        StateMsg("No input read. Must be done!", 0, 0);
+        close_IOState(io, pfd);
+      } else /* sstat > 0 */ {
         size_t tmp_sz = io->buf.sz;
         uint j;
         io->buf.sz = sstat;
@@ -149,39 +151,65 @@ LaceUtilMain(elastic)
   DeclTable( pollfd, pollfds );
   uint i;
 
+  /* Initialize input.*/
   io = Grow1Table( ios );
   pfd = Grow1Table( pollfds );
-
   Zeroize( *io );
-  io->filename = "/dev/stdin";
   GrowTable( io->buf, BUFSIZ );
-  pfd->fd = 0;
+  pfd->fd = -1;
 
-  if (argi == argc) {
-    io = Grow1Table( ios );
-    pfd = Grow1Table(pollfds);
-    Zeroize( *io );
-    io->filename = "/dev/stdout";
-    pfd->fd = 1;
-  }
+  /**** BEGIN ARGUMENT_PARSING ****/
   while (argi < argc) {
-    io = Grow1Table( ios );
-    pfd = Grow1Table( pollfds );
+    const char* arg = argv[argi++];
 
-    Zeroize( *io );
-    io->filename = argv[argi++];
+    if (eq_cstr(arg, "-x")) {
+      if (argi == argc) {
+        failout_sysCx("Need input file after -x.");
+      }
+      arg = argv[argi++];
 
-    if (eq_cstr (io->filename, "-")) {
-      pfd->fd = 1;
-    }
-    else {
+      io = &ios.s[0];
+      pfd = &pollfds.s[0];
+
+      io->filename = arg;
+      pfd->fd = open_lace_xfd(io->filename);
+    } else {
+      if (eq_cstr(arg, "-o")) {
+        if (argi == argc) {
+          failout_sysCx("Need input file after -o.");
+        }
+        arg = argv[argi++];
+      }
+
+      io = Grow1Table( ios );
+      pfd = Grow1Table( pollfds );
+
+      Zeroize( *io );
+      io->filename = arg;
       pfd->fd = open_lace_ofd(io->filename);
     }
+
     if (pfd->fd < 0) {
       DBog1("failed to open: %s\n", io->filename);
       failout_sysCx(0);
     }
   }
+
+  if (pollfds.s[0].fd == -1) {
+    io = &ios.s[0];
+    pfd = &pollfds.s[0];
+    io->filename = "/dev/stdin";
+    pfd->fd = open_lace_xfd("-");
+  }
+
+  if (pollfds.sz == 1) {
+    io = Grow1Table( ios );
+    pfd = Grow1Table(pollfds);
+    Zeroize( *io );
+    io->filename = "/dev/stdout";
+    pfd->fd = open_lace_ofd("-");
+  }
+  /**** END ARGUMENT_PARSING ****/
 
   for (i = 0; i < ios.sz; ++i) {
     io = &ios.s[i];

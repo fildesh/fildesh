@@ -398,6 +398,9 @@ dup2_sysCx (fd_t oldfd, fd_t newfd)
 open_lace_xfd(const char* filename)
 {
   static const char dev_fd_prefix[] = "/dev/fd/";
+  if (eq_cstr("-", filename)) {
+    return 0;
+  }
   if (pfxeq_cstr(dev_fd_prefix, filename)) {
     int fd = -1;
     xget_int_cstr(&fd, &filename[strlen(dev_fd_prefix)]);
@@ -425,6 +428,9 @@ open_lace_ofd(const char* filename)
   const int mode = _S_IREAD | _S_IWRITE;
 #endif
 
+  if (eq_cstr("-", filename)) {
+    return 1;
+  }
   if (pfxeq_cstr(dev_fd_prefix, filename)) {
     int fd = -1;
     xget_int_cstr(&fd, &filename[strlen(dev_fd_prefix)]);
@@ -503,6 +509,21 @@ setfd_nonblock_sysCx(fd_t fd)
 #else
   unsigned long arg = 1;
   return ioctlsocket(fd, FIONBIO, &arg);
+#endif
+}
+
+  int
+setfd_async_sysCx(fd_t fd)
+{
+#ifdef LACE_POSIX_SOURCE
+  int istat;
+  istat = fcntl(fd, F_GETFD);
+  if (istat < 0) {
+    return istat;
+  }
+  return fcntl(fd, F_SETFD, istat | O_ASYNC);
+#else
+  failout_sysCx("setfd_async_sysCx() not implemented.");
 #endif
 }
 

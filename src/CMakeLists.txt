@@ -1,12 +1,24 @@
 
 add_subdirectory(cx)
 
+if (WIN32 OR APPLE)
+  set (ELASTIC_SOURCE "elastic_poll.c")
+else()
+  set (ELASTIC_SOURCE "elastic_aio.c")
+endif()
+
+set (AIO_LIB "rt")
+if (APPLE)
+  set (AIO_LIB "c")
+endif()
+
+
 add_executable(lace
   "lace.c"
   "utilace.h"
   "add.c"
   "best-match.c"
-  "elastic_poll.c"
+  "${ELASTIC_SOURCE}"
   "execfd.c"
   "godo.c"
   "ssh-all.c"
@@ -21,6 +33,10 @@ add_executable(lace
 set_property(TARGET lace
   APPEND PROPERTY COMPILE_DEFINITIONS MAIN_LACE_EXECUTABLE)
 target_link_libraries(lace cx_lib)
+if (UNIX AND NOT APPLE)
+  target_link_libraries(lace ${AIO_LIB})
+endif()
+
 
 
 
@@ -85,12 +101,7 @@ add_executable(zec
 target_link_libraries(zec cx_lib)
 
 
-set (AIO_LIB "rt")
-if (APPLE)
-  set (AIO_LIB "c")
-endif()
-
-if (UNIX AND NOT APPLE)
+if (UNIX)
   add_executable(elastic_aio elastic_aio.c utilace.h)
   target_link_libraries (elastic_aio cx_lib ${AIO_LIB})
   set_property (TARGET elastic_aio
