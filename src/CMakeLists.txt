@@ -121,4 +121,5 @@ if (UNIX AND NOT APPLE)
 endif ()
 
 
-install(TARGETS lace)
+install(TARGETS lace
+  RUNTIME DESTINATION bin)
