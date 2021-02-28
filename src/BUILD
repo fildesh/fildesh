@@ -28,6 +28,19 @@ cc_binary(
 )
 
 cc_binary(
+    name = "elastic_pthread",
+    srcs = [
+        "elastic_pthread.c",
+        "utilace.h",
+    ],
+    deps = [
+        "//src/cx:cx_lib",
+    ],
+    linkopts = ["-lpthread"],
+    visibility = ["//visibility:public"],
+)
+
+cc_binary(
     name = "zec",
     srcs = [
         "zec.c",

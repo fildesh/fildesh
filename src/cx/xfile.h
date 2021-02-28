@@ -47,6 +47,8 @@ void
 lose_XFile (XFile* xf);
 void
 free_XFile (XFile* xf);
+bool
+xget_chunk_XFile (XFile* xf);
 void
 flush_XFile (XFile* f);
 

@@ -195,10 +195,8 @@ setfmt_XFileB (XFileB* xfb, FileB_Format fmt)
   nullt0 = nullt_FileB (&xfb->fb);
   xfb->fb.fmt = fmt;
   nullt1 = nullt_FileB (&xfb->fb);
-  if (nullt0 != nullt1)
-  {
-    if (nullt0)  xf->off += 1;
-    else         xf->buf.sz -= 1;
+  if (nullt0 && !nullt1) {
+    xf->buf.sz -= 1;
   }
 }
 
@@ -566,7 +564,7 @@ oputn_raw_byte_OFileB (OFileB* ofb, const byte* a, zuint n)
 {
   OFile* const of = &ofb->of;
   const zuint ntotal = of->off + n;
-  if (ntotal <= allocsz_Table ((Table*) &of->buf))
+  if (ntotal <= AllocszTable(of->buf))
   {
     memcpy (&of->buf.s[of->off], a, n);
     of->off = ntotal;

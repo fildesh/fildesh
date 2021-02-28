@@ -691,9 +691,8 @@ mktmppath_sysCx (AlphaTab* path)
 #else
   pid_t pid = _getpid ();
 #endif
-  OFile of[1];
+  OFile of[1] = {DEFAULT_OFile};
   zuint i;
-  init_OFile (of);
 
 #ifdef LACE_POSIX_SOURCE
   v = getenv ("TMPDIR");
