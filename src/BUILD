@@ -6,7 +6,8 @@ cc_binary(
         "utilace.h",
         "add.c",
         "best-match.c",
-        "elastic_poll.c",
+        #"elastic_poll.c",
+        "elastic_pthread.c",
         "execfd.c",
         "godo.c",
         "ssh-all.c",
@@ -24,6 +25,7 @@ cc_binary(
     deps = [
         "//src/cx:cx_lib",
     ],
+    linkopts = ["-lpthread"],
     visibility = ["//:__pkg__"],
 )
 
