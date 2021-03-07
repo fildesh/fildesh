@@ -160,7 +160,7 @@ AlphaTab_OFile (OFile* of, zuint off)
 {
   AlphaTab t = DEFAULT_AlphaTab;
   t.s = (char*) &of->buf.s[off];
-  t.sz = (of->off - off) / sizeof(char);
+  t.sz = (of->off - off + 1) / sizeof(char);
   return t;
 }
 

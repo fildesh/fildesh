@@ -97,3 +97,10 @@ cc_test(
     deps = [":cx_lib"],
     size = "small",
 )
+
+cc_test(
+    name = "tmpdir_test",
+    srcs = ["tmpdir_test.c"],
+    deps = [":cx_lib"],
+    size = "small",
+)
