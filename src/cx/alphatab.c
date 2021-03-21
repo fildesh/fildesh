@@ -25,20 +25,7 @@ xget_uint_cstr (uint* ret, const char* in)
   char*
 xget_int_cstr (int* ret, const char* in)
 {
-  long v;
-  char* out = 0;
-
-  assert (ret);
-  assert (in);
-  v = strtol (in, &out, 10);
-
-  if (out == in)  out = 0;
-  if (out)
-  {
-    *ret = (int) v;
-    if (*ret != v)  out = 0;
-  }
-  return out;
+  return lace_parse_int(ret, in);
 }
 
   char*

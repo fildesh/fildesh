@@ -9,7 +9,7 @@ typedef struct LaceX LaceX;
 
 struct LaceX_VTable
 {
-  size_t (*get_chunk_fn) (LaceX*);
+  size_t (*read_fn) (LaceX*);
   void (*close_fn) (LaceX*);
   void (*free_fn) (LaceX*);
 };
@@ -33,6 +33,15 @@ struct LaceXF {
 #if __STDC_VERSION__ < 199901L && !defined(inline)
 #define inline __inline
 #endif
+
+size_t read_LaceX(LaceX*);
+void close_LaceX(LaceX*);
+
+void open_LaceXF(LaceXF* f, const char* filename);
+void close_LaceXF(LaceXF* f);
+
+char* lace_parse_int(int* ret, const char* in);
+
 
 static inline
   void
@@ -64,7 +73,6 @@ static inline
 mpop_LaceA_(void** at, size_t* count, uint8_t* allocated_lgcount,
             size_t element_size, size_t capac,
             void* (*realloc_fn) (void*, size_t))
-
 {
   *count -= capac;
   if (*allocated_lgcount == UCHAR_MAX) {

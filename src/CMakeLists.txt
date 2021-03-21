@@ -1,5 +1,11 @@
 
+add_library(lace_lib
+  "string.c"
+  )
+
+
 add_subdirectory(cx)
+
 
 if (WIN32 OR APPLE)
   set (ELASTIC_SOURCE "elastic_poll.c")
@@ -36,7 +42,6 @@ target_link_libraries(lace cx_lib)
 if (UNIX AND NOT APPLE)
   target_link_libraries(lace ${AIO_LIB})
 endif()
-
 
 
 

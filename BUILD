@@ -7,8 +7,8 @@ alias(
 
 cc_library(
     name = "lace_lib",
-    srcs = [
-        "//include:lace.h",
+    deps = [
+        "//src:lace_lib",
     ],
     includes = [
         "include",

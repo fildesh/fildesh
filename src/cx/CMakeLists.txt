@@ -25,6 +25,7 @@ add_library (cx_lib
   "xfile.c"
   "xfile.h"
   )
+target_link_libraries(cx_lib lace_lib)
 if (WIN32)
   target_link_libraries(cx_lib ws2_32)
 endif()

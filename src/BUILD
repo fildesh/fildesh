@@ -1,4 +1,16 @@
 
+cc_library(
+    name = "lace_lib",
+    srcs = [
+        "string.c",
+        "//include:lace.h",
+    ],
+    copts = [
+        "-Iinclude",
+    ],
+    visibility = ["//visibility:public"],
+)
+
 cc_binary(
     name = "lace",
     srcs = [
