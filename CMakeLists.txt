@@ -39,6 +39,7 @@ else ()
 
 endif ()
 
+include_directories(include)
 add_subdirectory(src)
 add_subdirectory(tool)
 add_subdirectory(test)

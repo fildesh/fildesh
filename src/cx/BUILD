@@ -53,6 +53,9 @@ cc_library(
         ":mac_osx": [],
         ":windows_os": ["-DEFAULTLIB:ws2_32.lib"],
     }),
+    deps = [
+        "//:lace_lib",
+    ],
     visibility = ["//visibility:public"],
 )
 

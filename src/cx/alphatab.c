@@ -61,7 +61,7 @@ xget_luint_cstr (luint* ret, const char* in)
 }
 
 char* xget_ujint_cstr (ujint* ret, const char* in) {
-  luint x;
+  luint x = 0;
   char* out = xget_luint_cstr (&x, in);
   assert(ret);
   *ret = x;
