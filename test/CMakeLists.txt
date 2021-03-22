@@ -1,4 +1,6 @@
 
+add_subdirectory(src)
+
 set (lace_exe "$<TARGET_FILE:lace>")
 set (zec_exe "$<TARGET_FILE:zec>")
 

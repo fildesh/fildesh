@@ -2,6 +2,7 @@
 cc_library(
     name = "lace_lib",
     srcs = [
+        "instream.c",
         "string.c",
         "//include:lace.h",
     ],

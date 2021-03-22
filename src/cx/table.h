@@ -5,7 +5,6 @@
 #ifndef Table_H_
 #define Table_H_
 #ifndef __OPENCL_VERSION__
-#include "lace.h"
 #include "def.h"
 
 #include <stdlib.h>
@@ -270,26 +269,14 @@ qual_inline
   void*
 grow1_Table (Table* t)
 {
-  grow_Table (t, 1);
-  return top_Table (t);
+  return grow_LaceA_(&t->s, &t->sz, &t->alloc_lgsz, t->elsz,
+                     1, realloc);
 }
 
-/** Don't use this... It's a hack for the Grow1Table() macro.**/
-qual_inline
-  void
-synhax_grow1_Table (void* ps, void* s, zuint* sz,
-    TableElSz elsz, bitint* alloc_lgsz)
-{
-  Table t = dflt4_Table (s, *sz, elsz, *alloc_lgsz);
-  grow1_Table (&t);
-  memcpy (ps, &t.s, sizeof(void*));
-  *alloc_lgsz = t.alloc_lgsz;
-  *sz = t.sz;
-}
 #define Grow1Table( t ) \
-  (synhax_grow1_Table (&(t).s, (t).s, &(t).sz, \
-                       sizeof(*(t).s), &(t).alloc_lgsz), \
-                       TopTable( t ))
+  (grow_LaceA_((void**)&(t).s, &(t).sz, &(t).alloc_lgsz, \
+               sizeof(*(t).s), 1, realloc), \
+   TopTable( t ))
 #define DeclGrow1Table( S, x, t ) \
   TableElT_##S* const x = Grow1Table( t )
 #define PushTable( table, x ) \

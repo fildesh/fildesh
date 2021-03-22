@@ -4,11 +4,11 @@
  **/
 #ifndef DEF_H_
 #define DEF_H_
+
+#include "lace.h"
+
 #ifndef __OPENCL_VERSION__
 #include <float.h>
-#include <limits.h>
-#include <stddef.h>
-#include <stdint.h>
 #endif  /* #ifndef __OPENCL_VERSION__ */
 
 typedef int Bit;
@@ -28,15 +28,8 @@ typedef sign_t Sign;
  **/
 typedef sign_t (* PosetCmpFn) (const void*, const void*);
 
-typedef char Bool;
+typedef bool Bool;
 #define MPI_Bool MPI_CHAR
-
-/** Define bool.**/
-#if !defined(__cplusplus) && !defined(__OPENCL_VERSION__)
-typedef char bool;
-#define true 1
-#define false 0
-#endif
 
 typedef unsigned char byte;
 #define BYTE_BIT CHAR_BIT
@@ -139,7 +132,6 @@ typedef float real;
 
 
 #if __STDC_VERSION__ < 199901L
-#define inline __inline
 #ifdef _MSC_VER
 #define restrict
 #else
