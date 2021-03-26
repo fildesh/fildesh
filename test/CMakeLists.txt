@@ -13,22 +13,22 @@ endif()
 ## Ensure that the example we distribute actually works.
 foreach (f hello test args name familiar cycle convoluted silly)
   add_test (NAME example_${f}
-    WORKING_DIRECTORY ${TopPath}
+    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
     COMMAND
-    comparispawn ${TestPath}/expect/${f}.txt
+    comparispawn "${CMAKE_CURRENT_SOURCE_DIR}/expect/${f}.txt"
     ${lace_exe} -x example/${f}.lace
     )
 endforeach ()
 
 add_test (NAME cli_hello
   COMMAND
-  comparispawn ${TestPath}/expect/hello.txt
+  comparispawn "${CMAKE_CURRENT_SOURCE_DIR}/expect/hello.txt"
   ${lace_exe} -stdout - -- "|< ${zec_exe} / 'hello'"
   )
 
 add_test (NAME example_args2
-  WORKING_DIRECTORY ${TopPath}
+  WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
   COMMAND
-  comparispawn ${TestPath}/expect/args2.txt
+  comparispawn "${CMAKE_CURRENT_SOURCE_DIR}/expect/args2.txt"
   ${lace_exe} -x example/args.lace 2 7
   )

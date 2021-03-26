@@ -33,8 +33,8 @@ typedef struct LaceX LaceX;
 
 struct LaceX_VTable
 {
-  void (*read_fn) (LaceX*);
-  void (*close_fn) (LaceX*);
+  void (*read_fn)(LaceX*);
+  void (*close_fn)(LaceX*);
 };
 #define DEFINE_LaceX_VTable(T, field) \
   static void read_##T##_LaceX(LaceX* input) { \
@@ -64,12 +64,16 @@ struct LaceX {
 #define DEFAULT_LaceX  { { NULL, 0, 0 }, 12, 0, NULL }
 #define DEFAULT1_LaceX(vt)  { { NULL, 0, 0 }, 12, 0, vt }
 
+typedef int lace_fd_t;
+
 typedef struct LaceXF LaceXF;
 struct LaceXF {
   LaceX base;
-  int fd;
+  lace_fd_t fd;
+  /* unsigned basename_offset; */
+  char* filename;
 };
-#define DEFAULT_LaceXF  { DEFAULT_LaceX, -1 }
+#define DEFAULT_LaceXF  { DEFAULT_LaceX, -1, NULL }
 
 
 size_t read_LaceX(LaceX*);
@@ -80,8 +84,7 @@ void maybe_flush_LaceX(LaceX*);
 
 char* getline_LaceX(LaceX*);
 
-void open_LaceXF(LaceXF* f, const char* filename);
-void close_LaceXF(LaceXF* f);
+bool open_LaceXF(LaceXF* f, const char* filename);
 
 char* lace_parse_int(int* ret, const char* in);
 

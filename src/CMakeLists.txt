@@ -1,7 +1,8 @@
 
 add_library(lace_lib
-  "string.c"
+  "infile.c"
   "instream.c"
+  "string.c"
   )
 
 

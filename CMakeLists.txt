@@ -7,9 +7,6 @@ project (lace)
 
 enable_testing ()
 
-set (TopPath "${CMAKE_CURRENT_SOURCE_DIR}")
-set (TestPath "${TopPath}/test")
-
 ## Flags.
 if (UNIX)
   foreach (flags_vbl
