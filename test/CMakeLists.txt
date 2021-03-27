@@ -6,10 +6,6 @@ set (zec_exe "$<TARGET_FILE:zec>")
 
 add_subdirectory(builtin)
 
-if (WIN32)
-  return()
-endif()
-
 ## Ensure that the example we distribute actually works.
 foreach (f hello test args name familiar cycle convoluted silly)
   add_test (NAME example_${f}

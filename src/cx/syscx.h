@@ -48,7 +48,6 @@ lose_sysCx ();
 #include <poll.h>
 #else
 #include <fcntl.h>
-#include <winsock2.h>
 #include <windows.h>
 #include <direct.h>
 #include <io.h>
@@ -83,12 +82,6 @@ bool
 closefd_sysCx (fd_t fd);
 FILE*
 fdopen_sysCx (fd_t fd, const char* mode);
-int
-setfd_nonblock_sysCx(fd_t fd);
-int
-setfd_async_sysCx(fd_t fd);
-int
-poll_sysCx(struct pollfd* pollfds, size_t npollfds, int timeout);
 pid_t
 spawnvp_sysCx (char* const* argv);
 void

@@ -22,6 +22,7 @@
 #define StateMsg1(msg, x)
 #endif
 
+
 typedef struct IOState IOState;
 
 struct IOState
@@ -51,6 +52,18 @@ Bool all_done (const TableT(IOState)* ios)
   }
   StateMsg("all done? Yes");
   return 1;
+}
+
+static
+  int
+setfd_async(fd_t fd)
+{
+  int istat;
+  istat = fcntl(fd, F_GETFD);
+  if (istat < 0) {
+    return istat;
+  }
+  return fcntl(fd, F_SETFD, istat | O_ASYNC);
 }
 
 LaceUtilMain(elastic)
@@ -99,7 +112,7 @@ LaceUtilMain(elastic)
       fprintf (stderr, "%s: failed to open: %s\n", argv[0], arg);
       return 1;
     }
-    if (0 > setfd_async_sysCx(fd)) {
+    if (0 > setfd_async(fd)) {
       fprintf (stderr, "%s: failed to set O_ASYNC on %s.\n", argv[0], arg);
       return 1;
     }
@@ -110,8 +123,8 @@ LaceUtilMain(elastic)
     fd_t fd = open_lace_xfd("-");
     IOState* io = &ios.s[0];
     io->aio.aio_fildes = fd;
-    if (0 > setfd_async_sysCx(fd)) {
-      StateMsg("setfd_async_sysCx(stdin)");
+    if (0 > setfd_async(fd)) {
+      StateMsg("setfd_async(stdin)");
       fprintf (stderr, "%s: failed to set O_ASYNC on stdin.\n", argv[0]);
       return 1;
     }
@@ -122,8 +135,8 @@ LaceUtilMain(elastic)
     IOState* io = Grow1Table( ios );
     Zeroize( *io );
     io->aio.aio_fildes = fd;
-    if (0 > setfd_async_sysCx(fd)) {
-      StateMsg("setfd_async_sysCx(stdout)");
+    if (0 > setfd_async(fd)) {
+      StateMsg("setfd_async(stdout)");
       fprintf (stderr, "%s: failed to set O_ASYNC on stdout.\n", argv[0]);
       return 1;
     }

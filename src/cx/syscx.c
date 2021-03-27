@@ -145,10 +145,6 @@ init_sysCx (int* pargc, char*** pargv)
   _setmode(_fileno(stdin), _O_BINARY);
   _setmode(_fileno(stdout), _O_BINARY);
   _setmode(_fileno(stderr), _O_BINARY);
-  {
-    WSADATA wsaData;
-    WSAStartup(MAKEWORD(2, 2), &wsaData);
-  }
 #endif
   return 1;
 }
@@ -182,9 +178,6 @@ lose_sysCx ()
   }
   LoseTable( LoseFns );
 
-#ifndef LACE_POSIX_SOURCE
-  WSACleanup();
-#endif
   lose_XFileB(stdin_XFileB ());
   lose_OFileB(stdout_OFileB ());
   lose_OFileB(stderr_OFileB ());
@@ -196,9 +189,6 @@ failout_sysCx (const char* msg)
   if (msg)
   {
     int err = errno;
-#ifndef LACE_POSIX_SOURCE
-    int wsaerror = WSAGetLastError();
-#endif
     /* Use literal stderr just in case we have memory problems.*/
     FILE* f = stderr;
 
@@ -244,9 +234,6 @@ dbglog_printf3 (const char* file,
 {
   va_list args;
   int err = errno;
-#ifndef LACE_POSIX_SOURCE
-  int wsaerror = WSAGetLastError();
-#endif
   OFile* of = stderr_OFile ();
 
   while (true) {
@@ -284,12 +271,6 @@ dbglog_printf3 (const char* file,
 #endif
     errno = 0;
   }
-#ifndef LACE_POSIX_SOURCE
-  if (wsaerror != 0) {
-    printf_OFile(of, "^^^ wsaerror: %d\n", wsaerror);
-    WSASetLastError(0);
-  }
-#endif
   flush_OFile (of);
 }
 
@@ -493,47 +474,6 @@ fdopen_sysCx (fd_t fd, const char* mode)
   return fdopen (fd, mode);
 #else
   return _fdopen (fd, mode);
-#endif
-}
-
-  int
-setfd_nonblock_sysCx(fd_t fd)
-{
-#ifdef LACE_POSIX_SOURCE
-  int istat;
-  istat = fcntl(fd, F_GETFD);
-  if (istat < 0) {
-    return istat;
-  }
-  return fcntl(fd, F_SETFD, istat | O_NONBLOCK);
-#else
-  unsigned long arg = 1;
-  return ioctlsocket(fd, FIONBIO, &arg);
-#endif
-}
-
-  int
-setfd_async_sysCx(fd_t fd)
-{
-#ifdef LACE_POSIX_SOURCE
-  int istat;
-  istat = fcntl(fd, F_GETFD);
-  if (istat < 0) {
-    return istat;
-  }
-  return fcntl(fd, F_SETFD, istat | O_ASYNC);
-#else
-  failout_sysCx("setfd_async_sysCx() not implemented.");
-#endif
-}
-
-  int
-poll_sysCx(struct pollfd* pollfds, size_t npollfds, int timeout)
-{
-#ifdef LACE_POSIX_SOURCE
-  return poll(pollfds, npollfds, timeout);
-#else
-  return WSAPoll(pollfds, npollfds, timeout);
 #endif
 }
 

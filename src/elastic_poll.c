@@ -141,6 +141,17 @@ handle_read_write(TableT(IOState) ios, TableT(pollfd) pollfds) {
   }
 }
 
+static
+  int
+setfd_nonblock_sysCx(fd_t fd)
+{
+  int istat;
+  istat = fcntl(fd, F_GETFD);
+  if (istat < 0) {
+    return istat;
+  }
+  return fcntl(fd, F_SETFD, istat | O_NONBLOCK);
+}
 
 LaceUtilMain(elastic)
 {
@@ -224,7 +235,7 @@ LaceUtilMain(elastic)
   while (prepare_for_poll(ios, pollfds)) {
     const int infinite_poll_timeout = -1;
 
-    istat = poll_sysCx(pollfds.s, pollfds.sz, infinite_poll_timeout);
+    istat = poll(pollfds.s, pollfds.sz, infinite_poll_timeout);
     if (istat < 0) {
       StateMsg( "poll()", 0, istat );
       break;
