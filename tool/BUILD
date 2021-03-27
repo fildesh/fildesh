@@ -30,6 +30,10 @@ cc_binary(
     visibility = ["//visibility:public"],
 )
 
+exports_files([
+    "spawn.c",
+])
+
 run_binary(
     name = "exec_sh",
     tool = "//src:zec",

@@ -1,8 +1,10 @@
 
 def lace_expect_test(name, srcs, expect, data=[], args=[]):
-  native.sh_test(
+  native.cc_test(
       name = name,
-      srcs = ["//tool:exec.sh"],
+      srcs = [
+          "//tool:spawn.c",
+      ],
       data = [
           expect,
           "//tool:comparispawn",
