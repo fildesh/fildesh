@@ -24,3 +24,15 @@ lace_expect_test(
     expect = ":hello_newline.txt",
 )
 
+cc_test(
+    name = "zec_nop_test",
+    srcs = ["//tool:spawn.c"],
+    data = [
+        "//src:zec",
+    ],
+    args = [
+        "$(location //src:zec)",
+        "/",
+        "/",
+    ],
+)
