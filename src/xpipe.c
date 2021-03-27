@@ -4,19 +4,21 @@
  * to the spawned process' stdin.
  **/
 
+#include "lace.h"
 #include "utilace.h"
 
 #include "cx/ospc.h"
 
 LaceUtilMain(xpipe)
 {
-  XFile* xf = stdin_XFile ();
+  LaceXF xf[1] = {DEFAULT_LaceXF};
   OSPc ospc[] = {DEFAULT_OSPc};
   const char* s;
 
   if (argi >= argc)
     failout_sysCx ("Need at least one argument.");
 
+  open_LaceXF(xf, "-");
   stdxpipe_OSPc (ospc);
 
   ospc->cmd = cons1_AlphaTab (argv[argi++]);
@@ -28,9 +30,9 @@ LaceUtilMain(xpipe)
   while (argi < argc)
     PushTable( ospc->args, cons1_AlphaTab (argv[argi++]) );
 
-  for (s = getline_XFile (xf);
+  for (s = getline_LaceX(&xf->base);
        s;
-       s = getline_XFile (xf))
+       s = getline_LaceX(&xf->base))
   {
     if (!spawn_OSPc (ospc))
       failout_sysCx ("spawn() failed!");
@@ -46,6 +48,7 @@ LaceUtilMain(xpipe)
     }
   }
 
+  close_LaceX(&xf->base);
   lose_OSPc (ospc);
   lose_sysCx ();
   return 0;

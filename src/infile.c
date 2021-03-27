@@ -56,9 +56,16 @@ DEFINE_LaceX_VTable(LaceXF, base);
   bool
 open_LaceXF(LaceXF* xf, const char* filename)
 {
+  return open_sibling_LaceXF(xf, NULL, filename);
+}
+
+  bool
+open_sibling_LaceXF(LaceXF* xf, const char* sibling, const char* filename)
+{
   static const char dev_stdin[] = "/dev/stdin";
   static const char dev_fd_prefix[] = "/dev/fd/";
   static const unsigned dev_fd_prefix_length = sizeof(dev_fd_prefix)-1;
+  const size_t filename_length = strlen(filename);
 
   assert(xf->fd < 0);
   assert(!xf->filename);
@@ -71,33 +78,43 @@ open_LaceXF(LaceXF* xf, const char* filename)
   }
   else if (0 == strncmp(dev_fd_prefix, filename, dev_fd_prefix_length)) {
     int fd = -1;
-    char fdstr[3*sizeof(fd)+1];
-    unsigned ndigits;
     char* s = lace_parse_int(&fd, &filename[dev_fd_prefix_length]);
 
     if (!s || fd < 0) {
       return false;
     }
     xf->fd = fd;
-
-    sprintf(fdstr, "%d", fd);
-    ndigits = strlen(fdstr);
-    xf->filename = malloc(sizeof(dev_fd_prefix) + ndigits);
-    memcpy(xf->filename, dev_stdin, sizeof(dev_stdin)-1);
-    memcpy(&xf->filename[sizeof(dev_stdin)-1], fdstr, ndigits+1);
-  }
-  else {
-    const size_t filename_length = strlen(filename);
-#ifdef _WIN32
-    xf->fd = _open(filename, _O_RDONLY);
-#else
-    xf->fd = open(filename, O_RDONLY);
-#endif
-    if (xf->fd < 0) {
-      return false;
-    }
     xf->filename = malloc(filename_length+1);
     memcpy(xf->filename, filename, filename_length+1);
   }
-  return true;
+  else if (filename[0] != '/' && sibling) {
+    size_t sibling_dirlen = 0;
+    if (sibling) {
+      char* p = strrchr(sibling, '/');
+      if (p) {
+        sibling_dirlen = (size_t)(p - sibling) + 1;
+      }
+    }
+    xf->filename = malloc(sibling_dirlen + filename_length + 1);
+    memcpy(xf->filename, sibling, sibling_dirlen);
+    memcpy(&xf->filename[sibling_dirlen], filename, filename_length+1);
+  }
+  else {
+    xf->filename = malloc(filename_length+1);
+    memcpy(xf->filename, filename, filename_length+1);
+  }
+
+  if (xf->fd < 0) {
+#ifdef _WIN32
+    xf->fd = _open(xf->filename, _O_RDONLY);
+#else
+    xf->fd = open(xf->filename, O_RDONLY);
+#endif
+  }
+  if (xf->fd < 0 && xf->filename) {
+    free(xf->filename);
+    xf->filename = NULL;
+  }
+  return (xf->fd >= 0);
 }
+

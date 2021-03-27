@@ -83,8 +83,10 @@ void flush_LaceX(LaceX*);
 void maybe_flush_LaceX(LaceX*);
 
 char* getline_LaceX(LaceX*);
+char* gets_LaceX(LaceX*, const char* delim);
 
 bool open_LaceXF(LaceXF* f, const char* filename);
+bool open_sibling_LaceXF(LaceXF* f, const char* sibling, const char* filename);
 
 char* lace_parse_int(int* ret, const char* in);
 

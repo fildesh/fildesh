@@ -100,3 +100,39 @@ getline_LaceX(LaceX* in)
   assert(in->buf.at[in->buf.sz] == '\0');
   return &in->buf.at[ret_off];
 }
+
+/* Get string up to a delimiter. Push offset past delimiter.*/
+  char*
+gets_LaceX(LaceX* in, const char* delim)
+{
+  size_t delim_length = strlen(delim);
+  size_t ret_off;
+  char* s;
+
+  assert(delim_length > 0);
+
+  maybe_flush_LaceX(in);
+
+  ret_off = in->off;
+  s = strstr(cstr_of_LaceX(in), delim);
+
+  while (!s) {
+    if (in->off + delim_length <= in->buf.sz) {
+      in->off = in->buf.sz + 1 - delim_length;
+    }
+    if (0 == read_LaceX(in)) {
+      break;
+    }
+    s = strstr(cstr_of_LaceX(in), delim);
+  }
+
+  if (s) {
+    s[0] = '\0';
+    in->off = delim_length + (s - in->buf.at);
+  }
+  if (ret_off == in->off) {
+    return NULL;
+  }
+  assert(in->buf.at[in->buf.sz] == '\0');
+  return &in->buf.at[ret_off];
+}

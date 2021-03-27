@@ -4,16 +4,15 @@
  * It uses the ISC license (see the LICENSE file in the top-level directory).
  **/
 
+#include "lace.h"
 #include "utilace.h"
 #include "cx/associa.h"
 #include "cx/fileb.h"
 
-#include <limits.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
 
 
 enum SymValKind
@@ -282,7 +281,7 @@ failout_Command (const Command* cmd, const char* msg, const char* msg2)
  * $(H: var_name) value
  **/
   static char*
-parse_here_doc (XFile* in, const char* term, zuint* text_nlines)
+parse_here_doc (LaceX* in, const char* term, zuint* text_nlines)
 {
   AlphaTab delim = DEFAULT_AlphaTab;
   char* s;
@@ -302,19 +301,19 @@ parse_here_doc (XFile* in, const char* term, zuint* text_nlines)
   cat_char_AlphaTab (&delim, '\n');
   cat_cstr_AlphaTab (&delim, term);
 
-  s = getlined_XFile (in, ccstr_of_AlphaTab (&delim));
+  s = gets_LaceX(in, ccstr_of_AlphaTab(&delim));
   *text_nlines += 1 + count_newlines (s);
   lose_AlphaTab (&delim);
   return dup_cstr (s);
 }
 
   static char*
-parse_line (XFile* xf, zuint* text_nlines)
+parse_line (LaceX* xf, zuint* text_nlines)
 {
   AlphaTab line = DEFAULT_AlphaTab;
   char* s;
 
-  while ((s = getline_XFile (xf)))
+  while ((s = getline_LaceX(xf)))
   {
     uint n;
     bool multiline = false;
@@ -410,14 +409,14 @@ sep_line (TableT(cstr)* args, char* s)
 }
 
   static void
-parse_file (TableT(Command)* cmds, XFile* xf, const char* dirname)
+parse_file(TableT(Command)* cmds, LaceX* in, const char* this_filename)
 {
   zuint text_nlines = 0;
   while (true)
   {
     char* line;
     Command* cmd;
-    line = parse_line (xf, &text_nlines);
+    line = parse_line(in, &text_nlines);
     if (!line) {
       break;
     }
@@ -434,29 +433,24 @@ parse_file (TableT(Command)* cmds, XFile* xf, const char* dirname)
         line[2] == 'H' && line[3] != 'F')
     {
       cmd->kind = HereDocCommand;
-      cmd->doc = parse_here_doc (xf, line, &text_nlines);
+      cmd->doc = parse_here_doc(in, line, &text_nlines);
     }
     else if (pfxeq_cstr ("$(<<", line))
     {
       char* filename = &line[4];
-      XFileB src[] = {DEFAULT_XFileB};
+      LaceXF src[] = {DEFAULT_LaceXF};
 
       filename = &filename[count_ws (filename)];
       filename[strcspn (filename, ")")] = '\0';
 
-      if (!open_FileB (&src->fb, dirname, filename))
+      if (!open_sibling_LaceXF(src, this_filename, filename))
         failout_Command (cmd, "Failed to include file", filename);
 
       lose_Command (TopTable( *cmds ));
       MPopTable( *cmds, 1 );
 
-      if (1) {
-        parse_file (cmds, &src->xf, ccstr_of_AlphaTab (&src->fb.pathname));
-      }
-      else {
-        inject_XFile (xf, &src->xf, "\n");
-      }
-      lose_XFileB (src);
+      parse_file(cmds, &src->base, src->filename);
+      close_LaceX(&src->base);
     }
     else if (pfxeq_cstr ("$(>", line) ||
         pfxeq_cstr ("$(set", line))
@@ -1239,7 +1233,7 @@ int main(int argc, char** argv)
 
 int main_lace(int argi, int argc, char** argv)
 {
-  XFileB in[] = {DEFAULT_XFileB};
+  LaceXF xf[] = {DEFAULT_LaceXF};
   DeclTable( AlphaTab, script_args );
   DeclTable( Command, cmds );
   const char* stdin_sym = 0;
@@ -1264,22 +1258,12 @@ int main_lace(int argi, int argc, char** argv)
       use_stdin = false;
       if (argi >= argc)  show_usage_and_exit ();
       while (argi < argc) {
-        zuint off;
-        zuint sz;
-
+        size_t sz;
         arg = argv[argi++];
-
-        Claim2( in->xf.buf.sz ,>, 0 );
-        off = in->xf.buf.sz - 1;
-        sz = strlen (arg);
-
-        GrowTable( in->xf.buf, sz+1 );
-
-        Replac( &in->xf.buf.s[off], arg, sz );
-        in->xf.buf.s[off+sz] = '\n';
-        in->xf.buf.s[off+sz+1] = '\0';
+        sz = strlen(arg);
+        memcpy(grow_LaceX(&xf->base, sz), arg, sz);
+        *grow_LaceX(&xf->base, 1) = '\n';
       }
-      PackTable( in->xf.buf );
     }
     else if (eq_cstr (arg, "-as")) {
       int ret = lace_util_main (argi, argc, argv);
@@ -1338,8 +1322,7 @@ int main_lace(int argi, int argc, char** argv)
         break;
       use_stdin = false;
       PushTable( script_args, cons1_AlphaTab (arg) );
-      if (!open_FileB (&in->fb, 0, arg))
-      {
+      if (!open_LaceXF(xf, arg)) {
         DBog1( "Script file: %s", arg );
         failout_sysCx ("Cannot read script!");
       }
@@ -1355,7 +1338,7 @@ int main_lace(int argi, int argc, char** argv)
   push_losefn1_sysCx ((void (*) (void*)) lose_Commands, &cmds);
 
   if (use_stdin) {
-    set_FILE_FileB (&in->fb, stdin);
+    open_LaceXF(xf, "-");
     PushTable( script_args, cons1_AlphaTab ("-") );
   }
 
@@ -1410,8 +1393,8 @@ int main_lace(int argi, int argc, char** argv)
     sep_line (&cmd->args, cmd->line);
   }
 
-  parse_file (&cmds, &in->xf, ccstr_of_AlphaTab (&in->fb.pathname));
-  lose_XFileB (in);
+  parse_file(&cmds, &xf->base, xf->filename);
+  close_LaceX(&xf->base);
 
   if (stdout_sym) {
     Command* cmd = Grow1Table( cmds );

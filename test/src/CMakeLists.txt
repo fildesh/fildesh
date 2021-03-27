@@ -4,6 +4,11 @@ add_executable(getline_test
 target_link_libraries(getline_test lace_lib)
 add_test(NAME getline_test COMMAND getline_test)
 
+add_executable(gets_test
+  "gets_test.c")
+target_link_libraries(gets_test lace_lib)
+add_test(NAME gets_test COMMAND gets_test)
+
 add_executable(read_file_lines_test
   "read_file_lines_test.c")
 target_link_libraries(read_file_lines_test lace_lib)
