@@ -1,5 +1,5 @@
 
-add_library(lace_lib
+add_library(lace_lib STATIC
   "infile.c"
   "instream.c"
   "string.c"

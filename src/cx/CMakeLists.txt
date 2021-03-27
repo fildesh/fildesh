@@ -1,5 +1,6 @@
 
-add_library (cx_lib
+add_library (cx_lib STATIC
+  $<TARGET_OBJECTS:lace_lib>
   "alphatab.c"
   "alphatab.h"
   "associa.h"
@@ -25,10 +26,6 @@ add_library (cx_lib
   "xfile.c"
   "xfile.h"
   )
-target_link_libraries(cx_lib lace_lib)
-if (WIN32)
-  target_link_libraries(cx_lib ws2_32)
-endif()
 
 add_executable(bittable_test
   "bittable_test.c")

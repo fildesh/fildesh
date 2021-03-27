@@ -1,4 +1,5 @@
 
+#include "lace.h"
 #include "alphatab.h"
 #include <stdio.h>
 

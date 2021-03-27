@@ -1,17 +1,10 @@
 
-cc_library(
-    name = "lace_lib",
-    srcs = [
-        "infile.c",
-        "instream.c",
-        "string.c",
-        "//include:lace.h",
-    ],
-    copts = [
-        "-Iinclude",
-    ],
-    visibility = ["//visibility:public"],
-)
+# For //:lace_lib.
+exports_files([
+    "infile.c",
+    "instream.c",
+    "string.c",
+])
 
 cc_binary(
     name = "lace",

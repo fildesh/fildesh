@@ -7,8 +7,11 @@ alias(
 
 cc_library(
     name = "lace_lib",
-    deps = [
-        "//src:lace_lib",
+    srcs = [
+        "//include:lace.h",
+        "//src:infile.c",
+        "//src:instream.c",
+        "//src:string.c",
     ],
     includes = [
         "include",
