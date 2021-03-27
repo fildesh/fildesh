@@ -212,11 +212,6 @@ failout_sysCx (const char* msg)
       fprintf (f, "^^^ Reason: %s\n", msg);
     if (err != 0)
       fprintf (f, "^^^ errno:%d %s\n", err, strerror (err));
-#ifndef LACE_POSIX_SOURCE
-    if (wsaerror != 0)
-      fprintf(f, "^^^ wsaerror: %d\n", wsaerror);
-#endif
-
   }
   lose_sysCx ();
   if (false)

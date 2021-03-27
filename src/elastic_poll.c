@@ -7,6 +7,7 @@
 #include "cx/table.h"
 
 #include <errno.h>
+#include <poll.h>
 #include <stdio.h>
 
 /* #define DEBUGGING */
@@ -22,7 +23,7 @@ typedef struct IOState IOState;
 struct IOState
 {
   TableT(byte) buf;
-  Bool done;
+  bool done;
   const char* filename;
 };
 
@@ -41,10 +42,10 @@ close_IOState(IOState* io, struct pollfd* pfd) {
 }
 
 static
-  Bool
+  bool
 prepare_for_poll(TableT(IOState) ios, TableT(pollfd) pollfds) {
   uint i;
-  Bool still_reading = 0;
+  bool still_reading = 0;
 
   UFor( i, ios.sz ) {
     IOState* io = &ios.s[i];

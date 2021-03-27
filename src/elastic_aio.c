@@ -10,6 +10,7 @@
 #include "cx/table.h"
 
 #include <errno.h>
+#include <fcntl.h>
 #include <stdio.h>
 
 /* #define DEBUGGING */

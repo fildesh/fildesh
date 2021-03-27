@@ -45,7 +45,6 @@ lose_sysCx ();
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/wait.h>
-#include <poll.h>
 #else
 #include <fcntl.h>
 #include <windows.h>
