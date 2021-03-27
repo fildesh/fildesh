@@ -1,5 +1,3 @@
-load("@bazel_skylib//rules:run_binary.bzl", "run_binary")
-
 cc_binary(
     name = "cembed",
     srcs = [
@@ -33,18 +31,27 @@ cc_binary(
 exports_files([
     "spawn.c",
 ])
-
-run_binary(
-    name = "exec_sh",
-    tool = "//src:zec",
-    args = [
-        "-o",
-        "$(location exec.sh)",
-        "/",
-        "exec \"$@\"",
-        "/",
-    ],
-    outs = ["exec.sh"],
-    testonly = True,
-    visibility = ["//visibility:public"],
+cc_binary(
+    name = "spawn",
+    srcs = ["spawn.c"],
+)
+cc_binary(
+    name = "success",
+    srcs = ["success.c"],
+)
+cc_binary(
+    name = "failure",
+    srcs = ["failure.c"],
+)
+cc_test(
+    name = "success_test",
+    srcs = ["spawn.c"],
+    args = ["$(location :success)"],
+    data = [":success"],
+)
+cc_test(
+    name = "failure_test",
+    srcs = ["spawn.c"],
+    args = ["!", "$(location :failure)"],
+    data = [":failure"],
 )

@@ -12,6 +12,28 @@ lace_expect_test(
     expect = ":hello_newline_x2.txt",
 )
 
+cc_test(
+    name = "lace_as_add_test",
+    srcs = [
+        "//tool:spawn.c",
+    ],
+    args = [
+        "$(location //tool:comparispawn)",
+        "$(location summed_integers.txt)",
+        "$(location //:lace)",
+        "-stdinfile",
+        "$(location integers.txt)",
+        "-as",
+        "add",
+    ],
+    data = [
+        "integers.txt",
+        "summed_integers.txt",
+        "//:lace",
+        "//tool:comparispawn",
+    ],
+)
+
 lace_expect_test(
     name = "xpipe_nested_test",
     srcs = ["xpipe_nested.lace"],
