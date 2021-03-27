@@ -52,10 +52,14 @@ flush_LaceX(LaceX* x)
   void
 maybe_flush_LaceX(LaceX* x)
 {
-  if (x->flush_lgsz > 0 &&
-      (x->off >> x->flush_lgsz) > 0) {
-    flush_LaceX(x);
+  if (x->flush_lgsz == 0) {
+    return;
   }
+  if (x->off < x->buf.sz &&
+      (x->off >> x->flush_lgsz) == 0) {
+    return;
+  }
+  flush_LaceX(x);
 }
 
 static

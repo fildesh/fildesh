@@ -1,4 +1,5 @@
 
+#include "lace.h"
 #include "utilace.h"
 #include "cx/fileb.h"
 
@@ -28,9 +29,9 @@ sum_real_line (XFile* xf)
 
 LaceUtilMain(add)
 {
-  XFile* xfile;
+  LaceXF xf[1] = {DEFAULT_LaceXF};
   OFile* ofile;
-  XFile olay[1];
+  char* line;
 
   (void) argv;
   if (argi < argc)
@@ -40,11 +41,14 @@ LaceUtilMain(add)
     failout_sysCx ("No arguments expected...");
   }
 
-  xfile = stdin_XFile ();
+  open_LaceXF(xf, "-");
   ofile = stdout_OFile ();
 
-  while (getlined_olay_XFile (olay, xfile, 0)) {
-    const char* line = ccstr_of_XFile (olay);
+  for (line = getline_LaceX(&xf->base);
+       line;
+       line = getline_LaceX(&xf->base)) {
+    XFile olay[1];
+    init_XFile_olay_cstr(olay, line);
     if (!line[strcspn (line, ".Ee")]) {
       int x = sum_int_line (olay);
       oput_int_OFile (ofile, x);
@@ -57,6 +61,7 @@ LaceUtilMain(add)
     flush_OFile (ofile);
   }
 
+  close_LaceX(&xf->base);
   lose_sysCx ();
   return 0;
 }

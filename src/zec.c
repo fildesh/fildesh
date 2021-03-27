@@ -4,18 +4,11 @@
 
 #include "utilace.h"
 #include "cx/alphatab.h"
-
-typedef struct FInput FInput;
-struct FInput {
-  fd_t fd;
-  uint off;
-  uint sz;
-  char buf[8093];
-};
+#include <assert.h>
 
 static
-  Bool
-write_all (fd_t fd, const char* buf, size_t sz)
+  bool
+write_all(fd_t fd, const char* buf, size_t sz)
 {
   size_t off = 0;
   while (off < sz) {
@@ -28,10 +21,10 @@ write_all (fd_t fd, const char* buf, size_t sz)
 }
 
 static
-  Bool
-fdputs (fd_t fd, const char* msg)
+  bool
+fdputs(fd_t fd, const char* msg)
 {
-  return write_all (fd, msg, strlen(msg));
+  return write_all(fd, msg, strlen(msg));
 }
 
 static
@@ -50,96 +43,65 @@ show_usage ()
 }
 
 static
-  void
-open_input_file (FInput* in, const char* filename)
+  LaceXF
+open_input_file(const char* filename)
 {
-  in->off = 0;
-  in->sz = 0;
-  in->buf[0] = '\0';
+  LaceXF xf[1] = {DEFAULT_LaceXF};
 
-  if (!filename)
-    in->fd = 0;
-  else if (filename[0] == '-' && filename[1] == '\0')
-    in->fd = 0;
-  else
-    in->fd = open_lace_xfd(filename);
-
-  if (in->fd < 0) {
+  if (!filename) {
+    filename = "-";
+  }
+  if (!open_LaceXF(xf, filename)) {
     fdputs (2, "Cannot open file! ");
     fdputs (2, filename);
     fdputs (2, "\n");
     exit(1);
   }
+  return *xf;
 }
 
 static
   void
-cat_the_file (fd_t o_fd, FInput* in)
+cat_the_file (fd_t o_fd, LaceX* in)
 {
-  long nread;
+  size_t nread;
   do {
-    nread = read_sysCx(in->fd, in->buf, sizeof(in->buf) - 1);
-    if (!write_all (o_fd, in->buf, nread))
+    nread = read_LaceX(in);
+    if (!write_all(o_fd, in->buf.at, nread))
       break;
+    in->off += nread;
+    maybe_flush_LaceX(in);
+    assert(in->off == 0);
+    assert(in->buf.sz == 0);
   } while (nread > 0);
-  closefd_sysCx(in->fd);
+  close_LaceX(in);
 }
 
 static
-  Bool
-read_more (FInput* in)
-{
-  long nread = read_sysCx(in->fd, in->buf, sizeof(in->buf) - 1);
-  in->off = 0;
-  in->sz = (nread > 0) ? nread : 0;
-  in->buf[in->sz] = '\0';
-  return (in->sz > 0);
-}
-
-static
-  Bool
-all_have_data (FInput* inputs, uint n) {
+  bool
+all_have_data(LaceXF* inputs, uint n) {
   uint i;
   for (i = 0; i < n; ++i) {
-    FInput* in = &inputs[i];
-    if (in->off >= in->sz) {
-      if (!read_more (in))
-        return 0;
+    LaceX* in = &inputs[i].base;
+    if (in->off >= in->buf.sz) {
+      if (0 == read_LaceX(in)) {
+        return false;
+      }
     }
   }
-  return 1;
+  return true;
 }
 
 static
-  Bool
-cat_next_line (fd_t o_fd, FInput* in)
+  bool
+cat_next_line(fd_t o_fd, LaceX* in)
 {
-  char* s;
-  do {
-    uint n;
-
-    s = strchr (&in->buf[in->off], '\n');
-
-    if (s)
-      n = IdxElt( &in->buf[in->off], s );
-    else
-      n = in->sz - in->off;
-
-    if (n > 0) {
-      if (!write_all (o_fd, &in->buf[in->off], n))
-        return 0;
-    }
-
-    in->off += n+1;
-    if (!s) {
-      if (!read_more (in))
-        break;
-    }
-
-  } while (!s);
-  return 1;
+  char* s = getline_LaceX(in);
+  if (!s) {
+    return true;
+  }
+  return fdputs(o_fd, s);
 }
-
 
 LaceUtilMain(zec)
 {
@@ -147,9 +109,9 @@ LaceUtilMain(zec)
   int beg_slash = argc;
   int end_slash = argc;
   fd_t o_fd = 1;
-  Bool paste_mode = 0;
+  bool paste_mode = false;
   const char* unless_arg = 0;
-  FInput* inputs;
+  LaceXF* inputs;
   size_t mid_sz;
   char* mid_buf;
   int nbegs;
@@ -184,7 +146,7 @@ LaceUtilMain(zec)
       }
     }
     else if (eq_cstr (arg, "-paste")) {
-      paste_mode = 1;
+      paste_mode = true;
     }
     else if (eq_cstr (arg, "-unless")) {
       unless_arg = argv[argi++];
@@ -206,9 +168,8 @@ LaceUtilMain(zec)
   }
 
   if (argi == argc) {
-    FInput in[1];
-    open_input_file (in, 0);
-    cat_the_file (o_fd, in);
+    LaceXF xf = open_input_file(NULL);
+    cat_the_file(o_fd, &xf.base);
     lose_sysCx ();
     return 0;
   }
@@ -239,47 +200,48 @@ LaceUtilMain(zec)
   nbegs = beg_slash - argi;
   nends = argc - end_slash - OneIf(argc != end_slash);
 
-  inputs = (FInput*) malloc((nbegs + nends) * sizeof(FInput));
+  inputs = (LaceXF*) malloc((nbegs + nends) * sizeof(LaceXF));
 
   for (i = 0; i < nbegs; ++i)
-    open_input_file (&inputs[i], argv[argi+i]);
+    inputs[i] = open_input_file(argv[argi+i]);
 
   for (i = 0; i < nends; ++i)
-    open_input_file (&inputs[nbegs + i], argv[end_slash + 1 + i]);
+    inputs[nbegs + i] = open_input_file(argv[end_slash + 1 + i]);
 
 
   if (paste_mode) {
-    Bool good = 1;
+    bool good = true;
     while (good) {
-      good = all_have_data (inputs, nbegs + nends);
+      good = all_have_data(inputs, nbegs + nends);
 
       for (i = 0; i < nbegs && good; ++i)
-        good = cat_next_line (o_fd, &inputs[i]);
+        good = cat_next_line(o_fd, &inputs[i].base);
 
       if (good)
-        good = write_all (o_fd, mid_buf, mid_sz);
+        good = write_all(o_fd, mid_buf, mid_sz);
 
       for (i = 0; i < nends && good; ++i)
-        good = cat_next_line (o_fd, &inputs[nbegs+i]);
+        good = cat_next_line(o_fd, &inputs[nbegs+i].base);
 
       if (good)
-        good = write_all (o_fd, "\n", 1);
+        good = write_all(o_fd, "\n", 1);
     }
 
-    for (i = 0; i < nbegs + nends; ++i)
-      closefd_sysCx(inputs[i].fd);
+    for (i = 0; i < nbegs + nends; ++i) {
+      close_LaceX(&inputs[i].base);
+    }
   }
   else {
-    Bool good = 1;
+    bool good = true;
 
     for (i = 0; i < nbegs && good; ++i)
-      cat_the_file (o_fd, &inputs[i]);
+      cat_the_file(o_fd, &inputs[i].base);
 
     if (good)
       good = write_all (o_fd, mid_buf, mid_sz);
 
     for (i = 0; i < nends && good; ++i)
-      cat_the_file (o_fd, &inputs[nbegs+i]);
+      cat_the_file(o_fd, &inputs[nbegs+i].base);
   }
 
   closefd_sysCx(o_fd);
