@@ -111,16 +111,16 @@ target_link_libraries(zec cx_lib)
 
 
 if (UNIX)
-  add_executable(elastic_aio elastic_aio.c utilace.h)
-  target_link_libraries (elastic_aio cx_lib ${AIO_LIB})
-  set_property (TARGET elastic_aio
-    APPEND PROPERTY COMPILE_DEFINITIONS _POSIX_C_SOURCE=199309L)
-
   add_executable(elastic_poll elastic_poll.c utilace.h)
   target_link_libraries (elastic_poll cx_lib)
 endif ()
 
 if (UNIX AND NOT APPLE)
+  add_executable(elastic_aio elastic_aio.c utilace.h)
+  target_link_libraries (elastic_aio cx_lib ${AIO_LIB})
+  set_property (TARGET elastic_aio
+    APPEND PROPERTY COMPILE_DEFINITIONS _POSIX_C_SOURCE=199309L)
+
   add_executable(chatty
     chatty.c)
   target_link_libraries (chatty cx_lib ${AIO_LIB})
