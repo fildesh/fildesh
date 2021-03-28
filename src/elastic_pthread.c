@@ -3,6 +3,7 @@
  * \file elastic_pthread.c
  * Echo stdin to stdout with an arbitrary sized buffer.
  **/
+#include "lace.h"
 #include "utilace.h"
 #include "cx/alphatab.h"
 #include "cx/fileb.h"
@@ -174,15 +175,11 @@ writing_thread_fn(WritingThreadState* st) {
 /** Reading is actually done on the main thread.**/
 static
   void
-reading_routine(fd_t xfd, TableT(WritingThreadState)* wstates)
+reading_routine(LaceX* in, TableT(WritingThreadState)* wstates)
 {
-  static const size_t chunksz = BUFSIZ;
   int istat;
   uint i;
   zuint nspawned = wstates->sz;  /* For early cleanup.*/
-  TableT(byte) buf = DEFAULT_Table;
-
-  SizeTable( buf, chunksz );
 
   for (i = 0; i < wstates->sz; ++i) {
     WritingThreadState* st = &wstates->s[i];
@@ -199,28 +196,31 @@ reading_routine(fd_t xfd, TableT(WritingThreadState)* wstates)
 
   if (nspawned == wstates->sz) {
     while (true) {
-      long nbytes = read_sysCx(xfd, buf.s, buf.sz);
-      if (nbytes <= 0) {
+      const size_t nbytes = read_LaceX(in);
+      if (nbytes == 0) {
         break;
       }
 
-      buf.sz = nbytes;
       for (i = 0; i < wstates->sz; ++i) {
         WritingThreadState* st = &wstates->s[i];
         pthread_mutex_lock(&st->buf_mutex);
         if (!st->done) {
+          const size_t off = st->buf.sz;
           StateMsg("catting", ccstr_of_AlphaTab(&st->ofileb.fb.filename));
-          CatTable( st->buf, buf );
+          GrowTable( st->buf, nbytes );
+          memcpy(&st->buf.s[off], &in->buf.at[in->off], nbytes);
           if (st->waiting) {
             pthread_cond_signal(&st->buf_cond);
           }
         }
         pthread_mutex_unlock(&st->buf_mutex);
       }
-      buf.sz = chunksz;
+      in->off += nbytes;
+      assert(in->off == in->buf.sz);
+      maybe_flush_LaceX(in);
     }
   }
-  closefd_sysCx(xfd);
+  close_LaceX(in);
   StateMsg("done reading", "input");
 
   for (i = 0; i < nspawned; ++i) {
@@ -239,7 +239,6 @@ reading_routine(fd_t xfd, TableT(WritingThreadState)* wstates)
     StateMsg("joining", ccstr_of_AlphaTab(&st->ofileb.fb.filename));
     pthread_join(st->thread, &ret);
   }
-  LoseTable( buf );
   StateMsg("end of", "input");
 }
 
@@ -247,7 +246,7 @@ LaceUtilMain(elastic)
 {
   DeclTable( WritingThreadState, wstates );
   const char* xfilename = "/dev/fd/0";
-  fd_t xfd = -1;
+  LaceXF xf[1] = {DEFAULT_LaceXF};
   uint i;
 
   /**** BEGIN ARGUMENT_PARSING ****/
@@ -287,8 +286,7 @@ LaceUtilMain(elastic)
     }
   }
 
-  xfd = open_lace_xfd(xfilename);
-  if (xfd < 0) {
+  if (!open_LaceXF(xf, xfilename)) {
     DBog1("failed to open: %s\n", xfilename);
     failout_sysCx(0);
   }
@@ -302,8 +300,7 @@ LaceUtilMain(elastic)
   }
   /**** END ARGUMENT_PARSING ****/
 
-  reading_routine(xfd, &wstates);
-  xfd = -1;
+  reading_routine(&xf->base, &wstates);
 
   for (i = 0; i < wstates.sz; ++i) {
     lose_WritingThreadState(&wstates.s[i]);
