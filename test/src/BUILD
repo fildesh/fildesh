@@ -1,5 +1,12 @@
 
 cc_test(
+    name = "delimit_edge_test",
+    srcs = ["delimit_edge_test.c"],
+    deps = ["//:lace_lib"],
+    size = "small",
+)
+
+cc_test(
     name = "getline_test",
     srcs = ["getline_test.c"],
     deps = ["//:lace_lib"],

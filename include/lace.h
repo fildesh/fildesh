@@ -15,6 +15,32 @@ typedef char bool;
 # define bool bool
 #endif
 
+typedef int lace_fd_t;
+typedef uint8_t lace_lgsize_t;
+#define LACE_LGSIZE_MAX UCHAR_MAX
+
+typedef struct LaceX_VTable LaceX_VTable;
+typedef struct LaceX LaceX;
+typedef struct LaceXF LaceXF;
+
+
+size_t read_LaceX(LaceX*);
+void close_LaceX(LaceX*);
+char* grow_LaceX(LaceX*, size_t);
+void flush_LaceX(LaceX*);
+void maybe_flush_LaceX(LaceX*);
+LaceX sliceline_LaceX(LaceX*);
+LaceX slicestr_LaceX(LaceX*, const char* delim);
+/* LaceX slicechrs_LaceX(LaceX*, const char* delims); */
+/* LaceX skipchrs_LaceX(LaceX*, const char* span); */
+char* getline_LaceX(LaceX*);
+char* gets_LaceX(LaceX*, const char* delim);
+
+bool open_LaceXF(LaceXF* f, const char* filename);
+bool open_sibling_LaceXF(LaceXF* f, const char* sibling, const char* filename);
+
+char* lace_parse_int(int* ret, const char* in);
+
 
 /** Given the memory address of a structure's field,
  * get the address of the structure.
@@ -27,9 +53,6 @@ typedef char bool;
 #define lace_castup( T, field, p ) \
   ((T*) ((uintptr_t) (p) - (ptrdiff_t) offsetof(T, field)))
 
-
-typedef struct LaceX_VTable LaceX_VTable;
-typedef struct LaceX LaceX;
 
 struct LaceX_VTable
 {
@@ -48,9 +71,6 @@ struct LaceX_VTable
     close_##T##_LaceX, \
   }}
 
-typedef uint8_t lace_lgsize_t;
-#define LACE_LGSIZE_MAX UCHAR_MAX
-
 struct LaceX {
   struct LaceX_Buffer {
     char* at;
@@ -64,9 +84,6 @@ struct LaceX {
 #define DEFAULT_LaceX  { { NULL, 0, 0 }, 12, 0, NULL }
 #define DEFAULT1_LaceX(vt)  { { NULL, 0, 0 }, 12, 0, vt }
 
-typedef int lace_fd_t;
-
-typedef struct LaceXF LaceXF;
 struct LaceXF {
   LaceX base;
   lace_fd_t fd;
@@ -74,21 +91,6 @@ struct LaceXF {
   char* filename;
 };
 #define DEFAULT_LaceXF  { DEFAULT_LaceX, -1, NULL }
-
-
-size_t read_LaceX(LaceX*);
-void close_LaceX(LaceX*);
-char* grow_LaceX(LaceX*, size_t);
-void flush_LaceX(LaceX*);
-void maybe_flush_LaceX(LaceX*);
-
-char* getline_LaceX(LaceX*);
-char* gets_LaceX(LaceX*, const char* delim);
-
-bool open_LaceXF(LaceXF* f, const char* filename);
-bool open_sibling_LaceXF(LaceXF* f, const char* sibling, const char* filename);
-
-char* lace_parse_int(int* ret, const char* in);
 
 
 #if !defined(ZEROIZE)

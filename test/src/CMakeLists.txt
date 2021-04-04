@@ -1,4 +1,9 @@
 
+add_executable(delimit_edge_test
+  "delimit_edge_test.c")
+target_link_libraries(delimit_edge_test lace_lib)
+add_test(NAME delimit_edge_test COMMAND delimit_edge_test)
+
 add_executable(getline_test
   "getline_test.c")
 target_link_libraries(getline_test lace_lib)
