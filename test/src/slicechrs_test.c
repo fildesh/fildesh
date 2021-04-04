@@ -13,24 +13,24 @@ slicechrs_easy_test()
   char content[] = "(i.am some|content.)";
   const char delims[] = " ().|";
 
-  in->buf.at = content;
-  in->buf.sz = strlen(content);
-  in->buf.alloc_lgsz = LACE_LGSIZE_MAX;
+  in->at = content;
+  in->size = strlen(content);
+  in->alloc_lgsize = LACE_LGSIZE_MAX;
 
   slice = slicechrs_LaceX(in, delims);
-  assert(0 == strcmp(slice.buf.at, ""));
+  assert(0 == strcmp(slice.at, ""));
   slice = slicechrs_LaceX(in, delims);
-  assert(0 == strcmp(slice.buf.at, "i"));
+  assert(0 == strcmp(slice.at, "i"));
   slice = slicechrs_LaceX(in, delims);
-  assert(0 == strcmp(slice.buf.at, "am"));
+  assert(0 == strcmp(slice.at, "am"));
   slice = slicechrs_LaceX(in, delims);
-  assert(0 == strcmp(slice.buf.at, "some"));
+  assert(0 == strcmp(slice.at, "some"));
   slice = slicechrs_LaceX(in, delims);
-  assert(0 == strcmp(slice.buf.at, "content"));
+  assert(0 == strcmp(slice.at, "content"));
   slice = slicechrs_LaceX(in, delims);
-  assert(0 == strcmp(slice.buf.at, ""));
+  assert(0 == strcmp(slice.at, ""));
   slice = slicechrs_LaceX(in, delims);
-  assert(!slice.buf.at);
+  assert(!slice.at);
 }
 
 int main() {

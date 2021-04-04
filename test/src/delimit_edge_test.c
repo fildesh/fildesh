@@ -16,23 +16,23 @@ slicestr_long_delim_no_match_test()
   const size_t content_length = strlen(content);
   const char delim[] = "iamaverylongdelimiter";
 
-  in->buf.at = content;
-  in->buf.sz = content_length;
-  in->buf.alloc_lgsz = LACE_LGSIZE_MAX;
+  in->at = content;
+  in->size = content_length;
+  in->alloc_lgsize = LACE_LGSIZE_MAX;
 
   /* Run the test with various offsets.*/
   for (i = 0; i < content_length; ++i) {
     in->off = i;
     slice = slicestr_LaceX(in, delim);
     assert(in->off == content_length);
-    assert(slice.buf.at);
-    assert(slice.buf.at == &in->buf.at[i]);
-    assert(slice.buf.sz == content_length - i);
+    assert(slice.at);
+    assert(slice.at == &in->at[i]);
+    assert(slice.size == content_length - i);
   }
   in->off = content_length;
   slice = slicestr_LaceX(in, delim);
-  assert(!slice.buf.at);
-  assert(slice.buf.sz == 0);
+  assert(!slice.at);
+  assert(slice.size == 0);
 }
 
 

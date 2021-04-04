@@ -30,17 +30,21 @@ char* grow_LaceX(LaceX*, size_t);
 void flush_LaceX(LaceX*);
 void maybe_flush_LaceX(LaceX*);
 LaceX slicechr_LaceX(LaceX*, const char delim);
-LaceX slicechrs_LaceX(LaceX*, const char* delims);
 LaceX sliceline_LaceX(LaceX*);
+LaceX slicechrs_LaceX(LaceX*, const char* delims);
+LaceX slicespan_LaceX(LaceX*, const char* span);
 LaceX slicestr_LaceX(LaceX*, const char* delim);
-/* LaceX skipchrs_LaceX(LaceX*, const char* span); */
 char* getline_LaceX(LaceX*);
 char* gets_LaceX(LaceX*, const char* delim);
+void skipchrs_LaceX(LaceX*, const char* span);
+bool parse_int_LaceX(LaceX*, int*);
+bool parse_double_LaceX(LaceX*, double*);
 
 bool open_LaceXF(LaceXF* f, const char* filename);
 bool open_sibling_LaceXF(LaceXF* f, const char* sibling, const char* filename);
 
 char* lace_parse_int(int* ret, const char* in);
+char* lace_parse_double(double* ret, const char* in);
 
 
 /** Given the memory address of a structure's field,
@@ -73,17 +77,15 @@ struct LaceX_VTable
   }}
 
 struct LaceX {
-  struct LaceX_Buffer {
-    char* at;
-    size_t sz;
-    lace_lgsize_t alloc_lgsz;
-  } buf;
-  lace_lgsize_t flush_lgsz;
+  char* at;
+  size_t size;
   size_t off;
+  lace_lgsize_t alloc_lgsize;
+  lace_lgsize_t flush_lgsize;
   const LaceX_VTable* vt;
 };
-#define DEFAULT_LaceX  { { NULL, 0, 0 }, 12, 0, NULL }
-#define DEFAULT1_LaceX(vt)  { { NULL, 0, 0 }, 12, 0, vt }
+#define DEFAULT_LaceX  { NULL, 0, 0, 0, 12, NULL }
+#define DEFAULT1_LaceX(vt)  { NULL, 0, 0, 0, 12, vt }
 
 struct LaceXF {
   LaceX base;

@@ -208,7 +208,7 @@ reading_routine(LaceX* in, TableT(WritingThreadState)* wstates)
           const size_t off = st->buf.sz;
           StateMsg("catting", ccstr_of_AlphaTab(&st->ofileb.fb.filename));
           GrowTable( st->buf, nbytes );
-          memcpy(&st->buf.s[off], &in->buf.at[in->off], nbytes);
+          memcpy(&st->buf.s[off], &in->at[in->off], nbytes);
           if (st->waiting) {
             pthread_cond_signal(&st->buf_cond);
           }
@@ -216,7 +216,7 @@ reading_routine(LaceX* in, TableT(WritingThreadState)* wstates)
         pthread_mutex_unlock(&st->buf_mutex);
       }
       in->off += nbytes;
-      assert(in->off == in->buf.sz);
+      assert(in->off == in->size);
       maybe_flush_LaceX(in);
     }
   }

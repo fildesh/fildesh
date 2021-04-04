@@ -59,15 +59,11 @@ char* xget_ujint_cstr (ujint* ret, const char* in) {
   char*
 xget_real_cstr (real* ret, const char* in)
 {
-  double v;
-  char* out = 0;
-
-  assert (ret);
-  assert (in);
-  v = strtod (in, &out);
-
-  if (out == in)  out = 0;
-  if (out)  *ret = (real) v;
+  double v = 0;
+  char* out = lace_parse_double(&v, in);
+  if (out) {
+    *ret = (real)v;
+  }
   return out;
 }
 

@@ -21,3 +21,18 @@ lace_parse_int(int* ret, const char* in)
   return out;
 }
 
+  char*
+lace_parse_double(double* ret, const char* in)
+{
+  double v;
+  char* out = NULL;
+
+  assert(ret);
+  assert(in);
+  v = strtod(in, &out);
+
+  if (out == in)  out = NULL;
+  if (out)  *ret = (double) v;
+  return out;
+}
+

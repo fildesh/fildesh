@@ -68,7 +68,7 @@ param2_test_getline(unsigned chunk_size, lace_lgsize_t flush_lgsize) {
   MockLaceXF xf[1] = { DEFAULT_MockLaceXF };
   char* line;
   xf->chunk_size = chunk_size;
-  xf->x.flush_lgsz = flush_lgsize;
+  xf->x.flush_lgsize = flush_lgsize;
   xf->lines = lines;
 
   line = getline_LaceX(&xf->x);

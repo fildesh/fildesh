@@ -20,20 +20,20 @@ static
   void
 read_LaceXF(LaceXF* xf)
 {
-  static const size_t chunksz = 4096;
-  const size_t orig_sz = xf->base.buf.sz;
-  char* buf = grow_LaceX(&xf->base, chunksz);
+  static const size_t chunksize = 4096;
+  const size_t orig_size = xf->base.size;
+  char* buf = grow_LaceX(&xf->base, chunksize);
 
 #ifdef _WIN32
-  long n = _read(xf->fd, buf, chunksz);
+  long n = _read(xf->fd, buf, chunksize);
 #else
-  ssize_t n = read(xf->fd, buf, chunksz);
+  ssize_t n = read(xf->fd, buf, chunksize);
 #endif
 
   if (n <= 0) {
-    xf->base.buf.sz = orig_sz;
+    xf->base.size = orig_size;
   } else {
-    xf->base.buf.sz = orig_sz + (size_t) n;
+    xf->base.size = orig_size + (size_t) n;
   }
 }
 

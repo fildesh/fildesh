@@ -55,7 +55,7 @@ param3_test_gets(unsigned chunk_size, lace_lgsize_t flush_lgsize, const char* de
   MockLaceXF xf[1] = { DEFAULT_MockLaceXF };
   char* line;
   xf->chunk_size = chunk_size;
-  xf->x.flush_lgsz = flush_lgsize;
+  xf->x.flush_lgsize = flush_lgsize;
   xf->content = (char*)malloc((30+strlen(delim))*5+1);
   sprintf(xf->content, "%s%s%s%s%s%s%s%s%s",
           lines[0], delim,

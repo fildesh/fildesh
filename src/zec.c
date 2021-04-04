@@ -67,12 +67,12 @@ cat_the_file (fd_t o_fd, LaceX* in)
   size_t nread;
   do {
     nread = read_LaceX(in);
-    if (!write_all(o_fd, in->buf.at, nread))
+    if (!write_all(o_fd, in->at, nread))
       break;
     in->off += nread;
     maybe_flush_LaceX(in);
     assert(in->off == 0);
-    assert(in->buf.sz == 0);
+    assert(in->size == 0);
   } while (nread > 0);
   close_LaceX(in);
 }
@@ -83,7 +83,7 @@ all_have_data(LaceXF* inputs, uint n) {
   uint i;
   for (i = 0; i < n; ++i) {
     LaceX* in = &inputs[i].base;
-    if (in->off >= in->buf.sz) {
+    if (in->off >= in->size) {
       if (0 == read_LaceX(in)) {
         return false;
       }

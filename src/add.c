@@ -4,34 +4,36 @@
 #include "cx/fileb.h"
 
 static int
-sum_int_line (XFile* xf)
+sum_int_line (LaceX* in)
 {
   int x = 0, y = 0;
-  while (xget_int_XFile (xf, &y))
+  while (parse_int_LaceX(in, &y))
     x += y;
-  skipds_XFile (xf, 0);
-  if (ccstr_of_XFile (xf) [0] != '\0')
+  skipchrs_LaceX(in, WhiteSpaceChars);
+  if (in->off < in->size) {
     fputs ("Line is no good!\n", stderr);
+  }
   return x;
 }
 
-static real
-sum_real_line (XFile* xf)
+static double
+sum_real_line(LaceX* in)
 {
-  real x = 0, y = 0;
-  while (xget_real_XFile (xf, &y))
+  double x = 0, y = 0;
+  while (parse_double_LaceX(in, &y))
     x += y;
-  skipds_XFile (xf, 0);
-  if (ccstr_of_XFile (xf) [0] != '\0')
+  skipchrs_LaceX(in, WhiteSpaceChars);
+  if (in->off < in->size) {
     fputs ("Line is no good!\n", stderr);
+  }
   return x;
 }
 
 LaceUtilMain(add)
 {
   LaceXF xf[1] = {DEFAULT_LaceXF};
+  LaceX slice;
   OFile* ofile;
-  char* line;
 
   (void) argv;
   if (argi < argc)
@@ -44,18 +46,16 @@ LaceUtilMain(add)
   open_LaceXF(xf, "-");
   ofile = stdout_OFile ();
 
-  for (line = getline_LaceX(&xf->base);
-       line;
-       line = getline_LaceX(&xf->base)) {
-    XFile olay[1];
-    init_XFile_olay_cstr(olay, line);
-    if (!line[strcspn (line, ".Ee")]) {
-      int x = sum_int_line (olay);
+  for (slice = sliceline_LaceX(&xf->base);
+       slice.size > 0;
+       slice = sliceline_LaceX(&xf->base)) {
+    if (slice.size == strcspn(slice.at, ".Ee")) {
+      int x = sum_int_line(&slice);
       oput_int_OFile (ofile, x);
       oput_char_OFile (ofile, '\n');
     }
     else {
-      real x = sum_real_line (olay);
+      double x = sum_real_line(&slice);
       printf_OFile (ofile, "%f\n", x);
     }
     flush_OFile (ofile);
