@@ -35,3 +35,9 @@ cc_test(
     size = "small",
 )
 
+cc_test(
+    name = "slicechrs_test",
+    srcs = ["slicechrs_test.c"],
+    deps = ["//:lace_lib"],
+    size = "small",
+)

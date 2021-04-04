@@ -2,9 +2,8 @@
 #include "lace.h"
 
 #include <assert.h>
-#include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
+
 
 static
   void
@@ -18,7 +17,7 @@ slicestr_long_delim_no_match_test()
   const char delim[] = "iamaverylongdelimiter";
 
   in->buf.at = content;
-  in->buf.sz = strlen(content);
+  in->buf.sz = content_length;
   in->buf.alloc_lgsz = LACE_LGSIZE_MAX;
 
   /* Run the test with various offsets.*/

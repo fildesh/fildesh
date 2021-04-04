@@ -29,9 +29,10 @@ void close_LaceX(LaceX*);
 char* grow_LaceX(LaceX*, size_t);
 void flush_LaceX(LaceX*);
 void maybe_flush_LaceX(LaceX*);
+LaceX slicechr_LaceX(LaceX*, const char delim);
+LaceX slicechrs_LaceX(LaceX*, const char* delims);
 LaceX sliceline_LaceX(LaceX*);
 LaceX slicestr_LaceX(LaceX*, const char* delim);
-/* LaceX slicechrs_LaceX(LaceX*, const char* delims); */
 /* LaceX skipchrs_LaceX(LaceX*, const char* span); */
 char* getline_LaceX(LaceX*);
 char* gets_LaceX(LaceX*, const char* delim);

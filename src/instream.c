@@ -74,10 +74,9 @@ cstr_of_LaceX(LaceX* in)
   return &in->buf.at[in->off];
 }
 
-
-/* Get line, return slice.*/
+/** Like strcspn or strtok but returns a slice.**/
   LaceX
-sliceline_LaceX(LaceX* in)
+slicechr_LaceX(LaceX* in, const char delim)
 {
   LaceX slice = DEFAULT_LaceX;
   size_t ret_off;
@@ -85,18 +84,18 @@ sliceline_LaceX(LaceX* in)
 
   maybe_flush_LaceX(in);
   ret_off = in->off;
-  s = strchr(cstr_of_LaceX(in), '\n');
+  s = strchr(cstr_of_LaceX(in), delim);
 
   while (!s) {
     in->off = in->buf.sz;
     if (0 == read_LaceX(in)) {
       break;
     }
-    s = strchr(cstr_of_LaceX(in), '\n');
+    s = strchr(cstr_of_LaceX(in), delim);
   }
 
   if (ret_off == in->buf.sz) {
-    in->off = in->buf.sz;
+    assert(in->off == in->buf.sz);
     return slice;  /* Empty.*/
   }
   assert(in->buf.at[in->buf.sz] == '\0');
@@ -107,16 +106,64 @@ sliceline_LaceX(LaceX* in)
     in->off = 1 + (s - in->buf.at);
     slice.buf.sz = in->off - ret_off - 1;
     slice.buf.at[slice.buf.sz] = '\0';
-    /* Ignore carriage returns.*/
-    if (slice.buf.sz >= 1 && slice.buf.at[slice.buf.sz-1] == '\r') {
-      slice.buf.sz -= 1;
-      slice.buf.at[slice.buf.sz] = '\0';
-    }
   } else {
     assert(in->off == in->buf.sz);
     slice.buf.sz = in->buf.sz - ret_off;
   }
   assert(slice.buf.at[slice.buf.sz] == '\0');
+  return slice;
+}
+
+/** Like strcspn or strtok but returns a slice.**/
+  LaceX
+slicechrs_LaceX(LaceX* in, const char* delims)
+{
+  LaceX slice = DEFAULT_LaceX;
+  size_t ret_off;
+  size_t end;
+
+  maybe_flush_LaceX(in);
+  ret_off = in->off;
+  end = in->off + strcspn(cstr_of_LaceX(in), delims);
+
+  while (end == in->buf.sz) {
+    in->off = in->buf.sz;
+    if (0 == read_LaceX(in)) {
+      break;
+    }
+    end = in->off + strcspn(cstr_of_LaceX(in), delims);
+  }
+
+  if (ret_off == in->buf.sz) {
+    assert(in->off == in->buf.sz);
+    return slice;  /* Empty.*/
+  }
+  assert(in->buf.at[in->buf.sz] == '\0');
+
+  slice.buf.at = &in->buf.at[ret_off];
+  slice.buf.alloc_lgsz = LACE_LGSIZE_MAX;
+  if (end < in->buf.sz) {
+    in->off = end + 1;
+    slice.buf.sz = in->off - ret_off - 1;
+    slice.buf.at[slice.buf.sz] = '\0';
+  } else {
+    assert(in->off == in->buf.sz);
+    slice.buf.sz = in->buf.sz - ret_off;
+  }
+  assert(slice.buf.at[slice.buf.sz] == '\0');
+  return slice;
+}
+
+/** Get line, return slice.**/
+  LaceX
+sliceline_LaceX(LaceX* in)
+{
+  LaceX slice = slicechr_LaceX(in, '\n');
+  /* Ignore carriage returns.*/
+  if (slice.buf.sz > 0 && slice.buf.at[slice.buf.sz-1] == '\r') {
+    slice.buf.sz -= 1;
+    slice.buf.at[slice.buf.sz] = '\0';
+  }
   return slice;
 }
 
@@ -169,7 +216,7 @@ slicestr_LaceX(LaceX* in, const char* delim)
   return slice;
 }
 
-/* Get line, return string.*/
+/** Get line, return string.**/
   char*
 getline_LaceX(LaceX* in)
 {
@@ -177,7 +224,7 @@ getline_LaceX(LaceX* in)
   return slice.buf.at;
 }
 
-/* Get string up to a delimiter. Push offset past delimiter.*/
+/** Get string up to a delimiter. Push offset past delimiter.**/
   char*
 gets_LaceX(LaceX* in, const char* delim)
 {
