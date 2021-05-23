@@ -2,6 +2,8 @@
 add_library(lace_lib STATIC
   "infile.c"
   "instream.c"
+  "outfile.c"
+  "outstream.c"
   "string.c"
   )
 

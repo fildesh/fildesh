@@ -3,6 +3,8 @@
 exports_files([
     "infile.c",
     "instream.c",
+    "outfile.c",
+    "outstream.c",
     "string.c",
 ])
 

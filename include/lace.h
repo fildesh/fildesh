@@ -22,6 +22,9 @@ typedef uint8_t lace_lgsize_t;
 typedef struct LaceX_VTable LaceX_VTable;
 typedef struct LaceX LaceX;
 typedef struct LaceXF LaceXF;
+typedef struct LaceO_VTable LaceO_VTable;
+typedef struct LaceO LaceO;
+typedef struct LaceOF LaceOF;
 
 
 size_t read_LaceX(LaceX*);
@@ -45,6 +48,16 @@ bool open_sibling_LaceXF(LaceXF* f, const char* sibling, const char* filename);
 
 char* lace_parse_int(int* ret, const char* in);
 char* lace_parse_double(double* ret, const char* in);
+
+size_t write_LaceO(LaceO*);
+void close_LaceO(LaceO*);
+char* grow_LaceO(LaceO*, size_t);
+void flush_LaceO(LaceO*);
+void maybe_flush_LaceO(LaceO*);
+void puts_LaceO(LaceO*, const char*);
+
+bool open_LaceOF(LaceOF* f, const char* filename);
+bool open_sibling_LaceOF(LaceOF* f, const char* sibling, const char* filename);
 
 
 /** Given the memory address of a structure's field,
@@ -94,6 +107,41 @@ struct LaceXF {
   char* filename;
 };
 #define DEFAULT_LaceXF  { DEFAULT_LaceX, -1, NULL }
+
+struct LaceO_VTable
+{
+  void (*write_fn)(LaceO*);
+  void (*close_fn)(LaceO*);
+};
+#define DEFINE_LaceO_VTable(T, field) \
+  static void write_##T##_LaceO(LaceO* input) { \
+    write_##T(lace_castup(T, field, input)); \
+  } \
+  static void close_##T##_LaceO(LaceO* input) { \
+    close_##T(lace_castup(T, field, input)); \
+  } \
+  static const LaceO_VTable DEFAULT_##T##_LaceO_VTable[1] = {{ \
+    write_##T##_LaceO, \
+    close_##T##_LaceO, \
+  }}
+
+struct LaceO {
+  char* at;
+  size_t size;
+  size_t off;
+  lace_lgsize_t alloc_lgsize;
+  lace_lgsize_t flush_lgsize;
+  const LaceO_VTable* vt;
+};
+#define DEFAULT_LaceO  { NULL, 0, 0, 0, 12, NULL }
+#define DEFAULT1_LaceO(vt)  { NULL, 0, 0, 0, 12, vt }
+
+struct LaceOF {
+  LaceO base;
+  lace_fd_t fd;
+  char* filename;
+};
+#define DEFAULT_LaceOF  { DEFAULT_LaceO, -1, NULL }
 
 
 #if !defined(ZEROIZE)

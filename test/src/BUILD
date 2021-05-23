@@ -28,6 +28,13 @@ cc_test(
 )
 
 cc_test(
+    name = "puts_test",
+    srcs = ["puts_test.c"],
+    deps = ["//:lace_lib"],
+    size = "small",
+)
+
+cc_test(
     name = "read_file_lines_test",
     data = ["read_file_lines_test.c"],
     srcs = ["read_file_lines_test.c"],

@@ -3,35 +3,29 @@
  **/
 
 #include "utilace.h"
-#include "cx/alphatab.h"
 #include <assert.h>
 
 static
   bool
-write_all(fd_t fd, const char* buf, size_t sz)
+write_all(LaceO* out, const char* buf, size_t sz)
 {
-  size_t off = 0;
-  while (off < sz) {
-    long nbytes = write_sysCx(fd, &buf[off], sz - off);
-    if (nbytes <= 0)
-      return 0;
-    off += nbytes;
-  }
-  return 1;
+  memcpy(grow_LaceO(out, sz), buf, sz);
+  flush_LaceO(out);
+  return (0 == out->size);
 }
 
 static
-  bool
-fdputs(fd_t fd, const char* msg)
+  void
+badnews(const char* msg)
 {
-  return write_all(fd, msg, strlen(msg));
+  fputs(msg, stderr);
 }
 
 static
   void
 show_usage ()
 {
-#define W( a )  fdputs (2, a); fdputs (2, "\n")
+#define W( a )  badnews(a); badnews("\n")
   W("Usage: zec [OPTIONS] [FILE...] / [STRING...] / [FILE...]");
   W("   or: zec [OPTIONS] [FILE...] / [STRING...]");
   W("   or: zec [OPTIONS] [FILE...]");
@@ -52,9 +46,9 @@ open_input_file(const char* filename)
     filename = "-";
   }
   if (!open_LaceXF(xf, filename)) {
-    fdputs (2, "Cannot open file! ");
-    fdputs (2, filename);
-    fdputs (2, "\n");
+    badnews("Cannot open file! ");
+    badnews(filename);
+    badnews("\n");
     exit(1);
   }
   return *xf;
@@ -62,12 +56,12 @@ open_input_file(const char* filename)
 
 static
   void
-cat_the_file (fd_t o_fd, LaceX* in)
+cat_the_file(LaceO* out, LaceX* in)
 {
   size_t nread;
   do {
     nread = read_LaceX(in);
-    if (!write_all(o_fd, in->at, nread))
+    if (!write_all(out, in->at, nread))
       break;
     in->off += nread;
     maybe_flush_LaceX(in);
@@ -94,13 +88,15 @@ all_have_data(LaceXF* inputs, uint n) {
 
 static
   bool
-cat_next_line(fd_t o_fd, LaceX* in)
+cat_next_line(LaceO* out, LaceX* in)
 {
   char* s = getline_LaceX(in);
   if (!s) {
     return true;
   }
-  return fdputs(o_fd, s);
+  puts_LaceO(out, s);
+  flush_LaceO(out);
+  return (0 == out->size);
 }
 
 LaceUtilMain(zec)
@@ -108,7 +104,7 @@ LaceUtilMain(zec)
   int i;
   int beg_slash = argc;
   int end_slash = argc;
-  fd_t o_fd = 1;
+  LaceOF ofile = DEFAULT_LaceOF;
   bool paste_mode = false;
   const char* unless_arg = 0;
   LaceXF* inputs;
@@ -132,17 +128,11 @@ LaceUtilMain(zec)
         show_usage ();
         failout_sysCx ("Need a filename after -o.");
       }
-      if (eq_cstr (arg, "-")) {
-        o_fd = 1;
-      }
-      else {
-        o_fd = open_lace_ofd(arg);
-        if (o_fd < 0) {
-          fdputs (2, "Cannot open file for writing! ");
-          fdputs (2, arg);
-          fdputs (2, "\n");
-          exit(1);
-        }
+      if (!open_LaceOF(&ofile, arg)) {
+        badnews("Cannot open file for writing! ");
+        badnews(arg);
+        badnews("\n");
+        exit(1);
       }
     }
     else if (eq_cstr (arg, "-paste")) {
@@ -161,15 +151,23 @@ LaceUtilMain(zec)
     }
   }
 
+  if (ofile.fd < 0) {
+    if (!open_LaceOF(&ofile, "-")) {
+      badnews("Cannot open /dev/stdout for writing!\n");
+      exit(1);
+    }
+  }
+
   if (unless_arg && unless_arg[0]) {
-    fdputs (o_fd, unless_arg);
+    puts_LaceO(&ofile.base, unless_arg);
+    close_LaceO(&ofile.base);
     lose_sysCx ();
     return 0;
   }
 
   if (argi == argc) {
     LaceXF xf = open_input_file(NULL);
-    cat_the_file(o_fd, &xf.base);
+    cat_the_file(&ofile.base, &xf.base);
     lose_sysCx ();
     return 0;
   }
@@ -215,16 +213,16 @@ LaceUtilMain(zec)
       good = all_have_data(inputs, nbegs + nends);
 
       for (i = 0; i < nbegs && good; ++i)
-        good = cat_next_line(o_fd, &inputs[i].base);
+        good = cat_next_line(&ofile.base, &inputs[i].base);
 
       if (good)
-        good = write_all(o_fd, mid_buf, mid_sz);
+        good = write_all(&ofile.base, mid_buf, mid_sz);
 
       for (i = 0; i < nends && good; ++i)
-        good = cat_next_line(o_fd, &inputs[nbegs+i].base);
+        good = cat_next_line(&ofile.base, &inputs[nbegs+i].base);
 
       if (good)
-        good = write_all(o_fd, "\n", 1);
+        good = write_all(&ofile.base, "\n", 1);
     }
 
     for (i = 0; i < nbegs + nends; ++i) {
@@ -235,16 +233,16 @@ LaceUtilMain(zec)
     bool good = true;
 
     for (i = 0; i < nbegs && good; ++i)
-      cat_the_file(o_fd, &inputs[i].base);
+      cat_the_file(&ofile.base, &inputs[i].base);
 
     if (good)
-      good = write_all (o_fd, mid_buf, mid_sz);
+      good = write_all(&ofile.base, mid_buf, mid_sz);
 
     for (i = 0; i < nends && good; ++i)
-      cat_the_file(o_fd, &inputs[nbegs+i].base);
+      cat_the_file(&ofile.base, &inputs[nbegs+i].base);
   }
 
-  closefd_sysCx(o_fd);
+  close_LaceO(&ofile.base);
   free (inputs);
   free (mid_buf);
   lose_sysCx ();

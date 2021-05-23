@@ -14,6 +14,16 @@ add_executable(gets_test
 target_link_libraries(gets_test lace_lib)
 add_test(NAME gets_test COMMAND gets_test)
 
+add_executable(parse_int_test
+  "parse_int_test.c")
+target_link_libraries(parse_int_test lace_lib)
+add_test(NAME parse_int_test COMMAND parse_int_test)
+
+add_executable(puts_test
+  "puts_test.c")
+target_link_libraries(puts_test lace_lib)
+add_test(NAME puts_test COMMAND puts_test)
+
 add_executable(read_file_lines_test
   "read_file_lines_test.c")
 target_link_libraries(read_file_lines_test lace_lib)

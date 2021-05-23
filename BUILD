@@ -11,6 +11,8 @@ cc_library(
         "//include:lace.h",
         "//src:infile.c",
         "//src:instream.c",
+        "//src:outfile.c",
+        "//src:outstream.c",
         "//src:string.c",
     ],
     includes = [
