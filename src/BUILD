@@ -38,6 +38,18 @@ cc_binary(
     visibility = ["//:__pkg__"],
 )
 
+
+cc_binary(
+    name = "add",
+    srcs = [
+        "add.c",
+    ],
+    deps = [
+        "//:lace_lib",
+    ],
+    visibility = ["//visibility:public"],
+)
+
 cc_binary(
     name = "elastic_pthread",
     srcs = [
@@ -55,10 +67,9 @@ cc_binary(
     name = "zec",
     srcs = [
         "zec.c",
-        "utilace.h",
     ],
     deps = [
-        "//src/cx:cx_lib",
+        "//:lace_lib",
     ],
     visibility = ["//visibility:public"],
 )

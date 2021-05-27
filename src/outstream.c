@@ -3,6 +3,7 @@
 
 #include <assert.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
   size_t
@@ -74,10 +75,58 @@ maybe_flush_LaceO(LaceO* o)
 }
 
   void
+putc_LaceO(LaceO* o, char c)
+{
+  *grow_LaceO(o, 1) = c;
+  maybe_flush_LaceO(o);
+}
+
+  void
 puts_LaceO(LaceO* o, const char* s)
 {
   const size_t length = strlen(s);
   char* buf = grow_LaceO(o, length);
   memcpy(buf, s, length);
   maybe_flush_LaceO(o);
+}
+
+  void
+print_int_LaceO(LaceO* out, int q)
+{
+  char buf[1 + (CHAR_BIT * sizeof(int)) / 3];
+  unsigned i = sizeof(buf);
+
+  if (q == 0) {
+    putc_LaceO(out, '0');
+    return;
+  } else if (q < 0) {
+    q = -q;
+    buf[0] = '-';
+  } else {
+    buf[0] = '\0';
+  }
+
+  while (q > 0) {
+    buf[--i] = '0' + (char)(q % 10);
+    q /= 10;
+  }
+
+  if (buf[0] == '-') {
+    buf[--i] = '-';
+  }
+
+  memcpy(grow_LaceO(out, sizeof(buf)-i),
+         &buf[i],
+         sizeof(buf)-i);
+  maybe_flush_LaceO(out);
+}
+
+  void
+print_double_LaceO(LaceO* out, double q)
+{
+  char buf[50];
+  unsigned n = sprintf(buf, "%.17g", q);
+  assert(n > 0);
+  memcpy(grow_LaceO(out, n), buf, n);
+  maybe_flush_LaceO(out);
 }

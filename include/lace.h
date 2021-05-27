@@ -54,7 +54,10 @@ void close_LaceO(LaceO*);
 char* grow_LaceO(LaceO*, size_t);
 void flush_LaceO(LaceO*);
 void maybe_flush_LaceO(LaceO*);
+void putc_LaceO(LaceO*, char);
 void puts_LaceO(LaceO*, const char*);
+void print_int_LaceO(LaceO*, int);
+void print_double_LaceO(LaceO*, double);
 
 bool open_LaceOF(LaceOF* f, const char* filename);
 bool open_sibling_LaceOF(LaceOF* f, const char* sibling, const char* filename);

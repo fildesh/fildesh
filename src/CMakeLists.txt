@@ -52,9 +52,8 @@ endif()
 
 
 add_executable(add
-  add.c
-  utilace.h)
-target_link_libraries(add cx_lib)
+  add.c)
+target_link_libraries(add lace_lib)
 
 add_executable(best-match
   best-match.c
@@ -107,9 +106,8 @@ add_executable(xpipe
 target_link_libraries(xpipe cx_lib)
 
 add_executable(zec
-  zec.c
-  utilace.h)
-target_link_libraries(zec cx_lib)
+  zec.c)
+target_link_libraries(zec lace_lib)
 
 
 if (UNIX)
