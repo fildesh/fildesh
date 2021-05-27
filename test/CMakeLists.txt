@@ -5,6 +5,7 @@ set (lace_exe "$<TARGET_FILE:lace>")
 set (zec_exe "$<TARGET_FILE:zec>")
 
 add_subdirectory(builtin)
+add_subdirectory(fault)
 
 ## Ensure that the examples we distribute actually work.
 foreach (f hello args name cycle silly)

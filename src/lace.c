@@ -1241,6 +1241,7 @@ int main_lace(int argi, int argc, char** argv)
   bool use_stdin = true;
   AlphaTab tmppath[1];
   uint i;
+  int istat;
 
   /* add_util_path_env (); */
   (void) add_util_path_env;
@@ -1418,15 +1419,23 @@ int main_lace(int argi, int argc, char** argv)
 
   spawn_commands (cmds);
 
+  istat = 0;
   for (i = 0; i < cmds.sz; ++i) {
     if (cmds.s[i].kind == RunCommand) {
-      waitpid_sysCx (cmds.s[i].pid, 0);
+      int tmp_istat = 0;
+      waitpid_sysCx(cmds.s[i].pid, &tmp_istat);
+      if (tmp_istat != 0) {
+        if (istat < 127) {
+          /* Not sure what to do here. Just accumulate.*/
+          istat += 1;
+        }
+      }
     }
 
     lose_Command (&cmds.s[i]);
   }
 
   lose_sysCx ();
-  return 0;
+  return istat;
 }
 
