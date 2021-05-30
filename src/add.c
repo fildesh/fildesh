@@ -1,8 +1,5 @@
 
 #include "lace.h"
-#ifdef MAIN_LACE_EXECUTABLE
-#include "utilace.h"
-#endif
 
 #include <stdio.h>
 #include <string.h>
@@ -33,15 +30,9 @@ sum_real_line(LaceX* in)
   return x;
 }
 
-#ifdef MAIN_LACE_EXECUTABLE
-LaceUtilMain(add)
-#else
-int main(int argc, const char** argv)
-#endif
+  int
+main_add(int argi, int argc, char** argv)
 {
-#ifndef MAIN_LACE_EXECUTABLE
-  int argi = 1;
-#endif
   LaceXF infile = DEFAULT_LaceXF;
   LaceOF outfile = DEFAULT_LaceOF;
   LaceX* const in = &infile.base;
@@ -53,9 +44,6 @@ int main(int argc, const char** argv)
   {
     fputs("Just run without arguments and type numbers.\n", stderr);
     fputs("You'll figure it out.\n", stderr);
-#ifdef MAIN_LACE_EXECUTABLE
-    lose_sysCx();
-#endif
     return 1;
   }
 
@@ -80,9 +68,11 @@ int main(int argc, const char** argv)
 
   close_LaceX(in);
   close_LaceO(out);
-#ifdef MAIN_LACE_EXECUTABLE
-  lose_sysCx ();
-#endif
   return 0;
 }
 
+#ifndef MAIN_LACE_EXECUTABLE
+int main(int argc, char** argv) {
+  return main_add(1, argc, argv);
+}
+#endif

@@ -167,7 +167,12 @@ push_losefn1_sysCx (void (*f) (void*), void* x)
   void
 lose_sysCx ()
 {
+  static bool called = false;
   uint i;
+  if (called) {
+    assert(false);
+    return;
+  }
   UFor( i, LoseFns.sz ) {
     /* Do in reverse because it's a stack.*/
     DeclEltTable( HookFn, hook, LoseFns, LoseFns.sz-i-1 );
@@ -181,6 +186,7 @@ lose_sysCx ()
   lose_XFileB(stdin_XFileB ());
   lose_OFileB(stdout_OFileB ());
   lose_OFileB(stderr_OFileB ());
+  called = true;
 }
 
   void

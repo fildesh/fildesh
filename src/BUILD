@@ -54,10 +54,9 @@ cc_binary(
     name = "elastic_pthread",
     srcs = [
         "elastic_pthread.c",
-        "utilace.h",
     ],
     deps = [
-        "//src/cx:cx_lib",
+        "//:lace_lib",
     ],
     linkopts = ["-lpthread"],
     visibility = ["//visibility:public"],

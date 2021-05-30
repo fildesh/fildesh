@@ -1,16 +1,14 @@
-
 /**
  * \file elastic_pthread.c
  * Echo stdin to stdout with an arbitrary sized buffer.
  **/
 #include "lace.h"
-#include "utilace.h"
-#include "cx/alphatab.h"
-#include "cx/fileb.h"
-#include "cx/table.h"
 
+#include <assert.h>
 #include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 
 #ifdef _WIN32
@@ -87,11 +85,9 @@ struct WritingThreadState
   pthread_t thread;
   pthread_cond_t buf_cond;
   pthread_mutex_t buf_mutex;
-  TableT(byte) buf;
-  OFileB ofileb;
+  LaceO buf;
+  LaceOF outfile;
 };
-
-DeclTableT(WritingThreadState, WritingThreadState);
 
 static
   void
@@ -101,10 +97,9 @@ init_WritingThreadState(WritingThreadState* st)
   st->waiting = true;
   pthread_cond_init(&st->buf_cond, NULL);
   pthread_mutex_init(&st->buf_mutex, NULL);
-  InitTable( st->buf );
-  init_OFileB(&st->ofileb );
-  setfmt_OFileB(&st->ofileb, FileB_Raw);
-  st->ofileb.of.mayflush = false;
+  st->buf = default_LaceO();
+  st->outfile = default_LaceOF();
+  st->outfile.base.flush_lgsize = 0;  /* No automatic flushing.*/
 }
 
 /** Call pthread_join() before this!**/
@@ -114,8 +109,8 @@ lose_WritingThreadState(WritingThreadState* st)
 {
   pthread_cond_destroy(&st->buf_cond);
   pthread_mutex_destroy(&st->buf_mutex);
-  LoseTable( st->buf );
-  lose_OFileB(&st->ofileb);
+  close_LaceO(&st->buf);
+  close_LaceO(&st->outfile.base);
 }
 
 static
@@ -133,82 +128,98 @@ StateMsg(const char* msg, const char* name) {
 }
 
 static
+  void
+badnews(const char* msg)
+{
+  fputs(msg, stderr);
+}
+
+static
+  void
+badnewsf(const char* fmt, const char* arg)
+{
+  fprintf(stderr, fmt, arg);
+}
+
+static
   void*
 writing_thread_fn(WritingThreadState* st) {
   bool done = false;
 
-  while (!done && st->ofileb.fb.good) {
+  while (!done) {
     pthread_mutex_lock(&st->buf_mutex);
-    StateMsg("loop start", ccstr_of_AlphaTab(&st->ofileb.fb.filename));
-    if (st->buf.sz == 0 && !st->done) {
+    StateMsg("loop start", st->outfile.filename);
+    if (st->buf.size == 0 && !st->done) {
       st->waiting = true;
-      StateMsg("waiting", ccstr_of_AlphaTab(&st->ofileb.fb.filename));
+      StateMsg("waiting", st->outfile.filename);
       pthread_cond_wait(&st->buf_cond, &st->buf_mutex);
-      StateMsg("done waiting", ccstr_of_AlphaTab(&st->ofileb.fb.filename));
+      StateMsg("done waiting", st->outfile.filename);
       st->waiting = false;
     }
     done = st->done;
-    oputn_byte_OFileB(&st->ofileb, st->buf.s, st->buf.sz);
-    FlushTable( st->buf );
+    memcpy(grow_LaceO(&st->outfile.base, st->buf.size),
+           &st->buf.at[0], st->buf.size);
+    st->buf.size = 0;
     pthread_mutex_unlock(&st->buf_mutex);
 
-    if (!flush_OFileB(&st->ofileb)) {
+    flush_LaceO(&st->outfile.base);
+    if (st->outfile.base.size > 0) {
       break;
     }
   }
-  StateMsg("done writing", ccstr_of_AlphaTab(&st->ofileb.fb.filename));
+  StateMsg("done writing", st->outfile.filename);
 
   if (!done) {
-    StateMsg("setting myself done", ccstr_of_AlphaTab(&st->ofileb.fb.filename));
+    StateMsg("setting myself done", st->outfile.filename);
     /* The file closed on us!*/
     pthread_mutex_lock(&st->buf_mutex);
     st->done = true;
     pthread_mutex_unlock(&st->buf_mutex);
   }
 
-  close_OFileB(&st->ofileb);
-  ClearTable( st->buf );
-  StateMsg("end of", ccstr_of_AlphaTab(&st->ofileb.fb.filename));
+  close_LaceO(&st->buf);
+  close_LaceO(&st->outfile.base);
+  StateMsg("end of", st->outfile.filename);
   return NULL;
 }
 
 /** Reading is actually done on the main thread.**/
 static
   void
-reading_routine(LaceX* in, TableT(WritingThreadState)* wstates)
+reading_routine(LaceX* in, WritingThreadState* wstates, size_t wstate_count)
 {
   int istat;
-  uint i;
-  zuint nspawned = wstates->sz;  /* For early cleanup.*/
+  unsigned i;
+  size_t nspawned = wstate_count;  /* For early cleanup.*/
 
-  for (i = 0; i < wstates->sz; ++i) {
-    WritingThreadState* st = &wstates->s[i];
+  for (i = 0; i < wstate_count; ++i) {
+    WritingThreadState* st = &wstates[i];
     istat = pthread_create(
         &st->thread, NULL,
         (void* (*) (void*)) writing_thread_fn,
         st);
     if (istat != 0) {
-      DBog0("error on pthread_create()");
+      StateMsg("error on pthread create", "");
       nspawned = i;
       break;
     }
   }
 
-  if (nspawned == wstates->sz) {
+  if (nspawned == wstate_count) {
     while (true) {
       const size_t nbytes = read_LaceX(in);
       if (nbytes == 0) {
         break;
       }
 
-      for (i = 0; i < wstates->sz; ++i) {
-        WritingThreadState* st = &wstates->s[i];
+      for (i = 0; i < wstate_count; ++i) {
+        WritingThreadState* st = &wstates[i];
         pthread_mutex_lock(&st->buf_mutex);
         if (!st->done) {
-          const size_t off = st->buf.sz;
-          StateMsg("catting", ccstr_of_AlphaTab(&st->ofileb.fb.filename));
-          GrowTable( st->buf, nbytes );
-          memcpy(&st->buf.s[off], &in->at[in->off], nbytes);
+          StateMsg("catting", st->outfile.filename);
+          memcpy(grow_LaceO(&st->buf, nbytes),
+                 &in->at[in->off],
+                 nbytes);
           if (st->waiting) {
             pthread_cond_signal(&st->buf_cond);
           }
@@ -225,89 +236,93 @@ reading_routine(LaceX* in, TableT(WritingThreadState)* wstates)
 
   for (i = 0; i < nspawned; ++i) {
     void* ret = NULL;
-    WritingThreadState* st = &wstates->s[i];
+    WritingThreadState* st = &wstates[i];
     pthread_mutex_lock(&st->buf_mutex);
     if (!st->done) {
-      StateMsg("setting done", ccstr_of_AlphaTab(&st->ofileb.fb.filename));
+      StateMsg("setting done", st->outfile.filename);
       st->done = true;
       if (st->waiting) {
-        StateMsg("signaling done", ccstr_of_AlphaTab(&st->ofileb.fb.filename));
+        StateMsg("signaling done", st->outfile.filename);
         pthread_cond_signal(&st->buf_cond);
       }
     }
     pthread_mutex_unlock(&st->buf_mutex);
-    StateMsg("joining", ccstr_of_AlphaTab(&st->ofileb.fb.filename));
+    StateMsg("joining", st->outfile.filename);
     pthread_join(st->thread, &ret);
   }
   StateMsg("end of", "input");
 }
 
-LaceUtilMain(elastic)
+  int
+main_elastic(int argi, int argc, char** argv)
 {
-  DeclTable( WritingThreadState, wstates );
+  WritingThreadState* wstates = NULL;
+  size_t wstate_count = 0;
   const char* xfilename = "/dev/fd/0";
   LaceXF xf[1] = {DEFAULT_LaceXF};
-  uint i;
+  unsigned i;
+
+  /* Upper bound for number of output files.*/
+  wstates = (WritingThreadState*) malloc(sizeof(WritingThreadState) *
+                                         (1 + argc - argi));
 
   /**** BEGIN ARGUMENT_PARSING ****/
   while (argi < argc) {
     const char* arg = argv[argi++];
     WritingThreadState* st;
 
-    if (eq_cstr(arg, "-x")) {
+    if (0 == strcmp(arg, "-x")) {
       if (argi == argc) {
-        failout_sysCx("Need input file after -x.");
+        badnews("Need input file after -x.\n");
+        return 1;
       }
-      arg = argv[argi++];
-
-      if (eq_cstr(arg, "-")) {
-        xfilename = "/dev/fd/0";
-      } else {
-        xfilename = arg;
-      }
+      xfilename = argv[argi++];
     } else {
-      if (eq_cstr(arg, "-o")) {
+      if (0 == strcmp(arg, "-o")) {
         if (argi == argc) {
-          failout_sysCx("Need input file after -o.");
+          badnews("Need input file after -o.\n");
+          return 1;
         }
         arg = argv[argi++];
       }
 
-      st = Grow1Table( wstates );
+      st = &wstates[wstate_count++];
       init_WritingThreadState(st);
 
-      if (eq_cstr(arg, "-")) {
-        arg = "/dev/fd/1";
-      }
-      if (!open_FileB(&st->ofileb.fb, NULL, arg)) {
-        DBog1("failed to open: %s\n", arg);
-        failout_sysCx(0);
+      if (!open_LaceOF(&st->outfile, arg)) {
+        badnewsf("failed to open: %s\n", arg);
+        return 1;
       }
     }
   }
 
   if (!open_LaceXF(xf, xfilename)) {
-    DBog1("failed to open: %s\n", xfilename);
-    failout_sysCx(0);
+    badnewsf("failed to open: %s\n", xfilename);
+    return 1;
   }
 
-  if (wstates.sz == 0) {
-    WritingThreadState* st = Grow1Table( wstates );
+  if (wstate_count == 0) {
+    WritingThreadState* st = &wstates[wstate_count++];
     init_WritingThreadState(st);
-    if (!open_FileB(&st->ofileb.fb, NULL, "/dev/fd/1")) {
-      failout_sysCx("Failed to open: /dev/stdout");
+    if (!open_LaceOF(&st->outfile, "-")) {
+      badnews("Failed to open: /dev/stdout\n");
+      return 1;
     }
   }
   /**** END ARGUMENT_PARSING ****/
 
-  reading_routine(&xf->base, &wstates);
+  reading_routine(&xf->base, wstates, wstate_count);
 
-  for (i = 0; i < wstates.sz; ++i) {
-    lose_WritingThreadState(&wstates.s[i]);
+  for (i = 0; i < wstate_count; ++i) {
+    lose_WritingThreadState(&wstates[i]);
   }
-  LoseTable( wstates );
-
-  lose_sysCx ();
+  free(wstates);
   return 0;
 }
+
+#ifndef MAIN_LACE_EXECUTABLE
+int main(int argc, char** argv) {
+  return main_elastic(1, argc, argv);
+}
+#endif
 

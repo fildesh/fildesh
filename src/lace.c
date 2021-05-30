@@ -208,6 +208,7 @@ lose_Commands (TableT(Command)* cmds)
       lose_Command (&cmds->s[i]);
   }
   LoseTable (*cmds);
+  free(cmds);
 }
 
 
@@ -1034,6 +1035,7 @@ remove_tmppath (AlphaTab* tmppath)
   if (!rmdir_sysCx (cstr_AlphaTab (tmppath)))
     DBog1( "Temp directory not removed: %s", cstr_AlphaTab (tmppath) );
   lose_AlphaTab (tmppath);
+  free(tmppath);
 }
 
 
@@ -1083,9 +1085,11 @@ int lace_util_main (int argi, int argc, char** argv)
   argc -= argi;
   argi = 1;
   f = lace_specific_util (arg);
-  if (!f)
+  if (!f) {
+    DBog1("Unknown tool name: %s", arg);
     return -1;
-  return f (argi, argc, argv);
+  }
+  return f(argi, argc, argv);
 }
 
 static
@@ -1227,7 +1231,9 @@ spawn_commands (TableT(Command) cmds)
 int main(int argc, char** argv)
 {
   int argi = init_sysCx(&argc, &argv);
-  return main_lace(argi, argc, argv);
+  int ret = main_lace(argi, argc, argv);
+  lose_sysCx();
+  return ret;
 }
 
 
@@ -1235,11 +1241,11 @@ int main_lace(int argi, int argc, char** argv)
 {
   LaceXF xf[] = {DEFAULT_LaceXF};
   DeclTable( AlphaTab, script_args );
-  DeclTable( Command, cmds );
+  TableT(Command)* cmds = NULL;
   const char* stdin_sym = 0;
   const char* stdout_sym = 0;
   bool use_stdin = true;
-  AlphaTab tmppath[1];
+  AlphaTab* tmppath = NULL;
   uint i;
   int istat;
 
@@ -1267,10 +1273,7 @@ int main_lace(int argi, int argc, char** argv)
       }
     }
     else if (eq_cstr (arg, "-as")) {
-      int ret = lace_util_main (argi, argc, argv);
-      if (ret < 0)
-        failout_sysCx ("Unknown tool name!");
-      return ret;
+      return lace_util_main (argi, argc, argv);
     }
     else if (eq_cstr (arg, "-stdio")) {
       arg = argv[argi++];
@@ -1331,12 +1334,15 @@ int main_lace(int argi, int argc, char** argv)
     }
   }
 
+  tmppath = AllocT(AlphaTab, 1);
   *tmppath = cons1_AlphaTab ("lace");
   mktmppath_sysCx (tmppath);
   if (tmppath->sz == 0)
     failout_sysCx ("Unable to create temp directory...");
   push_losefn1_sysCx ((void (*) (void*)) remove_tmppath, tmppath);
-  push_losefn1_sysCx ((void (*) (void*)) lose_Commands, &cmds);
+  cmds = AllocT(TableT(Command), 1);
+  InitTable(*cmds);
+  push_losefn1_sysCx ((void (*) (void*)) lose_Commands, cmds);
 
   if (use_stdin) {
     open_LaceXF(xf, "-");
@@ -1350,7 +1356,7 @@ int main_lace(int argi, int argc, char** argv)
 
   if (script_args.sz > 0)
   {
-    Command* cmd = Grow1Table( cmds );
+    Command* cmd = Grow1Table( *cmds );
     AlphaTab line = DEFAULT_AlphaTab;
     AlphaTab doc = DEFAULT_AlphaTab;
     cat_cstr_AlphaTab (&line, "$(H: #)");
@@ -1368,7 +1374,7 @@ int main_lace(int argi, int argc, char** argv)
   }
 
   UFor( i, script_args.sz ) {
-    Command* cmd = Grow1Table( cmds );
+    Command* cmd = Grow1Table( *cmds );
     AlphaTab line = DEFAULT_AlphaTab;
     cat_cstr_AlphaTab (&line, "$(H: ");
     cat_uint_AlphaTab (&line, i);
@@ -1383,7 +1389,7 @@ int main_lace(int argi, int argc, char** argv)
   LoseTable( script_args );
 
   if (stdin_sym) {
-    Command* cmd = Grow1Table( cmds );
+    Command* cmd = Grow1Table( *cmds );
     AlphaTab line = DEFAULT_AlphaTab;
     init_Command (cmd);
     cat_cstr_AlphaTab (&line, "$(O ");
@@ -1394,11 +1400,11 @@ int main_lace(int argi, int argc, char** argv)
     sep_line (&cmd->args, cmd->line);
   }
 
-  parse_file(&cmds, &xf->base, xf->filename);
+  parse_file(cmds, &xf->base, xf->filename);
   close_LaceX(&xf->base);
 
   if (stdout_sym) {
-    Command* cmd = Grow1Table( cmds );
+    Command* cmd = Grow1Table( *cmds );
     AlphaTab line = DEFAULT_AlphaTab;
     init_Command (cmd);
     cat_cstr_AlphaTab (&line, "$(X ");
@@ -1408,22 +1414,22 @@ int main_lace(int argi, int argc, char** argv)
     cmd->kind = RunCommand;
     sep_line (&cmd->args, cmd->line);
   }
-  PackTable( cmds );
+  PackTable( *cmds );
 
-  setup_commands (&cmds, ccstr_of_AlphaTab (tmppath));
+  setup_commands (cmds, ccstr_of_AlphaTab (tmppath));
 
 
   if (false)
-    for (i = 0; i < cmds.sz; ++i)
-      output_Command (stderr, &cmds.s[i]);
+    for (i = 0; i < cmds->sz; ++i)
+      output_Command (stderr, &cmds->s[i]);
 
-  spawn_commands (cmds);
+  spawn_commands (*cmds);
 
   istat = 0;
-  for (i = 0; i < cmds.sz; ++i) {
-    if (cmds.s[i].kind == RunCommand) {
+  for (i = 0; i < cmds->sz; ++i) {
+    if (cmds->s[i].kind == RunCommand) {
       int tmp_istat = 0;
-      waitpid_sysCx(cmds.s[i].pid, &tmp_istat);
+      waitpid_sysCx(cmds->s[i].pid, &tmp_istat);
       if (tmp_istat != 0) {
         if (istat < 127) {
           /* Not sure what to do here. Just accumulate.*/
@@ -1432,10 +1438,8 @@ int main_lace(int argi, int argc, char** argv)
       }
     }
 
-    lose_Command (&cmds.s[i]);
+    lose_Command (&cmds->s[i]);
   }
-
-  lose_sysCx ();
   return istat;
 }
 

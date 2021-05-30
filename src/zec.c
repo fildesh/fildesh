@@ -3,9 +3,6 @@
  **/
 
 #include "lace.h"
-#ifdef MAIN_LACE_EXECUTABLE
-#include "utilace.h"
-#endif
 
 #include <assert.h>
 #include <stdio.h>
@@ -44,21 +41,21 @@ show_usage ()
 }
 
 static
-  LaceXF
-open_input_file(const char* filename)
+  bool
+open_input_file(LaceXF* infile, const char* filename)
 {
-  LaceXF xf[1] = {DEFAULT_LaceXF};
-
+  LaceXF tmp_infile = DEFAULT_LaceXF;
   if (!filename) {
     filename = "-";
   }
-  if (!open_LaceXF(xf, filename)) {
+  if (!open_LaceXF(&tmp_infile, filename)) {
     badnews("Cannot open file! ");
     badnews(filename);
     badnews("\n");
-    exit(1);
+    return false;
   }
-  return *xf;
+  *infile = tmp_infile;
+  return true;
 }
 
 static
@@ -106,15 +103,9 @@ cat_next_line(LaceO* out, LaceX* in)
   return (0 == out->size);
 }
 
-#ifdef MAIN_LACE_EXECUTABLE
-LaceUtilMain(zec)
-#else
-int main(int argc, const char** argv)
-#endif
+  int
+main_zec(int argi, int argc, char** argv)
 {
-#ifndef MAIN_LACE_EXECUTABLE
-  int argi = 1;
-#endif
   int i;
   int beg_slash = argc;
   int end_slash = argc;
@@ -141,13 +132,13 @@ int main(int argc, const char** argv)
       if (!arg) {
         show_usage ();
         badnews("Need a filename after -o.\n");
-        exit(1);
+        return 1;
       }
       if (!open_LaceOF(&ofile, arg)) {
         badnews("Cannot open file for writing! ");
         badnews(arg);
         badnews("\n");
-        exit(1);
+        return 1;
       }
     }
     else if (0 == strcmp(arg, "-paste")) {
@@ -158,7 +149,7 @@ int main(int argc, const char** argv)
       if (!unless_arg) {
         show_usage ();
         badnews("Need a string after -unless.\n");
-        exit(1);
+        return 1;
       }
     }
     else {
@@ -170,26 +161,23 @@ int main(int argc, const char** argv)
   if (ofile.fd < 0) {
     if (!open_LaceOF(&ofile, "-")) {
       badnews("Cannot open /dev/stdout for writing!\n");
-      exit(1);
+      return 1;
     }
   }
 
   if (unless_arg && unless_arg[0]) {
     puts_LaceO(&ofile.base, unless_arg);
     close_LaceO(&ofile.base);
-#ifdef MAIN_LACE_EXECUTABLE
-    lose_sysCx ();
-#endif
     return 0;
   }
 
   if (argi == argc) {
-    LaceXF xf = open_input_file(NULL);
-    cat_the_file(&ofile.base, &xf.base);
-#ifdef MAIN_LACE_EXECUTABLE
-    lose_sysCx ();
-#endif
-    return 0;
+    LaceXF xf;
+    if (open_input_file(&xf, NULL)) {
+      cat_the_file(&ofile.base, &xf.base);
+      return 0;
+    }
+    return 1;
   }
 
   for (i = argi; i < argc; ++i) {
@@ -220,12 +208,17 @@ int main(int argc, const char** argv)
 
   inputs = (LaceXF*) malloc((nbegs + nends) * sizeof(LaceXF));
 
-  for (i = 0; i < nbegs; ++i)
-    inputs[i] = open_input_file(argv[argi+i]);
+  for (i = 0; i < nbegs; ++i) {
+    if (!open_input_file(&inputs[i], argv[argi+i])) {
+      return 1;
+    }
+  }
 
-  for (i = 0; i < nends; ++i)
-    inputs[nbegs + i] = open_input_file(argv[end_slash + 1 + i]);
-
+  for (i = 0; i < nends; ++i) {
+    if (!open_input_file(&inputs[nbegs + i], argv[end_slash + 1 + i])) {
+      return 1;
+    }
+  }
 
   if (paste_mode) {
     bool good = true;
@@ -265,9 +258,13 @@ int main(int argc, const char** argv)
   close_LaceO(&ofile.base);
   free (inputs);
   free (mid_buf);
-#ifdef MAIN_LACE_EXECUTABLE
-  lose_sysCx ();
-#endif
   return 0;
 }
 
+#ifndef MAIN_LACE_EXECUTABLE
+  int
+main(int argc, char** argv)
+{
+  return main_zec(1, argc, argv);
+}
+#endif

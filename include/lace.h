@@ -154,6 +154,10 @@ struct LaceOF {
 #if __STDC_VERSION__ < 199901L && !defined(inline)
 #define inline __inline
 #endif
+static inline LaceX default_LaceX() {LaceX tmp = DEFAULT_LaceX; return tmp;}
+static inline LaceXF default_LaceXF() {LaceXF tmp = DEFAULT_LaceXF; return tmp;}
+static inline LaceO default_LaceO() {LaceO tmp = DEFAULT_LaceO; return tmp;}
+static inline LaceOF default_LaceOF() {LaceOF tmp = DEFAULT_LaceOF; return tmp;}
 
 static inline
   void*
