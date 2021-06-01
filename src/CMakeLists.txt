@@ -10,6 +10,7 @@ add_library(lace_lib STATIC
 
 add_subdirectory(cx)
 
+find_package(Threads REQUIRED)
 
 if (WIN32)
   set (ELASTIC_SOURCE "elastic_pthread.c")
@@ -30,6 +31,7 @@ add_executable(lace
   "utilace.h"
   "add.c"
   "best-match.c"
+  "compatible_pthread.h"
   "${ELASTIC_SOURCE}"
   "execfd.c"
   "godo.c"
@@ -44,7 +46,7 @@ add_executable(lace
   )
 set_property(TARGET lace
   APPEND PROPERTY COMPILE_DEFINITIONS MAIN_LACE_EXECUTABLE)
-target_link_libraries(lace cx_lib)
+target_link_libraries(lace cx_lib ${CMAKE_THREAD_LIBS_INIT})
 if (UNIX AND NOT APPLE)
   target_link_libraries(lace ${AIO_LIB})
 endif()
@@ -109,6 +111,9 @@ add_executable(zec
   zec.c)
 target_link_libraries(zec lace_lib)
 
+
+add_executable(elastic_pthread "elastic_pthread.c" "compatible_pthread.h")
+target_link_libraries(elastic_pthread lace_lib ${CMAKE_THREAD_LIBS_INIT})
 
 if (UNIX)
   add_executable(elastic_poll elastic_poll.c utilace.h)

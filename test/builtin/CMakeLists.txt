@@ -1,13 +1,13 @@
 
-add_test(NAME elastic_catfile_test COMMAND
-  comparispawn "${CMAKE_CURRENT_SOURCE_DIR}/hello_newline.txt"
-  ${lace_exe} --
-  "|< zec"
-  "|- waitdo -- rm -f ${CMAKE_CURRENT_BINARY_DIR}/elastic_catfile_output.txt"
-  "|- waitdo -- elastic -x ${CMAKE_CURRENT_SOURCE_DIR}/hello_newline.txt -o ${CMAKE_CURRENT_BINARY_DIR}/elastic_catfile_output.txt"
-  "|- waitdo -- zec ${CMAKE_CURRENT_BINARY_DIR}/elastic_catfile_output.txt"
-  "|> stdout"
-  )
+#add_test(NAME elastic_catfile_test COMMAND
+#  comparispawn "${CMAKE_CURRENT_SOURCE_DIR}/hello_newline.txt"
+#  ${lace_exe} --
+#  "|< zec"
+#  "|- waitdo -- rm -f ${CMAKE_CURRENT_BINARY_DIR}/elastic_catfile_output.txt"
+#  "|- waitdo -- elastic -x ${CMAKE_CURRENT_SOURCE_DIR}/hello_newline.txt -o ${CMAKE_CURRENT_BINARY_DIR}/elastic_catfile_output.txt"
+#  "|- waitdo -- zec ${CMAKE_CURRENT_BINARY_DIR}/elastic_catfile_output.txt"
+#  "|> stdout"
+#  )
 
 add_test(NAME elastic_cat_test COMMAND
   comparispawn "${CMAKE_CURRENT_SOURCE_DIR}/hello_newline.txt"
