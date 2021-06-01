@@ -5,6 +5,7 @@
  **/
 
 #include "lace.h"
+#include "compatible_pthread.h"
 #include "utilace.h"
 #include "cx/associa.h"
 #include "cx/fileb.h"
@@ -38,6 +39,7 @@ typedef enum CommandKind CommandKind;
 
 typedef struct SymVal SymVal;
 typedef struct Command Command;
+typedef struct BuiltinCommandThreadArg BuiltinCommandThreadArg;
 
 DeclTableT( Command, Command );
 DeclTableT( SymVal, SymVal );
@@ -51,7 +53,9 @@ struct Command
   TableT(cstr) args;
   TableT(cstr) extra_args;
   TableT(cstr) tmp_files;
+  pthread_t thread;
   pid_t pid;
+  int status;
   int stdis; /**< Standard input stream.**/
   TableT( int ) is; /**< Input streams.**/
   int stdos; /**< Standard output stream.**/
@@ -82,6 +86,11 @@ struct SymVal
     int file_desc;
     char* here_doc;
   } as;
+};
+
+struct BuiltinCommandThreadArg {
+  Command* command;  /* Cleanup but don't free.*/
+  char** argv;  /* Free nested.*/
 };
 
   static void
@@ -1092,6 +1101,84 @@ int lace_util_main (int argi, int argc, char** argv)
   return f(argi, argc, argv);
 }
 
+  void*
+builtin_command_thread_fn(BuiltinCommandThreadArg* st)
+{
+  int argc = 0;
+  int argi = 0;
+  int i;
+  while (st->argv[++argc]) {
+    if (argi == 0 && 0 == strcmp("-as", st->argv[argc])) {
+      argi = argc + 1;
+    }
+  }
+  st->command->status = lace_util_main(argi, argc, st->argv);
+  close_Command(st->command);
+  for (i = 0; i < argc; ++i) {
+    free(st->argv[i]);
+  }
+  free(st->argv);
+  free(st);
+  return NULL;
+}
+
+/** Replace stdio for `zec` with the file descriptors
+ * to avoid needing to spawn a new process and redirect stdio.
+ **/
+static
+  bool
+replace_zec_stdio(Command* cmd)
+{
+  unsigned stdin_index = 0;
+  unsigned stdout_index = 0;
+  unsigned i;
+  bool saw_slash = false;
+
+  for (i = 1; i < cmd->args.sz; ++i) {
+    if (0 == strcmp("/", cmd->args.s[i])) {
+      if (saw_slash) {
+        stdin_index = 0;
+      } else {
+        saw_slash = true;
+      }
+    } else if (0 == strcmp("-", cmd->args.s[i])) {
+      stdin_index = i;
+      if (!saw_slash) {
+        break;
+      }
+    } else if (!saw_slash && 0 == strcmp("-o", cmd->args.s[i])) {
+      ++i;
+      if (i < cmd->args.sz) {
+        stdout_index = i;
+      }
+    }
+  }
+
+  if (cmd->stdis >= 0 && stdin_index == 0) {
+    return false;
+  }
+
+  if (cmd->stdis >= 0) {
+    cmd->args.s[stdin_index] = add_fd_arg_Command(cmd, cmd->stdis);
+  }
+
+  if (cmd->stdos >= 0 && stdout_index == 0) {
+    PushTable(cmd->args, "-o");
+    PushTable(cmd->args, add_fd_arg_Command(cmd, cmd->stdos));
+    for (i = cmd->args.sz-3; i >= 1; --i) {
+      char* tmp = cmd->args.s[i];
+      cmd->args.s[i] = cmd->args.s[i+1];
+      cmd->args.s[i+1] = cmd->args.s[i+2];
+      cmd->args.s[i+2] = tmp;
+    }
+  } else if (cmd->stdos >= 0 && stdout_index > 0) {
+    if (0 == strcmp("-", cmd->args.s[i])) {
+      cmd->args.s[stdout_index] = add_fd_arg_Command(cmd, cmd->stdos);
+    }
+  }
+  return true;
+}
+
 static
   void
 fix_known_flags_Command(Command* cmd) {
@@ -1128,11 +1215,10 @@ spawn_commands (TableT(Command) cmds)
   for (i = 0; i < cmds.sz; ++i)
   {
     Command* cmd = &cmds.s[i];
+    bool use_thread = false;
     uint argi, j;
 
     if (cmd->kind != RunCommand && cmd->kind != DefCommand)  continue;
-
-    cloexec_Command (cmd, false);
 
     for (argi = 0; argi < cmd->args.sz; ++argi)
     {
@@ -1187,6 +1273,10 @@ spawn_commands (TableT(Command) cmds)
       PushTable( argv, dup_cstr (cmd->args.s[0]) );
     }
     else if (lace_specific_util (cmd->args.s[0])) {
+      if (0 == strcmp("zec", cmd->args.s[0]) &&
+          replace_zec_stdio(cmd)) {
+        use_thread = true;
+      }
       PushTable( argv, dup_cstr ("--") );
       PushTable( argv, dup_cstr ("-as") );
       PushTable( argv, dup_cstr (cmd->args.s[0]));
@@ -1210,17 +1300,32 @@ spawn_commands (TableT(Command) cmds)
       chmodu_sysCx (cmd->args.s[0], true, true, true);
     }
 
-    cmd->pid = spawnvp_sysCx (argv.s);
-    if (cmd->pid < 0)
-    {
-      DBog1( "File: %s", argv.s[0] );
-      failout_sysCx ("Could not spawnvp()...");
+    if (use_thread) {
+      int istat;
+      BuiltinCommandThreadArg* arg = AllocT(BuiltinCommandThreadArg, 1);
+      arg->command = cmd;
+      arg->argv = DupliT(char*, argv.s, argv.sz);
+      cmd->pid = 0;
+      istat = pthread_create(&cmd->thread, NULL,
+                             (void* (*) (void*)) builtin_command_thread_fn,
+                             arg);
+      if (istat < 0) {
+        DBog1( "File: %s", argv.s[0] );
+        failout_sysCx("Could not pthread_create().");
+      }
+    } else {
+      cloexec_Command (cmd, false);
+      cmd->pid = spawnvp_sysCx (argv.s);
+      if (cmd->pid < 0)
+      {
+        DBog1( "File: %s", argv.s[0] );
+        failout_sysCx ("Could not spawnvp()...");
+      }
+      close_Command (cmd);
+      for (argi = 0; argi < argv.sz; ++argi)
+        free (argv.s[argi]);
     }
-    close_Command (cmd);
-
     fdargs.sz = 0;
-    for (argi = 0; argi < argv.sz; ++argi)
-      free (argv.s[argi]);
     argv.sz = 0;
   }
   LoseTable( argv );
@@ -1257,6 +1362,7 @@ int main_lace(int argi, int argc, char** argv)
 #endif
   signal (SIGINT, lose_sysCx);
   signal (SIGSEGV, lose_sysCx);
+  signal(SIGPIPE, SIG_IGN);
 
   while (argi < argc) {
     const char* arg;
@@ -1427,10 +1533,14 @@ int main_lace(int argi, int argc, char** argv)
 
   istat = 0;
   for (i = 0; i < cmds->sz; ++i) {
-    if (cmds->s[i].kind == RunCommand) {
-      int tmp_istat = 0;
-      waitpid_sysCx(cmds->s[i].pid, &tmp_istat);
-      if (tmp_istat != 0) {
+    Command* cmd = &cmds->s[i];
+    if (cmd->kind == RunCommand) {
+      if (cmd->pid == 0) {
+        pthread_join(cmd->thread, NULL);
+      } else {
+        waitpid_sysCx(cmd->pid, &cmd->status);
+      }
+      if (cmd->status != 0) {
         if (istat < 127) {
           /* Not sure what to do here. Just accumulate.*/
           istat += 1;
@@ -1438,7 +1548,7 @@ int main_lace(int argi, int argc, char** argv)
       }
     }
 
-    lose_Command (&cmds->s[i]);
+    lose_Command(cmd);
   }
   return istat;
 }

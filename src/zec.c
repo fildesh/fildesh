@@ -175,8 +175,10 @@ main_zec(int argi, int argc, char** argv)
     LaceXF xf;
     if (open_input_file(&xf, NULL)) {
       cat_the_file(&ofile.base, &xf.base);
+      close_LaceO(&ofile.base);
       return 0;
     }
+    close_LaceO(&ofile.base);
     return 1;
   }
 

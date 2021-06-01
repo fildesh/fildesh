@@ -15,6 +15,7 @@ cc_binary(
         "utilace.h",
         "add.c",
         "best-match.c",
+        "compatible_pthread.h",
         #"elastic_poll.c",
         "elastic_pthread.c",
         "execfd.c",
@@ -53,6 +54,7 @@ cc_binary(
 cc_binary(
     name = "elastic_pthread",
     srcs = [
+        "compatible_pthread.h",
         "elastic_pthread.c",
     ],
     deps = [
