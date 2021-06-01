@@ -1357,12 +1357,13 @@ int main_lace(int argi, int argc, char** argv)
   /* add_util_path_env (); */
   (void) add_util_path_env;
 
+  signal(SIGINT, lose_sysCx);
+  signal(SIGSEGV, lose_sysCx);
 #ifdef LACE_POSIX_SOURCE
-  signal (SIGQUIT, lose_sysCx);
-#endif
-  signal (SIGINT, lose_sysCx);
-  signal (SIGSEGV, lose_sysCx);
+  signal(SIGQUIT, lose_sysCx);
+  /* We already detect closed pipes when write() returns <= 0.*/
   signal(SIGPIPE, SIG_IGN);
+#endif
 
   while (argi < argc) {
     const char* arg;
