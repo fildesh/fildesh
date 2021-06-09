@@ -1,3 +1,4 @@
+load("@rules_fuzzing//fuzzing:cc_defs.bzl", "cc_fuzz_test")
 
 cc_test(
     name = "delimit_edge_test",
@@ -18,6 +19,12 @@ cc_test(
     srcs = ["gets_test.c"],
     deps = ["//:lace_lib"],
     size = "small",
+)
+
+cc_fuzz_test(
+    name = "grow_mpop_fuzz_test",
+    srcs = ["grow_mpop_fuzz_test.c"],
+    deps = ["//:lace_lib"],
 )
 
 cc_test(
