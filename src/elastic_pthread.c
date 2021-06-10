@@ -216,7 +216,7 @@ main_elastic(int argi, int argc, char** argv)
     } else {
       if (0 == strcmp(arg, "-o")) {
         if (argi == argc) {
-          badnews("Need input file after -o.\n");
+          badnews("Need output file after -o.\n");
           return 1;
         }
         arg = argv[argi++];
