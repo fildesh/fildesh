@@ -14,7 +14,7 @@ jobs:
     - name: Setup bazel
       uses: jwlawson/actions-setup-bazel@v1
       with:
-        bazel-version: '3.7.2'
+        bazel-version: '4.1.0'
 
     - name: Checkout
       uses: actions/checkout@v1
