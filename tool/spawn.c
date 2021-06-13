@@ -9,7 +9,7 @@
 #include <errno.h>
 
 int main(int argc, char** argv) {
-  if (argc < 2 || !argv[1])  return 64;  /* EX_USAGE: Command line usage error.*/
+  if (argc < 2 || !argv[1])  return 66;  /* EX_USAGE: Command line usage error.*/
 
   if (argv[1][0] != '!' || argv[1][1] != '\0') {
     /* Just run the command.*/
@@ -37,12 +37,12 @@ int main(int argc, char** argv) {
       return 0;  /* Pretend success so overall command fails.*/
     }
     pid = waitpid(pid, &istat, 0);
-    if (pid < 0)  return 70;  /* Internal software error.*/
+    if (pid < 0)  return 70;  /* EX_SOFTWARE: Internal software error.*/
     if (!WIFEXITED(istat))  return 70;
     istat = WEXITSTATUS(istat);
 #endif
     if (istat > 0)  return 0;
-    if (istat == 0)  return 1;
+    if (istat == 0)  return 65;  /* EX_DATAERR: Input caused unexpected success.*/
   }
   if (errno == ENOENT)  return 127;  /* Command not found.*/
   return 126;  /* Command invoked cannot execute.*/
