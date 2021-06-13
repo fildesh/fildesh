@@ -1,4 +1,5 @@
 
+add_subdirectory(tool)
 add_subdirectory(src)
 
 set (lace_exe "$<TARGET_FILE:lace>")

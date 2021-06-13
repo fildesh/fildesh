@@ -20,7 +20,10 @@ int main(int argc, char** argv) {
 #endif
   }
   else if (argc < 3 || !argv[2]) {
-    return 64;  /* No command given after "!".*/
+    return 64;  /* `spawn !` can serve as `false`, much like `bash -c "!"`.*/
+  }
+  else if (argc == 3 && argv[2][0] == '!' && argv[2][1] == '\0') {
+    return 0;  /* `spawn ! !` can serve as `true`, much like `bash -c "! !"`.*/
   }
   else {
 #ifdef _WIN32

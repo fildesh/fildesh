@@ -34,24 +34,29 @@ exports_files([
 cc_binary(
     name = "spawn",
     srcs = ["spawn.c"],
+    visibility = ["//visibility:public"],
 )
-cc_binary(
-    name = "success",
-    srcs = ["success.c"],
-)
-cc_binary(
-    name = "failure",
-    srcs = ["failure.c"],
+
+cc_test(
+    name = "spawn_not_not_test",
+    srcs = ["spawn.c"],
+    args = ["!", "!"],
 )
 cc_test(
-    name = "success_test",
+    name = "spawn_spawn_not_not_test",
     srcs = ["spawn.c"],
-    args = ["$(location :success)"],
-    data = [":success"],
+    args = ["$(location :spawn)", "!", "!"],
+    data = [":spawn"],
 )
 cc_test(
-    name = "failure_test",
+    name = "spawn_not_spawn_not_test",
     srcs = ["spawn.c"],
-    args = ["!", "$(location :failure)"],
-    data = [":failure"],
+    args = ["!", "$(location :spawn)", "!"],
+    data = [":spawn"],
+)
+cc_test(
+    name = "spawn_not_spawn_nothing_test",
+    srcs = ["spawn.c"],
+    args = ["!", "$(location :spawn)"],
+    data = [":spawn"],
 )
