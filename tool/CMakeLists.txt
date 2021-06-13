@@ -7,8 +7,9 @@ target_link_libraries(comparispawn cx_lib)
 
 add_executable(cswitch cswitch.c)
 add_executable(expectish expectish.c)
-
+add_executable(shout shout.c)
 add_executable(spawn spawn.c)
+
 add_test(NAME spawn_not_not_test COMMAND spawn ! !)
 add_test(NAME spawn_spawn_not_not_test COMMAND spawn "$<TARGET_FILE:spawn>" ! !)
 add_test(NAME spawn_not_spawn_not_test COMMAND spawn ! "$<TARGET_FILE:spawn>" !)
