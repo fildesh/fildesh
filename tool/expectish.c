@@ -2,7 +2,7 @@
 
 /** Check that a file (1st argument) has the expected content (2nd+ arguments).
  *
- * The file may contain extra newlines, tabs, and spaces.
+ * The file may contain extra newlines, spaces, tabs, and even carriage returns.
  * Keep small; built often.
  **/
 int main(int argc, char** argv) {
@@ -27,7 +27,8 @@ int main(int argc, char** argv) {
     } else if (*s == '\0' && argi+1 < argc && argv[argi+1]) {
       argi += 1;
       s = argv[argi];
-    } else if ((char)c == '\n' || (char)c == '\t' || (char)c == ' ') {
+    } else if ((char)c == '\n' || (char)c == ' ' ||
+               (char)c == '\t' || (char)c == '\r') {
       c = fgetc(f);
     } else {
       fclose(f);
