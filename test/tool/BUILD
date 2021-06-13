@@ -62,3 +62,10 @@ cc_test(
     args = ["!", "$(location //tool:spawn)", "!", "$(location //tool:spawn).doesnotexist"],
     data = ["//tool:spawn"],
 )
+
+cc_test(
+    name = "expectish_hello_test",
+    srcs = ["//tool:expectish.c"],
+    args = ["$(location //test/expect:hello.txt)", "hello"],
+    data = ["//test/expect:hello.txt"],
+)

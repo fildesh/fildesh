@@ -6,6 +6,7 @@ set_property(TARGET comparispawn APPEND PROPERTY INCLUDE_DIRECTORIES
 target_link_libraries(comparispawn cx_lib)
 
 add_executable(cswitch cswitch.c)
+add_executable(expectish expectish.c)
 
 add_executable(spawn spawn.c)
 add_test(NAME spawn_not_not_test COMMAND spawn ! !)

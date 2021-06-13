@@ -1,4 +1,3 @@
-/* Keep small. Built often.*/
 #ifdef _WIN32
 #include <process.h>
 #else
@@ -8,8 +7,12 @@
 #endif
 #include <errno.h>
 
+/** Spawn a command, possibly negating its exit status by prepending a "!" arg.
+ *
+ * Keep small; built often.
+ **/
 int main(int argc, char** argv) {
-  if (argc < 2 || !argv[1])  return 66;  /* EX_USAGE: Command line usage error.*/
+  if (argc < 2 || !argv[1])  return 64;  /* EX_USAGE: Command line usage error.*/
 
   if (argv[1][0] != '!' || argv[1][1] != '\0') {
     /* Just run the command.*/

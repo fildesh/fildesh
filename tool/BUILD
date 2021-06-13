@@ -1,3 +1,9 @@
+# These are small enough to run many times as cc_test().
+exports_files([
+    "expectish.c",
+    "spawn.c",
+])
+
 cc_binary(
     name = "cembed",
     srcs = [
@@ -28,9 +34,12 @@ cc_binary(
     visibility = ["//visibility:public"],
 )
 
-exports_files([
-    "spawn.c",
-])
+cc_binary(
+    name = "expectish",
+    srcs = ["expectish.c"],
+    visibility = ["//visibility:public"],
+)
+
 cc_binary(
     name = "spawn",
     srcs = ["spawn.c"],

@@ -11,3 +11,6 @@ add_test(NAME spawn_not_spawn_invalid_test COMMAND spawn ! "$<TARGET_FILE:spawn>
 add_test(NAME spawn_not_spawn_not_invalid_test COMMAND spawn ! "$<TARGET_FILE:spawn>" ! .)
 add_test(NAME spawn_not_spawn_absent_test COMMAND spawn ! "$<TARGET_FILE:spawn>" "$<TARGET_FILE:spawn>.doesnotexist")
 add_test(NAME spawn_not_spawn_not_absent_test COMMAND spawn ! "$<TARGET_FILE:spawn>" ! "$<TARGET_FILE:spawn>.doesnotexist")
+
+add_test(NAME expectish_hello_test COMMAND expectish "${CMAKE_CURRENT_SOURCE_DIR}/../expect/hello.txt" "hello")
+
