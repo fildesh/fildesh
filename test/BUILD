@@ -20,6 +20,10 @@ lace_expect_test(
     name = "convoluted_test",
     srcs = ["//example:convoluted.lace"],
     expect = "//test/expect:convoluted.txt",
+    target_compatible_with = select({
+        "@platforms//os:windows": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }),
 )
 
 lace_expect_test(
@@ -64,4 +68,8 @@ lace_expect_test(
     name = "test_test",
     srcs = ["//example:test.lace"],
     expect = "//test/expect:test.txt",
+    target_compatible_with = select({
+        "@platforms//os:windows": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }),
 )

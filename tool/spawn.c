@@ -14,7 +14,9 @@ int main(int argc, char** argv) {
   if (argv[1][0] != '!' || argv[1][1] != '\0') {
     /* Just run the command.*/
 #ifdef _WIN32
-    _execvp(argv[1], &argv[1]);
+    /* Exec does not seem to propagate exit status on Windows, so use Spawn.*/
+    intptr_t istat = _spawnvp(_P_WAIT, argv[1], &argv[1]);
+    if (istat >= 0)  return istat;
 #else
     execvp(argv[1], &argv[1]);
 #endif

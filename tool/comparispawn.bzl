@@ -1,5 +1,7 @@
 
-def lace_expect_test(name, srcs, expect, data=[], args=[]):
+def lace_expect_test(name, srcs, expect,
+                     data=[], args=[], size="small",
+                     **kwargs):
   native.cc_test(
       name = name,
       srcs = [
@@ -17,5 +19,6 @@ def lace_expect_test(name, srcs, expect, data=[], args=[]):
           "-x",
           "$(location " + srcs[0] + ")",
       ] + args,
-      size = "small",
+      size = size,
+      **kwargs,
   )
