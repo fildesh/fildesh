@@ -1,11 +1,14 @@
-#include <stdio.h>
-
 /** Write to a file (1st argument) with content (2nd+ arguments).
  *
  * The content is separated by spaces and ends with a newline.
  * Keep small; built often.
  **/
-int main(int argc, char** argv) {
+#include <stdio.h>
+
+#ifndef LACE_TOOL_LIBRARY
+#define lace_tool_shout_main main
+#endif
+int lace_tool_shout_main(int argc, char** argv) {
   FILE* f = stdout;
   int argi;
   if (argc < 2 || !argv[1]) {

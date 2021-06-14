@@ -1,11 +1,14 @@
-#include <stdio.h>
-
 /** Check that a file (1st argument) has the expected content (2nd+ arguments).
  *
  * The file may contain extra newlines, spaces, tabs, and even carriage returns.
  * Keep small; built often.
  **/
-int main(int argc, char** argv) {
+#include <stdio.h>
+
+#ifndef LACE_TOOL_LIBRARY
+#define lace_tool_expectish_main main
+#endif
+int lace_tool_expectish_main(int argc, char** argv) {
   FILE* f = stdin;
   const char* s;
   int c, argi;
