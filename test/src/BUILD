@@ -21,6 +21,15 @@ cc_test(
 )
 
 cc_test(
+    name = "kve_test",
+    srcs = [
+        "kve_test.c",
+    ],
+    deps = ["//:lace_lib"],
+    size = "small",
+)
+
+cc_test(
     name = "parse_int_test",
     srcs = ["parse_int_test.c"],
     deps = ["//:lace_lib"],

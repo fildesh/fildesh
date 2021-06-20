@@ -14,6 +14,12 @@ add_executable(gets_test
 target_link_libraries(gets_test lace_lib)
 add_test(NAME gets_test COMMAND gets_test)
 
+add_executable(kve_test
+  "kve_test.c")
+target_link_libraries(kve_test lace_lib)
+target_include_directories(kve_test PRIVATE "${CMAKE_SOURCE_DIR}")
+add_test(NAME kve_test COMMAND kve_test)
+
 add_executable(parse_int_test
   "parse_int_test.c")
 target_link_libraries(parse_int_test lace_lib)

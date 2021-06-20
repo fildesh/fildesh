@@ -1,11 +1,17 @@
 
 # For //:lace_lib.
 exports_files([
+    "kve.c",
+    "kve.h",
     "infile.c",
     "instream.c",
     "outfile.c",
     "outstream.c",
     "string.c",
+], visibility = [
+    "//:__pkg__",
+    "//test/fuzz:__pkg__",
+    "//test/src:__pkg__",
 ])
 
 cc_binary(

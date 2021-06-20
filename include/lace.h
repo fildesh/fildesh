@@ -25,6 +25,8 @@ typedef struct LaceXF LaceXF;
 typedef struct LaceO_VTable LaceO_VTable;
 typedef struct LaceO LaceO;
 typedef struct LaceOF LaceOF;
+typedef struct LaceKV LaceKV;
+typedef struct LaceKVE LaceKVE;
 
 
 size_t read_LaceX(LaceX*);
@@ -146,6 +148,12 @@ struct LaceOF {
 };
 #define DEFAULT_LaceOF  { DEFAULT_LaceO, -1, NULL }
 
+struct LaceKV {
+  LaceKVE* at;
+  size_t freelist_head;
+  size_t freelist_tail;
+  lace_lgsize_t lgcount;
+};
 
 #if !defined(ZEROIZE)
 # define ZEROIZE(x)  memset(&(x), 0, sizeof(x))
