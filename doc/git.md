@@ -26,6 +26,7 @@ git commit -S
 git push origin trunk
 
 # Then delete the branch.
-git branch -d mybranch
+# The forceful `-D` option is required because `--squash` did not preserve history.
+git branch -D mybranch
 git push origin --delete mybranch
 ```

@@ -1,3 +1,4 @@
+[![Coverage Status](https://coveralls.io/repos/github/grencez/lace/badge.svg?branch=trunk)](https://coveralls.io/github/grencez/lace?branch=trunk)
 
 # The Lace Programming Language
 
