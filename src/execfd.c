@@ -81,7 +81,8 @@ readin_fd (fd_t in, bool scrap_newline)
   return buf.s;
 }
 
-LaceUtilMain(execfd)
+  int
+main_execfd(int argi, int argc, char** argv)
 {
   int off = 0;
   BitTable bt = cons2_BitTable (argc, 0);
@@ -146,8 +147,16 @@ LaceUtilMain(execfd)
     return lace_util_main (off, argc, argv);
   }
   execvp_sysCx (&argv[off]);
-
-  lose_sysCx ();
   return 1;
 }
 
+#ifndef MAIN_LACE_EXECUTABLE
+  int
+main(int argc, char** argv)
+{
+  int argi = init_sysCx(&argc, &argv);
+  int istat = main_execfd(argi, argc, argv);
+  lose_sysCx();
+  return istat;
+}
+#endif

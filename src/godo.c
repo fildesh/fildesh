@@ -5,7 +5,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-LaceUtilMain(godo)
+  int
+main_godo(int argi, int argc, char** argv)
 {
   if (argc < 3)
   {
@@ -28,7 +29,16 @@ LaceUtilMain(godo)
   }
   execvp_sysCx (&argv[argi]);
   /* Flow should not actually get here. */
-  lose_sysCx ();
   return 1;
 }
 
+#ifndef MAIN_LACE_EXECUTABLE
+  int
+main(int argc, char** argv)
+{
+  int argi = init_sysCx(&argc, &argv);
+  int istat = main_godo(argi, argc, argv);
+  lose_sysCx();
+  return istat;
+}
+#endif

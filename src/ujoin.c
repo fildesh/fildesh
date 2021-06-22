@@ -199,7 +199,8 @@ compare_lines (XFile* xf, Associa* map, const char* delim,
 }
 
 
-LaceUtilMain(ujoin)
+  int
+main_ujoin(int argi, int argc, char** argv)
 {
   const char* delim = "\t";
   const char* dflt_record = 0;
@@ -338,7 +339,16 @@ LaceUtilMain(ujoin)
 
   LoseTable( table );
   lose_Associa (map);
-  lose_sysCx ();
   return 0;
 }
 
+#ifndef MAIN_LACE_EXECUTABLE
+  int
+main(int argc, char** argv)
+{
+  int argi = init_sysCx(&argc, &argv);
+  int istat = main_ujoin(argi, argc, argv);
+  lose_sysCx();
+  return istat;
+}
+#endif

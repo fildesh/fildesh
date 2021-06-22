@@ -3,7 +3,6 @@
  * The longer time intervals like days or hours need not be present
  * for this to work properly. Field widths are not fixed either.
  */
-#include "utilace.h"
 #include "cx/fileb.h"
 
 static uint
@@ -34,7 +33,8 @@ conv_line (XFile* xf)
   return x;
 }
 
-LaceUtilMain(time2sec)
+  int
+main_time2sec(int argi, int argc, char** argv)
 {
   XFile* xf;
   OFile* of;
@@ -75,8 +75,11 @@ LaceUtilMain(time2sec)
     printf_OFile (of, "%*u\n", width, x);
     flush_OFile (of);
   }
-
-  lose_sysCx ();
   return 0;
 }
 
+#ifndef MAIN_LACE_EXECUTABLE
+int main(int argc, char** argv) {
+  return main_time2sec(1, argc, argv);
+}
+#endif

@@ -42,7 +42,10 @@ static
 close_LaceXF(LaceXF* xf)
 {
   if (xf->fd >= 0) {
+#ifndef _WIN32
+    /* TODO: Causes a short read somewhere.*/
     close(xf->fd);
+#endif
     xf->fd = -1;
   }
   if (xf->filename) {

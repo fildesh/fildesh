@@ -38,7 +38,10 @@ static
 close_LaceOF(LaceOF* of)
 {
   if (of->fd >= 0) {
+#ifndef _WIN32
+    /* TODO: Causes a short read somewhere.*/
     close(of->fd);
+#endif
     of->fd = -1;
   }
   if (of->filename) {

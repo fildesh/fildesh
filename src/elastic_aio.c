@@ -5,7 +5,7 @@
 #define LACE_POSIX_SOURCE
 
 #include <aio.h>
-#include "utilace.h"
+#include "cx/syscx.h"
 #include "cx/alphatab.h"
 #include "cx/table.h"
 
@@ -67,7 +67,8 @@ setfd_async(fd_t fd)
   return fcntl(fd, F_SETFD, istat | O_ASYNC);
 }
 
-LaceUtilMain(elastic)
+  int
+main_elastic_aio(int argi, int argc, char** argv)
 {
   int istat = 0;
   DeclTable( IOState, ios );
@@ -297,8 +298,20 @@ LaceUtilMain(elastic)
     LoseTable( ios.s[i].xbuf );
   }
   LoseTable( ios );
-
-  lose_sysCx();
   return 0;
 }
 
+#ifdef MAIN_LACE_EXECUTABLE
+int main_elastic(int argi, int argc, char** argv) {
+  return main_elastic_aio(argi, argc, argv);
+}
+#else
+  int
+main(int argc, char** argv)
+{
+  int argi = init_sysCx(&argc, &argv);
+  int istat = main_elastic_aio(argi, argc, argv);
+  lose_sysCx();
+  return istat;
+}
+#endif

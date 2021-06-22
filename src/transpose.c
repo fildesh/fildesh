@@ -1,11 +1,12 @@
 
 /** Simple utility to transpose based on a delimiter.**/
 
-#include "utilace.h"
-#include "cx/xfile.h"
+#include "cx/syscx.h"
 #include "cx/ofile.h"
+#include "cx/xfile.h"
 
-LaceUtilMain(transpose)
+  int
+main_transpose(int argi, int argc, char** argv)
 {
   DeclTableT( cstr_row, TableT(cstr) );
   DeclTable( cstr_row, mat );
@@ -101,8 +102,16 @@ LaceUtilMain(transpose)
 
   LoseTable( mat );
   LoseTable( widths );
-  lose_sysCx ();
   return 0;
 }
 
-
+#ifndef MAIN_LACE_EXECUTABLE
+  int
+main(int argc, char** argv)
+{
+  int argi = init_sysCx(&argc, &argv);
+  int istat = main_transpose(argi, argc, argv);
+  lose_sysCx();
+  return istat;
+}
+#endif

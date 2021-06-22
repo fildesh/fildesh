@@ -1,5 +1,4 @@
 
-#include "utilace.h"
 #include "cx/fileb.h"
 #include "cx/ospc.h"
 
@@ -63,7 +62,8 @@ spawn_ssh (const char* cmd, const char* host)
   LoseTable( args );
 }
 
-LaceUtilMain(ssh_all)
+  int
+main_ssh_all(int argi, int argc, char** argv)
 {
   XFileB xfb[] = {DEFAULT_XFileB};
   XFile* xf = 0;
@@ -107,7 +107,16 @@ LaceUtilMain(ssh_all)
   }
 
   lose_XFileB (xfb);
-  lose_sysCx ();
   return 0;
 }
 
+#ifndef MAIN_LACE_EXECUTABLE
+  int
+main(int argc, char** argv)
+{
+  int argi = init_sysCx(&argc, &argv);
+  int istat = main_ssh_all(argi, argc, argv);
+  lose_sysCx();
+  return istat;
+}
+#endif

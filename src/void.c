@@ -1,8 +1,9 @@
 /** Simple utility to gobble a stream.**/
-#include "utilace.h"
+#include "cx/syscx.h"
 #include <stdio.h>
 
-LaceUtilMain(void)
+  int
+main_void(int argi, int argc, char** argv)
 {
   size_t nread;
   FILE* in = stdin;
@@ -20,7 +21,16 @@ LaceUtilMain(void)
 #undef N
   } while (nread != 0);
   fclose (in);
-  lose_sysCx ();
   return 0;
 }
 
+#ifndef MAIN_LACE_EXECUTABLE
+  int
+main(int argc, char** argv)
+{
+  int argi = init_sysCx(&argc, &argv);
+  int istat = main_void(argi, argc, argv);
+  lose_sysCx();
+  return istat;
+}
+#endif

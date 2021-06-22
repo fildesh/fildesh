@@ -6,7 +6,8 @@
 #include <string.h>
 #include <stdlib.h>
 
-LaceUtilMain(waitdo)
+  int
+main_waitdo(int argi, int argc, char** argv)
 {
   const char* ExeName = argv[0];
   FILE* in = stdin;
@@ -51,8 +52,16 @@ LaceUtilMain(waitdo)
   }
 
   fprintf (ErrOut, "Usage: %s [-x IN] [--] COMMAND [ARG...]\n", ExeName);
-
-  lose_sysCx ();
   return 1;
 }
 
+#ifndef MAIN_LACE_EXECUTABLE
+  int
+main(int argc, char** argv)
+{
+  int argi = init_sysCx(&argc, &argv);
+  int istat = main_waitdo(argi, argc, argv);
+  lose_sysCx();
+  return istat;
+}
+#endif

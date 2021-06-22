@@ -53,7 +53,13 @@ static
   void
 StateMsg(const char* msg, const char* name) {
 #if 0
-  pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+  static bool initialized = false;
+  static pthread_mutex_t mutex;
+  /* You better call this from a single thread.*/
+  if (!initialized) {
+    pthread_mutex_init(&mutex, NULL);
+    initialized = true;
+  }
   pthread_mutex_lock(&mutex);
   fprintf(stderr, "%s %s\n", msg, name);
   pthread_mutex_unlock(&mutex);
@@ -114,8 +120,8 @@ writing_thread_fn(WritingThreadState* st) {
   }
 
   close_LaceO(&st->buf);
-  close_LaceO(&st->outfile.base);
   StateMsg("end of", st->outfile.filename);
+  close_LaceO(&st->outfile.base);
   return NULL;
 }
 
@@ -198,6 +204,8 @@ main_elastic(int argi, int argc, char** argv)
   LaceXF xf[1] = {DEFAULT_LaceXF};
   unsigned i;
 
+  StateMsg("begin", "main_elastic()");
+
   /* Upper bound for number of output files.*/
   wstates = (WritingThreadState*) malloc(sizeof(WritingThreadState) *
                                          (1 + argc - argi));
@@ -253,6 +261,7 @@ main_elastic(int argi, int argc, char** argv)
     lose_WritingThreadState(&wstates[i]);
   }
   free(wstates);
+  StateMsg("end", "main_elastic()");
   return 0;
 }
 

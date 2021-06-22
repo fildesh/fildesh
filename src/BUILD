@@ -41,7 +41,10 @@ cc_binary(
     deps = [
         "//src/cx:cx_lib",
     ],
-    linkopts = ["-lpthread"],
+    linkopts = select({
+        "@platforms//os:windows": [],
+        "//conditions:default": ["-pthread"],
+    }),
     visibility = ["//:__pkg__"],
 )
 
@@ -66,7 +69,10 @@ cc_binary(
     deps = [
         "//:lace_lib",
     ],
-    linkopts = ["-lpthread"],
+    linkopts = select({
+        "@platforms//os:windows": [],
+        "//conditions:default": ["-pthread"],
+    }),
     visibility = ["//visibility:public"],
 )
 

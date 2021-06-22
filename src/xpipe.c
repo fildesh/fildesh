@@ -9,7 +9,8 @@
 
 #include "cx/ospc.h"
 
-LaceUtilMain(xpipe)
+  int
+main_xpipe(int argi, int argc, char** argv)
 {
   LaceXF xf[1] = {DEFAULT_LaceXF};
   OSPc ospc[] = {DEFAULT_OSPc};
@@ -50,7 +51,16 @@ LaceUtilMain(xpipe)
 
   close_LaceX(&xf->base);
   lose_OSPc (ospc);
-  lose_sysCx ();
   return 0;
 }
 
+#ifndef MAIN_LACE_EXECUTABLE
+  int
+main(int argc, char** argv)
+{
+  int argi = init_sysCx(&argc, &argv);
+  int istat = main_xpipe(argi, argc, argv);
+  lose_sysCx();
+  return istat;
+}
+#endif

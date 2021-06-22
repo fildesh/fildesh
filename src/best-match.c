@@ -1,5 +1,4 @@
 
-#include "utilace.h"
 #include "cx/fileb.h"
 
 #include <ctype.h>
@@ -142,7 +141,8 @@ matching_line (uint* a, uint width, const char* s, char* const* lines)
   return match_idx;
 }
 
-LaceUtilMain(best_match)
+  int
+main_best_match(int argi, int argc, char** argv)
 {
   uint* lcs_array;
   XFileB lookup_in[] = {DEFAULT_XFileB};
@@ -197,7 +197,16 @@ LaceUtilMain(best_match)
   free (lines);
   lose_XFileB (lookup_in);
   lose_XFileB (stream_in);
-  lose_sysCx ();
   return 0;
 }
 
+#ifndef MAIN_LACE_EXECUTABLE
+  int
+main(int argc, char** argv)
+{
+  int argi = init_sysCx(&argc, &argv);
+  int istat = main_best_match(argi, argc, argv);
+  lose_sysCx();
+  return istat;
+}
+#endif
