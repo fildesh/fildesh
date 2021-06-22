@@ -41,7 +41,7 @@ static
   void
 close_LaceXF(LaceXF* xf)
 {
-  if (xf->fd < 0) {
+  if (xf->fd >= 0) {
     close(xf->fd);
     xf->fd = -1;
   }

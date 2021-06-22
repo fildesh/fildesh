@@ -37,7 +37,7 @@ static
   void
 close_LaceOF(LaceOF* of)
 {
-  if (of->fd < 0) {
+  if (of->fd >= 0) {
     close(of->fd);
     of->fd = -1;
   }
