@@ -15,7 +15,8 @@ struct MockLaceOF {
 };
 
 static void write_MockLaceOF(MockLaceOF* of);
-static void close_MockLaceOF(MockLaceOF* of);
+static void close_MockLaceOF(MockLaceOF* of) {(void) of;}
+static void free_MockLaceOF(MockLaceOF* of) {(void) of;}
 DEFINE_LaceO_VTable(MockLaceOF, o);
 #define DEFAULT_MockLaceOF { \
   DEFAULT1_LaceO(DEFAULT_MockLaceOF_LaceO_VTable), \
@@ -34,10 +35,6 @@ write_MockLaceOF(MockLaceOF* of) {
   }
 }
 
-void close_MockLaceOF(MockLaceOF* of) {
-  (void) of;
-  /* Nothing to do here.*/
-}
 
   void
 param3_test_puts(unsigned chunk_size, lace_lgsize_t flush_lgsize, const char* delim) {

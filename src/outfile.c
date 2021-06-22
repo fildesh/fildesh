@@ -15,6 +15,15 @@
 
 #include <sys/stat.h>
 
+typedef struct LaceOF LaceOF;
+struct LaceOF {
+  LaceO base;
+  lace_fd_t fd;
+  char* filename;
+};
+#define DEFAULT_LaceOF  { DEFAULT_LaceO, -1, NULL }
+/* static inline LaceOF default_LaceOF() {LaceOF tmp = DEFAULT_LaceOF; return tmp;} */
+
 
 static
   void
@@ -50,21 +59,29 @@ close_LaceOF(LaceOF* of)
   }
 }
 
-DEFINE_LaceO_VTable(LaceOF, base);
-
-  bool
-open_LaceOF(LaceOF* of, const char* filename)
+static
+  void
+free_LaceOF(LaceOF* of)
 {
-  return open_sibling_LaceOF(of, NULL, filename);
+  free(of);
 }
 
-  bool
-open_sibling_LaceOF(LaceOF* of, const char* sibling, const char* filename)
+DEFINE_LaceO_VTable(LaceOF, base);
+
+  LaceO*
+open_LaceOF(const char* filename)
+{
+  return open_sibling_LaceOF(NULL, filename);
+}
+
+  LaceO*
+open_sibling_LaceOF(const char* sibling, const char* filename)
 {
   static const char dev_stdout[] = "/dev/stdout";
   static const char dev_fd_prefix[] = "/dev/fd/";
   static const unsigned dev_fd_prefix_length = sizeof(dev_fd_prefix)-1;
   const size_t filename_length = strlen(filename);
+  LaceOF of[1] = { DEFAULT_LaceOF };
 
   assert(of->fd < 0);
   assert(!of->filename);
@@ -80,7 +97,7 @@ open_sibling_LaceOF(LaceOF* of, const char* sibling, const char* filename)
     char* s = lace_parse_int(&fd, &filename[dev_fd_prefix_length]);
 
     if (!s || fd < 0) {
-      return false;
+      return NULL;
     }
     of->fd = fd;
     of->filename = malloc(filename_length+1);
@@ -120,5 +137,11 @@ open_sibling_LaceOF(LaceOF* of, const char* sibling, const char* filename)
     free(of->filename);
     of->filename = NULL;
   }
-  return (of->fd >= 0);
+
+  if (of->fd >= 0) {
+    LaceOF* p = malloc(sizeof(LaceOF));
+    *p = *of;
+    return &p->base;
+  }
+  return NULL;
 }

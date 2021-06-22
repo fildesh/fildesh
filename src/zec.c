@@ -41,21 +41,20 @@ show_usage ()
 }
 
 static
-  bool
-open_input_file(LaceXF* infile, const char* filename)
+  LaceX*
+open_input_file(const char* filename)
 {
-  LaceXF tmp_infile = DEFAULT_LaceXF;
+  LaceX* in = NULL;
   if (!filename) {
     filename = "-";
   }
-  if (!open_LaceXF(&tmp_infile, filename)) {
+  in = open_LaceXF(filename);
+  if (!in) {
     badnews("Cannot open file! ");
     badnews(filename);
     badnews("\n");
-    return false;
   }
-  *infile = tmp_infile;
-  return true;
+  return in;
 }
 
 static
@@ -77,10 +76,10 @@ cat_the_file(LaceO* out, LaceX* in)
 
 static
   bool
-all_have_data(LaceXF* inputs, unsigned n) {
+all_have_data(LaceX** inputs, unsigned n) {
   unsigned i;
   for (i = 0; i < n; ++i) {
-    LaceX* in = &inputs[i].base;
+    LaceX* in = inputs[i];
     if (in->off >= in->size) {
       if (0 == read_LaceX(in)) {
         return false;
@@ -109,10 +108,10 @@ main_zec(int argi, int argc, char** argv)
   int i;
   int beg_slash = argc;
   int end_slash = argc;
-  LaceOF ofile = DEFAULT_LaceOF;
+  LaceO* out = NULL;
   bool paste_mode = false;
   const char* unless_arg = 0;
-  LaceXF* inputs;
+  LaceX** inputs;
   size_t mid_sz;
   char* mid_buf;
   int nbegs;
@@ -134,7 +133,8 @@ main_zec(int argi, int argc, char** argv)
         badnews("Need a filename after -o.\n");
         return 1;
       }
-      if (!open_LaceOF(&ofile, arg)) {
+      out = open_LaceOF(arg);
+      if (!out) {
         badnews("Cannot open file for writing! ");
         badnews(arg);
         badnews("\n");
@@ -158,27 +158,28 @@ main_zec(int argi, int argc, char** argv)
     }
   }
 
-  if (ofile.fd < 0) {
-    if (!open_LaceOF(&ofile, "-")) {
+  if (!out) {
+    out = open_LaceOF("-");
+    if (!out) {
       badnews("Cannot open /dev/stdout for writing!\n");
       return 1;
     }
   }
 
   if (unless_arg && unless_arg[0]) {
-    puts_LaceO(&ofile.base, unless_arg);
-    close_LaceO(&ofile.base);
+    puts_LaceO(out, unless_arg);
+    close_LaceO(out);
     return 0;
   }
 
   if (argi == argc) {
-    LaceXF xf;
-    if (open_input_file(&xf, NULL)) {
-      cat_the_file(&ofile.base, &xf.base);
-      close_LaceO(&ofile.base);
+    LaceX* in = open_input_file(NULL);
+    if (in) {
+      cat_the_file(out, in);
+      close_LaceO(out);
       return 0;
     }
-    close_LaceO(&ofile.base);
+    close_LaceO(out);
     return 1;
   }
 
@@ -208,16 +209,18 @@ main_zec(int argi, int argc, char** argv)
   nbegs = beg_slash - argi;
   nends = argc - end_slash - (argc != end_slash ? 1 : 0);
 
-  inputs = (LaceXF*) malloc((nbegs + nends) * sizeof(LaceXF));
+  inputs = (LaceX**) malloc((nbegs + nends) * sizeof(LaceX*));
 
   for (i = 0; i < nbegs; ++i) {
-    if (!open_input_file(&inputs[i], argv[argi+i])) {
+    inputs[i] = open_input_file(argv[argi+i]);
+    if (!inputs[i]) {
       return 1;
     }
   }
 
   for (i = 0; i < nends; ++i) {
-    if (!open_input_file(&inputs[nbegs + i], argv[end_slash + 1 + i])) {
+    inputs[nbegs + i] = open_input_file(argv[end_slash + 1 + i]);
+    if (!inputs[nbegs + i]) {
       return 1;
     }
   }
@@ -228,36 +231,36 @@ main_zec(int argi, int argc, char** argv)
       good = all_have_data(inputs, nbegs + nends);
 
       for (i = 0; i < nbegs && good; ++i)
-        good = cat_next_line(&ofile.base, &inputs[i].base);
+        good = cat_next_line(out, inputs[i]);
 
       if (good)
-        good = write_all(&ofile.base, mid_buf, mid_sz);
+        good = write_all(out, mid_buf, mid_sz);
 
       for (i = 0; i < nends && good; ++i)
-        good = cat_next_line(&ofile.base, &inputs[nbegs+i].base);
+        good = cat_next_line(out, inputs[nbegs+i]);
 
       if (good)
-        good = write_all(&ofile.base, "\n", 1);
+        good = write_all(out, "\n", 1);
     }
 
     for (i = 0; i < nbegs + nends; ++i) {
-      close_LaceX(&inputs[i].base);
+      close_LaceX(inputs[i]);
     }
   }
   else {
     bool good = true;
 
     for (i = 0; i < nbegs && good; ++i)
-      cat_the_file(&ofile.base, &inputs[i].base);
+      cat_the_file(out, inputs[i]);
 
     if (good)
-      good = write_all(&ofile.base, mid_buf, mid_sz);
+      good = write_all(out, mid_buf, mid_sz);
 
     for (i = 0; i < nends && good; ++i)
-      cat_the_file(&ofile.base, &inputs[nbegs+i].base);
+      cat_the_file(out, inputs[nbegs+i]);
   }
 
-  close_LaceO(&ofile.base);
+  close_LaceO(out);
   free (inputs);
   free (mid_buf);
   return 0;

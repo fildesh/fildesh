@@ -15,6 +15,16 @@
 
 #include <sys/stat.h>
 
+typedef struct LaceXF LaceXF;
+struct LaceXF {
+  LaceX base;
+  lace_fd_t fd;
+  /* unsigned basename_offset; */
+  char* filename;
+};
+#define DEFAULT_LaceXF  { DEFAULT_LaceX, -1, NULL }
+/* static inline LaceXF default_LaceXF() {LaceXF tmp = DEFAULT_LaceXF; return tmp;} */
+
 
 static
   void
@@ -54,21 +64,29 @@ close_LaceXF(LaceXF* xf)
   }
 }
 
-DEFINE_LaceX_VTable(LaceXF, base);
-
-  bool
-open_LaceXF(LaceXF* xf, const char* filename)
+static
+  void
+free_LaceXF(LaceXF* xf)
 {
-  return open_sibling_LaceXF(xf, NULL, filename);
+  free(xf);
 }
 
-  bool
-open_sibling_LaceXF(LaceXF* xf, const char* sibling, const char* filename)
+DEFINE_LaceX_VTable(LaceXF, base);
+
+  LaceX*
+open_LaceXF(const char* filename)
+{
+  return open_sibling_LaceXF(NULL, filename);
+}
+
+  LaceX*
+open_sibling_LaceXF(const char* sibling, const char* filename)
 {
   static const char dev_stdin[] = "/dev/stdin";
   static const char dev_fd_prefix[] = "/dev/fd/";
   static const unsigned dev_fd_prefix_length = sizeof(dev_fd_prefix)-1;
   const size_t filename_length = strlen(filename);
+  LaceXF xf[1] = { DEFAULT_LaceXF };
 
   assert(xf->fd < 0);
   assert(!xf->filename);
@@ -84,7 +102,7 @@ open_sibling_LaceXF(LaceXF* xf, const char* sibling, const char* filename)
     char* s = lace_parse_int(&fd, &filename[dev_fd_prefix_length]);
 
     if (!s || fd < 0) {
-      return false;
+      return NULL;
     }
     xf->fd = fd;
     xf->filename = malloc(filename_length+1);
@@ -118,6 +136,18 @@ open_sibling_LaceXF(LaceXF* xf, const char* sibling, const char* filename)
     free(xf->filename);
     xf->filename = NULL;
   }
-  return (xf->fd >= 0);
+
+  if (xf->fd >= 0) {
+    LaceXF* p = malloc(sizeof(LaceXF));
+    *p = *xf;
+    return &p->base;
+  }
+  return NULL;
 }
 
+const char* filename_LaceXF(LaceX* in) {
+  if (in->vt != DEFAULT_LaceXF_LaceX_VTable) {
+    return NULL;
+  }
+  return lace_castup(LaceXF, base, in)->filename;
+}

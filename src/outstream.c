@@ -20,6 +20,7 @@ write_LaceO(LaceO* o)
   void
 close_LaceO(LaceO* o)
 {
+  if (!o) { return; }
   flush_LaceO(o);
   if (o->vt && o->vt->close_fn) {
     o->vt->close_fn(o);
@@ -31,6 +32,9 @@ close_LaceO(LaceO* o)
     o->alloc_lgsize = 0;
   }
   o->off = 0;
+  if (o->vt && o->vt->free_fn) {
+    o->vt->free_fn(o);
+  }
 }
 
   char*

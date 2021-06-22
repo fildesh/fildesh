@@ -4,12 +4,10 @@
 #include <string.h>
 
 int main() {
-  LaceXF xf[] = {DEFAULT_LaceXF};
-  LaceX* in = &xf->base;
   char* line;
-  if (!open_LaceXF(xf, "test/src/read_file_lines_test.c")) {
-    assert(NULL && "tried to open file");
-  }
+  LaceX* in = open_LaceXF("test/src/read_file_lines_test.c");
+
+  assert(in);
 
   line = getline_LaceX(in);
   assert(0 == strcmp("/* EXPECTED_AS_FIRST_LINE */", line));

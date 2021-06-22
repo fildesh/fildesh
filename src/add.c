@@ -33,10 +33,8 @@ sum_real_line(LaceX* in)
   int
 main_add(int argi, int argc, char** argv)
 {
-  LaceXF infile = DEFAULT_LaceXF;
-  LaceOF outfile = DEFAULT_LaceOF;
-  LaceX* const in = &infile.base;
-  LaceO* const out = &outfile.base;
+  LaceX* in = NULL;
+  LaceO* out = NULL;
   LaceX slice;
 
   (void) argv;
@@ -47,8 +45,13 @@ main_add(int argi, int argc, char** argv)
     return 1;
   }
 
-  open_LaceXF(&infile, "-");
-  open_LaceOF(&outfile, "-");
+  in = open_LaceXF("-");
+  out = open_LaceOF("-");
+
+  if (!in || !out) {
+    fputs("Cannot open stdio!\n", stderr);
+    return 1;
+  }
 
   for (slice = sliceline_LaceX(in);
        slice.size > 0;

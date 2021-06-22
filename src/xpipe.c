@@ -12,14 +12,17 @@
   int
 main_xpipe(int argi, int argc, char** argv)
 {
-  LaceXF xf[1] = {DEFAULT_LaceXF};
+  LaceX* in = NULL;
   OSPc ospc[] = {DEFAULT_OSPc};
   const char* s;
 
   if (argi >= argc)
     failout_sysCx ("Need at least one argument.");
 
-  open_LaceXF(xf, "-");
+  in = open_LaceXF("-");
+  if (!in) {
+    failout_sysCx ("open() failed!");
+  }
   stdxpipe_OSPc (ospc);
 
   ospc->cmd = cons1_AlphaTab (argv[argi++]);
@@ -31,9 +34,7 @@ main_xpipe(int argi, int argc, char** argv)
   while (argi < argc)
     PushTable( ospc->args, cons1_AlphaTab (argv[argi++]) );
 
-  for (s = getline_LaceX(&xf->base);
-       s;
-       s = getline_LaceX(&xf->base))
+  for (s = getline_LaceX(in); s; s = getline_LaceX(in))
   {
     if (!spawn_OSPc (ospc))
       failout_sysCx ("spawn() failed!");
@@ -49,8 +50,8 @@ main_xpipe(int argi, int argc, char** argv)
     }
   }
 
-  close_LaceX(&xf->base);
   lose_OSPc (ospc);
+  close_LaceX(in);
   return 0;
 }
 

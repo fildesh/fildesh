@@ -19,6 +19,7 @@ read_LaceX(LaceX* in)
   void
 close_LaceX(LaceX* in)
 {
+  if (!in) { return; }
   if (in->vt && in->vt->close_fn) {
     in->vt->close_fn(in);
   }
@@ -29,6 +30,9 @@ close_LaceX(LaceX* in)
     in->alloc_lgsize = 0;
   }
   in->off = 0;
+  if (in->vt && in->vt->free_fn) {
+    in->vt->free_fn(in);
+  }
 }
 
   char*

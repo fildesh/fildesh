@@ -15,7 +15,8 @@ struct MockLaceXF {
 };
 
 static void read_MockLaceXF(MockLaceXF* xf);
-static void close_MockLaceXF(MockLaceXF* xf);
+static void close_MockLaceXF(MockLaceXF* xf) {(void) xf;}
+static void free_MockLaceXF(MockLaceXF* xf) {(void) xf;}
 DEFINE_LaceX_VTable(MockLaceXF, x);
 #define DEFAULT_MockLaceXF { \
   DEFAULT1_LaceX(DEFAULT_MockLaceXF_LaceX_VTable), \
@@ -36,11 +37,6 @@ read_MockLaceXF(MockLaceXF* xf) {
     xf->index += 1;
     *grow_LaceX(x, 1) = c;
   }
-}
-
-void close_MockLaceXF(MockLaceXF* xf) {
-  (void) xf;
-  /* Nothing to do here.*/
 }
 
   void

@@ -448,19 +448,21 @@ parse_file(TableT(Command)* cmds, LaceX* in, const char* this_filename)
     else if (pfxeq_cstr ("$(<<", line))
     {
       char* filename = &line[4];
-      LaceXF src[] = {DEFAULT_LaceXF};
+      LaceX* src = NULL;
 
       filename = &filename[count_ws (filename)];
       filename[strcspn (filename, ")")] = '\0';
 
-      if (!open_sibling_LaceXF(src, this_filename, filename))
-        failout_Command (cmd, "Failed to include file", filename);
+      src = open_sibling_LaceXF(this_filename, filename);
+      if (!src) {
+        failout_Command(cmd, "Failed to include file", filename);
+      }
 
       lose_Command (TopTable( *cmds ));
       MPopTable( *cmds, 1 );
 
-      parse_file(cmds, &src->base, src->filename);
-      close_LaceX(&src->base);
+      parse_file(cmds, src, filename_LaceXF(src));
+      close_LaceX(src);
     }
     else if (pfxeq_cstr ("$(>", line) ||
         pfxeq_cstr ("$(set", line))
@@ -1344,13 +1346,13 @@ int main(int argc, char** argv)
 
 int main_lace(int argi, int argc, char** argv)
 {
-  LaceXF xf[] = {DEFAULT_LaceXF};
   DeclTable( AlphaTab, script_args );
   TableT(Command)* cmds = NULL;
   const char* stdin_sym = 0;
   const char* stdout_sym = 0;
   bool use_stdin = true;
   AlphaTab* tmppath = NULL;
+  LaceX* in = NULL;
   uint i;
   int istat;
 
@@ -1371,12 +1373,15 @@ int main_lace(int argi, int argc, char** argv)
     if (eq_cstr (arg, "--")) {
       use_stdin = false;
       if (argi >= argc)  show_usage_and_exit ();
+      if (!in) {
+        in = open_LaceXA();
+      }
       while (argi < argc) {
         size_t sz;
         arg = argv[argi++];
         sz = strlen(arg);
-        memcpy(grow_LaceX(&xf->base, sz), arg, sz);
-        *grow_LaceX(&xf->base, 1) = '\n';
+        memcpy(grow_LaceX(in, sz), arg, sz);
+        *grow_LaceX(in, 1) = '\n';
       }
     }
     else if (eq_cstr (arg, "-as")) {
@@ -1433,7 +1438,8 @@ int main_lace(int argi, int argc, char** argv)
         break;
       use_stdin = false;
       PushTable( script_args, cons1_AlphaTab (arg) );
-      if (!open_LaceXF(xf, arg)) {
+      in = open_LaceXF(arg);
+      if (!in) {
         DBog1( "Script file: %s", arg );
         failout_sysCx ("Cannot read script!");
       }
@@ -1452,7 +1458,7 @@ int main_lace(int argi, int argc, char** argv)
   push_losefn1_sysCx ((void (*) (void*)) lose_Commands, cmds);
 
   if (use_stdin) {
-    open_LaceXF(xf, "-");
+    in = open_LaceXF("-");
     PushTable( script_args, cons1_AlphaTab ("-") );
   }
 
@@ -1507,8 +1513,8 @@ int main_lace(int argi, int argc, char** argv)
     sep_line (&cmd->args, cmd->line);
   }
 
-  parse_file(cmds, &xf->base, xf->filename);
-  close_LaceX(&xf->base);
+  parse_file(cmds, in, filename_LaceXF(in));
+  close_LaceX(in);
 
   if (stdout_sym) {
     Command* cmd = Grow1Table( *cmds );

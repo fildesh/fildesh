@@ -22,7 +22,8 @@ struct WritingThreadState
   pthread_cond_t buf_cond;
   pthread_mutex_t buf_mutex;
   LaceO buf;
-  LaceOF outfile;
+  LaceO* outfile;
+  const char* filename;
 };
 
 static
@@ -34,8 +35,8 @@ init_WritingThreadState(WritingThreadState* st)
   pthread_cond_init(&st->buf_cond, NULL);
   pthread_mutex_init(&st->buf_mutex, NULL);
   st->buf = default_LaceO();
-  st->outfile = default_LaceOF();
-  st->outfile.base.flush_lgsize = 0;  /* No automatic flushing.*/
+  st->outfile = NULL;
+  st->filename = NULL;
 }
 
 /** Call pthread_join() before this!**/
@@ -46,7 +47,7 @@ lose_WritingThreadState(WritingThreadState* st)
   pthread_cond_destroy(&st->buf_cond);
   pthread_mutex_destroy(&st->buf_mutex);
   close_LaceO(&st->buf);
-  close_LaceO(&st->outfile.base);
+  close_LaceO(st->outfile);
 }
 
 static
@@ -90,38 +91,39 @@ writing_thread_fn(WritingThreadState* st) {
 
   while (!done) {
     pthread_mutex_lock(&st->buf_mutex);
-    StateMsg("loop start", st->outfile.filename);
+    StateMsg("loop start", st->filename);
     if (st->buf.size == 0 && !st->done) {
       st->waiting = true;
-      StateMsg("waiting", st->outfile.filename);
+      StateMsg("waiting", st->filename);
       pthread_cond_wait(&st->buf_cond, &st->buf_mutex);
-      StateMsg("done waiting", st->outfile.filename);
+      StateMsg("done waiting", st->filename);
       st->waiting = false;
     }
     done = st->done;
-    memcpy(grow_LaceO(&st->outfile.base, st->buf.size),
+    memcpy(grow_LaceO(st->outfile, st->buf.size),
            &st->buf.at[0], st->buf.size);
     st->buf.size = 0;
     pthread_mutex_unlock(&st->buf_mutex);
 
-    flush_LaceO(&st->outfile.base);
-    if (st->outfile.base.size > 0) {
+    flush_LaceO(st->outfile);
+    if (st->outfile->size > 0) {
       break;
     }
   }
-  StateMsg("done writing", st->outfile.filename);
+  StateMsg("done writing", st->filename);
 
   if (!done) {
-    StateMsg("setting myself done", st->outfile.filename);
+    StateMsg("setting myself done", st->filename);
     /* The file closed on us!*/
     pthread_mutex_lock(&st->buf_mutex);
     st->done = true;
     pthread_mutex_unlock(&st->buf_mutex);
   }
 
+  StateMsg("end of", st->filename);
   close_LaceO(&st->buf);
-  StateMsg("end of", st->outfile.filename);
-  close_LaceO(&st->outfile.base);
+  close_LaceO(st->outfile);
+  st->outfile = NULL;
   return NULL;
 }
 
@@ -158,7 +160,7 @@ reading_routine(LaceX* in, WritingThreadState* wstates, size_t wstate_count)
         WritingThreadState* st = &wstates[i];
         pthread_mutex_lock(&st->buf_mutex);
         if (!st->done) {
-          StateMsg("catting", st->outfile.filename);
+          StateMsg("catting", st->filename);
           memcpy(grow_LaceO(&st->buf, nbytes),
                  &in->at[in->off],
                  nbytes);
@@ -181,15 +183,15 @@ reading_routine(LaceX* in, WritingThreadState* wstates, size_t wstate_count)
     WritingThreadState* st = &wstates[i];
     pthread_mutex_lock(&st->buf_mutex);
     if (!st->done) {
-      StateMsg("setting done", st->outfile.filename);
+      StateMsg("setting done", st->filename);
       st->done = true;
       if (st->waiting) {
-        StateMsg("signaling done", st->outfile.filename);
+        StateMsg("signaling done", st->filename);
         pthread_cond_signal(&st->buf_cond);
       }
     }
     pthread_mutex_unlock(&st->buf_mutex);
-    StateMsg("joining", st->outfile.filename);
+    StateMsg("joining", st->filename);
     pthread_join(st->thread, &ret);
   }
   StateMsg("end of", "input");
@@ -201,7 +203,7 @@ main_elastic(int argi, int argc, char** argv)
   WritingThreadState* wstates = NULL;
   size_t wstate_count = 0;
   const char* xfilename = "/dev/fd/0";
-  LaceXF xf[1] = {DEFAULT_LaceXF};
+  LaceX* in = NULL;
   unsigned i;
 
   StateMsg("begin", "main_elastic()");
@@ -233,14 +235,18 @@ main_elastic(int argi, int argc, char** argv)
       st = &wstates[wstate_count++];
       init_WritingThreadState(st);
 
-      if (!open_LaceOF(&st->outfile, arg)) {
-        badnewsf("failed to open: %s\n", arg);
+      st->filename = arg;
+      st->outfile = open_LaceOF(st->filename);
+      if (!st->outfile) {
+        badnewsf("failed to open: %s\n", st->filename);
         return 1;
       }
+      st->outfile->flush_lgsize = 0;  /* No automatic flushing.*/
     }
   }
 
-  if (!open_LaceXF(xf, xfilename)) {
+  in = open_LaceXF(xfilename);
+  if (!in) {
     badnewsf("failed to open: %s\n", xfilename);
     return 1;
   }
@@ -248,14 +254,17 @@ main_elastic(int argi, int argc, char** argv)
   if (wstate_count == 0) {
     WritingThreadState* st = &wstates[wstate_count++];
     init_WritingThreadState(st);
-    if (!open_LaceOF(&st->outfile, "-")) {
+    st->filename = "-";
+    st->outfile = open_LaceOF(st->filename);
+    if (!st->outfile) {
       badnews("Failed to open: /dev/stdout\n");
       return 1;
     }
+    st->outfile->flush_lgsize = 0;  /* No automatic flushing.*/
   }
   /**** END ARGUMENT_PARSING ****/
 
-  reading_routine(&xf->base, wstates, wstate_count);
+  reading_routine(in, wstates, wstate_count);
 
   for (i = 0; i < wstate_count; ++i) {
     lose_WritingThreadState(&wstates[i]);
