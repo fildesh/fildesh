@@ -33,7 +33,6 @@ add_executable(lace
   "utilace.h"
   "add.c"
   "best-match.c"
-  "compatible_pthread.h"
   "${ELASTIC_SOURCE}"
   "execfd.c"
   "godo.c"
@@ -45,6 +44,7 @@ add_executable(lace
   "waitdo.c"
   "xpipe.c"
   "zec.c"
+  "${CMAKE_SOURCE_DIR}/include/lace_posix_thread.h"
   )
 set_property(TARGET lace
   APPEND PROPERTY COMPILE_DEFINITIONS MAIN_LACE_EXECUTABLE)
@@ -114,7 +114,9 @@ add_executable(zec
 target_link_libraries(zec lace_lib)
 
 
-add_executable(elastic_pthread "elastic_pthread.c" "compatible_pthread.h")
+add_executable(elastic_pthread
+  "elastic_pthread.c"
+  "${CMAKE_SOURCE_DIR}/include/lace_posix_thread.h")
 target_link_libraries(elastic_pthread lace_lib ${CMAKE_THREAD_LIBS_INIT})
 
 if (UNIX)

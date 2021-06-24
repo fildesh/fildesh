@@ -5,7 +5,7 @@
  **/
 
 #include "lace.h"
-#include "compatible_pthread.h"
+#include "lace_posix_thread.h"
 #include "utilace.h"
 #include "cx/associa.h"
 #include "cx/fileb.h"

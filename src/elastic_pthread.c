@@ -3,7 +3,7 @@
  * Echo stdin to stdout with an arbitrary sized buffer.
  **/
 #include "lace.h"
-#include "compatible_pthread.h"
+#include "lace_posix_thread.h"
 
 #include <assert.h>
 #include <errno.h>
