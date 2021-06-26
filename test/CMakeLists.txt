@@ -8,8 +8,25 @@ set (zec_exe "$<TARGET_FILE:zec>")
 add_subdirectory(builtin)
 add_subdirectory(fault)
 
+set(plain_example_test_list
+  "args"
+  "cycle"
+  "hello"
+  "name"
+  )
+
+if (UNIX)
+  list(APPEND plain_example_test_list
+    "convoluted"
+    "familiar"
+    "silly"
+    "test"
+    )
+endif()
+
+
 ## Ensure that the examples we distribute actually work.
-foreach (f hello args name cycle silly)
+foreach (f ${plain_example_test_list})
   add_test (NAME example_${f}
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
     COMMAND
@@ -17,17 +34,6 @@ foreach (f hello args name cycle silly)
     ${lace_exe} -x example/${f}.lace
     )
 endforeach ()
-
-if (UNIX)
-  foreach (f test familiar convoluted)
-    add_test (NAME example_${f}
-      WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
-      COMMAND
-      comparispawn "${CMAKE_CURRENT_SOURCE_DIR}/expect/${f}.txt"
-      ${lace_exe} -x example/${f}.lace
-      )
-  endforeach ()
-endif()
 
 add_test (NAME cli_hello
   COMMAND

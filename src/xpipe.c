@@ -8,22 +8,16 @@
 #include "utilace.h"
 
 #include "cx/ospc.h"
+#ifdef LACE_BUILTIN_FORBID_XPIPE
+#include <assert.h>
+#endif
 
-  int
-main_xpipe(int argi, int argc, char** argv)
+static
+  void
+run_with_line(unsigned argc, char** argv, const char* line, LaceO* out)
 {
-  LaceX* in = NULL;
+  unsigned argi = 0;
   OSPc ospc[] = {DEFAULT_OSPc};
-  const char* s;
-
-  if (argi >= argc)
-    failout_sysCx ("Need at least one argument.");
-
-  in = open_LaceXF("-");
-  if (!in) {
-    failout_sysCx ("open() failed!");
-  }
-  stdxpipe_OSPc (ospc);
 
   ospc->cmd = cons1_AlphaTab (argv[argi++]);
   if (lace_specific_util(ccstr_of_AlphaTab(&ospc->cmd))) {
@@ -34,25 +28,59 @@ main_xpipe(int argi, int argc, char** argv)
   while (argi < argc)
     PushTable( ospc->args, cons1_AlphaTab (argv[argi++]) );
 
-  for (s = getline_LaceX(in); s; s = getline_LaceX(in))
-  {
-    if (!spawn_OSPc (ospc))
-      failout_sysCx ("spawn() failed!");
+  stdxpipe_OSPc(ospc);
+  stdopipe_OSPc(ospc);
+  if (!spawn_OSPc(ospc))
+    failout_sysCx("spawn() failed!");
 
-    oput_cstr_OFile (ospc->of, s);
-    oput_char_OFile (ospc->of, '\n');
-    if (!close_OSPc (ospc))
-      failout_sysCx ("Wait failed!");
-    if (ospc->status != 0)
-    {
-      DBog1( "Child exited with status:%d, exiting!", ospc->status );
-      failout_sysCx ("");
-    }
+  oput_cstr_OFile(ospc->of, line);
+  oput_char_OFile(ospc->of, '\n');
+  close_OFile(ospc->of);
+
+  xget_XFile(ospc->xf);
+  puts_LaceO(out, ccstr_of_XFile(ospc->xf));
+  flush_LaceO(out);
+
+  if (!close_OSPc(ospc))
+    failout_sysCx("Wait failed!");
+  if (ospc->status != 0) {
+    DBog1( "Child exited with status:%d, exiting!", ospc->status );
+    failout_sysCx ("");
+  }
+  lose_OSPc(ospc);
+}
+
+  int
+main_xpipe(int argi, int argc, char** argv)
+{
+#ifdef LACE_BUILTIN_FORBID_XPIPE
+  assert(false && "xpipe is known not to work on Windows");
+  return 1;
+#else
+  LaceX* in = NULL;
+  LaceO* out = NULL;
+  const char* s;
+
+  if (argi >= argc)
+    failout_sysCx ("Need at least one argument.");
+
+  in = open_LaceXF("-");
+  if (!in) {
+    failout_sysCx ("open() failed!");
+  }
+  out = open_LaceOF("-");
+  if (!out) {
+    failout_sysCx ("open() failed!");
   }
 
-  lose_OSPc (ospc);
+  for (s = getline_LaceX(in); s; s = getline_LaceX(in)) {
+    run_with_line(argc - argi, &argv[argi], s, out);
+  }
+
   close_LaceX(in);
+  close_LaceO(out);
   return 0;
+#endif
 }
 
 #ifndef MAIN_LACE_EXECUTABLE
@@ -60,7 +88,9 @@ main_xpipe(int argi, int argc, char** argv)
 main(int argc, char** argv)
 {
   int argi = init_sysCx(&argc, &argv);
-  int istat = main_xpipe(argi, argc, argv);
+  int istat = 1;
+  failout_sysCx("This builtin relies on Lace's -as flag.");
+  /* istat = main_xpipe(argi, argc, argv); */
   lose_sysCx();
   return istat;
 }

@@ -1,9 +1,7 @@
+load("//tool:spawn.bzl", "spawn_test")
 
-cc_test(
+spawn_test(
     name = "false_test",
-    srcs = [
-        "//tool:spawn.c",
-    ],
     args = [
         "!",
         "$(location //:lace)",

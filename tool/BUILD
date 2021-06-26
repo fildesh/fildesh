@@ -1,8 +1,16 @@
 # These are small enough to run many times as cc_test().
 exports_files([
-    "expectish.c",
-    "shout.c",
     "spawn.c",
+], visibility = ["//visibility:public"])
+
+exports_files([
+    "argspawn.c",
+    "expectish.c",
+    "pipem.c",
+    "shout.c",
+], visibility = [
+    "//:__pkg__",
+    "//test/tool:__pkg__",
 ])
 
 cc_binary(
@@ -51,28 +59,4 @@ cc_binary(
     name = "spawn",
     srcs = ["spawn.c"],
     visibility = ["//visibility:public"],
-)
-
-cc_test(
-    name = "spawn_not_not_test",
-    srcs = ["spawn.c"],
-    args = ["!", "!"],
-)
-cc_test(
-    name = "spawn_spawn_not_not_test",
-    srcs = ["spawn.c"],
-    args = ["$(location :spawn)", "!", "!"],
-    data = [":spawn"],
-)
-cc_test(
-    name = "spawn_not_spawn_not_test",
-    srcs = ["spawn.c"],
-    args = ["!", "$(location :spawn)", "!"],
-    data = [":spawn"],
-)
-cc_test(
-    name = "spawn_not_spawn_nothing_test",
-    srcs = ["spawn.c"],
-    args = ["!", "$(location :spawn)"],
-    data = [":spawn"],
 )

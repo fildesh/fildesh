@@ -1,5 +1,5 @@
-#ifndef LACE_COMPATIBLE_PTHREAD_H_
-#define LACE_COMPATIBLE_PTHREAD_H_
+#ifndef LACE_POSIX_THREAD_H_
+#define LACE_POSIX_THREAD_H_
 
 #ifdef _WIN32
 #include <windows.h>
@@ -39,7 +39,7 @@ pthread_mutex_unlock(pthread_mutex_t* mutex) {
 }
 static inline int
 pthread_cond_wait(pthread_cond_t* cond, pthread_mutex_t* mutex) {
-  bool good = SleepConditionVariableCS(cond, mutex, INFINITE);
+  int good = SleepConditionVariableCS(cond, mutex, INFINITE);
   return (good ? 0 : -1);
 }
 static inline int
@@ -69,4 +69,4 @@ pthread_mutex_destroy(pthread_mutex_t* mutex) {
 #include <pthread.h>
 #endif
 
-#endif  /* LACE_COMPATIBLE_PTHREAD_H_ */
+#endif  /* LACE_POSIX_THREAD_H_ */

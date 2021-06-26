@@ -11,7 +11,7 @@
 int lace_tool_shout_main(int argc, char** argv) {
   FILE* f = stdout;
   int argi;
-  if (argc < 2 || !argv[1]) {
+  if (argc < 3 || !argv[1] || !argv[2]) {
     return 64;  /* EX_USAGE: Command line usage error.*/
   }
   if (argv[1][0] != '-' || argv[1][1] != '\0') {

@@ -1,5 +1,6 @@
 
 add_library (cx_lib STATIC
+  $<TARGET_OBJECTS:lace_compat_lib>
   $<TARGET_OBJECTS:lace_lib>
   "alphatab.c"
   "alphatab.h"

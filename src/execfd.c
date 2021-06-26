@@ -35,7 +35,7 @@ pipe_to_file (fd_t in, const char* name)
     long sz;
     byte buf[BUFSIZ];
 
-    sz = read_sysCx (in, buf, BUFSIZ);
+    sz = read(in, buf, BUFSIZ);
 
     if (sz <= 0)  break;
     if (!out)  out = fopen (name, "wb");
@@ -62,7 +62,7 @@ readin_fd (fd_t in, bool scrap_newline)
     if (buf.sz < (size_t) n)
       GrowTable( buf, n - buf.sz );
 
-    n = read_sysCx (in, &buf.s[off], n_per_chunk * sizeof(char));
+    n = read(in, &buf.s[off], n_per_chunk * sizeof(char));
     if (n < 0)
       failout_sysCx ("Problem reading file descriptor!");
     if (n == 0)  break;

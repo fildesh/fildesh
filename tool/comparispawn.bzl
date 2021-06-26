@@ -1,12 +1,10 @@
+load("//tool:spawn.bzl", "spawn_test")
 
 def lace_expect_test(name, srcs, expect,
                      data=[], args=[], size="small",
                      **kwargs):
-  native.cc_test(
+  spawn_test(
       name = name,
-      srcs = [
-          "//tool:spawn.c",
-      ],
       data = [
           expect,
           "//tool:comparispawn",

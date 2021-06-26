@@ -62,6 +62,10 @@ lace_expect_test(
         "//example:cycle.lace",
         "//example:hello.lace",
     ],
+    target_compatible_with = select({
+        "@platforms//os:windows": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }),
 )
 
 lace_expect_test(

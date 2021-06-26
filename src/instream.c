@@ -89,11 +89,13 @@ slicechr_LaceX(LaceX* in, const char delim)
 {
   LaceX slice = DEFAULT_LaceX;
   size_t ret_off;
-  char* s;
+  char* s = NULL;
 
   maybe_flush_LaceX(in);
   ret_off = in->off;
-  s = strchr(cstr_of_LaceX(in), delim);
+  if (in->size > 0) {
+    s = strchr(cstr_of_LaceX(in), delim);
+  }
 
   while (!s) {
     in->off = in->size;
@@ -183,11 +185,13 @@ slicespan_LaceX(LaceX* in, const char* span)
 {
   LaceX slice = DEFAULT_LaceX;
   size_t ret_off;
-  size_t end;
+  size_t end = in->size;
 
   maybe_flush_LaceX(in);
   ret_off = in->off;
-  end = in->off + strspn(cstr_of_LaceX(in), span);
+  if (in->size > 0) {
+    end = in->off + strspn(cstr_of_LaceX(in), span);
+  }
 
   while (end == in->size) {
     in->off = in->size;

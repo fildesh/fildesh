@@ -3,6 +3,7 @@
  * Simple and advanced file I/O and parsing.
  **/
 #include "fileb.h"
+#include "lace_compat_fd.h"
 
 #include <assert.h>
 #include <errno.h>
@@ -74,12 +75,13 @@ static
   void
 close_FileB (FileB* f)
 {
-  if (f->f)
-  {
+  if (f->f) {
+    /* assert(f->fd >= 0); */
     fclose (f->f);
-    f->f = 0;
+    f->f = NULL;
     f->fd = -1;
   }
+  assert(f->fd < 0);
 }
 
   void
@@ -303,10 +305,14 @@ open_FileB (FileB* f, const char* pathname, const char* filename)
   if (pfxeq_cstr(dev_fd_prefix, f->pathname.s)) {
     int fd = -1;
     xget_int_cstr(&fd, &f->pathname.s[strlen(dev_fd_prefix)]);
-    f->fd = fd;
-    f->f = fdopen_sysCx(fd, (f->sink ? "wb" : "rb"));
+    if (fd >= 0) {
+      openfd_FileB(f, fd);
+    }
   } else {
-    f->f = fopen (f->pathname.s, (f->sink ? "wb" : "rb"));
+    FILE* file = fopen (f->pathname.s, (f->sink ? "wb" : "rb"));
+    if (file) {
+      set_FILE_FileB(f, file);
+    }
   }
 
   assign2_AlphaTab (&f->filename, &f->pathname, sepidx, f->pathname.sz);
@@ -318,7 +324,11 @@ open_FileB (FileB* f, const char* pathname, const char* filename)
   bool
 openfd_FileB (FileB* fb, fd_t fd)
 {
-  Claim( !fb->f );
+  assert(fd >= 0);
+  assert(!fb->f);
+  assert(fb->fd < 0);
+
+  lace_compat_fd_cloexec(fd);
   fb->fd = fd;
   fb->f = fdopen_sysCx (fd, (fb->sink ? "wb" : "rb"));
   return !!fb->f;
@@ -327,8 +337,16 @@ openfd_FileB (FileB* fb, fd_t fd)
   void
 set_FILE_FileB (FileB* fb, FILE* file)
 {
-  Claim( !fb->f );
+  assert(file);
+  assert(!fb->f);
+  assert(fb->fd < 0);
   fb->f = file;
+#ifdef _WIN32
+  fb->fd = _fileno(file);
+#else
+  fb->fd = fileno(file);
+#endif
+  lace_compat_fd_cloexec(fb->fd);
 }
 
   char*

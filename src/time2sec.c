@@ -3,20 +3,26 @@
  * The longer time intervals like days or hours need not be present
  * for this to work properly. Field widths are not fixed either.
  */
-#include "cx/fileb.h"
+#include "lace.h"
 
-static uint
-conv_line (XFile* xf)
+#include <stdio.h>
+#include <string.h>
+
+static unsigned conv_line(LaceX* in)
 {
-  uint i = 0;
-  uint m;
-  uint a[4];
-  uint x = 0;
-  skipds_XFile (xf, 0);
-  while (i < ArraySz(a) && xget_uint_XFile (xf, &a[i]))
-  {
-    skipds_XFile (xf, ":");
-    ++i;
+  unsigned i = 0;
+  unsigned m;
+  unsigned a[4];
+  unsigned x = 0;
+
+  for (i = 0; i < 4; ++i) {
+    LaceX slice = slicechr_LaceX(in, ':');
+    int tmp_int = -1;
+    if (parse_int_LaceX(&slice, &tmp_int) && tmp_int >= 0) {
+      a[i] = (unsigned) tmp_int;
+    } else {
+      break;
+    }
   }
   if (i == 0)  return x;
   m = 1;
@@ -36,45 +42,48 @@ conv_line (XFile* xf)
   int
 main_time2sec(int argi, int argc, char** argv)
 {
-  XFile* xf;
-  OFile* of;
-  char* s;
-  uint width = 1;
+  LaceX* in = NULL;
+  LaceO* out = NULL;
+  LaceX slice;
+  unsigned width = 0;
 
-  if (argi < argc && eq_cstr ("-w", argv[argi])) {
-    Bool good = false;
+  if (argi < argc && 0 == strcmp("-w", argv[argi])) {
     ++ argi;
     if (argi < argc) {
-      if (xget_uint_cstr (&width, argv[argi++])) {
-        good = true;
+      int tmp_int = -1;
+      if (lace_parse_int(&tmp_int, argv[argi++]) && tmp_int >= 0) {
+        width = (unsigned) tmp_int;
+      } else {
+        return 64;
       }
     }
-    if (!good) {
-      failout_sysCx ("-w needs a numerical width!");
+  }
+
+  if (argi < argc) {
+    fputs("Just run without arguments and type numbers.\n", stderr);
+    fputs("You'll figure it out.\n", stderr);
+    return 64;
+  }
+
+  in = open_LaceXF("-");
+  out = open_LaceOF("-");
+
+  for (slice = sliceline_LaceX(in);
+       slice.size > 0;
+       slice = sliceline_LaceX(in))
+  {
+    char buf[20];
+    unsigned x = conv_line(&slice);
+    unsigned n;
+    sprintf(buf, "%u", x);
+    for (n = strlen(buf); n < width; ++n) {
+      putc_LaceO(out, ' ');
     }
+    print_int_LaceO(out, x);
+    putc_LaceO(out, '\n');
   }
-
-  if (argi < argc)
-  {
-    DBog0( "Just run without arguments and type numbers." );
-    DBog0( "You'll figure it out." );
-    failout_sysCx ("No arguments expected...");
-  }
-
-  xf = stdin_XFile ();
-  of = stdout_OFile ();
-
-  for (s = getline_XFile (xf);
-       s;
-       s = getline_XFile (xf))
-  {
-    uint x;
-    XFile olay[1];
-    olay_txt_XFile (olay, xf, IdxEltTable( xf->buf, s ));
-    x = conv_line (olay);
-    printf_OFile (of, "%*u\n", width, x);
-    flush_OFile (of);
-  }
+  close_LaceX(in);
+  close_LaceO(out);
   return 0;
 }
 

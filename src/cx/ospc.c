@@ -3,12 +3,15 @@
  * Spawn and communicate with a process.
  **/
 #include "ospc.h"
+#include "lace_compat_fd.h"
 
   bool
 close_OSPc (OSPc* ospc)
 {
   bool good = false;
   if (ospc->pid < 0)  return 0;
+  ospc->xf = NULL;
+  ospc->of = NULL;
   close_XFileB (&ospc->xfb);
   close_OFileB (&ospc->ofb);
   /* if (ospc->pid > 0)  kill (ospc->pid, SIGKILL); */
@@ -60,12 +63,14 @@ spawn_OSPc (OSPc* ospc)
   uint i;
 
   if (ospc->of) {
-    DoLegitLine( "pipe()" )
-      pipe_sysCx (xfd);
+    DoLegit( "pipe()" ) {
+      good = (0 == lace_compat_fd_pipe(&xfd[1], &xfd[0]));
+    }
   }
   if (ospc->xf) {
-    DoLegitLine( "pipe()" )
-      pipe_sysCx (ofd);
+    DoLegit( "pipe()" ) {
+      good = (0 == lace_compat_fd_pipe(&ofd[1], &ofd[0]));
+    }
   }
 
   if (good)
@@ -73,22 +78,15 @@ spawn_OSPc (OSPc* ospc)
     PushTable( argv, dup_cstr (exename_of_sysCx ()) );
     PushTable( argv, dup_cstr (MagicArgv1_sysCx) );
     PushTable( argv, dup_cstr ("-exec") );
-    PushTable( argv, dup_cstr ("-exe") );
     PushTable( argv, dup_cstr (cstr_AlphaTab (&ospc->cmd)) );
 
     if (ospc->of)
     {
-      cloexec_sysCx (xfd[1], true);
       PushTable( argv, dup_cstr ("-stdxfd") );
       PushTable( argv, itoa_dup_cstr (xfd[0]) );
-      /* PushTable( argv, dup_cstr ("-closefd") ); */
-      /* PushTable( argv, itoa_dup_cstr (xfd[1]) ); */
     }
     if (ospc->xf)
     {
-      cloexec_sysCx (ofd[0], true);
-      /* PushTable( argv, dup_cstr ("-closefd") ); */
-      /* PushTable( argv, itoa_dup_cstr (ofd[0]) ); */
       PushTable( argv, dup_cstr ("-stdofd") );
       PushTable( argv, itoa_dup_cstr (ofd[1]) );
     }
@@ -102,23 +100,28 @@ spawn_OSPc (OSPc* ospc)
     PushTable( argv, 0 );
   }
 
+  if (good) {
+    if (ospc->of) {
+      lace_compat_fd_inherit(xfd[0]);
+    }
+    if (ospc->xf) {
+      lace_compat_fd_inherit(ofd[1]);
+    }
+  }
+
   DoLegitP( ospc->pid >= 0, "spawn" )
     ospc->pid = spawnvp_sysCx (argv.s);
 
   DoLegit( 0 )
   {
     /* The old switcharoo. Your input is my output and vice-versa.*/
-    if (ospc->of)
-    {
-      closefd_sysCx (xfd[0]);
-      ospc->ofb.fb.fd = xfd[1];
-      set_FILE_FileB (&ospc->ofb.fb, fdopen_sysCx (ospc->ofb.fb.fd, "wb"));
+    if (ospc->of) {
+      lace_compat_fd_close(xfd[0]);
+      good = openfd_FileB(&ospc->ofb.fb, xfd[1]);
     }
-    if (ospc->xf)
-    {
-      closefd_sysCx (ofd[1]);
-      ospc->xfb.fb.fd = ofd[0];
-      set_FILE_FileB (&ospc->xfb.fb, fdopen_sysCx (ospc->xfb.fb.fd, "rb"));
+    if (ospc->xf) {
+     lace_compat_fd_close(ofd[1]);
+      good = openfd_FileB(&ospc->xfb.fb, ofd[0]);
     }
   }
 

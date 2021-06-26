@@ -1,5 +1,6 @@
 
 #include "lace.h"
+#include "lace_compat_fd.h"
 
 #include <assert.h>
 #include <fcntl.h>
@@ -30,16 +31,7 @@ static
 write_LaceOF(LaceOF* of)
 {
   LaceO* o = &of->base;
-
-#ifdef _WIN32
-  long n = _write(of->fd, &o->at[o->off], o->size - o->off);
-#else
-  ssize_t n = write(of->fd, &o->at[o->off], o->size - o->off);
-#endif
-
-  if (n > 0) {
-    o->off += (size_t) n;
-  }
+  o->off += lace_compat_fd_write(of->fd, &o->at[o->off], o->size - o->off);
 }
 
 static
@@ -47,10 +39,7 @@ static
 close_LaceOF(LaceOF* of)
 {
   if (of->fd >= 0) {
-#ifndef _WIN32
-    /* TODO: Causes a short read somewhere.*/
-    close(of->fd);
-#endif
+    lace_compat_fd_close(of->fd);
     of->fd = -1;
   }
   if (of->filename) {
@@ -122,16 +111,28 @@ open_sibling_LaceOF(const char* sibling, const char* filename)
 
   if (of->fd < 0) {
 #ifdef _WIN32
-    const int flags = _O_WRONLY | _O_CREAT | _O_TRUNC | O_APPEND;
+    const int flags = (
+        _O_WRONLY | _O_CREAT | _O_TRUNC |
+        _O_APPEND |
+        _O_BINARY |
+        _O_NOINHERIT);
     const int mode = _S_IREAD | _S_IWRITE;
     of->fd = _open(filename, flags, mode);
 #else
-    const int flags =  O_WRONLY | O_CREAT | O_TRUNC | O_APPEND;
+    const int flags = (
+        O_WRONLY | O_CREAT | O_TRUNC |
+        O_APPEND |
+        0 /* O_CLOEXEC is below */);
     const int mode
       = S_IWUSR | S_IWGRP | S_IWOTH
       | S_IRUSR | S_IRGRP | S_IROTH;
     of->fd = open(filename, flags, mode);
+    if (of->fd >= 0) {
+      lace_compat_fd_cloexec(of->fd);
+    }
 #endif
+  } else {
+    lace_compat_fd_cloexec(of->fd);
   }
   if (of->fd < 0 && of->filename) {
     free(of->filename);

@@ -1,36 +1,26 @@
 /** Simple utility to gobble a stream.**/
-#include "cx/syscx.h"
-#include <stdio.h>
+#include "lace.h"
 
   int
 main_void(int argi, int argc, char** argv)
 {
-  size_t nread;
-  FILE* in = stdin;
-
+  LaceX* in = open_LaceXF("-");
+  LaceO* out = open_LaceOF("-");
   (void) argi;
   (void) argc;
   (void) argv;
-  fclose (stdout);
-  fclose (stderr);
-  do
-  {
-#define N 8192
-    char buf[N];
-    nread = fread (buf, sizeof(char), N, in);
-#undef N
-  } while (nread != 0);
-  fclose (in);
+
+  while (0 < read_LaceX(in)) {
+    in->size = 0;
+    flush_LaceX(in);
+  }
+  close_LaceX(in);
+  close_LaceO(out);
   return 0;
 }
 
 #ifndef MAIN_LACE_EXECUTABLE
-  int
-main(int argc, char** argv)
-{
-  int argi = init_sysCx(&argc, &argv);
-  int istat = main_void(argi, argc, argv);
-  lose_sysCx();
-  return istat;
+int main(int argc, char** argv) {
+  return main_void(1, argc, argv);
 }
 #endif

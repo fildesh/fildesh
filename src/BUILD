@@ -14,6 +14,13 @@ exports_files([
     "//test/src:__pkg__",
 ])
 
+exports_files([
+    "time2sec.c",
+    "void.c",
+], visibility = [
+    "//test/builtin:__pkg__",
+])
+
 cc_binary(
     name = "lace",
     srcs = [
@@ -37,7 +44,10 @@ cc_binary(
     ],
     defines = [
         "MAIN_LACE_EXECUTABLE",
-    ],
+    ] + select({
+        "@platforms//os:windows": ["LACE_BUILTIN_FORBID_XPIPE"],
+        "//conditions:default": [],
+    }),
     deps = [
         "//src/cx:cx_lib",
     ],

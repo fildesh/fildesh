@@ -63,20 +63,10 @@ typedef int fd_t;
 
 #include "def.h"
 
-bool
-pipe_sysCx (fd_t* fds);
-fd_t
-dup_sysCx (fd_t fd);
-bool
-dup2_sysCx (fd_t oldfd, fd_t newfd);
 int
 open_lace_xfd(const char* filename);
 int
 open_lace_ofd(const char* filename);
-long
-read_sysCx (fd_t fd, void* buf, long sz);
-long
-write_sysCx (fd_t fd, const void* buf, long sz);
 bool
 closefd_sysCx (fd_t fd);
 FILE*
@@ -94,8 +84,6 @@ void
 setenv_sysCx (const char* key, const char* val);
 void
 tacenv_sysCx (const char* key, const char* val);
-void
-cloexec_sysCx (fd_t fd, bool b);
 
 bool
 chmodu_sysCx (const char* pathname, bool r, bool w, bool x);

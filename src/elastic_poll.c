@@ -89,7 +89,7 @@ handle_read_write(TableT(IOState) ios, TableT(pollfd) pollfds) {
     if (io->done) {
       /* Nothing.*/
     } else if ((pfd->revents & POLLIN) == POLLIN) {
-      sstat = read_sysCx(pfd->fd, io->buf.s, io->buf.sz);
+      sstat = read(pfd->fd, io->buf.s, io->buf.sz);
       if (sstat < 0) {
         rwerrno = errno;
       } else if (sstat == 0) {
@@ -108,7 +108,7 @@ handle_read_write(TableT(IOState) ios, TableT(pollfd) pollfds) {
         io->buf.sz = tmp_sz;
       }
     } else if ((pfd->revents & POLLOUT) == POLLOUT) {
-      sstat = write_sysCx(pfd->fd, io->buf.s, io->buf.sz);
+      sstat = write(pfd->fd, io->buf.s, io->buf.sz);
       if (sstat < 0) {
         rwerrno = errno;
       }

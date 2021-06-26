@@ -3,6 +3,7 @@
  * Interact with the operating system.
  **/
 #include "syscx.h"
+#include "lace_compat_fd.h"
 
 #include "fileb.h"
 
@@ -61,7 +62,7 @@ static
   void
 parse_args_sysCx (int* pargc, char*** pargv)
 {
-  bool execing = false;
+  char* execing = NULL;
   int argc = *pargc;
   char** argv = *pargv;
   int argi = 0;
@@ -76,9 +77,12 @@ parse_args_sysCx (int* pargc, char*** pargv)
     if (eql_cstr (arg, "-stdxfd"))
     {
       fd_t fd = parse_fd_arg_sysCx (argv[argi++]);
-      if (fd >= 0)  dup2_sysCx (fd, 0);
-      else
-      {
+      if (fd >= 0) {
+        if (fd != 0) {
+          lace_compat_fd_move_to(0, fd);
+          lace_compat_fd_inherit(0);
+        }
+      } else {
         DBog1( "Bad -stdxfd argument: %s", argv[argi-1] );
         failout_sysCx ("");
       }
@@ -86,9 +90,12 @@ parse_args_sysCx (int* pargc, char*** pargv)
     else if (eql_cstr (arg, "-stdofd"))
     {
       fd_t fd = parse_fd_arg_sysCx (argv[argi++]);
-      if (fd >= 0)  dup2_sysCx (fd, 1);
-      else
-      {
+      if (fd >= 0) {
+        if (fd != 1) {
+          lace_compat_fd_move_to(1, fd);
+          lace_compat_fd_inherit(1);
+        }
+      } else {
         DBog1( "Bad -stdofd argument: %s", argv[argi-1] );
         failout_sysCx ("");
       }
@@ -96,20 +103,16 @@ parse_args_sysCx (int* pargc, char*** pargv)
     if (eql_cstr (arg, "-closefd"))
     {
       fd_t fd = parse_fd_arg_sysCx (argv[argi++]);
-      if (fd >= 0)  closefd_sysCx (fd);
-      else
-      {
+      if (fd >= 0) {
+        lace_compat_fd_close(fd);
+      } else {
         DBog1( "Bad -closefd argument: %s", argv[argi-1] );
         failout_sysCx ("");
       }
     }
-    else if (eql_cstr (arg, "-exe"))
-    {
-      argv[0] = argv[argi++];
-    }
     else if (eql_cstr (arg, "-exec"))
     {
-      execing = true;
+      execing = argv[argi++];
     }
   }
 
@@ -123,8 +126,13 @@ parse_args_sysCx (int* pargc, char*** pargv)
   *pargc = argc - argi;
   *pargv = argv;
 
-  if (execing)
-    execvp_sysCx (argv);
+  if (execing) {
+    /* Only exec if it's a different program.*/
+    if (0 != strcmp(argv[0], execing)) {
+      argv[0] = execing;
+      execvp_sysCx(argv);
+    }
+  }
 }
 
 /** Initialize the system.
@@ -275,16 +283,23 @@ dbglog_printf3 (const char* file,
   flush_OFile (of);
 }
 
+static int fileno_sysCx(FILE* file) {
+#ifdef _WIN32
+  return _fileno(file);
+#else
+  return fileno(file);
+#endif
+}
 
   XFileB*
 stdin_XFileB ()
 {
   static bool initialized = false;
   static XFileB xfb[1];
-  if (!initialized)
-  {
+  if (!initialized) {
     init_XFileB (xfb);
-    set_FILE_FileB (&xfb->fb, stdin);
+    xfb->fb.f = stdin;
+    xfb->fb.fd = fileno_sysCx(stdin);
     xfb->fb.byline = true;
     initialized = true;
   }
@@ -299,7 +314,8 @@ stdout_OFileB ()
   if (!initialized)
   {
     init_OFileB (ofb);
-    set_FILE_FileB (&ofb->fb, stdout);
+    ofb->fb.f = stdout;
+    ofb->fb.fd = fileno_sysCx(stdout);
     initialized = true;
   }
   return ofb;
@@ -313,7 +329,8 @@ stderr_OFileB ()
   if (!initialized)
   {
     init_OFileB (ofb);
-    set_FILE_FileB (&ofb->fb, stderr);
+    ofb->fb.f = stderr;
+    ofb->fb.fd = fileno_sysCx(stderr);
     initialized = true;
   }
   return ofb;
@@ -340,60 +357,28 @@ stderr_OFile ()
   return &ofb->of;
 }
 
-  bool
-pipe_sysCx (fd_t* fds)
-{
-  int ret = -1;
-#ifdef LACE_POSIX_SOURCE
-  ret = pipe (fds);
-#else
-  ret = _pipe (fds, BUFSIZ, 0);
-#endif
-  return (ret == 0);
-}
-
-  fd_t
-dup_sysCx (fd_t fd)
-{
-  int ret = -1;
-#ifdef LACE_POSIX_SOURCE
-  ret = dup (fd);
-#else
-  ret = _dup (fd);
-#endif
-  return ret;
-}
-
-  bool
-dup2_sysCx (fd_t oldfd, fd_t newfd)
-{
-  int ret = -1;
-#ifdef LACE_POSIX_SOURCE
-  ret = dup2 (oldfd, newfd);
-#else
-  ret = _dup2 (oldfd, newfd);
-#endif
-  return (ret >= 0);
-}
-
   int
 open_lace_xfd(const char* filename)
 {
   static const char dev_fd_prefix[] = "/dev/fd/";
+  int fd = -1;
   if (eq_cstr("-", filename)) {
-    return 0;
+    fd = 0;
   }
-  if (pfxeq_cstr(dev_fd_prefix, filename)) {
-    int fd = -1;
+  else if (pfxeq_cstr(dev_fd_prefix, filename)) {
     xget_int_cstr(&fd, &filename[strlen(dev_fd_prefix)]);
-    return fd;
   }
-
+  else {
 #ifdef LACE_POSIX_SOURCE
-  return open(filename, O_RDONLY);
+    fd = open(filename, O_RDONLY);
 #else
-  return _open(filename, _O_RDONLY);
+    fd = _open(filename, _O_RDONLY);
 #endif
+  }
+  if (fd >= 0) {
+    lace_compat_fd_cloexec(fd);
+  }
+  return fd;
 }
 
   int
@@ -409,47 +394,29 @@ open_lace_ofd(const char* filename)
   const int flags = _O_WRONLY | _O_CREAT | _O_TRUNC | O_APPEND;
   const int mode = _S_IREAD | _S_IWRITE;
 #endif
-
+  int fd = -1;
   if (eq_cstr("-", filename)) {
-    return 1;
+    fd = 1;
   }
-  if (pfxeq_cstr(dev_fd_prefix, filename)) {
-    int fd = -1;
+  else if (pfxeq_cstr(dev_fd_prefix, filename)) {
     xget_int_cstr(&fd, &filename[strlen(dev_fd_prefix)]);
-    return fd;
   }
-
+  else {
 #ifdef LACE_POSIX_SOURCE
-  return open(filename, flags, mode);
+    fd = open(filename, flags, mode);
 #else
-  return _open(filename, flags, mode);
+    fd = _open(filename, flags, mode);
 #endif
-}
-
-  long
-read_sysCx (fd_t fd, void* buf, long sz)
-{
-#ifdef LACE_POSIX_SOURCE
-  return read (fd, buf, sz);
-#else
-  return _read (fd, buf, sz);
-#endif
-}
-
-  long
-write_sysCx (fd_t fd, const void* buf, long sz)
-{
-#ifdef LACE_POSIX_SOURCE
-  return write (fd, buf, sz);
-#else
-  return _write (fd, buf, sz);
-#endif
+  }
+  if (fd >= 0) {
+    lace_compat_fd_cloexec(fd);
+  }
+  return fd;
 }
 
   bool
 closefd_sysCx (fd_t fd)
 {
-  int istat = -1;
   if (fd == 0 && stdin_XFileB()->fb.f) {
     close_XFileB(stdin_XFileB());
     return true;
@@ -460,12 +427,7 @@ closefd_sysCx (fd_t fd)
     close_OFileB(stderr_OFileB());
     return true;
   }
-#ifdef LACE_POSIX_SOURCE
-  istat = close(fd);
-#else
-  istat = _close(fd);
-#endif
-  return (istat == 0);
+  return (0 == lace_compat_fd_close(fd));
 }
 
   FILE*
@@ -702,32 +664,6 @@ tacenv_sysCx (const char* key, const char* val)
   lose_AlphaTab (dec);
 }
 
-  void
-cloexec_sysCx (fd_t fd, bool b)
-{
-#ifdef LACE_POSIX_SOURCE
-  int flags = fcntl (fd, F_GETFD);
-
-  if (flags == -1)
-  {
-    DBog0( "fcntl() GET failed." );
-    return;
-  }
-
-  if (b == (0 != (flags & FD_CLOEXEC)))  return;
-
-  if (b)  flags |= FD_CLOEXEC;
-  else    flags ^= FD_CLOEXEC;
-
-  if (fcntl (fd, F_SETFD, flags) == -1)
-    DBog0( "fcntl() SET failed." );
-#else
-  SetHandleInformation ((HANDLE) _get_osfhandle (fd),
-      HANDLE_FLAG_INHERIT,
-      b ? 0 : HANDLE_FLAG_INHERIT);
-#endif
-}
-
   bool
 chmodu_sysCx (const char* pathname, bool r, bool w, bool x)
 {
@@ -809,7 +745,7 @@ randomize_sysCx(void* p, uint size)
 
     nbytes = read(urandom_fd, buf, buf_size);
     nbytes += read(urandom_fd, p, size);
-    close(urandom_fd);
+    lace_compat_fd_close(urandom_fd);
   }
 
   if (nbytes != (int)(buf_size+size))

@@ -1,5 +1,6 @@
 
 add_library(lace_lib STATIC
+  $<TARGET_OBJECTS:lace_compat_lib>
   "infile.c"
   "instream.c"
   "kve.c"
@@ -7,12 +8,11 @@ add_library(lace_lib STATIC
   "outfile.c"
   "outstream.c"
   "string.c"
+  "${CMAKE_SOURCE_DIR}/include/lace.h"
   )
 
 
 add_subdirectory(cx)
-
-find_package(Threads REQUIRED)
 
 if (WIN32)
   set (ELASTIC_SOURCE "elastic_pthread.c")
@@ -46,8 +46,14 @@ add_executable(lace
   "zec.c"
   "${CMAKE_SOURCE_DIR}/include/lace_posix_thread.h"
   )
+
 set_property(TARGET lace
   APPEND PROPERTY COMPILE_DEFINITIONS MAIN_LACE_EXECUTABLE)
+if (WIN32)
+  set_property(TARGET lace
+    APPEND PROPERTY COMPILE_DEFINITIONS LACE_BUILTIN_FORBID_XPIPE)
+endif()
+
 target_link_libraries(lace cx_lib ${CMAKE_THREAD_LIBS_INIT})
 if (UNIX AND NOT APPLE)
   target_link_libraries(lace ${AIO_LIB})
@@ -103,11 +109,6 @@ add_executable(waitdo
   waitdo.c
   utilace.h)
 target_link_libraries(waitdo cx_lib)
-
-add_executable(xpipe
-  xpipe.c
-  utilace.h)
-target_link_libraries(xpipe cx_lib)
 
 add_executable(zec
   zec.c)

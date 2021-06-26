@@ -1,5 +1,6 @@
 
 #include "lace.h"
+#include "lace_compat_fd.h"
 
 #include <assert.h>
 #include <fcntl.h>
@@ -33,18 +34,7 @@ read_LaceXF(LaceXF* xf)
   static const size_t chunksize = 4096;
   const size_t orig_size = xf->base.size;
   char* buf = grow_LaceX(&xf->base, chunksize);
-
-#ifdef _WIN32
-  long n = _read(xf->fd, buf, chunksize);
-#else
-  ssize_t n = read(xf->fd, buf, chunksize);
-#endif
-
-  if (n <= 0) {
-    xf->base.size = orig_size;
-  } else {
-    xf->base.size = orig_size + (size_t) n;
-  }
+  xf->base.size = orig_size + lace_compat_fd_read(xf->fd, buf, chunksize);
 }
 
 static
@@ -52,10 +42,7 @@ static
 close_LaceXF(LaceXF* xf)
 {
   if (xf->fd >= 0) {
-#ifndef _WIN32
-    /* TODO: Causes a short read somewhere.*/
-    close(xf->fd);
-#endif
+    lace_compat_fd_close(xf->fd);
     xf->fd = -1;
   }
   if (xf->filename) {
@@ -127,10 +114,22 @@ open_sibling_LaceXF(const char* sibling, const char* filename)
 
   if (xf->fd < 0) {
 #ifdef _WIN32
-    xf->fd = _open(xf->filename, _O_RDONLY);
+    const int flags = (
+        _O_RDONLY |
+        _O_BINARY |
+        _O_NOINHERIT);
+    xf->fd = _open(xf->filename, flags);
 #else
-    xf->fd = open(xf->filename, O_RDONLY);
+    const int flags = (
+        O_RDONLY |
+        0 /* O_CLOEXEC is below */);
+    xf->fd = open(xf->filename, flags);
+    if (xf->fd >= 0) {
+      lace_compat_fd_cloexec(xf->fd);
+    }
 #endif
+  } else {
+    lace_compat_fd_cloexec(xf->fd);
   }
   if (xf->fd < 0 && xf->filename) {
     free(xf->filename);

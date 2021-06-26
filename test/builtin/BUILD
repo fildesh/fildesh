@@ -1,22 +1,10 @@
 load("//tool:comparispawn.bzl", "lace_expect_test")
+load("//tool:spawn.bzl", "spawn_test")
 
-lace_expect_test(
-    name = "elastic_cat_test",
-    srcs = ["elastic_cat.lace"],
-    expect = ":hello_newline.txt",
-)
+#### add
 
-lace_expect_test(
-    name = "elastic_tee_test",
-    srcs = ["elastic_tee.lace"],
-    expect = ":hello_newline_x2.txt",
-)
-
-cc_test(
+spawn_test(
     name = "lace_as_add_test",
-    srcs = [
-        "//tool:spawn.c",
-    ],
     args = [
         "$(location //tool:comparispawn)",
         "$(location summed_integers.txt)",
@@ -34,11 +22,92 @@ cc_test(
     ],
 )
 
+#### cmp
+
+spawn_test(
+    name = "cmp_equal_test",
+    args = [
+        "$(location //builtin:cmp)",
+        "$(location :hello_newline.txt)",
+        "$(location :hello_newline.txt)",
+    ],
+    data = [
+        ":hello_newline.txt",
+        "//builtin:cmp",
+    ],
+)
+spawn_test(
+    name = "cmp_diff_test",
+    args = [
+        "!",
+        "$(location //builtin:cmp)",
+        "$(location :hello_newline.txt)",
+        "$(location :hello_newline_x2.txt)",
+    ],
+    data = [
+        ":hello_newline.txt",
+        ":hello_newline_x2.txt",
+        "//builtin:cmp",
+    ],
+)
+
+#### elastic
+
+lace_expect_test(
+    name = "elastic_cat_test",
+    srcs = ["elastic_cat.lace"],
+    expect = ":hello_newline.txt",
+)
+
+lace_expect_test(
+    name = "elastic_tee_test",
+    srcs = ["elastic_tee.lace"],
+    expect = ":hello_newline_x2.txt",
+)
+
+#### time2sec
+
+cc_test(
+    name = "time2sec_test",
+    srcs = [
+        "time2sec_test.c",
+        "//src:time2sec.c",
+    ],
+    defines = ["MAIN_LACE_EXECUTABLE"],
+    deps = [
+        "//:lace_lib",
+        "//:lace_tool_lib",
+    ],
+)
+
+#### void
+
+cc_test(
+    name = "void_test",
+    srcs = [
+        "void_test.c",
+        "//src:void.c",
+    ],
+    defines = ["MAIN_LACE_EXECUTABLE"],
+    deps = [
+        "//:lace_lib",
+        "//:lace_tool_lib",
+    ],
+)
+
+#### xpipe
+
 lace_expect_test(
     name = "xpipe_nested_test",
     srcs = ["xpipe_nested.lace"],
     expect = "//test/expect:xpipe_nested.txt",
+    target_compatible_with = select({
+        "@platforms//os:windows": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }),
 )
+
+#### zec
 
 lace_expect_test(
     name = "zec_cat_test",
@@ -46,15 +115,14 @@ lace_expect_test(
     expect = ":hello_newline.txt",
 )
 
-cc_test(
+spawn_test(
     name = "zec_nop_test",
-    srcs = ["//tool:spawn.c"],
-    data = [
-        "//src:zec",
-    ],
-    args = [
-        "$(location //src:zec)",
-        "/",
-        "/",
-    ],
+    data = ["//src:zec"],
+    args = ["$(location //src:zec)", "/", "/"],
+)
+
+spawn_test(
+    name = "zec_usage_test",
+    data = ["//src:zec"],
+    args = ["$(location //src:zec)", "-h"],
 )
