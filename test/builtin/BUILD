@@ -71,7 +71,7 @@ cc_test(
     name = "time2sec_test",
     srcs = [
         "time2sec_test.c",
-        "//src:time2sec.c",
+        "//builtin:time2sec.c",
     ],
     defines = ["MAIN_LACE_EXECUTABLE"],
     deps = [
@@ -86,7 +86,7 @@ cc_test(
     name = "void_test",
     srcs = [
         "void_test.c",
-        "//src:void.c",
+        "//builtin:void.c",
     ],
     defines = ["MAIN_LACE_EXECUTABLE"],
     deps = [
@@ -117,12 +117,12 @@ lace_expect_test(
 
 spawn_test(
     name = "zec_nop_test",
-    data = ["//src:zec"],
-    args = ["$(location //src:zec)", "/", "/"],
+    data = ["//builtin:zec"],
+    args = ["$(location //builtin:zec)", "/", "/"],
 )
 
 spawn_test(
     name = "zec_usage_test",
-    data = ["//src:zec"],
-    args = ["$(location //src:zec)", "-h"],
+    data = ["//builtin:zec"],
+    args = ["$(location //builtin:zec)", "-h"],
 )

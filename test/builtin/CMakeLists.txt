@@ -41,7 +41,7 @@ add_test(NAME elastic_tee_test COMMAND
 
 #### time2sec
 
-add_executable(time2sec_test time2sec_test.c "${CMAKE_SOURCE_DIR}/src/time2sec.c")
+add_executable(time2sec_test "time2sec_test.c" "${CMAKE_SOURCE_DIR}/builtin/time2sec.c")
 target_link_libraries(time2sec_test lace_lib lace_tool_lib)
 set_property(TARGET time2sec_test
   APPEND PROPERTY COMPILE_DEFINITIONS MAIN_LACE_EXECUTABLE)
@@ -49,7 +49,7 @@ add_test(NAME time2sec_test COMMAND time2sec_test)
 
 #### void
 
-add_executable(void_test void_test.c "${CMAKE_SOURCE_DIR}/src/void.c")
+add_executable(void_test "void_test.c" "${CMAKE_SOURCE_DIR}/builtin/void.c")
 target_link_libraries(void_test lace_lib lace_tool_lib)
 set_property(TARGET void_test
   APPEND PROPERTY COMPILE_DEFINITIONS MAIN_LACE_EXECUTABLE)

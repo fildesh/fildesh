@@ -15,7 +15,7 @@ add_library(lace_lib STATIC
 add_subdirectory(cx)
 
 if (WIN32)
-  set (ELASTIC_SOURCE "elastic_pthread.c")
+  set (ELASTIC_SOURCE "${CMAKE_SOURCE_DIR}/builtin/elastic_pthread.c")
 elseif (APPLE)
   set (ELASTIC_SOURCE "elastic_poll.c")
 else()
@@ -31,19 +31,19 @@ endif()
 add_executable(lace
   "lace.c"
   "utilace.h"
-  "add.c"
   "best-match.c"
   "${ELASTIC_SOURCE}"
   "execfd.c"
   "godo.c"
   "ssh-all.c"
-  "time2sec.c"
   "transpose.c"
   "ujoin.c"
-  "void.c"
   "waitdo.c"
   "xpipe.c"
-  "zec.c"
+  "${CMAKE_SOURCE_DIR}/builtin/add.c"
+  "${CMAKE_SOURCE_DIR}/builtin/time2sec.c"
+  "${CMAKE_SOURCE_DIR}/builtin/void.c"
+  "${CMAKE_SOURCE_DIR}/builtin/zec.c"
   "${CMAKE_SOURCE_DIR}/include/lace_posix_thread.h"
   )
 
@@ -59,11 +59,6 @@ if (UNIX AND NOT APPLE)
   target_link_libraries(lace ${AIO_LIB})
 endif()
 
-
-
-add_executable(add
-  add.c)
-target_link_libraries(add lace_lib)
 
 add_executable(best-match
   best-match.c
@@ -85,11 +80,6 @@ add_executable(ssh-all
   utilace.h)
 target_link_libraries(ssh-all cx_lib)
 
-add_executable(time2sec
-  time2sec.c
-  utilace.h)
-target_link_libraries(time2sec cx_lib)
-
 add_executable(transpose
   transpose.c
   utilace.h)
@@ -100,25 +90,10 @@ add_executable(ujoin
   utilace.h)
 target_link_libraries(ujoin cx_lib)
 
-add_executable(void
-  void.c
-  utilace.h)
-target_link_libraries(void cx_lib)
-
 add_executable(waitdo
   waitdo.c
   utilace.h)
 target_link_libraries(waitdo cx_lib)
-
-add_executable(zec
-  zec.c)
-target_link_libraries(zec lace_lib)
-
-
-add_executable(elastic_pthread
-  "elastic_pthread.c"
-  "${CMAKE_SOURCE_DIR}/include/lace_posix_thread.h")
-target_link_libraries(elastic_pthread lace_lib ${CMAKE_THREAD_LIBS_INIT})
 
 if (UNIX)
   add_executable(elastic_poll elastic_poll.c utilace.h)

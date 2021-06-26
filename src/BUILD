@@ -26,20 +26,20 @@ cc_binary(
     srcs = [
         "lace.c",
         "utilace.h",
-        "add.c",
         "best-match.c",
         #"elastic_poll.c",
-        "elastic_pthread.c",
         "execfd.c",
         "godo.c",
         "ssh-all.c",
-        "time2sec.c",
         "transpose.c",
         "ujoin.c",
-        "void.c",
         "waitdo.c",
         "xpipe.c",
-        "zec.c",
+        "//builtin:add.c",
+        "//builtin:elastic_pthread.c",
+        "//builtin:time2sec.c",
+        "//builtin:void.c",
+        "//builtin:zec.c",
         "//include:lace_posix_thread.h",
     ],
     defines = [
@@ -56,45 +56,6 @@ cc_binary(
         "//conditions:default": ["-pthread"],
     }),
     visibility = ["//:__pkg__"],
-)
-
-
-cc_binary(
-    name = "add",
-    srcs = [
-        "add.c",
-    ],
-    deps = [
-        "//:lace_lib",
-    ],
-    visibility = ["//visibility:public"],
-)
-
-cc_binary(
-    name = "elastic_pthread",
-    srcs = [
-        "elastic_pthread.c",
-        "//include:lace_posix_thread.h",
-    ],
-    deps = [
-        "//:lace_lib",
-    ],
-    linkopts = select({
-        "@platforms//os:windows": [],
-        "//conditions:default": ["-pthread"],
-    }),
-    visibility = ["//visibility:public"],
-)
-
-cc_binary(
-    name = "zec",
-    srcs = [
-        "zec.c",
-    ],
-    deps = [
-        "//:lace_lib",
-    ],
-    visibility = ["//visibility:public"],
 )
 
 
