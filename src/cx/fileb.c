@@ -14,8 +14,6 @@ static bool
 xget_chunk_XFileB (XFileB* xfb);
 static bool
 xget_chunk_fn_XFileB (XFile* xf);
-static bool
-oput_chunk_OFileB (OFileB* ofb);
 static void
 oputn_raw_byte_OFileB (OFileB* ofb, const byte* a, zuint n);
 
@@ -29,6 +27,9 @@ static void
 free_fn_OFileB (OFile* of);
 static bool
 flush_fn_OFileB (OFile* of);
+static bool
+flush_OFileB (OFileB* ofb);
+
 
 const XFileVT FileB_XFileVT = DEFAULT3_XFileVT(xget_chunk_fn_XFileB, close_fn_XFileB, free_fn_XFileB);
 const OFileVT FileB_OFileVT = DEFAULT3_OFileVT(flush_fn_OFileB, close_fn_OFileB, free_fn_OFileB);
@@ -165,6 +166,7 @@ chunksz_XFileB (XFileB* xfb)
   return BUFSIZ;
 }
 
+static
   byte*
 ensure_XFileB (XFileB* xfb, zuint n)
 {
@@ -179,82 +181,11 @@ ensure_XFileB (XFileB* xfb, zuint n)
   return &xf->buf.s[sz];
 }
 
-  byte*
-ensure_OFileB (OFileB* ofb, zuint n)
-{
-  OFile* const of = &ofb->of;
-  oput_chunk_OFileB (ofb);
-  EnsizeTable( of->buf, of->off+n );
-  return &of->buf.s[of->off];
-}
-
-  void
-setfmt_XFileB (XFileB* xfb, FileB_Format fmt)
-{
-  XFile* const xf = &xfb->xf;
-  bool nullt0, nullt1;
-
-  nullt0 = nullt_FileB (&xfb->fb);
-  xfb->fb.fmt = fmt;
-  nullt1 = nullt_FileB (&xfb->fb);
-  if (nullt0 && !nullt1) {
-    xf->buf.sz -= 1;
-  }
-}
-
-  void
-setfmt_OFileB (OFileB* ofb, FileB_Format fmt)
-{
-  ofb->fb.fmt = fmt;
-}
-
-static
-  uint
-dirname_sz (const char* path)
-{
-  const char* prev;
-  const char* s;
-
-  if (!path)  return 0;
-
-  prev = path;
-  s = strchr (path, '/');
-  while (s) {
-    prev = &s[1];
-    s = strchr (prev, '/');
-  }
-
-  return IdxElt( path, prev );
-}
-
 static
   bool
 absolute_path (const char* path)
 {
   return path[0] == '/';
-}
-
-  void
-dirname_AlphaTab (AlphaTab* dirname, const AlphaTab* path)
-{
-  const uint pflen = dirname_sz (ccstr_of_AlphaTab (path));
-  const Bool add_rel =
-    ((pflen == 0)
-     || (path->s[0] != '/' && path->s[0] != '.'));
-
-  if (dirname != path) {
-    if (add_rel)
-      copy_cstr_AlphaTab (dirname, "./");
-    else
-      flush_AlphaTab (dirname);
-    cat1_cstr_AlphaTab (dirname, path->s, pflen);
-  }
-  else {
-    dirname->s[pflen] = '\0';
-    dirname->sz = pflen+1;
-    if (add_rel)
-      tac_cstr_AlphaTab (dirname, "./");
-  }
 }
 
 /** Construct a path relative to a directory.
@@ -304,7 +235,7 @@ open_FileB (FileB* f, const char* pathname, const char* filename)
 
   if (pfxeq_cstr(dev_fd_prefix, f->pathname.s)) {
     int fd = -1;
-    xget_int_cstr(&fd, &f->pathname.s[strlen(dev_fd_prefix)]);
+    lace_parse_int(&fd, &f->pathname.s[strlen(dev_fd_prefix)]);
     if (fd >= 0) {
       openfd_FileB(f, fd);
     }
@@ -330,7 +261,11 @@ openfd_FileB (FileB* fb, fd_t fd)
 
   lace_compat_fd_cloexec(fd);
   fb->fd = fd;
-  fb->f = fdopen_sysCx (fd, (fb->sink ? "wb" : "rb"));
+#ifdef LACE_POSIX_SOURCE
+  fb->f = fdopen(fd, (fb->sink ? "wb" : "rb"));
+#else
+  fb->f = _fdopen(fd, (fb->sink ? "wb" : "rb"));
+#endif
   return !!fb->f;
 }
 
@@ -442,38 +377,6 @@ xget_chunk_fn_XFileB (XFile* xf)
   return xget_chunk_XFileB (CastUp( XFileB, xf, xf ));
 }
 
-  void
-flush_XFileB (XFileB* xfb)
-{
-  XFile* const f = &xfb->xf;
-  TableT(byte)* buf = &f->buf;
-  if (nullt_FileB (&xfb->fb))
-  {
-    Claim2( 0 ,<, buf->sz );
-    Claim2( 0 ,==, buf->s[buf->sz-1] );
-    Claim2( f->off ,<, buf->sz );
-  }
-  else
-  {
-    Claim2( f->off ,<=, buf->sz );
-  }
-  if (f->off == 0)  return;
-  buf->sz = buf->sz - f->off;
-  if (buf->sz > 0)
-  {
-    memmove (buf->s, &buf->s[f->off], buf->sz);
-  }
-  else if (nullt_FileB (&xfb->fb))
-  {
-    Claim(0);
-    /* TODO - When does this even happen?*/
-    buf->s[0] = 0;
-    buf->sz = 1;
-  }
-  f->off = 0;
-}
-
-
 static
   bool
 foput_OFileB (OFileB* ofb, const byte* a, uint n)
@@ -539,15 +442,6 @@ flush_OFileB (OFileB* ofb)
 flush_fn_OFileB (OFile* of)
 {
   return flush_OFileB (CastUp( OFileB, of, of ));
-}
-
-  bool
-oput_chunk_OFileB (OFileB* f)
-{
-  if (f->of.off < f->of.flushsz)  return true;
-  /* In the future, we may not want to flush all the time!*/
-  /* Also, we may not wish to flush the whole buffer.*/
-  return flush_OFileB (f);
 }
 
 #if 0
@@ -617,109 +511,3 @@ oputn_byte_OFileB (OFileB* ofb, const byte* a, zuint n)
       oput_char_OFile (&ofb->of, ' ');
   }
 }
-
-  bool
-xget_uint_XFileB (XFileB* xfb, uint* x)
-{
-  XFile* const xf = &xfb->xf;
-  const char* s;
-  if (!xfb->fb.good)  return false;
-  if (nullt_FileB (&xfb->fb))
-  {
-    skipds_XFile (xf, 0);
-    if (xf->buf.sz - xf->off < 50)
-      xget_chunk_XFileB (xfb);
-    s = xget_uint_cstr (x, cstr_XFile (xf));
-    xfb->fb.good = !!s;
-    if (!xfb->fb.good)  return false;
-    xf->off = IdxElt( xf->buf.s, s );
-  }
-  else
-  {
-    union Castless {
-      uint x;
-      byte b[sizeof(uint)];
-    } y;
-    xfb->fb.good = xgetn_byte_XFileB (xfb, y.b, sizeof(uint));
-    if (!xfb->fb.good)  return false;
-    *x = y.x;
-  }
-  return true;
-}
-
-static
-  bool
-xgetn_raw_byte_XFileB (XFileB* xfb, byte* a, zuint n)
-{
-  XFile* const xf = &xfb->xf;
-  Claim2( xfb->fb.fmt ,==, FileB_Raw );
-  flush_XFileB (xfb);
-  while (n > 0)
-  {
-    zuint m;
-    if (xf->buf.sz == 0)
-      xfb->fb.good = xget_chunk_XFileB (xfb);
-    if (!xfb->fb.good)  return false;
-    m = (n < xf->buf.sz ? n : xf->buf.sz);
-    memcpy (a, xf->buf.s, m);
-    xf->off = m;
-    flush_XFileB (xfb);
-    a = &a[m];
-    n -= m;
-  }
-  return true;
-}
-
-  bool
-xgetn_byte_XFileB (XFileB* xfb, byte* a, zuint n)
-{
-  if (xfb->fb.fmt == FileB_Raw)
-    return xgetn_raw_byte_XFileB (xfb, a, n);
-
-  while (n > 0)
-  {
-    uint y;
-    xfb->fb.good = xget_uint_XFileB (xfb, &y);
-    if (!xfb->fb.good)  return false;
-    a[0] = (byte) y;
-    a = &a[1];
-    n -= 1;
-  }
-  return true;
-}
-
-  AlphaTab
-textfile_AlphaTab (const char* pathname, const char* filename)
-{
-  const bool use_stdin = !pathname && !filename;
-  XFileB* xfileb;
-  XFileB xfileb_on_stack;
-  AlphaTab text = dflt_AlphaTab ();
-  if (use_stdin) {
-    xfileb = stdin_XFileB ();
-  }
-  else {
-    xfileb = &xfileb_on_stack;
-    init_XFileB (xfileb);
-    if (!open_FileB (&xfileb->fb, pathname, filename)) {
-      lose_XFileB (xfileb);
-      return text;
-    }
-  }
-
-  if (!xget_XFileB (xfileb)) {
-    lose_XFileB (xfileb);
-    return text;
-  }
-
-  init_AlphaTab_move_XFile (&text, &xfileb->xf);
-
-  if (use_stdin) {
-    close_XFileB (xfileb);
-  }
-  else {
-    lose_XFileB (xfileb);
-  }
-  return text;
-}
-

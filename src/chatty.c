@@ -10,6 +10,7 @@
 #define LACE_POSIX_SOURCE
 
 #include <aio.h>
+#include "lace.h"
 #include "cx/syscx.h"
 #include "cx/def.h"
 #include "cx/fileb.h"
@@ -66,13 +67,15 @@ int main (int argc, char** argv)
     if (argi < argc && eql_cstr (argv[argi], "-connect"))
     {
       int sock = -1;
+      LaceX* in = open_fd_LaceXF(0);
+
       OFile of[] = {DEFAULT_OFile};
 
       oput_cstr_OFile (of, "hi");
 
       /* Wait for parent proc to be ready.*/
-      xget_XFile (stdin_XFile ());
-      close_XFileB (stdin_XFileB ());
+      slurp_LaceX(in);
+      close_LaceX(in);
 
       DoLegitP( sock >= 0, "socket()" )
         sock = socket (addr->ai_family,

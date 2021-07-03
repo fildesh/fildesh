@@ -21,20 +21,9 @@ write_all(LaceO* out, const char* buf, size_t sz)
 
 static
   void
-badnews(const char* msg)
-{
-  if (msg) {
-    fputs(msg, stderr);
-  } else {
-    fputs("NULL", stderr);
-  }
-}
-
-static
-  void
 show_usage ()
 {
-#define W( a )  badnews(a); badnews("\n")
+#define W( a )  fputs(a "\n", stderr)
   W("Usage: zec [OPTIONS] [FILE...] / [STRING...] / [FILE...]");
   W("   or: zec [OPTIONS] [FILE...] / [STRING...]");
   W("   or: zec [OPTIONS] [FILE...]");
@@ -121,9 +110,7 @@ lace_builtin_zec_main(unsigned argc, char** argv,
       arg = argv[++argi];
       out = open_arg_LaceOF(argi, argv, outputv);
       if (!out) {
-        badnews("Cannot open file for writing! ");
-        badnews(arg);
-        badnews("\n");
+        lace_log_errorf("Cannot open file for writing! %s\n", arg);
         return 1;
       }
     }
@@ -134,7 +121,7 @@ lace_builtin_zec_main(unsigned argc, char** argv,
       unless_arg = argv[++argi];
       if (!unless_arg) {
         show_usage ();
-        badnews("Need a string after -unless.\n");
+        lace_log_error("Need a string after -unless.\n");
         return 1;
       }
     }
@@ -146,7 +133,7 @@ lace_builtin_zec_main(unsigned argc, char** argv,
   if (!out) {
     out = open_arg_LaceOF(0, argv, outputv);
     if (!out) {
-      badnews("Cannot open /dev/stdout for writing!\n");
+      lace_log_error("Cannot open /dev/stdout for writing!\n");
       return 1;
     }
   }

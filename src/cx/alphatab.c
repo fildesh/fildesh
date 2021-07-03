@@ -11,62 +11,6 @@ itoa_dup_cstr (int x)
   return dup_cstr (buf);
 }
 
-  char*
-xget_uint_cstr (uint* ret, const char* in)
-{
-  zuint x = 0;
-  char* s =
-    xget_ujint_cstr (&x, in);
-  if (!s)  return 0;
-  if (x > UINT_MAX)  return 0;
-  *ret = x;
-  return s;
-}
-
-  char*
-xget_int_cstr (int* ret, const char* in)
-{
-  return lace_parse_int(ret, in);
-}
-
-  char*
-xget_luint_cstr (luint* ret, const char* in)
-{
-  unsigned long v;
-  char* out = 0;
-
-  assert (ret);
-  assert (in);
-  v = strtoul (in, &out, 10);
-
-  if (out == in)  out = 0;
-  if (out)
-  {
-    *ret = v;
-    if (*ret != v)  out = 0;
-  }
-  return out;
-}
-
-char* xget_ujint_cstr (ujint* ret, const char* in) {
-  luint x = 0;
-  char* out = xget_luint_cstr (&x, in);
-  assert(ret);
-  *ret = x;
-  return out;
-}
-
-  char*
-xget_real_cstr (real* ret, const char* in)
-{
-  double v = 0;
-  char* out = lace_parse_double(&v, in);
-  if (out) {
-    *ret = (real)v;
-  }
-  return out;
-}
-
   Sign
 cmp_AlphaTab (const AlphaTab* a, const AlphaTab* b)
 {
@@ -104,20 +48,3 @@ cat_uint_AlphaTab (AlphaTab* a, uint x)
   (void) sprintf(buf, "%u", x);
   cat_cstr_AlphaTab (a, buf);
 }
-
-  void
-cat_luint_AlphaTab (AlphaTab* a, luint x)
-{
-  char buf[50];
-  (void) sprintf(buf, "%lu", x);
-  cat_cstr_AlphaTab (a, buf);
-}
-
-  void
-cat_int_AlphaTab (AlphaTab* a, int x)
-{
-  char buf[50];
-  (void) sprintf(buf, "%d", x);
-  cat_cstr_AlphaTab (a, buf);
-}
-

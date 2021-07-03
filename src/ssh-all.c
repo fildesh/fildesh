@@ -14,14 +14,13 @@
   static void
 show_usage_and_exit ()
 {
-  OFile* of = stderr_OFile ();
-  printf_OFile (of, "Usage: %s FILE COMMAND\n", exename_of_sysCx ());
-#define f( s )  oput_cstr_OFile (of, s); oput_char_OFile (of, '\n')
+#define f( s )  fputs(s "\n", stderr)
+  f( "Usage: ssh-all FILE COMMAND" );
   f( "  Where /FILE/ contains a machine name on each line." );
   f( "  It can be '-' for stdin." );
   f( "  The /COMMAND/ is processed by /bin/sh, so escape it!" );
-  failout_sysCx ("Bad args...");
 #undef f
+  exit(64);
 }
 
 
@@ -66,24 +65,13 @@ spawn_ssh (const char* cmd, const char* host)
 main_ssh_all(unsigned argc, char** argv)
 {
   unsigned argi = 1;
-  XFileB xfb[] = {DEFAULT_XFileB};
-  XFile* xf = 0;
+  LaceX* in = NULL;
   char* line;
 
   if (argi >= argc)  show_usage_and_exit ();
 
-  if (0 == strcmp (argv[argi], "-"))
-  {
-    xf = stdin_XFile ();
-  }
-  else
-  {
-    bool good = open_FileB (&xfb->fb, 0, argv[argi]);
-    if (good)  xf = &xfb->xf;
-  }
-
-  if (!xf)
-  {
+  in = open_LaceXF(argv[argi]);
+  if (!in) {
     DBog1( "File: %s", argv[argi] );
     failout_sysCx ("Cannot open file for reading!");
   }
@@ -91,9 +79,9 @@ main_ssh_all(unsigned argc, char** argv)
   ++ argi;
   if (argi >= argc)  show_usage_and_exit ();
 
-  for (line = getline_XFile (xf);
-      line;
-      line = getline_XFile (xf))
+  for (line = getline_LaceX(in);
+       line;
+       line = getline_LaceX(in))
   {
     int q = 0;
     int r = strlen (line);
@@ -107,7 +95,7 @@ main_ssh_all(unsigned argc, char** argv)
     spawn_ssh (argv[argi], line);
   }
 
-  lose_XFileB (xfb);
+  close_LaceX(in);
   return 0;
 }
 

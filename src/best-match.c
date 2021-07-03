@@ -9,14 +9,12 @@
   static void
 show_usage_and_exit ()
 {
-  OFile* of = stderr_OFile ();
-  printf_OFile (of, "Usage: %s TABLE QUERIES [OPTION]*\n",
-      exename_of_sysCx ());
-#define f(s)  oput_cstr_OFile (of, s); oput_char_OFile (of, '\n')
+#define f(s)  fputs(s "\n", stderr)
+  f( "Usage: best-match TABLE QUERIES [OPTION]*" );
   f( "    TABLE is a file used for lookup." );
   f( "    QUERIES is a file, each line prompts an output of the closest match from TABLE." );
 #undef f
-  failout_sysCx ("");
+  exit(64);
 }
 
 /** Open a file for reading or writing.

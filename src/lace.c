@@ -8,6 +8,7 @@
 #include "lace_builtin.h"
 #include "lace_compat_errno.h"
 #include "lace_compat_fd.h"
+#include "lace_compat_sh.h"
 #include "lace_posix_thread.h"
 #include "utilace.h"
 #include "cx/associa.h"
@@ -1643,7 +1644,7 @@ int main_lace(unsigned argc, char** argv)
       if (cmd->pid == 0) {
         pthread_join(cmd->thread, NULL);
       } else {
-        waitpid_sysCx(cmd->pid, &cmd->status);
+        cmd->status = lace_compat_sh_wait(cmd->pid);
       }
       cmd->pid = -1;
       if (cmd->status != 0) {

@@ -18,10 +18,6 @@ void
 lose_sysCx ();
 
 /* synhax.h - failout_sysCx() */
-/* synhax.h - dbglog_printf3() */
-/* fileb.h - stdin_XFileB () */
-/* fileb.h - stdout_OFileB () */
-/* fileb.h - stderr_OFileB () */
 
 #if defined(_MSC_VER)
 #elif defined(__APPLE__)
@@ -67,16 +63,10 @@ int
 open_lace_xfd(const char* filename);
 int
 open_lace_ofd(const char* filename);
-bool
-closefd_sysCx (fd_t fd);
-FILE*
-fdopen_sysCx (fd_t fd, const char* mode);
 pid_t
 spawnvp_sysCx (char* const* argv);
 void
 execvp_sysCx (char* const* argv);
-bool
-waitpid_sysCx (pid_t pid, int* status);
 bool
 kill_please_sysCx(pid_t pid);
 

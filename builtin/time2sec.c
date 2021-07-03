@@ -72,7 +72,7 @@ lace_builtin_time2sec_main(unsigned argc, char** argv,
   if (!in || !out) {
     close_LaceX(in);
     close_LaceO(out);
-    fputs("Cannot open stdio!\n", stderr);
+    lace_log_error("Cannot open stdio!");
     return 1;
   }
 

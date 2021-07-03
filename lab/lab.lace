@@ -1,34 +1,32 @@
 #!/usr/bin/env lace
 
-## This code replaces all the computer names in /lab-file/
+## This code replaces all the computer names in `lab_file`
 ## with the user id on each machine!
 ## Non-hostnames in the map must start with exclamation points.
 ## You should have auto-login to these hosts.
 
-$(H: lab-file) lab330.txt
+$(H: lab_file) lab.txt
 
- $(O a) cat $(H lab-file)
-$(XO a) sed \
-    -e 's/^[[:space:]]\+/ /' \
-    -e 's/^ //' \
-    -e 's/ $//'
-
-$(XO a) tr ' ' '\n'
-$(XO a) grep -v -e '^!' -e '^$'
-
-
+# Assume that the second column of `who -u`
+# can tell us the real user sitting at the machine.
 $(H clientcmd)
-who -u | awk '$2 == ":0" { print "'"$1 "'" $1 ; }'
+who -u | awk '$2 == ":0" || $2 == "tty1" { print "'"$1 "'" $1 ; }'
 $(H clientcmd)
-
- $(O users) ssh-all $(XF a) $(H clientcmd)
-
 
 $(H subst)
 { printf ("s/\\<%s\\>/%-*s/\n", $1, length($1), $2); }
 $(H subst)
 
-$(X users) $(O a) awk $(H subst)
-
-sed -f $(XF a) $(H lab-file)
+|< zec $(H lab_file)
+|- sed \
+    -e 's/^[[:space:]]\+/ /' \
+    -e 's/^ //' \
+    -e 's/ $//'
+|- tr ' ' '\n'
+|- grep -v -e '^!' -e '^$'
+|- ssh-all - $(H clientcmd)
+#- Usernames.
+|- awk $(H subst)
+|- sed -f - $(H lab_file)
+|> stdout
 

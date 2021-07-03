@@ -34,10 +34,8 @@ lose_LineJoin (LineJoin* join)
   static void
 show_usage_and_exit ()
 {
-  OFile* of = stderr_OFile ();
-  printf_OFile (of, "Usage: %s SMALL LARGE [OPTION]*\n",
-      exename_of_sysCx ());
-#define f(s)  oput_cstr_OFile (of, s); oput_char_OFile (of, '\n')
+#define f(s)  fputs(s "\n", stderr)
+  f("Usage: ujoin SMALL LARGE [OPTION]*");
   f("    SMALL is a file used for lookup.");
   f("    LARGE can be a stream, which tries to match the fields in SMALL.");
   f("    -x  Nix the join field.");
@@ -48,7 +46,7 @@ show_usage_and_exit ()
   f("    -nomatch FILE  Put lines whose fields could not be matched here.");
   f("    -dupmatch FILE  Put fields who got matched here.");
 #undef f
-  failout_sysCx ("");
+  exit(64);
 }
 
 /** Open a file for reading or writing.
@@ -291,7 +289,6 @@ main_ujoin(unsigned argc, char** argv)
     LineJoin* join = &table.s[i];
     insert_Associa (map, &join->field, &join);
   }
-  flush_OFile (stderr_OFile ());
   compare_lines (&stream_in->xf, map, delim, nomatch_file, dupmatch_file);
 
   lose_XFileB (stream_in);

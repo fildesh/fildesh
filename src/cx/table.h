@@ -351,51 +351,6 @@ pack_Table (Table* t)
 
 qual_inline
   void
-affy_Table (Table* t, zuint capac)
-{
-  if (t->alloc_lgsz > 0) {
-    t->s = realloc (t->s, t->elsz * capac);
-    t->alloc_lgsz = SIZE_BIT - 1;
-  }
-  else if (t->sz < capac) {
-    const void* s = t->s;
-    t->s = malloc (t->elsz * capac);
-    if (t->sz > 0)
-      memcpy (t->s, s, t->elsz * t->sz);
-    t->alloc_lgsz = SIZE_BIT - 1;
-  }
-}
-#define AffyTable( t, capac )  do \
-{ \
-  Table AffyTable_t = MakeCastTable( t ); \
-  affy_Table (&AffyTable_t, capac); \
-  XferCastTable( t, AffyTable_t ); \
-} while (0)
-
-qual_inline
-  void
-affysz_Table (Table* t, zuint sz)
-{
-  affy_Table (t, sz);
-  t->sz = sz;
-}
-
-qual_inline
-  void
-copy_Table (Table* a, const Table* b)
-{
-  if (a->elsz != b->elsz)
-  {
-    a->sz = a->sz * a->elsz / b->elsz;
-    a->elsz = b->elsz;
-  }
-
-  ensize_Table (a, b->sz);
-  memcpy (a->s, b->s, a->sz * a->elsz);
-}
-
-qual_inline
-  void
 copy_const_Table (Table* a, const ConstTable* b)
 {
   if (a->elsz != b->elsz)
@@ -417,17 +372,6 @@ copy_const_Table (Table* a, const ConstTable* b)
 
 qual_inline
   void
-cat_Table (Table* a, const Table* b)
-{
-  zuint off = a->sz;
-  if (b->sz == 0)  return;
-  grow_Table (a, b->sz);
-  Claim( a->elsz == b->elsz );
-  memcpy (elt_Table (a, off), b->s, a->elsz * b->sz);
-}
-
-qual_inline
-  void
 cat_const_Table (Table* a, const ConstTable* b)
 {
   zuint off = a->sz;
@@ -444,7 +388,6 @@ cat_const_Table (Table* a, const ConstTable* b)
   XferCastTable( a, CatTable_a ); \
 } while (0)
 
-
 /** Clear the table and free most of its memory.**/
 qual_inline
   void
@@ -452,41 +395,7 @@ clear_Table (Table* a)
 { mpop_Table (a, a->sz); }
 #define ClearTable( a )  MPopTable( a, (a).sz )
 
-qual_inline
-  void
-flush_Table (Table* a)
-{
-  a->sz = 0;
-}
-#define FlushTable( a )  do \
-{ \
-  (a).sz = 0; \
-} while (0)
 #endif  /* #ifndef __OPENCL_VERSION__ */
-
-qual_inline
-  void
-state_of_index (uint* state, zuint idx, const uint* doms, uint n)
-{
-  uint i;
-  for (i = n; i > 0; --i) {
-    state[i-1] = idx % doms[i-1];
-    idx /= doms[i-1];
-  }
-}
-
-qual_inline
-  zuint
-index_of_state (const uint* state, const uint* doms, uint n)
-{
-  zuint idx = 0;
-  uint i;
-  for (i = 0; i < n; ++i) {
-    idx *= doms[i];
-    idx += state[i];
-  }
-  return idx;
-}
 
 #endif
 

@@ -83,10 +83,6 @@ printf_OFile (OFile* of, const char* fmt, ...);
 void
 oputn_char_OFile (OFile* of, const char* a, zuint n);
 
-/* Implemented in syscx.c */
-OFile* stdout_OFile ();
-OFile* stderr_OFile ();
-
 qual_inline
   void
 init_data_OFile (OFile* of)

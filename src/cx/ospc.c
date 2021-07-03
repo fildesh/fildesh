@@ -4,20 +4,20 @@
  **/
 #include "ospc.h"
 #include "lace_compat_fd.h"
+#include "lace_compat_sh.h"
 
   bool
 close_OSPc (OSPc* ospc)
 {
-  bool good = false;
   if (ospc->pid < 0)  return 0;
   ospc->xf = NULL;
   ospc->of = NULL;
   close_XFileB (&ospc->xfb);
   close_OFileB (&ospc->ofb);
   /* if (ospc->pid > 0)  kill (ospc->pid, SIGKILL); */
-  good = waitpid_sysCx (ospc->pid, &ospc->status);
+  ospc->status = lace_compat_sh_wait(ospc->pid);
   ospc->pid = -1;
-  return good;
+  return (ospc->status >= 0);
 }
 
   void
