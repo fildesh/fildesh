@@ -2,6 +2,7 @@
  * \file elastic_poll.c
  * Echo stdin to stdout with an arbitrary sized buffer.
  **/
+#include "lace_compat_fd.h"
 #include "cx/syscx.h"
 #include "cx/alphatab.h"
 #include "cx/table.h"
@@ -37,7 +38,7 @@ close_IOState(IOState* io, struct pollfd* pfd) {
     return;
   }
   io->done = 1;
-  closefd_sysCx(pfd->fd);
+  lace_compat_fd_close(pfd->fd);
   ClearTable( io->buf );
 }
 
@@ -155,8 +156,9 @@ setfd_nonblock_sysCx(fd_t fd)
 }
 
   int
-main_elastic_poll(int argi, int argc, char** argv)
+main_elastic_poll(unsigned argc, char** argv)
 {
+  unsigned argi = 1;
   int istat = 0;
   IOState* io;
   struct pollfd* pfd;
@@ -256,16 +258,12 @@ main_elastic_poll(int argi, int argc, char** argv)
   return 0;
 }
 
-#ifdef MAIN_LACE_EXECUTABLE
-int main_elastic(int argi, int argc, char** argv) {
-  return main_elastic_poll(argi, argc, argv);
-}
-#else
+#ifndef LACE_BUILTIN_LIBRARY
   int
 main(int argc, char** argv)
 {
   int argi = init_sysCx(&argc, &argv);
-  int istat = main_elastic_poll(argi, argc, argv);
+  int istat = main_elastic_poll(argc-(argi-1), &argv[argi-1]);
   lose_sysCx();
   return istat;
 }

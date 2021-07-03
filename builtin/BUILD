@@ -3,10 +3,14 @@ exports_files([
     "add.c",
     "cmp.c",
     "elastic_pthread.c",
+    "seq.c",
     "time2sec.c",
     "void.c",
     "zec.c",
-], visibility = ["//visibility:public"])
+], visibility = [
+    "//test/builtin:__pkg__",
+    "//src:__pkg__",
+])
 
 cc_binary(
     name = "add",
@@ -33,6 +37,20 @@ cc_binary(
         "@platforms//os:windows": [],
         "//conditions:default": ["-pthread"],
     }),
+    visibility = ["//visibility:public"],
+)
+
+cc_binary(
+    name = "seq",
+    srcs = ["seq.c"],
+    deps = ["//:lace_lib"],
+    visibility = ["//visibility:public"],
+)
+
+cc_binary(
+    name = "time2sec",
+    srcs = ["time2sec.c"],
+    deps = ["//:lace_lib"],
     visibility = ["//visibility:public"],
 )
 

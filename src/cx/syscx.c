@@ -4,6 +4,7 @@
  **/
 #include "syscx.h"
 #include "lace_compat_fd.h"
+#include "lace_compat_sh.h"
 
 #include "fileb.h"
 
@@ -176,12 +177,10 @@ push_losefn1_sysCx (void (*f) (void*), void* x)
 lose_sysCx ()
 {
   static bool called = false;
-  uint i;
-  if (called) {
-    assert(false);
-    return;
-  }
-  UFor( i, LoseFns.sz ) {
+  unsigned i;
+  assert(!called);
+  called = true;
+  for (i = 0; i < LoseFns.sz; ++i) {
     /* Do in reverse because it's a stack.*/
     DeclEltTable( HookFn, hook, LoseFns, LoseFns.sz-i-1 );
     if (hook->x)
@@ -190,11 +189,7 @@ lose_sysCx ()
       hook->f ();
   }
   LoseTable( LoseFns );
-
-  lose_XFileB(stdin_XFileB ());
-  lose_OFileB(stdout_OFileB ());
-  lose_OFileB(stderr_OFileB ());
-  called = true;
+  LoseFns.sz = 0;
 }
 
   void
@@ -234,57 +229,8 @@ failout_sysCx (const char* msg)
     exit(1);
 }
 
-  void
-dbglog_printf3 (const char* file,
-    const char* func,
-    uint line,
-    const char* fmt,
-    ...)
-{
-  va_list args;
-  int err = errno;
-  OFile* of = stderr_OFile ();
-
-  while (true) {
-    const char* tmp = strstr (file, "bld/");
-    if (!tmp)  break;
-    file = &tmp[4];
-  }
-
-  printf_OFile (of, "./%s(%u) %s: ", file, line, func);
-
-  va_start (args, fmt);
-  vprintf_OFile (of, fmt, args);
-  va_end(args);
-
-  oput_char_OFile (of, '\n');
-
-  if (err != 0)
-  {
-#if 0
-    /* Why no work? */
-    const uint n = 2048 * sizeof(char);
-    char* s;
-
-    printf_FileB (of, "^^^ errno:%d ", err);
-
-    s = (char*) ensure_OFile (of, n);
-    s[0] = '\0';
-
-    strerror_r (err, s, n);
-
-    of->off += strlen (s) * sizeof(char);
-    oput_char_File (of, '\n');
-#else
-    printf_OFile (of, "^^^ errno:%d %s\n", err, strerror (err));
-#endif
-    errno = 0;
-  }
-  flush_OFile (of);
-}
-
 static int fileno_sysCx(FILE* file) {
-#ifdef _WIN32
+#ifdef _MSC_VER
   return _fileno(file);
 #else
   return fileno(file);
@@ -555,15 +501,8 @@ execvp_sysCx (char* const* argv)
   bool
 waitpid_sysCx (pid_t pid, int* status)
 {
-  int ret = -1;
-#ifdef LACE_POSIX_SOURCE
-  ret = waitpid (pid, status, 0);
-  if (status)
-    *status = WEXITSTATUS( *status );
-#else
-  ret = _cwait (status, pid, 0);
-#endif
-  return (ret >= 0);
+  *status = lace_compat_sh_wait(pid);
+  return (*status >= 0);
 }
 
   bool
@@ -697,18 +636,6 @@ rmdir_sysCx (const char* pathname)
   ret = rmdir (pathname);
 #else
   ret = _rmdir (pathname);
-#endif
-  return (ret == 0);
-}
-
-  bool
-chdir_sysCx (const char* pathname)
-{
-  int ret = -1;
-#ifdef LACE_POSIX_SOURCE
-  ret = chdir (pathname);
-#else
-  ret = _chdir (pathname);
 #endif
   return (ret == 0);
 }

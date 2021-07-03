@@ -60,16 +60,15 @@ testfn_exec ()
 
 int main(int argc, char** argv)
 {
-  int argi = init_sysCx (&argc, &argv);
-
+  int argi = init_sysCx(&argc, &argv);
   /* Special test as child process. */
-  if (eql_cstr (argv[argi], "echo")) {
-    OFile* of = stdout_OFile ();
+  if (argv[argi] && 0 == strcmp(argv[argi], "echo")) {
+    LaceO* out = open_fd_LaceOF(1);
     for (argi += 1; argi < argc; ++argi) {
-      oput_cstr_OFile (of, argv[argi]);
-      oput_char_OFile (of, (argi + 1 < argc) ? ' ' : '\n');
+      puts_LaceO(out, argv[argi]);
+      putc_LaceO(out, (argi + 1 < argc) ? ' ' : '\n');
     }
-    lose_sysCx ();
+    close_LaceO(out);
     return 0;
   }
   if (eql_cstr (argv[argi], "wait0")) {
@@ -89,6 +88,5 @@ int main(int argc, char** argv)
   testfn_OSPc();
   testfn_exec();
 
-  lose_sysCx ();
   return 0;
 }

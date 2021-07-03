@@ -76,7 +76,7 @@ static
 close_FileB (FileB* f)
 {
   if (f->f) {
-    /* assert(f->fd >= 0); */
+    assert(f->fd >= 0);
     fclose (f->f);
     f->f = NULL;
     f->fd = -1;
@@ -341,7 +341,7 @@ set_FILE_FileB (FileB* fb, FILE* file)
   assert(!fb->f);
   assert(fb->fd < 0);
   fb->f = file;
-#ifdef _WIN32
+#ifdef _MSC_VER
   fb->fd = _fileno(file);
 #else
   fb->fd = fileno(file);

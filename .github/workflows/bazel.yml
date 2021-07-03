@@ -31,4 +31,13 @@ jobs:
       if: failure()
       with:
         name: Test Results (${{ matrix.platform }})
-        path: bazel-testlogs*/**/*
+        path: |
+          bazel-bin*/builtin/*
+          bazel-bin*/src/*
+          bazel-bin*/test/*
+          bazel-bin*/tool/*
+          !bazel-bin*/**/_objs/
+          !bazel-bin*/**/*.cppmap
+          !bazel-bin*/**/*.params
+          !bazel-bin*/**/*.runfiles*
+          bazel-testlogs*/**/test.log

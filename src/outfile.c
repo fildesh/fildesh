@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef _WIN32
+#ifdef _MSC_VER
 #include <io.h>
 #else
 #include <unistd.h>
@@ -22,8 +22,6 @@ struct LaceOF {
   lace_fd_t fd;
   char* filename;
 };
-#define DEFAULT_LaceOF  { DEFAULT_LaceO, -1, NULL }
-/* static inline LaceOF default_LaceOF() {LaceOF tmp = DEFAULT_LaceOF; return tmp;} */
 
 
 static
@@ -57,6 +55,12 @@ free_LaceOF(LaceOF* of)
 
 DEFINE_LaceO_VTable(LaceOF, base);
 
+static inline LaceOF default_LaceOF() {
+  LaceOF tmp = {DEFAULT_LaceO, -1, NULL};
+  tmp.base.vt = DEFAULT_LaceOF_LaceO_VTable;
+  return tmp;
+}
+
   LaceO*
 open_LaceOF(const char* filename)
 {
@@ -70,29 +74,20 @@ open_sibling_LaceOF(const char* sibling, const char* filename)
   static const char dev_fd_prefix[] = "/dev/fd/";
   static const unsigned dev_fd_prefix_length = sizeof(dev_fd_prefix)-1;
   const size_t filename_length = strlen(filename);
-  LaceOF of[1] = { DEFAULT_LaceOF };
-
-  assert(of->fd < 0);
-  assert(!of->filename);
-  of->base.vt = DEFAULT_LaceOF_LaceO_VTable;
+  LaceOF of[1];
 
   if (0 == strcmp("-", filename) || 0 == strcmp(dev_stdout, filename)) {
-    of->fd = 1;
-    of->filename = malloc(sizeof(dev_stdout));
-    memcpy(of->filename, dev_stdout, sizeof(dev_stdout));
+    return open_fd_LaceOF(1);
   }
-  else if (0 == strncmp(dev_fd_prefix, filename, dev_fd_prefix_length)) {
+  if (0 == strncmp(dev_fd_prefix, filename, dev_fd_prefix_length)) {
     int fd = -1;
     char* s = lace_parse_int(&fd, &filename[dev_fd_prefix_length]);
-
-    if (!s || fd < 0) {
-      return NULL;
-    }
-    of->fd = fd;
-    of->filename = malloc(filename_length+1);
-    memcpy(of->filename, filename, filename_length+1);
+    if (!s) {return NULL;}
+    return open_fd_LaceOF(fd);
   }
-  else if (filename[0] != '/' && sibling) {
+
+  *of = default_LaceOF();
+  if (filename[0] != '/' && sibling) {
     size_t sibling_dirlen = 0;
     if (sibling) {
       char* p = strrchr(sibling, '/');
@@ -110,7 +105,7 @@ open_sibling_LaceOF(const char* sibling, const char* filename)
   }
 
   if (of->fd < 0) {
-#ifdef _WIN32
+#ifdef _MSC_VER
     const int flags = (
         _O_WRONLY | _O_CREAT | _O_TRUNC |
         _O_APPEND |
@@ -145,4 +140,55 @@ open_sibling_LaceOF(const char* sibling, const char* filename)
     return &p->base;
   }
   return NULL;
+}
+
+  LaceO*
+open_fd_LaceOF(lace_fd_t fd)
+{
+  LaceO filename[1] = {DEFAULT_LaceO};
+  LaceOF* of;
+  if (fd < 0) {return NULL;}
+  of = (LaceOF*) malloc(sizeof(LaceOF));
+  *of = default_LaceOF();
+  /* File descriptor.*/
+  of->fd = fd;
+  /* Filename.*/
+  puts_LaceO(filename, "/dev/fd/");
+  print_int_LaceO(filename, fd);
+  putc_LaceO(filename, '\0');
+  of->filename = &filename->at[0];
+  /* Cloexec.*/
+  lace_compat_fd_cloexec(fd);
+  return &of->base;
+}
+
+  LaceO*
+open_arg_LaceOF(unsigned argi, char** argv, LaceO** outputv)
+{
+  if (outputv && outputv[argi]) {
+    LaceO* ret = outputv[argi];
+    outputv[argi] = NULL;  /* Claim it.*/
+    return ret;
+  }
+  if (!argv[argi]) {return NULL;}
+  if (argi == 0 || (argv[argi][0] == '-' && argv[argi][1] == '\0')) {
+    if (outputv) {
+      if (outputv[0]) {
+        LaceO* ret = outputv[0];
+        outputv[0] = NULL;  /* Claim it.*/
+        return ret;
+      } else {
+        return NULL; /* Better not steal the real stdout.*/
+      }
+    }
+    return open_fd_LaceOF(1);
+  }
+  return open_LaceOF(argv[argi]);
+}
+
+const char* filename_LaceOF(LaceO* in) {
+  if (in->vt != DEFAULT_LaceOF_LaceO_VTable) {
+    return NULL;
+  }
+  return lace_castup(LaceOF, base, in)->filename;
 }

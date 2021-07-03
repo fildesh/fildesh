@@ -3,6 +3,7 @@
  **/
 
 #include "lace.h"
+#include "lace_compat_errno.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -22,7 +23,11 @@ static
   void
 badnews(const char* msg)
 {
-  fputs(msg, stderr);
+  if (msg) {
+    fputs(msg, stderr);
+  } else {
+    fputs("NULL", stderr);
+  }
 }
 
 static
@@ -38,23 +43,6 @@ show_usage ()
   W("  -paste  Operate like the paste utility without delimiters.");
   W("          The STRINGs can act as a delimiter or as a prefix/suffix.");
 #undef W
-}
-
-static
-  LaceX*
-open_input_file(const char* filename)
-{
-  LaceX* in = NULL;
-  if (!filename) {
-    filename = "-";
-  }
-  in = open_LaceXF(filename);
-  if (!in) {
-    badnews("Cannot open file! ");
-    badnews(filename);
-    badnews("\n");
-  }
-  return in;
 }
 
 static
@@ -103,23 +91,26 @@ cat_next_line(LaceO* out, LaceX* in)
 }
 
   int
-main_zec(int argi, int argc, char** argv)
+lace_builtin_zec_main(unsigned argc, char** argv,
+                      LaceX** inputv, LaceO** outputv)
 {
-  int i;
-  int beg_slash = argc;
-  int end_slash = argc;
+  unsigned i;
+  unsigned argi = 1;
+  unsigned beg_slash = argc;
+  unsigned end_slash = argc;
   LaceO* out = NULL;
   bool paste_mode = false;
   const char* unless_arg = 0;
   LaceX** inputs;
   size_t mid_sz;
   char* mid_buf;
-  int nbegs;
-  int nends;
+  unsigned nbegs;
+  unsigned nends;
 
-  while (argi < argc) {
-    const char* arg = argv[argi++];
+  for (argi = 1; argi < argc; ++argi) {
+    const char* arg = argv[argi];
     if (0 == strcmp(arg, "--")) {
+      argi += 1;
       break;
     }
     else if (0 == strcmp(arg, "-h")) {
@@ -127,13 +118,8 @@ main_zec(int argi, int argc, char** argv)
       return 0;
     }
     else if (0 == strcmp(arg, "-o")) {
-      arg = argv[argi++];
-      if (!arg) {
-        show_usage ();
-        badnews("Need a filename after -o.\n");
-        return 1;
-      }
-      out = open_LaceOF(arg);
+      arg = argv[++argi];
+      out = open_arg_LaceOF(argi, argv, outputv);
       if (!out) {
         badnews("Cannot open file for writing! ");
         badnews(arg);
@@ -145,7 +131,7 @@ main_zec(int argi, int argc, char** argv)
       paste_mode = true;
     }
     else if (0 == strcmp(arg, "-unless")) {
-      unless_arg = argv[argi++];
+      unless_arg = argv[++argi];
       if (!unless_arg) {
         show_usage ();
         badnews("Need a string after -unless.\n");
@@ -153,13 +139,12 @@ main_zec(int argi, int argc, char** argv)
       }
     }
     else {
-      argi -= 1;
       break;
     }
   }
 
   if (!out) {
-    out = open_LaceOF("-");
+    out = open_arg_LaceOF(0, argv, outputv);
     if (!out) {
       badnews("Cannot open /dev/stdout for writing!\n");
       return 1;
@@ -173,7 +158,7 @@ main_zec(int argi, int argc, char** argv)
   }
 
   if (argi == argc) {
-    LaceX* in = open_input_file(NULL);
+    LaceX* in = open_arg_LaceXF(0, argv, inputv);
     if (in) {
       cat_the_file(out, in);
       close_LaceO(out);
@@ -205,21 +190,20 @@ main_zec(int argi, int argc, char** argv)
     mid_sz += sz;
   }
 
-
   nbegs = beg_slash - argi;
   nends = argc - end_slash - (argc != end_slash ? 1 : 0);
 
   inputs = (LaceX**) malloc((nbegs + nends) * sizeof(LaceX*));
 
   for (i = 0; i < nbegs; ++i) {
-    inputs[i] = open_input_file(argv[argi+i]);
+    inputs[i] = open_arg_LaceXF(argi+i, argv, inputv);
     if (!inputs[i]) {
       return 1;
     }
   }
 
   for (i = 0; i < nends; ++i) {
-    inputs[nbegs + i] = open_input_file(argv[end_slash + 1 + i]);
+    inputs[nbegs+i] = open_arg_LaceXF(end_slash+1+i, argv, inputv);
     if (!inputs[nbegs + i]) {
       return 1;
     }
@@ -260,16 +244,15 @@ main_zec(int argi, int argc, char** argv)
       cat_the_file(out, inputs[nbegs+i]);
   }
 
+  lace_compat_errno_trace();
   close_LaceO(out);
   free (inputs);
   free (mid_buf);
   return 0;
 }
 
-#ifndef MAIN_LACE_EXECUTABLE
-  int
-main(int argc, char** argv)
-{
-  return main_zec(1, argc, argv);
+#ifndef LACE_BUILTIN_LIBRARY
+int main(int argc, char** argv) {
+  return lace_builtin_zec_main(argc, argv, NULL, NULL);
 }
 #endif

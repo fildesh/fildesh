@@ -2,7 +2,7 @@
  *
  * Keep small; built often.
  **/
-#ifdef _WIN32
+#ifdef _MSC_VER
 #include <io.h>
 #include <process.h>
 #else
@@ -10,11 +10,14 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #endif
+#include <stdio.h>
 #include <stdlib.h>
 
-int lace_tool_spawn_close_expect(char** argv, const int* fdv, int expect) {
+static
+  int
+lace_tool_spawn_expect(char** argv, int expect) {
   int istat = 70;
-#ifdef _WIN32
+#ifdef _MSC_VER
   intptr_t pid = _spawnvp(_P_NOWAIT, argv[0], argv);
   if (pid < 0) {
     return (expect == 0) ? 126 : 65;
@@ -29,23 +32,20 @@ int lace_tool_spawn_close_expect(char** argv, const int* fdv, int expect) {
   }
 #endif
 
-  /* Close the requested file descriptors.*/
-  for (; fdv && *fdv >= 0; fdv = &fdv[1]) {
-#ifdef _WIN32
-    _close(*fdv);
-#else
-    close(*fdv);
+#ifndef LACE_TOOL_LIBRARY
+  fclose(stdin);
+  fclose(stdout);
+  fclose(stderr);
 #endif
-  }
 
-#ifdef _WIN32
+#ifdef _MSC_VER
   pid = _cwait(&istat, pid, 0);
 #else
   pid = waitpid(pid, &istat, 0);
 #endif
   if (pid < 0)  return 70;  /* -EX_SOFTWARE: Internal software error.*/
 
-#ifdef _WIN32
+#ifdef _MSC_VER
   istat &= 0xFF;
 #else
   if (!WIFEXITED(istat))  return 70;
@@ -62,19 +62,14 @@ int lace_tool_spawn_close_expect(char** argv, const int* fdv, int expect) {
 #define lace_tool_spawn_main main
 #endif
 int lace_tool_spawn_main(int argc, char** argv) {
-#ifdef LACE_TOOL_LIBRARY
-  const int* const fds_to_close = NULL;
-#else
-  const int fds_to_close[4] = {0, 1, 2, -1};
-#endif
   if (argc < 2 || !argv[1]) {
     return 64;  /* EX_USAGE: Command line usage error.*/
   }
   if (argv[1][0] != '!' || argv[1][1] != '\0') {
     /* Just run the command.*/
-#if defined(LACE_TOOL_LIBRARY) || defined(_WIN32)
+#if defined(LACE_TOOL_LIBRARY) || defined(_MSC_VER)
     /* Exec does not seem to propagate exit status on Windows, so use Spawn.*/
-    return lace_tool_spawn_close_expect(&argv[1], fds_to_close, 0);
+    return lace_tool_spawn_expect(&argv[1], 0);
 #else
     execvp(argv[1], &argv[1]);
 #endif
@@ -85,5 +80,5 @@ int lace_tool_spawn_main(int argc, char** argv) {
   if (argc == 3 && argv[2][0] == '!' && argv[2][1] == '\0') {
     return 0;  /* `spawn ! !` can serve as `true`, much like `bash -c "! !"`.*/
   }
-  return lace_tool_spawn_close_expect(&argv[2], fds_to_close, -1);
+  return lace_tool_spawn_expect(&argv[2], -1);
 }

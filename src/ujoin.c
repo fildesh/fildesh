@@ -1,5 +1,4 @@
 
-#include "utilace.h"
 #include "cx/associa.h"
 #include "cx/fileb.h"
 
@@ -200,7 +199,7 @@ compare_lines (XFile* xf, Associa* map, const char* delim,
 
 
   int
-main_ujoin(int argi, int argc, char** argv)
+main_ujoin(unsigned argc, char** argv)
 {
   const char* delim = "\t";
   const char* dflt_record = 0;
@@ -211,6 +210,7 @@ main_ujoin(int argi, int argc, char** argv)
   XFileB lookup_in[] = {DEFAULT_XFileB};
   XFileB stream_in[] = {DEFAULT_XFileB};
   FILE* out = stdout;
+  unsigned argi = 1;
   TableT(LineJoin) table;
   Associa map[1];
   uint i;
@@ -342,12 +342,12 @@ main_ujoin(int argi, int argc, char** argv)
   return 0;
 }
 
-#ifndef MAIN_LACE_EXECUTABLE
+#ifndef LACE_BUILTIN_LIBRARY
   int
 main(int argc, char** argv)
 {
   int argi = init_sysCx(&argc, &argv);
-  int istat = main_ujoin(argi, argc, argv);
+  int istat = main_ujoin(argc-(argi-1), &argv[argi-1]);
   lose_sysCx();
   return istat;
 }

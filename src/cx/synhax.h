@@ -237,20 +237,12 @@ static const size_t Static00[] = {0,0};
 /** Assign {a} as {0} iff they are not already equal.**/
 #define Ensure0( a )  do { if (a)  a = 0; } while (0)
 
-/** Implemented in syscx.c **/
-void
-dbglog_printf3 (const char* file,
-    const char* func,
-    uint line,
-    const char* fmt,
-    ...);
-
-#define DBog1(s,a)  dbglog_printf3 (__FILE__,__FUNC__,__LINE__,s,a)
-#define DBog2(s,a,b)  dbglog_printf3 (__FILE__,__FUNC__,__LINE__,s,a,b)
-#define DBog3(s,a,b,c)  dbglog_printf3 (__FILE__,__FUNC__,__LINE__,s,a,b,c)
-#define DBog4(s,a,b,c,d)  dbglog_printf3 (__FILE__,__FUNC__,__LINE__,s,a,b,c,d)
-#define DBog5(s,a,b,c,d,e)  dbglog_printf3 (__FILE__,__FUNC__,__LINE__,s,a,b,c,d,e)
-#define DBog0(s)  DBog1("%s",s)
+#define DBog1(s,a)  lace_log_warningf(s,a)
+#define DBog2(s,a,b)  lace_log_warningf(s,a,b)
+#define DBog3(s,a,b,c)  lace_log_warningf(s,a,b,c)
+#define DBog4(s,a,b,c,d)  lace_log_warningf(s,a,b,c,d)
+#define DBog5(s,a,b,c,d,e)  lace_log_warningf(s,a,b,c,d,e)
+#define DBog0(s)  lace_log_warning(s)
 #define DBog_zuint(x)  DBog2( "%s:%zu", #x, (zuint)(x) )
 #define DBog_ujint(x)  DBog2( "%s:%lu", #x, (luint)(x) )
 #define DBog_luint(x)  DBog2( "%s:%lu", #x, (luint)(x) )

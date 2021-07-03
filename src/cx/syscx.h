@@ -23,7 +23,7 @@ lose_sysCx ();
 /* fileb.h - stdout_OFileB () */
 /* fileb.h - stderr_OFileB () */
 
-#if defined(_WIN32)
+#if defined(_MSC_VER)
 #elif defined(__APPLE__)
 #define LACE_POSIX_SOURCE
 #else
@@ -91,8 +91,6 @@ bool
 mkdir_sysCx (const char* pathname);
 bool
 rmdir_sysCx (const char* pathname);
-bool
-chdir_sysCx (const char* pathname);
 Bool
 randomize_sysCx(void* p, uint size);
 

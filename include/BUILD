@@ -1,6 +1,10 @@
 exports_files([
     "lace.h",
+    "lace_builtin.h",
+    "lace_compat_errno.h",
     "lace_compat_fd.h",
+    "lace_compat_file.h",
+    "lace_compat_sh.h",
     "lace_posix_thread.h",
     "lace_tool.h",
 ])

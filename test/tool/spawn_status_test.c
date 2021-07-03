@@ -1,9 +1,9 @@
 
-#include "lace_tool.h"
-
 #include <assert.h>
 #include <stdarg.h>
 #include <stddef.h>
+
+int lace_tool_spawn_main(int argc, char** argv);
 
 static int spawnit(const char* arg1, ...) {
   va_list argp;

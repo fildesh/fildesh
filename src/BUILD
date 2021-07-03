@@ -1,10 +1,11 @@
 
 # For //:lace_lib.
 exports_files([
-    "kve.c",
-    "kve.h",
     "infile.c",
     "instream.c",
+    "kve.c",
+    "kve.h",
+    "log.c",
     "outfile.c",
     "outstream.c",
     "string.c",
@@ -15,7 +16,9 @@ exports_files([
 ])
 
 exports_files([
+    "godo.c",
     "time2sec.c",
+    "transpose.c",
     "void.c",
 ], visibility = [
     "//test/builtin:__pkg__",
@@ -36,14 +39,17 @@ cc_binary(
         "waitdo.c",
         "xpipe.c",
         "//builtin:add.c",
+        "//builtin:cmp.c",
         "//builtin:elastic_pthread.c",
+        "//builtin:seq.c",
         "//builtin:time2sec.c",
         "//builtin:void.c",
         "//builtin:zec.c",
+        "//include:lace_builtin.h",
         "//include:lace_posix_thread.h",
     ],
     defines = [
-        "MAIN_LACE_EXECUTABLE",
+        "LACE_BUILTIN_LIBRARY",
     ] + select({
         "@platforms//os:windows": ["LACE_BUILTIN_FORBID_XPIPE"],
         "//conditions:default": [],

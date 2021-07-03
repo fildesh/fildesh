@@ -51,7 +51,7 @@ run_with_line(unsigned argc, char** argv, const char* line, LaceO* out)
 }
 
   int
-main_xpipe(int argi, int argc, char** argv)
+main_xpipe(unsigned argc, char** argv)
 {
 #ifdef LACE_BUILTIN_FORBID_XPIPE
   assert(false && "xpipe is known not to work on Windows");
@@ -60,6 +60,7 @@ main_xpipe(int argi, int argc, char** argv)
   LaceX* in = NULL;
   LaceO* out = NULL;
   const char* s;
+  unsigned argi = 1;
 
   if (argi >= argc)
     failout_sysCx ("Need at least one argument.");
@@ -82,16 +83,3 @@ main_xpipe(int argi, int argc, char** argv)
   return 0;
 #endif
 }
-
-#ifndef MAIN_LACE_EXECUTABLE
-  int
-main(int argc, char** argv)
-{
-  int argi = init_sysCx(&argc, &argv);
-  int istat = 1;
-  failout_sysCx("This builtin relies on Lace's -as flag.");
-  /* istat = main_xpipe(argi, argc, argv); */
-  lose_sysCx();
-  return istat;
-}
-#endif

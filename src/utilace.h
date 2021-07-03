@@ -1,21 +1,19 @@
 
-#include "cx/syscx.h"
-#include "cx/alphatab.h"
+#include "lace.h"
 
-#ifdef MAIN_LACE_EXECUTABLE
-int (*lace_specific_util (const char* arg)) (int, int, char**);
-int lace_util_main (int argi, int argc, char** argv);
+#ifdef LACE_BUILTIN_LIBRARY
+int (*lace_specific_util (const char* arg)) (unsigned, char**);
+int lace_builtin_main(unsigned argc, char** argv);
 #else
 static inline
-int (*lace_specific_util (const char* arg)) (int, int, char**)
+int (*lace_specific_util (const char* arg)) (unsigned, char**)
 {
   (void) arg;
   return 0;
 }
 static inline
-int lace_util_main (int argi, int argc, char** argv)
+int lace_builtin_main(unsigned argc, char** argv)
 {
-  (void) argi;
   (void) argc;
   (void) argv;
   return -1;

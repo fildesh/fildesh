@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef _WIN32
+#ifdef _MSC_VER
 #include <io.h>
 #else
 #include <unistd.h>
@@ -23,8 +23,6 @@ struct LaceXF {
   /* unsigned basename_offset; */
   char* filename;
 };
-#define DEFAULT_LaceXF  { DEFAULT_LaceX, -1, NULL }
-/* static inline LaceXF default_LaceXF() {LaceXF tmp = DEFAULT_LaceXF; return tmp;} */
 
 
 static
@@ -60,6 +58,12 @@ free_LaceXF(LaceXF* xf)
 
 DEFINE_LaceX_VTable(LaceXF, base);
 
+static inline LaceXF default_LaceXF() {
+  LaceXF tmp = {DEFAULT_LaceX, -1, NULL};
+  tmp.base.vt = DEFAULT_LaceXF_LaceX_VTable;
+  return tmp;
+}
+
   LaceX*
 open_LaceXF(const char* filename)
 {
@@ -73,29 +77,20 @@ open_sibling_LaceXF(const char* sibling, const char* filename)
   static const char dev_fd_prefix[] = "/dev/fd/";
   static const unsigned dev_fd_prefix_length = sizeof(dev_fd_prefix)-1;
   const size_t filename_length = strlen(filename);
-  LaceXF xf[1] = { DEFAULT_LaceXF };
-
-  assert(xf->fd < 0);
-  assert(!xf->filename);
-  xf->base.vt = DEFAULT_LaceXF_LaceX_VTable;
+  LaceXF xf[1];
 
   if (0 == strcmp("-", filename) || 0 == strcmp(dev_stdin, filename)) {
-    xf->fd = 0;
-    xf->filename = malloc(sizeof(dev_stdin));
-    memcpy(xf->filename, dev_stdin, sizeof(dev_stdin));
+    return open_fd_LaceXF(0);
   }
-  else if (0 == strncmp(dev_fd_prefix, filename, dev_fd_prefix_length)) {
+  if (0 == strncmp(dev_fd_prefix, filename, dev_fd_prefix_length)) {
     int fd = -1;
     char* s = lace_parse_int(&fd, &filename[dev_fd_prefix_length]);
-
-    if (!s || fd < 0) {
-      return NULL;
-    }
-    xf->fd = fd;
-    xf->filename = malloc(filename_length+1);
-    memcpy(xf->filename, filename, filename_length+1);
+    if (!s) {return NULL;}
+    return open_fd_LaceXF(fd);
   }
-  else if (filename[0] != '/' && sibling) {
+
+  *xf = default_LaceXF();
+  if (filename[0] != '/' && sibling) {
     size_t sibling_dirlen = 0;
     if (sibling) {
       char* p = strrchr(sibling, '/');
@@ -113,7 +108,7 @@ open_sibling_LaceXF(const char* sibling, const char* filename)
   }
 
   if (xf->fd < 0) {
-#ifdef _WIN32
+#ifdef _MSC_VER
     const int flags = (
         _O_RDONLY |
         _O_BINARY |
@@ -142,6 +137,50 @@ open_sibling_LaceXF(const char* sibling, const char* filename)
     return &p->base;
   }
   return NULL;
+}
+
+  LaceX*
+open_fd_LaceXF(lace_fd_t fd)
+{
+  LaceO filename[1] = {DEFAULT_LaceO};
+  LaceXF* xf;
+  if (fd < 0) {return NULL;}
+  xf = (LaceXF*) malloc(sizeof(LaceXF));
+  *xf = default_LaceXF();
+  /* File descriptor.*/
+  xf->fd = fd;
+  /* Filename.*/
+  puts_LaceO(filename, "/dev/fd/");
+  print_int_LaceO(filename, fd);
+  putc_LaceO(filename, '\0');
+  xf->filename = &filename->at[0];
+  /* Cloexec.*/
+  lace_compat_fd_cloexec(fd);
+  return &xf->base;
+}
+
+  LaceX*
+open_arg_LaceXF(unsigned argi, char** argv, LaceX** inputv)
+{
+  if (inputv && inputv[argi]) {
+    LaceX* ret = inputv[argi];
+    inputv[argi] = NULL;  /* Claim it.*/
+    return ret;
+  }
+  if (!argv[argi]) {return NULL;}
+  if (argi == 0 || (argv[argi][0] == '-' && argv[argi][1] == '\0')) {
+    if (inputv) {
+      if (inputv[0]) {
+        LaceX* ret = inputv[0];
+        inputv[0] = NULL;  /* Claim it.*/
+        return ret;
+      } else {
+        return NULL; /* Better not steal the real stdin.*/
+      }
+    }
+    return open_fd_LaceXF(0);
+  }
+  return open_LaceXF(argv[argi]);
 }
 
 const char* filename_LaceXF(LaceX* in) {

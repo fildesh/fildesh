@@ -39,21 +39,36 @@ add_test(NAME elastic_tee_test COMMAND
   ${lace_exe} -x "${CMAKE_CURRENT_SOURCE_DIR}/elastic_tee.lace"
   )
 
+#### godo
+
+add_executable(godo_test "godo_test.c" "${CMAKE_SOURCE_DIR}/src/godo.c")
+target_link_libraries(godo_test lace_lib)
+set_property(TARGET godo_test
+  APPEND PROPERTY COMPILE_DEFINITIONS LACE_BUILTIN_LIBRARY)
+add_test(NAME godo_test COMMAND
+  godo_test "$<TARGET_FILE:expectish>" "${CMAKE_SOURCE_DIR}/test/expect/hello.txt")
+
 #### time2sec
 
 add_executable(time2sec_test "time2sec_test.c" "${CMAKE_SOURCE_DIR}/builtin/time2sec.c")
 target_link_libraries(time2sec_test lace_lib lace_tool_lib)
 set_property(TARGET time2sec_test
-  APPEND PROPERTY COMPILE_DEFINITIONS MAIN_LACE_EXECUTABLE)
+  APPEND PROPERTY COMPILE_DEFINITIONS LACE_BUILTIN_LIBRARY)
 add_test(NAME time2sec_test COMMAND time2sec_test)
+
+#### transpone
+
+add_executable(transpose_test "transpose_test.c" "${CMAKE_SOURCE_DIR}/src/transpose.c")
+target_link_libraries(transpose_test cx_lib lace_tool_lib)
+set_property(TARGET transpose_test
+  APPEND PROPERTY COMPILE_DEFINITIONS LACE_BUILTIN_LIBRARY)
+add_test(NAME transpose_test COMMAND transpose_test)
 
 #### void
 
-add_executable(void_test "void_test.c" "${CMAKE_SOURCE_DIR}/builtin/void.c")
+add_executable(void_test "void_test.c")
 target_link_libraries(void_test lace_lib lace_tool_lib)
-set_property(TARGET void_test
-  APPEND PROPERTY COMPILE_DEFINITIONS MAIN_LACE_EXECUTABLE)
-add_test(NAME void_test COMMAND void_test)
+add_test(NAME void_test COMMAND void_test "$<TARGET_FILE:void>")
 
 #### xpipe
 

@@ -1,7 +1,7 @@
 #ifndef LACE_POSIX_THREAD_H_
 #define LACE_POSIX_THREAD_H_
 
-#ifdef _WIN32
+#ifdef _MSC_VER
 #include <windows.h>
 #include <process.h>
 typedef HANDLE pthread_t;

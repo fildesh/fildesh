@@ -198,64 +198,68 @@ reading_routine(LaceX* in, WritingThreadState* wstates, size_t wstate_count)
 }
 
   int
-main_elastic(int argi, int argc, char** argv)
+lace_builtin_elastic_pthread_main(unsigned argc, char** argv,
+                                  LaceX** inputv, LaceO** outputv)
 {
   WritingThreadState* wstates = NULL;
   size_t wstate_count = 0;
-  const char* xfilename = "/dev/fd/0";
   LaceX* in = NULL;
   unsigned i;
+  unsigned argi;
 
   StateMsg("begin", "main_elastic()");
 
   /* Upper bound for number of output files.*/
-  wstates = (WritingThreadState*) malloc(sizeof(WritingThreadState) *
-                                         (1 + argc - argi));
+  wstates = (WritingThreadState*) malloc(sizeof(WritingThreadState) * argc);
 
   /**** BEGIN ARGUMENT_PARSING ****/
-  while (argi < argc) {
-    const char* arg = argv[argi++];
+  for (argi = 1; argi < argc; ++argi) {
+    const char* arg = argv[argi];
     WritingThreadState* st;
 
     if (0 == strcmp(arg, "-x")) {
-      if (argi == argc) {
-        badnews("Need input file after -x.\n");
+      const char* xfilename = argv[++argi];
+      in = open_arg_LaceXF(argi, argv, inputv);
+      if (!in) {
+        badnewsf("failed to open: %s\n", xfilename);
         return 1;
       }
-      xfilename = argv[argi++];
     } else {
       if (0 == strcmp(arg, "-o")) {
+        arg = argv[++argi];
         if (argi == argc) {
           badnews("Need output file after -o.\n");
           return 1;
         }
-        arg = argv[argi++];
       }
 
       st = &wstates[wstate_count++];
       init_WritingThreadState(st);
 
-      st->filename = arg;
-      st->outfile = open_LaceOF(st->filename);
-      if (!st->outfile) {
-        badnewsf("failed to open: %s\n", st->filename);
+      st->outfile = open_arg_LaceOF(argi, argv, outputv);
+      if (st->outfile) {
+        st->filename = filename_LaceOF(st->outfile);
+      } else {
+        badnewsf("failed to open: %s\n", argv[argi]);
         return 1;
       }
       st->outfile->flush_lgsize = 0;  /* No automatic flushing.*/
     }
   }
 
-  in = open_LaceXF(xfilename);
   if (!in) {
-    badnewsf("failed to open: %s\n", xfilename);
-    return 1;
+    in = open_arg_LaceXF(0, argv, inputv);
+    if (!in) {
+      badnews("Failed to open: /dev/stdin\n");
+      return 1;
+    }
   }
 
   if (wstate_count == 0) {
     WritingThreadState* st = &wstates[wstate_count++];
     init_WritingThreadState(st);
     st->filename = "-";
-    st->outfile = open_LaceOF(st->filename);
+    st->outfile = open_arg_LaceOF(0, argv, outputv);
     if (!st->outfile) {
       badnews("Failed to open: /dev/stdout\n");
       return 1;
@@ -274,9 +278,9 @@ main_elastic(int argi, int argc, char** argv)
   return 0;
 }
 
-#ifndef MAIN_LACE_EXECUTABLE
+#ifndef LACE_BUILTIN_LIBRARY
 int main(int argc, char** argv) {
-  return main_elastic(1, argc, argv);
+  return lace_builtin_elastic_pthread_main(argc, argv, NULL, NULL);
 }
 #endif
 

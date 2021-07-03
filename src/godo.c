@@ -1,44 +1,43 @@
 
-#include "utilace.h"
-#include "cx/ofile.h"
+#include "lace.h"
+#include "lace_compat_errno.h"
+#include "lace_compat_fd.h"
+#include "lace_compat_sh.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 
   int
-main_godo(int argi, int argc, char** argv)
+main_godo(unsigned argc, char** argv)
 {
-  if (argc < 3)
-  {
-    printf_OFile (stderr_OFile (),
-                  "Usage: %s PATH COMMAND [ARG...]\n",
-                  exename_of_sysCx ());
-    failout_sysCx ("Exiting...");
+  const char* directory = argv[1];
+  if (argc < 3) {
+    lace_log_warning("Usage: godo PATH COMMAND [ARG...]");
+    return 64;
   }
 
-  if (!chdir_sysCx (argv[argi]))
-  {
-    DBog1( "Failed to chdir() to: %s", argv[argi] );
-    failout_sysCx ("");
+  if (0 != lace_compat_sh_chdir(directory)) {
+    lace_log_errorf("Failed to chdir() to: %s", directory);
+    return 66;
   }
-  ++ argi;
 
-  if (lace_specific_util(argv[argi]))
+  argv = &argv[2];
+#ifdef LACE_BUILTIN_LIBRARY
   {
-    return lace_util_main (argi, argc, argv);
+    int istat = lace_compat_fd_spawnvp_wait(NULL, (const char**)argv);
+    if (istat >= 0) {return istat;}
   }
-  execvp_sysCx (&argv[argi]);
+#else
+  lace_compat_sh_exec((const char**)argv);
+#endif
   /* Flow should not actually get here. */
-  return 1;
+  return 126;
 }
 
-#ifndef MAIN_LACE_EXECUTABLE
+#ifndef LACE_BUILTIN_LIBRARY
   int
 main(int argc, char** argv)
 {
-  int argi = init_sysCx(&argc, &argv);
-  int istat = main_godo(argi, argc, argv);
-  lose_sysCx();
-  return istat;
+  return main_godo(argc, argv);
 }
 #endif

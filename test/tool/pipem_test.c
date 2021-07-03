@@ -1,5 +1,6 @@
 
 #include "lace_tool.h"
+#include "lace_compat_fd.h"
 
 #include <assert.h>
 #include <stdlib.h>
@@ -13,7 +14,7 @@ static size_t expected_text_size = sizeof(expected_text)-1;
 static void run_shout(const char* shout_exe) {
   const int fds_to_close[] = { 1, -1 };
   int istat;
-  istat = lace_tool_spawnlp(
+  istat = lace_compat_fd_spawnlp_wait(
       fds_to_close,
       shout_exe, "-",
       "SELECT", "*", "FROM", "TestCase",
@@ -26,7 +27,7 @@ static void run_shout(const char* shout_exe) {
 static void run_expectish(const char* expectish_exe) {
   const int fds_to_close[] = { 0, -1 };
   int istat;
-  istat = lace_tool_spawnlp(
+  istat = lace_compat_fd_spawnlp_wait(
       fds_to_close,
       expectish_exe, "-",
       "SELECT", "*", "FROM", "TestCase",

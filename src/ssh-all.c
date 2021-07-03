@@ -63,8 +63,9 @@ spawn_ssh (const char* cmd, const char* host)
 }
 
   int
-main_ssh_all(int argi, int argc, char** argv)
+main_ssh_all(unsigned argc, char** argv)
 {
+  unsigned argi = 1;
   XFileB xfb[] = {DEFAULT_XFileB};
   XFile* xf = 0;
   char* line;
@@ -110,12 +111,12 @@ main_ssh_all(int argi, int argc, char** argv)
   return 0;
 }
 
-#ifndef MAIN_LACE_EXECUTABLE
+#ifndef LACE_BUILTIN_LIBRARY
   int
 main(int argc, char** argv)
 {
   int argi = init_sysCx(&argc, &argv);
-  int istat = main_ssh_all(argi, argc, argv);
+  int istat = main_ssh_all(argc-(argi-1), &argv[argi-1]);
   lose_sysCx();
   return istat;
 }

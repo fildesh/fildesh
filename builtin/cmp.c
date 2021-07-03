@@ -15,17 +15,8 @@ lace_builtin_cmp_main(int argc, char** argv,
     return 64;
   }
 
-  if (argv[1]) {
-    lhs = open_LaceXF(argv[1]);
-  } else if (inputs && inputs[1]) {
-    lhs = inputs[1];
-  }
-  if (argv[2]) {
-    rhs = open_LaceXF(argv[2]);
-  } else if (inputs && inputs[2]) {
-    rhs = inputs[2];
-  }
-
+  lhs = open_arg_LaceXF(1, argv, inputs);
+  rhs = open_arg_LaceXF(2, argv, inputs);
   if (!lhs || !rhs) {
     close_LaceX(lhs);
     close_LaceX(rhs);
@@ -53,14 +44,11 @@ lace_builtin_cmp_main(int argc, char** argv,
 
   close_LaceX(lhs);
   close_LaceX(rhs);
-
   return (equal ? 0 : 1);
 }
 
 #ifndef LACE_BUILTIN_LIBRARY
-  int
-main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
   return lace_builtin_cmp_main(argc, argv, NULL, NULL);
 }
 #endif

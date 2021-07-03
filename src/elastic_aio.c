@@ -68,8 +68,9 @@ setfd_async(fd_t fd)
 }
 
   int
-main_elastic_aio(int argi, int argc, char** argv)
+main_elastic_aio(unsigned argc, char** argv)
 {
+  unsigned argi = 1;
   int istat = 0;
   DeclTable( IOState, ios );
   const zuint xbuf_inc = 1024;
@@ -301,16 +302,12 @@ main_elastic_aio(int argi, int argc, char** argv)
   return 0;
 }
 
-#ifdef MAIN_LACE_EXECUTABLE
-int main_elastic(int argi, int argc, char** argv) {
-  return main_elastic_aio(argi, argc, argv);
-}
-#else
+#ifndef LACE_BUILTIN_LIBRARY
   int
 main(int argc, char** argv)
 {
   int argi = init_sysCx(&argc, &argv);
-  int istat = main_elastic_aio(argi, argc, argv);
+  int istat = main_elastic_aio(argc-(argi-1), &argv[argi-1]);
   lose_sysCx();
   return istat;
 }

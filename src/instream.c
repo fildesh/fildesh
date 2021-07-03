@@ -83,6 +83,14 @@ cstr_of_LaceX(LaceX* in)
   return &in->at[in->off];
 }
 
+  char*
+slurp_LaceX(LaceX* in)
+{
+  maybe_flush_LaceX(in);
+  while (0 < read_LaceX(in)) {/* Yummy.*/}
+  return cstr_of_LaceX(in);
+}
+
 /** Like strcspn or strtok but returns a slice.**/
   LaceX
 slicechr_LaceX(LaceX* in, const char delim)

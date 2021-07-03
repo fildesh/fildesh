@@ -36,6 +36,10 @@ lace_expect_test(
     name = "familiar_test",
     srcs = ["//example:familiar.lace"],
     expect = "//test/expect:familiar.txt",
+    target_compatible_with = select({
+        "@platforms//os:windows": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }),
 )
 
 lace_expect_test(

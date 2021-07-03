@@ -102,8 +102,11 @@ cc_test(
 )
 cc_test(
     name = "spawn_status_test",
-    srcs = ["spawn_status_test.c"],
-    deps = ["//:lace_tool_lib"],
+    srcs = [
+        "spawn_status_test.c",
+        "//tool:spawn.c",
+    ],
+    defines = ["LACE_TOOL_LIBRARY"],
     args = ["$(location :success)", "$(location :failure)"],
     data = [
         ":failure",

@@ -1,17 +1,18 @@
 
 #include "utilace.h"
-#include "cx/def.h"
+#include "cx/syscx.h"
 
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 
   int
-main_waitdo(int argi, int argc, char** argv)
+main_waitdo(unsigned argc, char** argv)
 {
   const char* ExeName = argv[0];
   FILE* in = stdin;
   FILE* ErrOut = stderr;
+  unsigned argi = 1;
   DeclLegit( good );
 
   DoLegitLine( "Need a command!" )
@@ -44,7 +45,7 @@ main_waitdo(int argi, int argc, char** argv)
 
     if (lace_specific_util(argv[argi]))
     {
-      return lace_util_main (argi, argc, argv);
+      return lace_builtin_main(argc-argi, &argv[argi]);
     }
     execvp_sysCx (&argv[argi]);
 
@@ -55,12 +56,12 @@ main_waitdo(int argi, int argc, char** argv)
   return 1;
 }
 
-#ifndef MAIN_LACE_EXECUTABLE
+#ifndef LACE_BUILTIN_LIBRARY
   int
 main(int argc, char** argv)
 {
   int argi = init_sysCx(&argc, &argv);
-  int istat = main_waitdo(argi, argc, argv);
+  int istat = main_waitdo(argc-(argi-1), &argv[argi-1]);
   lose_sysCx();
   return istat;
 }

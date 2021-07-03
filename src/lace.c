@@ -5,6 +5,8 @@
  **/
 
 #include "lace.h"
+#include "lace_builtin.h"
+#include "lace_compat_errno.h"
 #include "lace_compat_fd.h"
 #include "lace_posix_thread.h"
 #include "utilace.h"
@@ -131,25 +133,21 @@ close_Command (Command* cmd)
 {
   unsigned i;
   if (cmd->stdis >= 0) {
-    closefd_sysCx(cmd->stdis);
+    lace_compat_fd_close(cmd->stdis);
     cmd->stdis = -1;
   }
   if (cmd->stdos >= 0) {
-    closefd_sysCx (cmd->stdos);
+    lace_compat_fd_close(cmd->stdos);
     cmd->stdos = -1;
   }
-  if (cmd->is.sz > 0) {
-    for (i = 0; i < cmd->is.sz; ++i) {
-      closefd_sysCx(cmd->is.s[i]);
-    }
+  for (i = 0; i < cmd->is.sz; ++i) {
+    lace_compat_fd_close(cmd->is.s[i]);
   }
   LoseTable( cmd->is );
   InitTable( cmd->is );
 
-  if (cmd->os.sz > 0) {
-    for (i = 0; i < cmd->os.sz; ++i) {
-      closefd_sysCx(cmd->os.s[i]);
-    }
+  for (i = 0; i < cmd->os.sz; ++i) {
+    lace_compat_fd_close(cmd->os.s[i]);
   }
   LoseTable( cmd->os );
   InitTable( cmd->os );
@@ -157,10 +155,7 @@ close_Command (Command* cmd)
   LoseTable( cmd->iargs );
   InitTable( cmd->iargs );
 
-  if (cmd->exec_fd >= 0) {
-    closefd_sysCx (cmd->exec_fd);
-    cmd->exec_fd = -1;
-  }
+  cmd->exec_fd = -1;
   cmd->exec_doc = 0;
 }
 
@@ -269,14 +264,12 @@ trim_trailing_ws (char* s)
   static void
 failout_Command (const Command* cmd, const char* msg, const char* msg2)
 {
-  FILE* out = stderr;
-  fprintf (out, "lace: Problem on line %u\n", cmd->line_num);
-  if (msg) {
-    fprintf (out, " \\- %s", msg);
-    if (msg2) {
-      fprintf (out, ": %s", msg2);
-    }
-    fputc ('\n', out);
+  if (msg && msg2) {
+    lace_log_errorf("Problem on line %u. %s: %s", cmd->line_num, msg, msg2);
+  } else if (msg) {
+    lace_log_errorf("Problem on line %u. %s.", cmd->line_num, msg);
+  } else {
+    lace_log_errorf("Problem on line %u.", cmd->line_num);
   }
   lose_sysCx ();
   exit (1);
@@ -378,7 +371,7 @@ sep_line (TableT(cstr)* args, char* s)
       PushTable( *args, s );
       i = strcspn (s, "'");
       if (s[i] == '\0') {
-        DBog0( "Unterminated single quote." );
+        lace_log_warning("Unterminated single quote.");
         break;
       }
       s = &s[i];
@@ -407,7 +400,7 @@ sep_line (TableT(cstr)* args, char* s)
       }
 
       if (s[j] == '\0') {
-        DBog0( "Unterminated double quote." );
+        lace_log_warning("Unterminated double quote.");
         break;
       }
       j += 1;
@@ -419,9 +412,8 @@ sep_line (TableT(cstr)* args, char* s)
       PushTable( *args, s );
       s = &s[2];
       i = strcspn (s, ")");
-      if (s[i] == '\0')
-      {
-        DBog0( "Unterminated variable." );
+      if (s[i] == '\0') {
+        lace_log_warning("Unterminated variable.");
         break;
       }
       s = &s[i+1];
@@ -693,9 +685,8 @@ write_here_doc_file (const char* name, const char* doc)
   FILE* out;
 
   out = fopen (name, "wb");
-  if (!out)
-  {
-    DBog1( "Cannot open file for writing!: %s", name );
+  if (!out) {
+    lace_log_errorf("Cannot open file for writing!: %s", name);
     return;
   }
   n = strlen (doc);
@@ -793,7 +784,7 @@ setup_commands (TableT(Command)* cmds,
         if (last->kind != RunCommand)
           failout_Command (cmd, "Stdout stream not coming from a command?", arg);
 
-        closefd_sysCx (sym->as.file_desc);
+        lace_compat_fd_close(sym->as.file_desc);
 
         if (sym->ios_idx < last->os.sz) {
           lace_compat_fd_move_to(last->os.s[sym->ios_idx], 1);
@@ -1005,7 +996,7 @@ setup_commands (TableT(Command)* cmds,
     SymVal* x = (SymVal*) val_of_Assoc (map, assoc);
     if (x->kind == ODescVal)
     {
-      DBog1( "Dangling output stream! Symbol: %s", x->name.s );
+      lace_log_errorf("Dangling output stream! Symbol: %s", x->name.s);
       failout_sysCx ("");
     }
     lose_SymVal (x);
@@ -1016,20 +1007,21 @@ setup_commands (TableT(Command)* cmds,
 }
 
   static void
-output_Command (FILE* out, const Command* cmd)
+output_Command(FILE* out, const Command* cmd)
 {
-  uint i;
+  unsigned i;
   if (cmd->kind != RunCommand)  return;
 
   fputs ("COMMAND: ", out);
-  UFor( i, cmd->args.sz ) {
-    if (i > 0)  fputc (' ', out);
-    if (cmd->args.s[i])
-      fputs (cmd->args.s[i], out);
-    else
-      fputs ("NULL", out);
+  for (i = 0; i < (unsigned)cmd->args.sz; ++i) {
+    if (i > 0)  fputc(' ', out);
+    if (cmd->args.s[i]) {
+      fputs(cmd->args.s[i], out);
+    } else {
+      fputs("NULL", out);
+    }
   }
-  fputc ('\n', out);
+  fputc('\n', out);
 }
 
 /** Add the utility bin directory to the PATH environment variable.**/
@@ -1048,151 +1040,234 @@ add_util_path_env ()
   static void
 show_usage_and_exit ()
 {
-  printf_OFile (stderr_OFile (),
-      "Usage: %s [[-f] SCRIPTFILE | -- SCRIPT]\n",
-      exename_of_sysCx ());
-  failout_sysCx ("Bad args...");
+  fprintf(stderr, "Usage: %s [[-f] SCRIPTFILE | -- SCRIPT]\n",
+          exename_of_sysCx ());
+  failout_sysCx(0);
 }
 
   static void
 remove_tmppath (AlphaTab* tmppath)
 {
   if (!rmdir_sysCx (cstr_AlphaTab (tmppath)))
-    DBog1( "Temp directory not removed: %s", cstr_AlphaTab (tmppath) );
+    lace_log_warningf("Temp directory not removed: %s", cstr_AlphaTab(tmppath));
   lose_AlphaTab (tmppath);
   free(tmppath);
 }
 
 
-int main_add (int argi, int argc, char** argv);
-int main_best_match (int argi, int argc, char** argv);
-int main_elastic (int argi, int argc, char** argv);
-int main_execfd (int argi, int argc, char** argv);
-int main_godo (int argi, int argc, char** argv);
-int main_lace(int argi, int argc, char** argv);
-int main_ssh_all (int argi, int argc, char** argv);
-int main_time2sec (int argi, int argc, char** argv);
-int main_transpose (int argi, int argc, char** argv);
-int main_ujoin (int argi, int argc, char** argv);
-int main_void (int argi, int argc, char** argv);
-int main_waitdo (int argi, int argc, char** argv);
-int main_xpipe (int argi, int argc, char** argv);
-int main_zec (int argi, int argc, char** argv);
+int main_best_match(unsigned argc, char** argv);
+#ifdef LACE_BUILTIN_PERMIT_ELASTIC_AIO
+int main_elastic_aio(unsigned argc, char** argv);
+#endif
+#ifdef LACE_BUILTIN_PERMIT_ELASTIC_POLL
+int main_elastic_poll(unsigned argc, char** argv);
+#endif
+int main_execfd(unsigned argc, char** argv);
+int main_godo(unsigned argc, char** argv);
+int main_lace(unsigned argc, char** argv);
+int main_ssh_all(unsigned argc, char** argv);
+int main_transpose(unsigned argc, char** argv);
+int main_ujoin(unsigned argc, char** argv);
+int main_waitdo(unsigned argc, char** argv);
+int main_xpipe(unsigned argc, char** argv);
 
-int (*lace_specific_util (const char* arg)) (int, int, char**)
-{
-#define C(str, name) \
-  if (eq_cstr (arg, str))  return &main_##name
-
-  C( "add", add );
-  C( "best-match", best_match );
-  C( "elastic", elastic );
-  C( "execfd", execfd );
-  C( "godo", godo );
-  C( "lace", lace );
-  C( "ssh-all", ssh_all );
-  C( "time2sec", time2sec );
-  C( "transpose", transpose );
-  C( "ujoin", ujoin );
-  C( "void", void );
-  C( "waitdo", waitdo );
-  C( "xpipe", xpipe );
-  C( "zec", zec );
-#undef C
-  return 0;
+static int lace_main_add(unsigned argc, char** argv) {
+  return lace_builtin_add_main(argc, argv, NULL, NULL);
+}
+static int lace_main_cmp(unsigned argc, char** argv) {
+  return lace_builtin_cmp_main(argc, argv, NULL, NULL);
+}
+static int lace_main_elastic_pthread(unsigned argc, char** argv) {
+  return lace_builtin_elastic_pthread_main(argc, argv, NULL, NULL);
+}
+static int lace_main_seq(unsigned argc, char** argv) {
+  return lace_builtin_seq_main(argc, argv, NULL, NULL);
+}
+static int lace_main_time2sec(unsigned argc, char** argv) {
+  return lace_builtin_time2sec_main(argc, argv, NULL, NULL);
+}
+static int lace_main_void(unsigned argc, char** argv) {
+  return lace_builtin_void_main(argc, argv, NULL, NULL);
+}
+static int lace_main_zec(unsigned argc, char** argv) {
+  return lace_builtin_zec_main(argc, argv, NULL, NULL);
 }
 
-int lace_util_main (int argi, int argc, char** argv)
+static int lace_main_elastic(unsigned argc, char** argv) {
+#if defined(LACE_BUILTIN_PERMIT_ELASTIC_AIO)
+  return main_elastic_aio(argc, argv);
+#elif defined(LACE_BUILTIN_PERMIT_ELASTIC_POLL)
+  return main_elastic_poll(argc, argv);
+#else
+  return lace_main_elastic_pthread(argc, argv);
+#endif
+}
+
+bool lace_builtin_is_threadsafe(const char* name)
 {
-  const char* arg = argv[argi];
-  int (*f) (int, int, char**);
-  argv = &argv[argi];
-  argc -= argi;
-  argi = 1;
-  f = lace_specific_util (arg);
+  static const char* const all[] = {
+    "add",
+    "cmp",
+#if !defined(LACE_BUILTIN_PERMIT_ELASTIC_AIO) && !defined(LACE_BUILTIN_PERMIT_ELASTIC_POLL)
+    "elastic",
+#endif
+    "elastic_pthread",
+    "seq",
+    "time2sec",
+    "void",
+    "zec",
+    NULL,
+  };
+  unsigned i;
+  for (i = 0; all[i]; ++i) {
+    if (0 == strcmp(name, all[i])) {
+      return true;
+    }
+  }
+  return false;
+}
+
+int (*lace_specific_util (const char* arg)) (unsigned, char**)
+{
+  typedef struct LaceBuiltinMap LaceBuiltinMap;
+  struct LaceBuiltinMap {
+    const char* name;
+    int (*main_fn)(unsigned,char**);
+  };
+  static const LaceBuiltinMap builtins[] = {
+    {"add", lace_main_add},
+    {"best-match", main_best_match},
+    {"cmp", lace_main_cmp},
+    {"elastic", lace_main_elastic},
+    {"elastic_pthread", lace_main_elastic_pthread},
+#ifdef LACE_BUILTIN_PERMIT_ELASTIC_AIO
+    {"elastic_aio", main_elastic_aio},
+#endif
+#ifdef LACE_BUILTIN_PERMIT_ELASTIC_POLL
+    {"elastic_poll", main_elastic_poll},
+#endif
+    {"execfd", main_execfd},
+    {"godo", main_godo},
+    {"lace", main_lace},
+    {"seq", lace_main_seq},
+    {"ssh-all", main_ssh_all},
+    {"time2sec", lace_main_time2sec},
+    {"transpose", main_transpose},
+    {"ujoin", main_ujoin},
+    {"void", lace_main_void},
+    {"waitdo", main_waitdo},
+    {"xpipe", main_xpipe},
+    {"zec", lace_main_zec},
+    {NULL, NULL},
+  };
+  unsigned i;
+
+  for (i = 0; builtins[i].name; ++i) {
+    if (0 == strcmp(builtins[i].name, arg)) {
+      return builtins[i].main_fn;
+    }
+  }
+  return NULL;
+}
+
+int lace_builtin_main(unsigned argc, char** argv)
+{
+  int (*f) (unsigned, char**);
+  f = lace_specific_util(argv[0]);
   if (!f) {
-    DBog1("Unknown tool name: %s", arg);
+    lace_log_errorf("Unknown tool name: %s", argv[0]);
     return -1;
   }
-  return f(argi, argc, argv);
+  return f(argc, argv);
 }
 
+static
   void*
 builtin_command_thread_fn(BuiltinCommandThreadArg* st)
 {
-  int argc = 0;
-  int argi = 0;
-  int i;
-  while (st->argv[++argc]) {
-    if (argi == 0 && 0 == strcmp("-as", st->argv[argc])) {
-      argi = argc + 1;
+  typedef struct LaceBuiltinMainMap LaceBuiltinMainMap;
+  struct LaceBuiltinMainMap {
+    const char* name;
+    int (*main_fn)(unsigned, char**, LaceX**, LaceO**);
+  };
+  static const LaceBuiltinMainMap builtins[] = {
+    {"add", lace_builtin_add_main},
+    {"cmp", lace_builtin_cmp_main},
+#if !defined(LACE_BUILTIN_PERMIT_ELASTIC_AIO) && !defined(LACE_BUILTIN_PERMIT_ELASTIC_POLL)
+    {"elastic", lace_builtin_elastic_pthread_main},
+#endif
+    {"elastic_pthread", lace_builtin_elastic_pthread_main},
+    {"seq", lace_builtin_seq_main},
+    {"time2sec", lace_builtin_time2sec_main},
+    {"void", lace_builtin_void_main},
+    {"zec", lace_builtin_zec_main},
+    {NULL, NULL},
+  };
+  Command* cmd = st->command;
+  unsigned offset = 0;
+  unsigned argc;
+  char** argv;
+  LaceX** inputs = NULL;
+  LaceO** outputs = NULL;
+  int (*main_fn)(unsigned, char**, LaceX**, LaceO**) = NULL;
+  unsigned i;
+
+  assert(cmd->iargs.sz == 0);
+  assert(cmd->exec_fd < 0);
+
+  for (argc = 0; st->argv[argc]; ++argc) {
+    if (offset == 0 && 0 == strcmp("-as", st->argv[argc])) {
+      offset = argc + 1;
     }
   }
-  st->command->status = lace_util_main(argi, argc, st->argv);
-  close_Command(st->command);
+
+  argc -= offset;
+  argv = &st->argv[offset];
+  inputs = (LaceX**) malloc(sizeof(LaceX*) * (argc+1));
+  outputs = (LaceO**) malloc(sizeof(LaceO*) * (argc+1));
+  for (i = 0; i <= argc; ++i) {
+    inputs[i] = NULL;
+    outputs[i] = NULL;
+  }
+  if (cmd->stdis >= 0) {
+    inputs[0] = open_fd_LaceXF(cmd->stdis);
+    cmd->stdis = -1;
+  }
+  if (cmd->stdos >= 0) {
+    outputs[0] = open_fd_LaceOF(cmd->stdos);
+    cmd->stdos = -1;
+  }
+
+  for (i = 0; builtins[i].name; ++i) {
+    if (0 == strcmp(argv[0], builtins[i].name)) {
+      main_fn = builtins[i].main_fn;
+      break;
+    }
+  }
+  if (main_fn) {
+    cmd->status = main_fn(argc, argv, inputs, outputs);
+  } else {
+    cmd->status = -1;
+  }
+
+  /* `main_fn()` should have closed all files passed to it.*/
+  cmd->is.sz = 0;
+  cmd->os.sz = 0;
   for (i = 0; i < argc; ++i) {
+    assert(!inputs[i]);
+    assert(!outputs[i]);
+  }
+
+  /* Free memory.*/
+  free(inputs);
+  free(outputs);
+  close_Command(cmd);
+  for (i = 0; st->argv[i]; ++i) {
     free(st->argv[i]);
   }
   free(st->argv);
   free(st);
   return NULL;
-}
-
-/** Replace stdio for `zec` with the file descriptors
- * to avoid needing to spawn a new process and redirect stdio.
- **/
-static
-  bool
-replace_zec_stdio(Command* cmd)
-{
-  unsigned stdin_index = 0;
-  unsigned stdout_index = 0;
-  unsigned i;
-  bool saw_slash = false;
-
-  for (i = 1; i < cmd->args.sz; ++i) {
-    if (0 == strcmp("/", cmd->args.s[i])) {
-      if (saw_slash) {
-        stdin_index = 0;
-      } else {
-        saw_slash = true;
-      }
-    } else if (0 == strcmp("-", cmd->args.s[i])) {
-      stdin_index = i;
-      if (!saw_slash) {
-        break;
-      }
-    } else if (!saw_slash && 0 == strcmp("-o", cmd->args.s[i])) {
-      ++i;
-      if (i < cmd->args.sz) {
-        stdout_index = i;
-      }
-    }
-  }
-
-  if (cmd->stdis >= 0 && stdin_index == 0) {
-    return false;
-  }
-
-  if (cmd->stdis >= 0) {
-    cmd->args.s[stdin_index] = add_fd_arg_Command(cmd, cmd->stdis);
-  }
-
-  if (cmd->stdos >= 0 && stdout_index == 0) {
-    PushTable(cmd->args, "-o");
-    PushTable(cmd->args, add_fd_arg_Command(cmd, cmd->stdos));
-    for (i = cmd->args.sz-3; i >= 1; --i) {
-      char* tmp = cmd->args.s[i];
-      cmd->args.s[i] = cmd->args.s[i+1];
-      cmd->args.s[i+1] = cmd->args.s[i+2];
-      cmd->args.s[i+2] = tmp;
-    }
-  } else if (cmd->stdos >= 0 && stdout_index > 0) {
-    if (0 == strcmp("-", cmd->args.s[i])) {
-      cmd->args.s[stdout_index] = add_fd_arg_Command(cmd, cmd->stdos);
-    }
-  }
-  return true;
 }
 
 static
@@ -1286,13 +1361,7 @@ spawn_commands (TableT(Command) cmds)
       PushTable( argv, dup_cstr (cmd->args.s[0]) );
     }
     else if (lace_specific_util (cmd->args.s[0])) {
-      if (0 == strcmp("zec", cmd->args.s[0]) &&
-#ifdef _WIN32
-          false &&
-#endif
-          replace_zec_stdio(cmd)) {
-        use_thread = true;
-      }
+      use_thread = lace_builtin_is_threadsafe(cmd->args.s[0]);
       PushTable( argv, dup_cstr ("--") );
       PushTable( argv, dup_cstr ("-as") );
       PushTable( argv, dup_cstr (cmd->args.s[0]));
@@ -1325,16 +1394,16 @@ spawn_commands (TableT(Command) cmds)
                              (void* (*) (void*)) builtin_command_thread_fn,
                              arg);
       if (istat < 0) {
-        DBog1( "File: %s", argv.s[0] );
-        failout_sysCx("Could not pthread_create().");
+        lace_log_errorf("Could not pthread_create(). File: %s", argv.s[0]);
+        failout_sysCx(0);
       }
     } else {
       inherit_fds_Command(cmd);
       cmd->pid = spawnvp_sysCx (argv.s);
       close_Command(cmd);
       if (cmd->pid < 0) {
-        DBog1( "File: %s", argv.s[0] );
-        failout_sysCx ("Could not spawnvp()...");
+        lace_log_errorf("Could not spawnvp(). File: %s", argv.s[0]);
+        failout_sysCx(0);
       }
       for (argi = 0; argi < argv.sz; ++argi)
         free (argv.s[argi]);
@@ -1350,13 +1419,13 @@ spawn_commands (TableT(Command) cmds)
 int main(int argc, char** argv)
 {
   int argi = init_sysCx(&argc, &argv);
-  int ret = main_lace(argi, argc, argv);
+  int ret = main_lace(argc-(argi-1), &argv[argi-1]);
   lose_sysCx();
   return ret;
 }
 
 
-int main_lace(int argi, int argc, char** argv)
+int main_lace(unsigned argc, char** argv)
 {
   DeclTable( AlphaTab, script_args );
   TableT(Command)* cmds = NULL;
@@ -1365,7 +1434,8 @@ int main_lace(int argi, int argc, char** argv)
   bool use_stdin = true;
   AlphaTab* tmppath = NULL;
   LaceX* in = NULL;
-  uint i;
+  unsigned argi = 1;
+  unsigned i;
   int istat;
 
   /* add_util_path_env (); */
@@ -1397,7 +1467,7 @@ int main_lace(int argi, int argc, char** argv)
       }
     }
     else if (eq_cstr (arg, "-as")) {
-      return lace_util_main (argi, argc, argv);
+      return lace_builtin_main(argc-argi, &argv[argi]);
     }
     else if (eq_cstr (arg, "-stdio")) {
       arg = argv[argi++];
@@ -1461,8 +1531,8 @@ int main_lace(int argi, int argc, char** argv)
       PushTable( script_args, cons1_AlphaTab (arg) );
       in = open_LaceXF(arg);
       if (!in) {
-        DBog1( "Script file: %s", arg );
-        failout_sysCx ("Cannot read script!");
+        lace_log_errorf("Cannot read script. File: %s", arg);
+        failout_sysCx(0);
       }
       break;
     }
@@ -1471,6 +1541,7 @@ int main_lace(int argi, int argc, char** argv)
   tmppath = AllocT(AlphaTab, 1);
   *tmppath = cons1_AlphaTab ("lace");
   mktmppath_sysCx (tmppath);
+  lace_compat_errno_clear();
   if (tmppath->sz == 0)
     failout_sysCx ("Unable to create temp directory...");
   push_losefn1_sysCx ((void (*) (void*)) remove_tmppath, tmppath);
@@ -1534,8 +1605,10 @@ int main_lace(int argi, int argc, char** argv)
     sep_line (&cmd->args, cmd->line);
   }
 
+  lace_compat_errno_trace();
   parse_file(cmds, in, filename_LaceXF(in));
   close_LaceX(in);
+  lace_compat_errno_trace();
 
   if (stdout_sym) {
     Command* cmd = Grow1Table( *cmds );
@@ -1550,19 +1623,23 @@ int main_lace(int argi, int argc, char** argv)
   }
   PackTable( *cmds );
 
+  lace_compat_errno_trace();
   setup_commands (cmds, ccstr_of_AlphaTab (tmppath));
+  lace_compat_errno_trace();
 
 
   if (false)
     for (i = 0; i < cmds->sz; ++i)
       output_Command (stderr, &cmds->s[i]);
 
+  lace_compat_errno_trace();
   spawn_commands (*cmds);
+  lace_compat_errno_trace();
 
   istat = 0;
   for (i = 0; i < cmds->sz; ++i) {
     Command* cmd = &cmds->s[i];
-    if (cmd->kind == RunCommand) {
+    if (cmd->kind == RunCommand || cmd->kind == DefCommand) {
       if (cmd->pid == 0) {
         pthread_join(cmd->thread, NULL);
       } else {
@@ -1570,6 +1647,8 @@ int main_lace(int argi, int argc, char** argv)
       }
       cmd->pid = -1;
       if (cmd->status != 0) {
+        fputs("FAILED ", stderr);
+        output_Command(stderr, cmd);
         if (istat < 127) {
           /* Not sure what to do here. Just accumulate.*/
           istat += 1;
@@ -1579,6 +1658,7 @@ int main_lace(int argi, int argc, char** argv)
 
     lose_Command(cmd);
   }
+  lace_compat_errno_trace();
   return istat;
 }
 

@@ -31,24 +31,26 @@ sum_real_line(LaceX* in)
 }
 
   int
-main_add(int argi, int argc, char** argv)
+lace_builtin_add_main(unsigned argc, char** argv,
+                      LaceX** inputv, LaceO** outputv)
 {
   LaceX* in = NULL;
   LaceO* out = NULL;
   LaceX slice;
 
   (void) argv;
-  if (argi < argc)
+  if (argc > 1)
   {
     fputs("Just run without arguments and type numbers.\n", stderr);
     fputs("You'll figure it out.\n", stderr);
     return 1;
   }
 
-  in = open_LaceXF("-");
-  out = open_LaceOF("-");
-
+  in = open_arg_LaceXF(0, argv, inputv);
+  out = open_arg_LaceOF(0, argv, outputv);
   if (!in || !out) {
+    close_LaceX(in);
+    close_LaceO(out);
     fputs("Cannot open stdio!\n", stderr);
     return 1;
   }
@@ -74,8 +76,8 @@ main_add(int argi, int argc, char** argv)
   return 0;
 }
 
-#ifndef MAIN_LACE_EXECUTABLE
+#ifndef LACE_BUILTIN_LIBRARY
 int main(int argc, char** argv) {
-  return main_add(1, argc, argv);
+  return lace_builtin_add_main(argc, argv, NULL, NULL);
 }
 #endif

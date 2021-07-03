@@ -4,7 +4,6 @@ exports_files([
 ], visibility = ["//visibility:public"])
 
 exports_files([
-    "argspawn.c",
     "expectish.c",
     "pipem.c",
     "shout.c",
@@ -23,14 +22,10 @@ cc_binary(
 
 cc_binary(
     name = "comparispawn",
-    srcs = [
-        "comparispawn.c",
-    ],
+    srcs = ["comparispawn.c"],
     deps = [
-        "//src/cx:cx_lib",
-    ],
-    copts = [
-        "-Isrc",
+        "//:lace_lib",
+        "//:lace_tool_lib"
     ],
     visibility = ["//visibility:public"],
 )

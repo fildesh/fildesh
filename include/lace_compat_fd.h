@@ -21,4 +21,7 @@ lace_compat_fd_write(lace_compat_fd_t fd, const void* data, size_t data_size);
 size_t
 lace_compat_fd_read(lace_compat_fd_t fd, void* buf, size_t buf_capacity);
 
+int lace_compat_fd_spawnvp_wait(const int* fds_to_close, const char* const* argv);
+int lace_compat_fd_spawnlp_wait(const int* fds_to_close, const char* cmd, ...);
+
 #endif

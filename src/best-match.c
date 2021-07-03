@@ -142,8 +142,9 @@ matching_line (uint* a, uint width, const char* s, char* const* lines)
 }
 
   int
-main_best_match(int argi, int argc, char** argv)
+main_best_match(unsigned argc, char** argv)
 {
+  unsigned argi = 1;
   uint* lcs_array;
   XFileB lookup_in[] = {DEFAULT_XFileB};
   XFileB stream_in[] = {DEFAULT_XFileB};
@@ -200,12 +201,12 @@ main_best_match(int argi, int argc, char** argv)
   return 0;
 }
 
-#ifndef MAIN_LACE_EXECUTABLE
+#ifndef LACE_BUILTIN_LIBRARY
   int
 main(int argc, char** argv)
 {
   int argi = init_sysCx(&argc, &argv);
-  int istat = main_best_match(argi, argc, argv);
+  int istat = main_best_match(argc-(argi-1), &argv[argi-1]);
   lose_sysCx();
   return istat;
 }

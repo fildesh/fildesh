@@ -65,6 +65,28 @@ lace_expect_test(
     expect = ":hello_newline_x2.txt",
 )
 
+#### godo
+
+cc_test(
+    name = "godo_test",
+    srcs = [
+        "godo_test.c",
+        "//src:godo.c",
+    ],
+    defines = ["LACE_BUILTIN_LIBRARY"],
+    deps = [
+        "//:lace_lib",
+    ],
+    data = [
+        "//tool:expectish",
+        "//test/expect:hello.txt",
+    ],
+    args = [
+        "$(location //tool:expectish)",
+        "$(location //test/expect:hello.txt)",
+    ],
+)
+
 #### time2sec
 
 cc_test(
@@ -73,10 +95,25 @@ cc_test(
         "time2sec_test.c",
         "//builtin:time2sec.c",
     ],
-    defines = ["MAIN_LACE_EXECUTABLE"],
+    defines = ["LACE_BUILTIN_LIBRARY"],
     deps = [
         "//:lace_lib",
         "//:lace_tool_lib",
+    ],
+)
+
+#### transpose
+
+cc_test(
+    name = "transpose_test",
+    srcs = [
+        "transpose_test.c",
+        "//src:transpose.c",
+    ],
+    defines = ["LACE_BUILTIN_LIBRARY"],
+    deps = [
+        "//:lace_tool_lib",
+        "//src/cx:cx_lib",
     ],
 )
 
@@ -84,14 +121,11 @@ cc_test(
 
 cc_test(
     name = "void_test",
-    srcs = [
-        "void_test.c",
-        "//builtin:void.c",
-    ],
-    defines = ["MAIN_LACE_EXECUTABLE"],
+    args = ["$(location //builtin:void)"],
+    srcs = ["void_test.c"],
     deps = [
-        "//:lace_lib",
         "//:lace_tool_lib",
+        "//builtin:void",
     ],
 )
 

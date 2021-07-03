@@ -1,117 +1,102 @@
 
 /** Simple utility to transpose based on a delimiter.**/
 
-#include "cx/syscx.h"
-#include "cx/ofile.h"
-#include "cx/xfile.h"
+#include "lace.h"
+#include "cx/alphatab.h"
+#include "cx/table.h"
 
   int
-main_transpose(int argi, int argc, char** argv)
+main_transpose(unsigned argc, char** argv)
 {
   DeclTableT( cstr_row, TableT(cstr) );
   DeclTable( cstr_row, mat );
-  XFile* xf = stdin_XFile ();
-  OFile* of = stdout_OFile ();
-  const char* line;
-  const char* delim;
-  uint coli = 0;
-  DeclTable( uint, widths );
-  uint i;
+  LaceX* in;
+  LaceO* out;
+  LaceX slice;
+  const char* const delim = argv[1];
+  DeclTable( uint, row_widths );
+  unsigned i;
+  unsigned ncols = 0;
 
-  if (argi+1 != argc)
-    failout_sysCx ("Need exactly one argument.");
-  delim = argv[argi++];
+  if (argc != 2 || !delim) {
+    lace_log_error("Need exactly one argument.");
+    return 64;
+  }
 
-  mayflush_XFile (xf, Yes);
-
-  for (line = getline_XFile (xf);
-       line;
-       line = getline_XFile (xf))
+  in = open_fd_LaceXF(0);
+  for (slice = sliceline_LaceX(in);
+       slice.at;
+       slice = sliceline_LaceX(in))
   {
     const char* field;
-    uint rowi = 0;
-    XFile olay[1];
-    olay_txt_XFile (olay, xf, IdxEltTable( xf->buf, line ));
+    size_t max_width = 0;
+    TableT(cstr)* row = Grow1Table( mat );
+    InitTable(*row);
 
-    for (field = getlined_XFile (olay, delim);
+    skipchrs_LaceX(&slice, " ");
+    for (field = gets_LaceX(&slice, delim);
          field;
-         field = getlined_XFile (olay, delim))
+         field = gets_LaceX(&slice, delim))
     {
-      TableT(cstr)* row;
-      if (rowi >= mat.sz) {
-        row = Grow1Table( mat );
-        InitTable( *row );
+      size_t width = strlen(field);
+      if (width > max_width) {
+        max_width = width;
       }
-      else {
-        row = &mat.s[rowi];
+      PushTable( *row, dup_cstr(field) );
+      if (row->sz > ncols) {
+        ncols = row->sz;
       }
-
-      while (coli >= row->sz) {
-        PushTable( *row, 0 );
-      }
-
-      row->s[coli] = dup_cstr (field);
-      ++ rowi;
+      skipchrs_LaceX(&slice, " ");
     }
-
-    ++ coli;
+    if (row_widths.sz > 0) {
+      max_width += 1;  /* 1 extra space after delim in the output.*/
+    }
+    PushTable( row_widths, max_width );
   }
+  close_LaceX(in);
 
-  while (widths.sz < coli) {
-    PushTable( widths, 0 );
-  }
-
-  UFor( i, mat.sz ) {
-    TableT(cstr)* row = &mat.s[i];
-    uint j;
-    UFor( j, coli ) {
-      char* field;
-      if (j >= row->sz) {
-        PushTable( *row, 0 );
+  out = open_fd_LaceOF(1);
+  for (i = 0; i < ncols; ++i) {
+    unsigned j;
+    for (j = 0; j < mat.sz; ++j) {
+      char* field = (i < mat.s[j].sz ? mat.s[j].s[i] : NULL);
+      size_t field_width = field ? strlen(field) : 0;
+      size_t width_needed;
+      assert(field_width <= row_widths.s[j]);
+      if (field || j + 1 < mat.sz) {
+        for (width_needed = row_widths.s[j] - field_width;
+             width_needed > 0;
+             width_needed -= 1)
+        {
+          putc_LaceO(out, ' ');
+        }
       }
-      field = row->s[j];
 
       if (field) {
-        uint w = strlen (field);
-        while (w > 0 && strchr (WhiteSpaceChars, field[w-1])) {
-          field[--w] = '\0';
-        }
-        if (w > widths.s[j])
-          widths.s[j] = w;
+        puts_LaceO(out, field);
+        free(field);
+      }
+      if (j + 1 < mat.sz) {
+        puts_LaceO(out, delim);
       }
     }
+    putc_LaceO(out, '\n');
   }
+  close_LaceO(out);
 
-  UFor( i, mat.sz ) {
-    TableT(cstr)* row = &mat.s[i];
-    uint j;
-    UFor( j, row->sz ) {
-      char* field = row->s[j];
-
-      printf_OFile (of, "%*s%s%s",
-                    widths.s[j],
-                    (field ? field : ""),
-                    (j + 1 < row->sz ? " " : ""),
-                    (j + 1 < row->sz ? delim : ""),
-                    (j + 1 < row->sz ? " " : ""));
-      free (field);
-    }
-    oput_char_OFile (of, '\n');
-    LoseTable( *row );
+  LoseTable( row_widths );
+  for (i = 0; i < mat.sz; ++i) {
+    LoseTable( mat.s[i] );
   }
-
   LoseTable( mat );
-  LoseTable( widths );
   return 0;
 }
 
-#ifndef MAIN_LACE_EXECUTABLE
+#ifndef LACE_BUILTIN_LIBRARY
   int
 main(int argc, char** argv)
 {
-  int argi = init_sysCx(&argc, &argv);
-  int istat = main_transpose(argi, argc, argv);
-  lose_sysCx();
+  int istat = main_transpose(argc, argv);
   return istat;
 }
 #endif

@@ -2,25 +2,24 @@
 #include "lace.h"
 
   int
-main_void(int argi, int argc, char** argv)
+lace_builtin_void_main(unsigned argc, char** argv,
+                       LaceX** inputs, LaceO** outputs)
 {
-  LaceX* in = open_LaceXF("-");
-  LaceO* out = open_LaceOF("-");
-  (void) argi;
+  LaceX* in = open_arg_LaceXF(0, argv, inputs);
   (void) argc;
-  (void) argv;
+  (void) outputs;
+  if (!in) {return 1;}
 
   while (0 < read_LaceX(in)) {
     in->size = 0;
     flush_LaceX(in);
   }
   close_LaceX(in);
-  close_LaceO(out);
   return 0;
 }
 
-#ifndef MAIN_LACE_EXECUTABLE
+#ifndef LACE_BUILTIN_LIBRARY
 int main(int argc, char** argv) {
-  return main_void(1, argc, argv);
+  return lace_builtin_void_main(argc, argv, NULL, NULL);
 }
 #endif

@@ -1,3 +1,4 @@
+#include "lace.h"
 #include "lace_tool.h"
 #include <assert.h>
 #include <stdlib.h>
@@ -28,11 +29,11 @@ static const char expected_output[] =
 static const size_t expected_output_size = sizeof(expected_output)-1;
 
 
-int main_time2sec(int argi, int argc, char** argv);
+int lace_builtin_time2sec_main(int, char**, LaceX**, LaceO**);
 
 void run_time2sec() {
   const char* const argv[2] = { "time2sec", NULL };
-  int istat = main_time2sec(1, 1, (char**)argv);
+  int istat = lace_builtin_time2sec_main(1, (char**)argv, NULL, NULL);
   assert(istat == 0);
 }
 

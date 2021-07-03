@@ -26,12 +26,12 @@ typedef struct LaceO LaceO;
 typedef struct LaceKV LaceKV;
 typedef struct LaceKVE LaceKVE;
 
-
 size_t read_LaceX(LaceX*);
 void close_LaceX(LaceX*);
 char* grow_LaceX(LaceX*, size_t);
 void flush_LaceX(LaceX*);
 void maybe_flush_LaceX(LaceX*);
+char* slurp_LaceX(LaceX*);
 LaceX slicechr_LaceX(LaceX*, const char delim);
 LaceX sliceline_LaceX(LaceX*);
 LaceX slicechrs_LaceX(LaceX*, const char* delims);
@@ -47,6 +47,9 @@ LaceX* open_LaceXA();
 
 LaceX* open_LaceXF(const char* filename);
 LaceX* open_sibling_LaceXF(const char* sibling, const char* filename);
+LaceX* open_fd_LaceXF(lace_fd_t fd);
+LaceX* open_arg_LaceXF(unsigned argi, char** argv, LaceX** inputv);
+
 const char* filename_LaceXF(LaceX*);
 
 char* lace_parse_int(int* ret, const char* in);
@@ -64,6 +67,25 @@ void print_double_LaceO(LaceO*, double);
 
 LaceO* open_LaceOF(const char* filename);
 LaceO* open_sibling_LaceOF(const char* sibling, const char* filename);
+LaceO* open_fd_LaceOF(lace_fd_t fd);
+LaceO* open_arg_LaceOF(unsigned argi, char** argv, LaceO** outputv);
+
+const char* filename_LaceOF(LaceO*);
+
+
+void lace_log_errorf(const char*, ...);
+void lace_log_warningf(const char*, ...);
+void lace_log_error_(
+    const char* file, const char* func, unsigned line, const char* msg);
+void lace_log_warning_(
+    const char* file, const char* func, unsigned line, const char* msg);
+#ifdef _MSC_VER
+#define lace_log_error(s)  lace_log_error_(__FILE__,__FUNCTION__,__LINE__,s)
+#define lace_log_warning(s)  lace_log_warning_(__FILE__,__FUNCTION__,__LINE__,s)
+#else
+#define lace_log_error(s)  lace_log_error_(__FILE__,__extension__ __func__,__LINE__, s)
+#define lace_log_warning(s)  lace_log_warning_(__FILE__,__extension__ __func__,__LINE__, s)
+#endif
 
 
 /** Given the memory address of a structure's field,

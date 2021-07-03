@@ -40,8 +40,10 @@ static unsigned conv_line(LaceX* in)
 }
 
   int
-main_time2sec(int argi, int argc, char** argv)
+lace_builtin_time2sec_main(unsigned argc, char** argv,
+                           LaceX** inputs, LaceO** outputs)
 {
+  unsigned argi = 1;
   LaceX* in = NULL;
   LaceO* out = NULL;
   LaceX slice;
@@ -65,8 +67,14 @@ main_time2sec(int argi, int argc, char** argv)
     return 64;
   }
 
-  in = open_LaceXF("-");
-  out = open_LaceOF("-");
+  in = open_arg_LaceXF(0, argv, inputs);
+  out = open_arg_LaceOF(0, argv, outputs);
+  if (!in || !out) {
+    close_LaceX(in);
+    close_LaceO(out);
+    fputs("Cannot open stdio!\n", stderr);
+    return 1;
+  }
 
   for (slice = sliceline_LaceX(in);
        slice.size > 0;
@@ -87,8 +95,8 @@ main_time2sec(int argi, int argc, char** argv)
   return 0;
 }
 
-#ifndef MAIN_LACE_EXECUTABLE
+#ifndef LACE_BUILTIN_LIBRARY
 int main(int argc, char** argv) {
-  return main_time2sec(1, argc, argv);
+  return lace_builtin_time2sec_main(argc, argv, NULL, NULL);
 }
 #endif

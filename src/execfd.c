@@ -1,19 +1,18 @@
 
+#include "lace.h"
 #include "utilace.h"
-#include "cx/fileb.h"
 #include "cx/bittable.h"
+#include "cx/syscx.h"
 
+#include <stdio.h>
 #include <sys/stat.h>
 
 static
   void
 show_usage_and_exit ()
 {
-  OFile* of = stderr_OFile ();
-#define f(s)  oput_cstr_OFile (of, s); oput_char_OFile (of, '\n');
-
-  printf_OFile (of, "Usage: %s [-exe name] [argi]* -- [arg|fd]*\n",
-                exename_of_sysCx ());
+#define f(s)  fputs(s, stderr); fputc('\n', stderr);
+  f( "Usage: execfd [-exe name] [argi]* -- [arg|fd]*" );
   f( "  Each /argi/ is an index which has a file descriptor in it." );
   f( "  Index zero is the executable name." );
 #undef f
@@ -26,89 +25,73 @@ show_usage_and_exit ()
  **/
 static
   void
-pipe_to_file (fd_t in, const char* name)
+pipe_to_file(lace_fd_t fd, const char* name)
 {
-  FILE* out = 0;
+  LaceX* in = open_fd_LaceXF(fd);
+  LaceO* out = NULL;
 
-  while (true)
-  {
-    long sz;
-    byte buf[BUFSIZ];
-
-    sz = read(in, buf, BUFSIZ);
-
-    if (sz <= 0)  break;
-    if (!out)  out = fopen (name, "wb");
-
-    fwrite (buf, 1, sz, out);
+  if (in) {
+    read_LaceX(in);
+    if (in->size > 0) {
+      out = open_LaceOF(name);
+    }
   }
 
-  closefd_sysCx (in);
-  if (out)  fclose (out);
+  if (in && out) {
+    for (; in->size > 0; read_LaceX(in)) {
+      memcpy(grow_LaceO(out, in->size), in->at, in->size);
+      maybe_flush_LaceO(out);
+      in->size = 0;
+    }
+  }
+  if (in) {close_LaceX(in);}
+  if (out) {close_LaceO(out);}
 }
 
 
 static
   char*
-readin_fd (fd_t in, bool scrap_newline)
+readin_fd(lace_fd_t fd, bool scrap_newline)
 {
-  const uint n_per_chunk = 8192;
-  DeclTable( char, buf );
-  uint off = 0;
-
-  while (1)
-  {
-    long n = off + n_per_chunk + 1;
-    if (buf.sz < (size_t) n)
-      GrowTable( buf, n - buf.sz );
-
-    n = read(in, &buf.s[off], n_per_chunk * sizeof(char));
-    if (n < 0)
-      failout_sysCx ("Problem reading file descriptor!");
-    if (n == 0)  break;
-    off += n;
+  LaceX* in = open_fd_LaceXF(fd);
+  char* s = slurp_LaceX(in);
+  if (scrap_newline && in->size >= 1 && s[in->size-1] == '\n') {
+    s[in->size-1] = '\0';
+    if (in->size >= 2 && s[in->size-2] == '\r') {
+      s[in->size-2] = '\0';
+    }
   }
-  closefd_sysCx (in);
-
-  MPopTable( buf, buf.sz - off + 1 );
-  buf.s[off] = '\0';
-  if (scrap_newline && off > 0 && buf.s[off-1] == '\n')
-  {
-    buf.s[--off] = '\0';
-    if (off > 0 && buf.s[off-1] == '\r')
-      buf.s[--off] = '\0';
-  }
-  return buf.s;
+  in->at = NULL;
+  in->alloc_lgsize = 0;
+  close_LaceX(in);
+  return s;
 }
 
   int
-main_execfd(int argi, int argc, char** argv)
+main_execfd(unsigned argc, char** argv)
 {
-  int off = 0;
+  unsigned argi = 1;
+  unsigned off = 0;
   BitTable bt = cons2_BitTable (argc, 0);
   char* exe = 0;
 
-  while (!eql_cstr (argv[argi], "--"))
+  while (argv[argi] && 0 != strcmp(argv[argi], "--"))
   {
-    uint idx = 0;
-    if (!argv[argi])
-    {
-      show_usage_and_exit ();
-    }
-    else if (eql_cstr (argv[argi], "-exe"))
-    {
+    if (0 == strcmp(argv[argi], "-exe")) {
       exe = argv[++argi];
-    }
-    else if (xget_uint_cstr (&idx, argv[argi]))
-    {
-      set1_BitTable (bt, idx);
-    }
-    else
-    {
-      DBog1( "Cannot parse index from arg: %s", argv[argi] );
-      show_usage_and_exit ();
+    } else {
+      int idx = 0;
+      if (lace_parse_int(&idx, argv[argi]) && idx >= 0) {
+        set1_BitTable(bt, (unsigned)idx);
+      } else {
+        DBog1( "Cannot parse index from arg: %s", argv[argi] );
+        show_usage_and_exit ();
+      }
     }
     ++ argi;
+  }
+  if (!argv[argi]) {
+    show_usage_and_exit ();
   }
   off = ++ argi;
 
@@ -116,23 +99,21 @@ main_execfd(int argi, int argc, char** argv)
   {
     if (test_BitTable (bt, argi-off))
     {
-      uint fd = 0;
-      if (!xget_uint_cstr (&fd, argv[argi]))
-      {
+      int fd = -1;
+      if (!lace_parse_int(&fd, argv[argi]) || fd < 0) {
         DBog1( "Cannot parse fd from arg: %s", argv[argi] );
         show_usage_and_exit ();
       }
-      else if (argi == off)
-      {
-        if (!exe)
+      else if (argi == off) {
+        if (!exe) {
           failout_sysCx ("Need to provide -exe argument.");
+        }
 
         pipe_to_file (fd, exe);
         argv[argi] = exe;
         chmodu_sysCx (argv[argi], true, true, true);
       }
-      else
-      {
+      else {
         argv[argi] = readin_fd (fd, true);
         push_losefn1_sysCx ((void (*) (void*)) free, argv[argi]);
       }
@@ -142,21 +123,19 @@ main_execfd(int argi, int argc, char** argv)
 
   lose_BitTable (&bt);
 
-  if (lace_specific_util (argv[off]))
-  {
-    return lace_util_main (off, argc, argv);
+  if (lace_specific_util(argv[off])) {
+    return lace_builtin_main(argc-off, &argv[off]);
   }
   execvp_sysCx (&argv[off]);
   return 1;
 }
 
-#ifndef MAIN_LACE_EXECUTABLE
+#ifndef LACE_BUILTIN_LIBRARY
   int
 main(int argc, char** argv)
 {
   int argi = init_sysCx(&argc, &argv);
-  int istat = main_execfd(argi, argc, argv);
-  lose_sysCx();
+  int istat = main_execfd(argc-(argi-1), &argv[argi-1]);
   return istat;
 }
 #endif
