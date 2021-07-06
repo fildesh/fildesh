@@ -109,7 +109,7 @@ open_sibling_LaceXF(const char* sibling, const char* filename)
     memcpy(xf->filename, filename, filename_length+1);
   }
 
-  if (xf->fd < 0) {
+  { /* Open.*/
 #ifdef _MSC_VER
     const int flags = (
         _O_RDONLY |
@@ -125,19 +125,15 @@ open_sibling_LaceXF(const char* sibling, const char* filename)
       lace_compat_fd_cloexec(xf->fd);
     }
 #endif
-  } else {
-    lace_compat_fd_cloexec(xf->fd);
   }
-  if (xf->fd < 0 && xf->filename) {
-    free(xf->filename);
-    xf->filename = NULL;
-  }
-
+  xf->fd = lace_compat_fd_move_off_stdio(xf->fd);
   if (xf->fd >= 0) {
     LaceXF* p = malloc(sizeof(LaceXF));
     *p = *xf;
     return &p->base;
   }
+
+  if (xf->filename) {free(xf->filename);}
   return NULL;
 }
 

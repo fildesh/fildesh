@@ -106,7 +106,7 @@ open_sibling_LaceOF(const char* sibling, const char* filename)
     memcpy(of->filename, filename, filename_length+1);
   }
 
-  if (of->fd < 0) {
+  { /* Open.*/
 #ifdef _MSC_VER
     const int flags = (
         _O_WRONLY | _O_CREAT | _O_TRUNC |
@@ -128,19 +128,15 @@ open_sibling_LaceOF(const char* sibling, const char* filename)
       lace_compat_fd_cloexec(of->fd);
     }
 #endif
-  } else {
-    lace_compat_fd_cloexec(of->fd);
   }
-  if (of->fd < 0 && of->filename) {
-    free(of->filename);
-    of->filename = NULL;
-  }
-
+  of->fd = lace_compat_fd_move_off_stdio(of->fd);
   if (of->fd >= 0) {
     LaceOF* p = malloc(sizeof(LaceOF));
     *p = *of;
     return &p->base;
   }
+
+  if (of->filename) {free(of->filename);}
   return NULL;
 }
 
@@ -189,9 +185,9 @@ open_arg_LaceOF(unsigned argi, char** argv, LaceO** outputv)
   return open_LaceOF(argv[argi]);
 }
 
-const char* filename_LaceOF(LaceO* in) {
-  if (in->vt != DEFAULT_LaceOF_LaceO_VTable) {
+const char* filename_LaceOF(LaceO* out) {
+  if (out->vt != DEFAULT_LaceOF_LaceO_VTable) {
     return NULL;
   }
-  return lace_castup(LaceOF, base, in)->filename;
+  return lace_castup(LaceOF, base, out)->filename;
 }
