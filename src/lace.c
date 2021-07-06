@@ -11,8 +11,11 @@
 #include "lace_compat_sh.h"
 #include "lace_posix_thread.h"
 #include "utilace.h"
+
+#include "cx/syscx.h"
+#include "cx/alphatab.h"
 #include "cx/associa.h"
-#include "cx/fileb.h"
+#include "cx/table.h"
 
 #include <signal.h>
 #include <stdio.h>
@@ -754,13 +757,13 @@ setup_commands (TableT(Command)* cmds,
           cmd->args.s[arg_q] = sym->as.here_doc;
         }
         else if (sym->kind == ODescVal) {
-          fd_t fd = sym->as.file_desc;
+          lace_fd_t fd = sym->as.file_desc;
           sym->kind = NSymValKinds;
           add_iarg_Command (cmd, fd, true);
           cmd->args.s[arg_q] = 0;
         }
         else if (sym->kind == DefVal) {
-          fd_t fd[2];
+          lace_fd_t fd[2];
           Command* xcmd = &cmds->s[sym->cmd_idx];
 
           if (0 != lace_compat_fd_pipe(&fd[1], &fd[0]))
@@ -792,7 +795,7 @@ setup_commands (TableT(Command)* cmds,
         }
         else {
           lace_compat_fd_close(last->stdos);
-          last->stdos = 1;
+          last->stdos = lace_compat_fd_move_off_stdio(1);
         }
         sym->kind = NSymValKinds;
       }
@@ -893,7 +896,7 @@ setup_commands (TableT(Command)* cmds,
         SymVal* sym = getf_SymVal (add_map, arg);
         sym->kind = ODescVal;
         sym->cmd_idx = i;
-        sym->as.file_desc = lace_compat_fd_duplicate(0);
+        sym->as.file_desc = lace_compat_fd_move_off_stdio(0);
         InitDomMax( sym->arg_idx );
         InitDomMax( sym->ios_idx );
       }
@@ -904,7 +907,7 @@ setup_commands (TableT(Command)* cmds,
       else if (kind == ODescVal || kind == ODescFileVal ||
           kind == IODescVal)
       {
-        fd_t fd[2];
+        lace_fd_t fd[2];
         SymVal* sym = getf_SymVal (add_map, arg);
         sym->kind = ODescVal;
         sym->cmd_idx = i;
@@ -929,7 +932,7 @@ setup_commands (TableT(Command)* cmds,
       }
       else if (kind == IFutureDescVal || kind == IFutureDescFileVal)
       {
-        fd_t fd[2];
+        lace_fd_t fd[2];
         SymVal* sym = getf_SymVal (add_map, arg);
         sym->kind = IFutureDescVal;
         sym->cmd_idx = i;
@@ -1171,12 +1174,12 @@ int (*lace_specific_util (const char* arg)) (unsigned, char**)
   return NULL;
 }
 
-int lace_builtin_main(unsigned argc, char** argv)
+int lace_builtin_main(const char* name, unsigned argc, char** argv)
 {
   int (*f) (unsigned, char**);
-  f = lace_specific_util(argv[0]);
+  f = lace_specific_util(name);
   if (!f) {
-    lace_log_errorf("Unknown tool name: %s", argv[0]);
+    lace_log_errorf("Unknown builtin: %s", name);
     return -1;
   }
   return f(argc, argv);
@@ -1297,9 +1300,6 @@ spawn_commands (TableT(Command) cmds)
   DeclTable( cstr, argv );
   DeclTable( uint2, fdargs );
   uint i;
-
-  lace_compat_fd_cloexec(0);
-  lace_compat_fd_cloexec(1);
 
   for (i = 0; i < cmds.sz; ++i)
   {
@@ -1468,7 +1468,9 @@ int main_lace(unsigned argc, char** argv)
       }
     }
     else if (eq_cstr (arg, "-as")) {
-      return lace_builtin_main(argc-argi, &argv[argi]);
+      const char* builtin_name = argv[argi];
+      argv[argi] = argv[0];
+      return lace_builtin_main(builtin_name, argc-argi, &argv[argi]);
     }
     else if (eq_cstr (arg, "-stdio")) {
       arg = argv[argi++];
@@ -1483,7 +1485,7 @@ int main_lace(unsigned argc, char** argv)
     }
     else if (eq_cstr (arg, "-stdinfile")) {
       const char* stdin_filepath = argv[argi++];
-      fd_t fd = open_lace_xfd(stdin_filepath);
+      lace_fd_t fd = open_lace_xfd(stdin_filepath);
       if (fd >= 0) {
         istat = lace_compat_fd_move_to(0, fd);
         lace_compat_fd_inherit(0);
@@ -1496,7 +1498,7 @@ int main_lace(unsigned argc, char** argv)
     }
     else if (eq_cstr (arg, "-stdoutfile")) {
       const char* stdout_filepath = argv[argi++];
-      fd_t fd = open_lace_ofd(stdout_filepath);
+      lace_fd_t fd = open_lace_ofd(stdout_filepath);
       if (fd >= 0) {
         istat = lace_compat_fd_move_to(1, fd);
         lace_compat_fd_inherit(1);
@@ -1509,7 +1511,7 @@ int main_lace(unsigned argc, char** argv)
     }
     else if (eq_cstr (arg, "-stderrfile")) {
       const char* stdout_filepath = argv[argi++];
-      fd_t fd = open_lace_ofd(stdout_filepath);
+      lace_fd_t fd = open_lace_ofd(stdout_filepath);
       if (fd >= 0) {
         istat = lace_compat_fd_move_to(2, fd);
         lace_compat_fd_inherit(2);
@@ -1540,8 +1542,7 @@ int main_lace(unsigned argc, char** argv)
   }
 
   tmppath = AllocT(AlphaTab, 1);
-  *tmppath = cons1_AlphaTab ("lace");
-  mktmppath_sysCx (tmppath);
+  *tmppath = dflt1_AlphaTab(mktmppath_sysCx("lace"));
   lace_compat_errno_clear();
   if (tmppath->sz == 0)
     failout_sysCx ("Unable to create temp directory...");
@@ -1607,6 +1608,8 @@ int main_lace(unsigned argc, char** argv)
   }
 
   lace_compat_errno_trace();
+  lace_compat_fd_cloexec(0);
+  lace_compat_fd_cloexec(1);
   parse_file(cmds, in, filename_LaceXF(in));
   close_LaceX(in);
   lace_compat_errno_trace();

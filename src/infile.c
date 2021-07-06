@@ -76,8 +76,10 @@ open_sibling_LaceXF(const char* sibling, const char* filename)
   static const char dev_stdin[] = "/dev/stdin";
   static const char dev_fd_prefix[] = "/dev/fd/";
   static const unsigned dev_fd_prefix_length = sizeof(dev_fd_prefix)-1;
-  const size_t filename_length = strlen(filename);
+  const size_t filename_length = (filename ? strlen(filename) : 0);
   LaceXF xf[1];
+
+  if (!filename) {return NULL;}
 
   if (0 == strcmp("-", filename) || 0 == strcmp(dev_stdin, filename)) {
     return open_fd_LaceXF(0);
@@ -144,6 +146,7 @@ open_fd_LaceXF(lace_fd_t fd)
 {
   LaceO filename[1] = {DEFAULT_LaceO};
   LaceXF* xf;
+  fd = lace_compat_fd_move_off_stdio(fd);
   if (fd < 0) {return NULL;}
   xf = (LaceXF*) malloc(sizeof(LaceXF));
   *xf = default_LaceXF();

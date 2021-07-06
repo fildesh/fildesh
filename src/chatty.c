@@ -9,36 +9,38 @@
  **/
 #define LACE_POSIX_SOURCE
 
-#include <aio.h>
 #include "lace.h"
-#include "cx/syscx.h"
-#include "cx/def.h"
-#include "cx/fileb.h"
-#include "cx/ospc.h"
+#include "lace_compat_errno.h"
+#include "lace_compat_fd.h"
+#include "lace_compat_sh.h"
 
+#include <aio.h>
 #include <errno.h>
 #include <netdb.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include <sys/socket.h>
+#include <unistd.h>
 
 
 int main (int argc, char** argv)
 {
-  int argi = init_sysCx (&argc, &argv);
-  DeclLegit( good );
+  int argi = 1;
   int istat = 0;
   const char* host = "127.0.0.1";
   const char* service = "1337";
+  const char* message_text_data = NULL;
+  size_t message_text_size = 0;
+  bool connecting = false;
 
   struct addrinfo crit;
-  struct addrinfo* list = 0;
-  struct addrinfo* addr = 0;
+  struct addrinfo* list = NULL;
+  struct addrinfo* addr = NULL;
   struct aiocb aio[1];
 
-  Zeroize( crit );
-  Zeroize( *aio );
+  memset(&crit, 0, sizeof(crit));
+  memset(aio, 0, sizeof(*aio));
 
   /* crit.ai_family = AF_INET6; */
   crit.ai_family   = AF_INET;
@@ -51,143 +53,132 @@ int main (int argc, char** argv)
   /* crit.ai_protocol = IPPROTO_UDP; */
 
 
-  if (argi < argc && !eql_cstr (argv[argi], "-connect"))
-    failout_sysCx ("I take no arguments from humans.");
-
-  DoLegitP( istat == 0, "getaddrinfo()" )
-    istat = getaddrinfo (host, service, &crit, &list);
-
-  DoLegit( 0 )
-  {
-    addr = list;
-    if (addr->ai_next)
-    {
-      DBog0( "Host could bind to multiple!" );
-    }
-    if (argi < argc && eql_cstr (argv[argi], "-connect"))
-    {
-      int sock = -1;
-      LaceX* in = open_fd_LaceXF(0);
-
-      OFile of[] = {DEFAULT_OFile};
-
-      oput_cstr_OFile (of, "hi");
-
-      /* Wait for parent proc to be ready.*/
-      slurp_LaceX(in);
-      close_LaceX(in);
-
-      DoLegitP( sock >= 0, "socket()" )
-        sock = socket (addr->ai_family,
-                       addr->ai_socktype,
-                       addr->ai_protocol);
-      DoLegitP( istat >= 0, "connect()" )
-        istat = connect (sock, addr->ai_addr, addr->ai_addrlen);
-
-      DoLegitP( istat == 0, "aio_write()" )
-      {
-        aio->aio_fildes = sock;
-        aio->aio_buf = of->buf.s;
-        aio->aio_nbytes = of->off;
-        istat = aio_write (aio);
-      }
-      DoLegitP( istat == 0, "aio_suspend()" )
-      {
-        do {
-          const struct aiocb* tmp = aio;
-          istat = aio_suspend (&tmp, 1, 0);
-        } while (istat != 0 && errno == EINTR);
-      }
-
-      DoLegitLine( "aio_return()" )
-        aio_return (aio) == (ssize_t) aio->aio_nbytes;
-
-      if (sock >= 0)  close (sock);
-      lose_OFile (of);
-    }
-    else
-    {
-      OSPc ospc[] = {DEFAULT_OSPc};
-      int sock = -1;
-      int sock1 = -1;
-      struct sockaddr_storage client_addr;
-      socklen_t client_addr_nbytes = sizeof (client_addr);
-      DeclTable( byte, msg );
-      ssize_t nbytes = 0;
-
-      ospc->cmd = cons1_AlphaTab (exename_of_sysCx ());
-      PushTable( ospc->args, cons1_AlphaTab ("-connect") );
-
-      stdxpipe_OSPc (ospc);
-
-      DoLegitLine( "spawn()" )
-        spawn_OSPc (ospc);
-
-      DoLegitP( sock >= 0, "socket()" )
-      {
-        EnsizeTable( msg, 1024 );
-
-        sock = socket (addr->ai_family,
-                       addr->ai_socktype,
-                       addr->ai_protocol);
-      }
-      DoLegitP( istat == 0, "bind()" )
-        istat = bind (sock, addr->ai_addr, addr->ai_addrlen);
-
-      DoLegitP( istat == 0, "listen()" )
-        istat = listen (sock, SOMAXCONN);
-
-      DoLegitP( sock1 >= 0, "accept()" )
-      {
-        /* Tell spawned process that we are listening.*/
-        close_OFile (ospc->of);
-
-        sock1 = accept (sock,
-                        (struct sockaddr*) &client_addr,
-                        &client_addr_nbytes);
-      }
-
-      DoLegitP( istat == 0, "aio_read()" )
-      {
-        aio->aio_fildes = sock1;
-        aio->aio_buf = msg.s;
-        aio->aio_nbytes = msg.sz;
-
-        istat = aio_read (aio);
-      }
-
-      DoLegitP( istat == 0, "aio_suspend()" )
-      {
-        do {
-          const struct aiocb* tmp = aio;
-          istat = aio_suspend (&tmp, 1, 0);
-        } while (istat < 0 && errno == EINTR);
-      }
-
-      DoLegitP( nbytes > 0, "aio_return()" )
-        nbytes = aio_return (aio);
-
-      DoLegit( 0 )
-      {
-        msg.sz = nbytes;
-        fputs ("got:", stdout);
-        fwrite (msg.s, sizeof(char), msg.sz, stdout);
-        fputc ('\n', stdout);
-      }
-
-      LoseTable( msg );
-      lose_OSPc (ospc);
-
-      if (sock1 >= 0)  close (sock1);
-      if (sock >= 0)  close (sock);
-    }
+  if (argi >= argc) {
+    message_text_data = "hi";
+    message_text_size = strlen(message_text_data);
+  } else if (0 == strcmp(argv[argi], "-connect")) {
+    connecting = true;
+  } else {
+    message_text_data = argv[argi];
+    message_text_size = strlen(message_text_data);
   }
 
-  if (list)
-    freeaddrinfo (list);
+  istat = getaddrinfo(host, service, &crit, &list);
+  if (istat != 0) {
+    lace_log_error("getaddrinfo()");
+    return 1;
+  }
 
-  Zeroize( *aio );
-  lose_sysCx ();
-  return good ? 0 : 1;
+  addr = list;
+  if (addr->ai_next) {
+    lace_log_warning("Host could bind to multiple!");
+  }
+  if (connecting) {
+    char buf[1024];
+    int sock = -1;
+    LaceX* in = open_fd_LaceXF(0);
+
+    /* Wait for parent proc to be ready.*/
+    slurp_LaceX(in);
+    close_LaceX(in);
+
+    sock = socket(addr->ai_family,
+                  addr->ai_socktype,
+                  addr->ai_protocol);
+    if (sock < 0) {lace_compat_errno_trace(); return 1;}
+    istat = connect(sock, addr->ai_addr, addr->ai_addrlen);
+    if (istat != 0) {lace_compat_errno_trace(); return 1;}
+
+    memcpy(buf, message_text_data, message_text_size);
+    aio->aio_fildes = sock;
+    aio->aio_buf = buf;
+    aio->aio_nbytes = message_text_size;
+    istat = aio_write(aio);
+    if (istat != 0) {lace_compat_errno_trace(); return 1;}
+
+    do {
+      const struct aiocb* tmp = aio;
+      istat = aio_suspend (&tmp, 1, 0);
+    } while (istat != 0 && errno == EINTR);
+    if (istat != 0) {lace_compat_errno_trace(); return 1;}
+
+    istat = (int)aio_return(aio);
+    if (istat < 0) {lace_compat_errno_trace(); return 1;}
+    if (istat != (int)aio->aio_nbytes) {lace_log_warning("nbytes differs");}
+
+    close(sock);
+  } else {
+    char buf[1024];
+    int listen_sock = -1;
+    int sock = -1;
+    struct sockaddr_storage client_addr;
+    socklen_t client_addr_nbytes = sizeof(client_addr);
+    ssize_t nbytes = 0;
+    lace_compat_fd_t fds_to_inherit[] = {0, -1};
+    lace_compat_fd_t fd_to_child = -1;
+    lace_compat_pid_t pid;
+
+    {
+      lace_compat_fd_t child_source_fd = -1;
+      istat = lace_compat_fd_pipe(&fd_to_child, &child_source_fd);
+      if (istat != 0) {lace_compat_errno_trace(); return 1;}
+      istat = lace_compat_fd_move_to(0, child_source_fd);
+      if (istat != 0) {lace_compat_errno_trace(); return 1;}
+    }
+
+    pid = lace_compat_fd_spawnlp(fds_to_inherit, argv[0], "-connect", NULL);
+    if (pid < 0) {lace_compat_errno_trace(); return 126;}
+
+    listen_sock = socket(addr->ai_family,
+                         addr->ai_socktype,
+                         addr->ai_protocol);
+    if (listen_sock < 0) {lace_compat_errno_trace(); return 1;}
+    istat = bind (listen_sock, addr->ai_addr, addr->ai_addrlen);
+    if (istat != 0) {lace_compat_errno_trace(); close(listen_sock); return 1;}
+
+    istat = listen(listen_sock, SOMAXCONN);
+    if (istat != 0) {lace_compat_errno_trace(); close(listen_sock); return 1;}
+
+    lace_compat_fd_close(fd_to_child);
+
+    sock = accept(listen_sock,
+                   (struct sockaddr*) &client_addr,
+                   &client_addr_nbytes);
+    if (istat != 0) {lace_compat_errno_trace(); close(listen_sock); return 1;}
+
+    aio->aio_fildes = sock;
+    aio->aio_buf = buf;
+    aio->aio_nbytes = sizeof(buf);
+
+    istat = aio_read(aio);
+    if (istat != 0) {lace_compat_errno_trace();}
+
+    if (istat == 0) do {
+      const struct aiocb* tmp = aio;
+      istat = aio_suspend (&tmp, 1, 0);
+    } while (istat < 0 && errno == EINTR);
+    if (istat != 0) {lace_compat_errno_trace();}
+
+    if (istat == 0) {
+      nbytes = aio_return(aio);
+      if (nbytes <= 0) {lace_compat_errno_trace();}
+    }
+    if (nbytes > 0) {
+      fputs("got:", stdout);
+      fwrite(buf, sizeof(char), nbytes, stdout);
+      fputc('\n', stdout);
+    }
+
+    if (sock >= 0) {close(sock);}
+    if (listen_sock >= 0) {close(listen_sock);}
+    lace_compat_sh_wait(pid);
+  }
+
+  if (list) {
+    freeaddrinfo(list);
+  }
+
+  memset(aio, 0, sizeof(*aio));
+  return (istat == 0 ? 0 : 1);
 }
 

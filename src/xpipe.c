@@ -5,81 +5,90 @@
  **/
 
 #include "lace.h"
+#include "lace_compat_errno.h"
+#include "lace_compat_fd.h"
+#include "lace_compat_sh.h"
 #include "utilace.h"
+#include <stdlib.h>
 
-#include "cx/ospc.h"
-#ifdef LACE_BUILTIN_FORBID_XPIPE
-#include <assert.h>
-#endif
 
 static
   void
-run_with_line(unsigned argc, char** argv, const char* line, LaceO* out)
+run_with_line(const char* lace_exe, unsigned argc, const char** argv,
+              const char* line)
 {
+  /* We create a new stdin for the spawned process.
+   * It inherits stdout too, but we want to reuse it.
+   */
+  lace_compat_fd_t inherited_fds[] = {0, -1};
+  const char** actual_argv;
+  int istat;
+  unsigned offset = 0;
   unsigned argi = 0;
-  OSPc ospc[] = {DEFAULT_OSPc};
+  LaceO* to_spawned = NULL;
+  lace_compat_pid_t pid;
 
-  ospc->cmd = cons1_AlphaTab (argv[argi++]);
-  if (lace_specific_util(ccstr_of_AlphaTab(&ospc->cmd))) {
-    PushTable( ospc->args, cons1_AlphaTab("-as") );
-    PushTable( ospc->args, cons1_AlphaTab(ccstr_of_AlphaTab(&ospc->cmd)) );
-    copy_cstr_AlphaTab(&ospc->cmd, exename_of_sysCx());
+  {
+    lace_compat_fd_t to_spawned_fd = -1;
+    lace_compat_fd_t spawned_source_fd = -1;
+    istat = lace_compat_fd_pipe(&to_spawned_fd, &spawned_source_fd);
+    if (istat != 0) {lace_compat_errno_trace(); return;}
+    istat = lace_compat_fd_move_to(0, spawned_source_fd);
+    if (istat != 0) {lace_compat_errno_trace(); return;}
+    to_spawned = open_fd_LaceOF(to_spawned_fd);
+    if (!to_spawned) {return;}
   }
-  while (argi < argc)
-    PushTable( ospc->args, cons1_AlphaTab (argv[argi++]) );
 
-  stdxpipe_OSPc(ospc);
-  stdopipe_OSPc(ospc);
-  if (!spawn_OSPc(ospc))
-    failout_sysCx("spawn() failed!");
-
-  oput_cstr_OFile(ospc->of, line);
-  oput_char_OFile(ospc->of, '\n');
-  close_OFile(ospc->of);
-
-  xget_XFile(ospc->xf);
-  puts_LaceO(out, ccstr_of_XFile(ospc->xf));
-  flush_LaceO(out);
-
-  if (!close_OSPc(ospc))
-    failout_sysCx("Wait failed!");
-  if (ospc->status != 0) {
-    DBog1( "Child exited with status:%d, exiting!", ospc->status );
-    failout_sysCx ("");
+  actual_argv = (const char**)malloc(sizeof(char*) * (2+argc+1));
+  if (lace_specific_util(argv[0])) {
+    actual_argv[offset++] = lace_exe;
+    actual_argv[offset++] = "-as";
   }
-  lose_OSPc(ospc);
+  while (argi < argc) {
+    actual_argv[offset++] = argv[argi++];
+  }
+  actual_argv[offset] = NULL;
+
+  pid = lace_compat_fd_spawnvp(inherited_fds, actual_argv);
+  free(actual_argv);
+  if (pid >= 0) {
+    puts_LaceO(to_spawned, line);
+    putc_LaceO(to_spawned, '\n');
+  } else {
+    lace_log_error("Spawn failed.");
+  }
+  close_LaceO(to_spawned);
+  if (pid >= 0) {
+    istat = lace_compat_sh_wait(pid);
+    if (istat != 0) {
+      lace_compat_errno_trace();
+      lace_log_errorf("Child (%s) exited with status: %d", actual_argv[0], istat);
+    }
+  }
 }
 
   int
 main_xpipe(unsigned argc, char** argv)
 {
-#ifdef LACE_BUILTIN_FORBID_XPIPE
-  assert(false && "xpipe is known not to work on Windows");
-  return 1;
-#else
   LaceX* in = NULL;
-  LaceO* out = NULL;
   const char* s;
   unsigned argi = 1;
 
-  if (argi >= argc)
-    failout_sysCx ("Need at least one argument.");
+  if (argi >= argc) {
+    lace_log_error("Need at least one argument.");
+    return 64;
+  }
 
   in = open_LaceXF("-");
   if (!in) {
-    failout_sysCx ("open() failed!");
-  }
-  out = open_LaceOF("-");
-  if (!out) {
-    failout_sysCx ("open() failed!");
+    lace_log_error("Cannot open stdin.");
+    return 1;
   }
 
   for (s = getline_LaceX(in); s; s = getline_LaceX(in)) {
-    run_with_line(argc - argi, &argv[argi], s, out);
+    run_with_line(argv[0], argc - argi, (const char**)&argv[argi], s);
   }
 
   close_LaceX(in);
-  close_LaceO(out);
   return 0;
-#endif
 }

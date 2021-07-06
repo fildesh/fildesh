@@ -6,8 +6,7 @@
 #include "lace_compat_errno.h"
 #include "lace_compat_fd.h"
 #include "lace_compat_sh.h"
-
-#include "fileb.h"
+#include "alphatab.h"
 
 #include <errno.h>
 #include <signal.h>
@@ -262,34 +261,16 @@ open_lace_ofd(const char* filename)
   return fd;
 }
 
-#ifndef LACE_POSIX_SOURCE
-static
-  char*
-escape_windows_cmd_arg(const char* arg)
-{
-  /* We should escape quotes and backslashes!*/
-  const uint arglen = strlen(arg);
-  DeclTable( char, escaped );
-  EnsizeTable( escaped, arglen + 3 );
-  escaped.s[0] = '\"';
-  memcpy(&escaped.s[1], arg, arglen);
-  escaped.s[arglen+1] = '\"';
-  escaped.s[arglen+2] = '\0';
-  return escaped.s;
-}
-#endif
-
   pid_t
 spawnvp_sysCx (char* const* argv)
 {
   pid_t pid;
 #ifdef LACE_POSIX_SOURCE
-  pid = fork ();
-  if (pid == 0)
+  if (eql_cstr (argv[0], exename_of_sysCx ()) &&
+      eql_cstr (argv[1], MagicArgv1_sysCx))
   {
-    if (eql_cstr (argv[0], exename_of_sysCx ()) &&
-        eql_cstr (argv[1], MagicArgv1_sysCx))
-    {
+    pid = fork();
+    if (pid == 0) {
       int argc = 0;
       DeclTable( cstr, t );
       uint i;
@@ -302,58 +283,19 @@ spawnvp_sysCx (char* const* argv)
       parse_args_sysCx (&argc, &t.s);
       execvp_sysCx (t.s);
     }
-    execvp_sysCx (argv);
+  } else {
+    pid = lace_compat_sh_spawn((const char**)argv);
   }
 #else
-  DeclTable( cstr, escaped_args );
-  PushTable( escaped_args, dup_cstr(argv[0]) );
-  while (argv[escaped_args.sz]) {
-    char* escaped_arg = escape_windows_cmd_arg(argv[escaped_args.sz]);
-    PushTable( escaped_args, escaped_arg );
-  }
-  PushTable( escaped_args, 0 );
-
-  pid = _spawnvp (_P_NOWAIT, escaped_args.s[0], escaped_args.s);
-
-  CPopTable( escaped_args, 1 );
-  while (escaped_args.sz > 0) {
-    free(*TopTable(escaped_args));
-    CPopTable(escaped_args, 1);
-  }
-  LoseTable(escaped_args);
+  pid = lace_compat_sh_spawn((const char**)argv);
 #endif
-  if (pid < 0) {
-    lace_compat_errno_trace();
-  }
   return pid;
 }
 
   void
 execvp_sysCx (char* const* argv)
 {
-  if (0) {
-    uint i;
-    for (i = 0; argv[i]; ++i) {
-      DBog2( "argv[%u] = %s", i, argv[i] );
-    }
-  }
-#ifdef LACE_POSIX_SOURCE
-  execvp (argv[0], argv);
-#else
-  pid_t pid = -1;
-  pid = spawnvp_sysCx (argv);
-  if (pid >= 0)
-  {
-    int status = lace_compat_sh_wait(pid);
-    if (status < 0) {
-      lace_log_error("Failed to wait for process.");
-      exit(1);
-    }
-    exit (status);
-  }
-#endif
-  DBog0( "execvp() failed!" );
-  /* DBog1( "PATH=%s", getenv ("PATH") ); */
+  lace_compat_sh_exec((const char**)argv);
   failout_sysCx ("execvp() failed!");
 }
 
@@ -376,8 +318,8 @@ kill_please_sysCx(pid_t pid)
 /**
  * \param path  Return value. Can come in as a hint for the path name.
  **/
-  void
-mktmppath_sysCx (AlphaTab* path)
+  char*
+mktmppath_sysCx(const char* hint)
 {
   const char* v = 0;
 #ifdef LACE_POSIX_SOURCE
@@ -385,8 +327,10 @@ mktmppath_sysCx (AlphaTab* path)
 #else
   pid_t pid = _getpid ();
 #endif
-  OFile of[1] = {DEFAULT_OFile};
-  zuint i;
+  char* buf;
+  const size_t hint_length = (hint ? strlen(hint) : 0);
+  size_t offset;
+  unsigned long i;
 
 #ifdef LACE_POSIX_SOURCE
   v = getenv ("TMPDIR");
@@ -395,31 +339,25 @@ mktmppath_sysCx (AlphaTab* path)
   v = getenv ("TEMP");
 #endif
 
-  if (!v)
-  {
-    path->sz = 0;
-    return;
+  if (!v) {
+    return NULL;
   }
-  oput_cstr_OFile (of, v);
-  oput_char_OFile (of, '/');
-  oput_AlphaTab (of, path);
-  oput_char_OFile (of, '-');
-  oput_luint_OFile (of, pid);
-  oput_char_OFile (of, '-');
+  offset = strlen(v);
+  buf = (char*) malloc(offset + hint_length + 50);
+  memcpy(buf, v, offset);
+  buf[offset++] = '/';
+  memcpy(&buf[offset], hint, hint_length);
+  offset += hint_length;
+  buf[offset++] = '-';
+  offset += sprintf(&buf[offset], "-%lu-", (unsigned long) pid);
 
-  path->sz = 0;
-  for (i = 0; i < SIZE_MAX; ++i) {
-    zuint off = of->off;
-    oput_luint_OFile (of, i);
-
-    if (mkdir_sysCx (cstr1_OFile (of, 0))) {
-      copy_AlphaTab_OFile (path, of);
-      break;
+  for (i = 0; i < ULONG_MAX; ++i) {
+    sprintf(&buf[offset], "%lu", (unsigned long) i);
+    if (mkdir_sysCx(buf)) {
+      return buf;
     }
-
-    of->off = off;
   }
-  lose_OFile (of);
+  return NULL;
 }
 
   void

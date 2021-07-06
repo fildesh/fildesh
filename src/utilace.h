@@ -3,7 +3,7 @@
 
 #ifdef LACE_BUILTIN_LIBRARY
 int (*lace_specific_util (const char* arg)) (unsigned, char**);
-int lace_builtin_main(unsigned argc, char** argv);
+int lace_builtin_main(const char* name, unsigned argc, char** argv);
 #else
 static inline
 int (*lace_specific_util (const char* arg)) (unsigned, char**)
@@ -12,8 +12,9 @@ int (*lace_specific_util (const char* arg)) (unsigned, char**)
   return 0;
 }
 static inline
-int lace_builtin_main(unsigned argc, char** argv)
+int lace_builtin_main(const char* name, unsigned argc, char** argv)
 {
+  (void) name;
   (void) argc;
   (void) argv;
   return -1;

@@ -13,12 +13,6 @@ static void create_pipe(int* ret_produce, int* ret_consume) {
   assert(0 == istat);
 }
 
-static int duplicate_fd(int fd) {
-  int newfd = lace_compat_fd_duplicate(fd);
-  assert(newfd >= 0);
-  return newfd;
-}
-
 static void move_fd_to(int dst, int oldfd) {
   int istat = lace_compat_fd_move_to(dst, oldfd);
   assert(istat == 0);
@@ -90,8 +84,6 @@ lace_tool_pipem(size_t input_size, const char* input_data, int const source_fd,
                 int const sink_fd, char** output_storage)
 {
   int istat;
-  int saved_source_fd = -1;
-  int saved_sink_fd = -1;
   int produce_fd = -1;
   pthread_t produce_thread;
   LaceToolPipemInput produce_thread_arg;
@@ -110,14 +102,15 @@ lace_tool_pipem(size_t input_size, const char* input_data, int const source_fd,
   if (source_fd >= 0) {
     int tmp_source_fd = -1;
     create_pipe(&produce_fd, &tmp_source_fd);
-    saved_source_fd = duplicate_fd(source_fd);
+    assert(produce_fd != source_fd);
+    assert(produce_fd != sink_fd);
     move_fd_to(source_fd, tmp_source_fd);
   }
 
   if (sink_fd >= 0) {
     int tmp_sink_fd = -1;
     create_pipe(&tmp_sink_fd, &consume_fd);
-    saved_sink_fd = duplicate_fd(sink_fd);
+    assert(consume_fd != sink_fd);
     move_fd_to(sink_fd, tmp_sink_fd);
   }
 
@@ -149,12 +142,10 @@ lace_tool_pipem(size_t input_size, const char* input_data, int const source_fd,
   if (produce_fd >= 0) {
     istat = pthread_join(produce_thread, NULL);
     assert(istat == 0);
-    move_fd_to(source_fd, saved_source_fd);
   }
   if (consume_fd >= 0) {
     istat = pthread_join(consume_thread, NULL);
     assert(istat == 0);
-    move_fd_to(sink_fd, saved_sink_fd);
   }
 #ifndef _MSC_VER
   signal(SIGPIPE, sigpipe_fn);

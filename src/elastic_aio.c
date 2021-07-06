@@ -299,6 +299,7 @@ main_elastic_aio(unsigned argc, char** argv)
     LoseTable( ios.s[i].xbuf );
   }
   LoseTable( ios );
+  free(aiocb_buf);
   return 0;
 }
 

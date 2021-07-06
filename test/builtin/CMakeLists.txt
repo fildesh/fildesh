@@ -11,11 +11,24 @@
 
 #### add
 
+add_executable(add_float_test "add_float_test.c" "${CMAKE_SOURCE_DIR}/builtin/add.c")
+target_link_libraries(add_float_test lace_lib lace_tool_lib)
+set_property(TARGET add_float_test
+  APPEND PROPERTY COMPILE_DEFINITIONS LACE_BUILTIN_LIBRARY)
+add_test(NAME add_float_test COMMAND add_float_test)
+
 add_test(NAME lace_as_add_test COMMAND
   comparispawn "${CMAKE_CURRENT_SOURCE_DIR}/summed_integers.txt"
   "${lace_exe}" -stdinfile "${CMAKE_CURRENT_SOURCE_DIR}/integers.txt"
   -as add
   )
+
+#### bestmatch
+
+add_executable(bestmatch_test "bestmatch_test.c")
+target_link_libraries(bestmatch_test lace_lib lace_tool_lib)
+add_test(NAME bestmatch_test COMMAND
+  bestmatch_test "$<TARGET_FILE:bestmatch>")
 
 #### cmp
 
@@ -39,6 +52,19 @@ add_test(NAME elastic_tee_test COMMAND
   ${lace_exe} -x "${CMAKE_CURRENT_SOURCE_DIR}/elastic_tee.lace"
   )
 
+add_executable(elastic_alt_tee_test "elastic_alt_tee_test.c")
+target_link_libraries(elastic_alt_tee_test lace_lib lace_tool_lib)
+add_test(NAME elastic_pthread_tee_test COMMAND
+  elastic_alt_tee_test "$<TARGET_FILE:elastic_pthread>")
+if (UNIX)
+  add_test(NAME elastic_poll_tee_test COMMAND
+    elastic_alt_tee_test "$<TARGET_FILE:elastic_poll>")
+  if (NOT APPLE)
+    add_test(NAME elastic_aio_tee_test COMMAND
+      elastic_alt_tee_test "$<TARGET_FILE:elastic_aio>")
+  endif()
+endif()
+
 #### godo
 
 add_executable(godo_test "godo_test.c" "${CMAKE_SOURCE_DIR}/src/godo.c")
@@ -47,6 +73,17 @@ set_property(TARGET godo_test
   APPEND PROPERTY COMPILE_DEFINITIONS LACE_BUILTIN_LIBRARY)
 add_test(NAME godo_test COMMAND
   godo_test "$<TARGET_FILE:expectish>" "${CMAKE_SOURCE_DIR}/test/expect/hello.txt")
+
+#### sshall
+
+add_executable(echocat "echocat.c" "${CMAKE_SOURCE_DIR}/builtin/zec.c")
+set_property(TARGET echocat
+  APPEND PROPERTY COMPILE_DEFINITIONS LACE_BUILTIN_LIBRARY)
+target_link_libraries(echocat lace_lib)
+
+add_executable(sshall_test "sshall_test.c")
+target_link_libraries(sshall_test lace_lib lace_tool_lib)
+add_test(NAME sshall_test COMMAND sshall_test "$<TARGET_FILE:sshall>" "$<TARGET_FILE:echocat>")
 
 #### time2sec
 
@@ -64,20 +101,30 @@ set_property(TARGET transpose_test
   APPEND PROPERTY COMPILE_DEFINITIONS LACE_BUILTIN_LIBRARY)
 add_test(NAME transpose_test COMMAND transpose_test)
 
+#### ujoin
+
+add_executable(ujoin_test "ujoin_test.c")
+target_link_libraries(ujoin_test lace_lib lace_tool_lib)
+add_test(NAME ujoin_test COMMAND
+  ujoin_test "$<TARGET_FILE:ujoin>")
+
 #### void
 
 add_executable(void_test "void_test.c")
 target_link_libraries(void_test lace_lib lace_tool_lib)
 add_test(NAME void_test COMMAND void_test "$<TARGET_FILE:void>")
 
+#### waitdo
+
+add_executable(waitdo_test "waitdo_test.c")
+target_link_libraries(waitdo_test lace_lib lace_tool_lib)
+add_test(NAME waitdo_test COMMAND waitdo_test "$<TARGET_FILE:waitdo>" "$<TARGET_FILE:shout>")
+
 #### xpipe
 
-if (UNIX)
-  add_test(NAME xpipe_nested_test COMMAND
-    comparispawn "${CMAKE_CURRENT_SOURCE_DIR}/../expect/xpipe_nested.txt"
-    ${lace_exe} -x "${CMAKE_CURRENT_SOURCE_DIR}/xpipe_nested.lace"
-    )
-endif()
+add_test(NAME xpipe_nested_test COMMAND
+  comparispawn "${CMAKE_CURRENT_SOURCE_DIR}/../expect/xpipe_nested.txt"
+  ${lace_exe} -x "${CMAKE_CURRENT_SOURCE_DIR}/xpipe_nested.lace")
 
 #### zec
 

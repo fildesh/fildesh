@@ -124,7 +124,7 @@ main_execfd(unsigned argc, char** argv)
   lose_BitTable (&bt);
 
   if (lace_specific_util(argv[off])) {
-    return lace_builtin_main(argc-off, &argv[off]);
+    return lace_builtin_main(argv[off], argc-off, &argv[off]);
   }
   execvp_sysCx (&argv[off]);
   return 1;

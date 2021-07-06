@@ -1,7 +1,10 @@
 
+#include "lace.h"
+#include "lace_compat_errno.h"
+#include "cx/alphatab.h"
 #include "cx/associa.h"
-#include "cx/fileb.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -49,43 +52,16 @@ show_usage_and_exit ()
   exit(64);
 }
 
-/** Open a file for reading or writing.
- * Exit with an error status if this is not possible.
- **/
-  static FILE*
-open_file_arg (const char* arg, bool writing)
-{
-  FILE* f;
-  if (writing)
-  {
-    if (0 == strcmp (arg, "-"))  f = stdout;
-    else                         f = fopen (arg, "wb");
-  }
-  else
-  {
-    if (0 == strcmp (arg, "-"))  f = stdin;
-    else                         f = fopen (arg, "rb");
-  }
-  if (!f)
-  {
-    DBog2( "Cannot open file for %s: %s\n",
-        writing ? "writing" : "reading",
-        arg );
-    failout_sysCx ("");
-  }
-  return f;
-}
-
   static TableT(LineJoin)
-setup_lookup_table (XFile* xf, const char* delim)
+setup_lookup_table(LaceX* in, const char* delim)
 {
   DeclTable( LineJoin, table );
   const uint delim_sz = delim ? strlen (delim) : 0;
   char* s;
 
-  for (s = getline_XFile (xf);
-      s;
-      s = getline_XFile (xf))
+  for (s = getline_LaceX(in);
+       s;
+       s = getline_LaceX(in))
   {
     LineJoin* join;
 
@@ -119,16 +95,16 @@ setup_lookup_table (XFile* xf, const char* delim)
 }
 
   static void
-compare_lines (XFile* xf, Associa* map, const char* delim,
-    FILE* nomatch_out, FILE* dupmatch_out)
+compare_lines(LaceX* in, Associa* map, const char* delim,
+              LaceO* nomatch_out, LaceO* dupmatch_out)
 {
   const uint delim_sz = delim ? strlen (delim) : 0;
   uint line_no = 0;
   char* line;
 
-  for (line = getline_XFile (xf);
-      line;
-      line = getline_XFile (xf))
+  for (line = getline_LaceX(in);
+       line;
+       line = getline_LaceX(in))
   {
     char* field = line;
     char* payload;
@@ -160,8 +136,8 @@ compare_lines (XFile* xf, Associa* map, const char* delim,
       if (nomatch_out)
       {
         if (payload)  payload[0] = nixed_char;
-        fputs (line, nomatch_out);
-        fputc ('\n', nomatch_out);
+        puts_LaceO(nomatch_out, line);
+        putc_LaceO(nomatch_out, '\n');
       }
     }
     else if (join->stream_line)
@@ -169,8 +145,8 @@ compare_lines (XFile* xf, Associa* map, const char* delim,
       if (payload)  payload[0] = nixed_char;
       if (dupmatch_out)
       {
-        fputs (line, dupmatch_out);
-        fputc ('\n', dupmatch_out);
+        puts_LaceO(dupmatch_out, line);
+        putc_LaceO(dupmatch_out, '\n');
       }
       else
       {
@@ -191,8 +167,6 @@ compare_lines (XFile* xf, Associa* map, const char* delim,
       join->stream_line = dup_cstr (payload);
     }
   }
-  if (nomatch_out)  fclose (nomatch_out);
-  if (dupmatch_out)  fclose (dupmatch_out);
 }
 
 
@@ -203,11 +177,11 @@ main_ujoin(unsigned argc, char** argv)
   const char* dflt_record = 0;
   bool keep_join_field = true;
   bool stream_on_left = false;
-  FILE* nomatch_file = 0;
-  FILE* dupmatch_file = 0;
-  XFileB lookup_in[] = {DEFAULT_XFileB};
-  XFileB stream_in[] = {DEFAULT_XFileB};
-  FILE* out = stdout;
+  LaceX* lookup_in = NULL;
+  LaceX* stream_in = NULL;
+  LaceO* nomatch_out = NULL;
+  LaceO* dupmatch_out = NULL;
+  LaceO* out = NULL;
   unsigned argi = 1;
   TableT(LineJoin) table;
   Associa map[1];
@@ -215,15 +189,14 @@ main_ujoin(unsigned argc, char** argv)
 
   InitAssocia( AlphaTab, LineJoin*, *map, cmp_AlphaTab );
 
-  if (argi >= argc)
-    show_usage_and_exit ();
-
-  set_FILE_FileB (&lookup_in->fb, open_file_arg (argv[argi++], false));
-
-  if (argi >= argc)
-    failout_sysCx ("Not enough arguments (need 2 files).");
-
-  set_FILE_FileB (&stream_in->fb, open_file_arg (argv[argi++], false));
+  if (argi + 2 <= argc) {
+    lookup_in = open_LaceXF(argv[argi++]);
+    stream_in = open_LaceXF(argv[argi++]);
+  }
+  if (!lookup_in || !stream_in) {
+    lace_compat_errno_trace();
+    show_usage_and_exit();
+  }
 
   while (argi < argc)
   {
@@ -235,9 +208,11 @@ main_ujoin(unsigned argc, char** argv)
     }
     else if (0 == strcmp (arg, "-o"))
     {
-      if (argi >= argc)
-        failout_sysCx ("Output (-o) needs an argument.");
-      out = open_file_arg (argv[argi++], true);
+      out = open_LaceOF(argv[argi++]);
+      if (!out) {
+        lace_log_error("Output (-o) needs an argument.");
+        return 64;
+      }
     }
     else if (0 == strcmp (arg, "-x"))
     {
@@ -253,45 +228,64 @@ main_ujoin(unsigned argc, char** argv)
     }
     else if (0 == strcmp (arg, "-d"))
     {
-      if (argi >= argc)
-        failout_sysCx ("Delimiter (-d) needs an argument.\n");
       delim = argv[argi++];
+      if (!delim) {
+        lace_log_error("Delimiter (-d) needs an argument.");
+        return 64;
+      }
       Claim2( strlen (delim) ,>, 0 );
     }
     else if (0 == strcmp (arg, "-p"))
     {
-      if (argi >= argc)
-        failout_sysCx ("Need argument for default record (-p).");
       dflt_record = argv[argi++];
+      if (!dflt_record) {
+        lace_log_error("Need argument for default record (-p).");
+        return 64;
+      }
     }
     else if (0 == strcmp (arg, "-nomatch"))
     {
-      if (argi >= argc)
-        failout_sysCx ("Need argument for nomatch file (-nomatch).");
-      nomatch_file = open_file_arg (argv[argi++], true);
+      nomatch_out = open_LaceOF(argv[argi++]);
+      if (!nomatch_out) {
+        lace_log_error("Need argument for nomatch file (-nomatch).");
+        return 64;
+      }
     }
     else if (0 == strcmp (arg, "-dupmatch"))
     {
-      if (argi >= argc)
-        failout_sysCx ("Need argument for dupmatch file (-dupmatch).");
-      dupmatch_file = open_file_arg (argv[argi++], true);
+      dupmatch_out = open_LaceOF(argv[argi++]);
+      if (!dupmatch_out) {
+        lace_log_error("Need argument for dupmatch file (-dupmatch).");
+        return 64;
+      }
     }
     else
     {
-      DBog1( "Unknown argument: %s", arg );
-      show_usage_and_exit ();
+      lace_log_errorf("Unknown argument: %s", arg);
+      return 64;
     }
   }
 
-  table = setup_lookup_table (&lookup_in->xf, delim);
-  lose_XFileB (lookup_in);
+  table = setup_lookup_table(lookup_in, delim);
+  close_LaceX(lookup_in);
+
   UFor( i, table.sz ) {
     LineJoin* join = &table.s[i];
     insert_Associa (map, &join->field, &join);
   }
-  compare_lines (&stream_in->xf, map, delim, nomatch_file, dupmatch_file);
 
-  lose_XFileB (stream_in);
+  compare_lines(stream_in, map, delim, nomatch_out, dupmatch_out);
+  close_LaceX(stream_in);
+  if (nomatch_out) {close_LaceO(nomatch_out);}
+  if (dupmatch_out) {close_LaceO(dupmatch_out);}
+
+  if (!out) {
+    out = open_LaceOF("-");
+    if (!out) {
+      lace_log_error("Cannot open stdout.");
+      return 1;
+    }
+  }
 
   if (!delim)  delim = "\t";
   UFor( i, table.sz ) {
@@ -304,35 +298,35 @@ main_ujoin(unsigned argc, char** argv)
       bool tab = false;
       if (keep_join_field)
       {
-        fputs (join->field.s, out);
+        puts_LaceO(out, join->field.s);
         tab = true;
       }
 
       if (stream_on_left && stream_line != join->field.s)
       {
-        if (tab)  fputs (delim, out);
+        if (tab) {puts_LaceO(out, delim);}
         tab = true;
-        fputs (stream_line, out);
+        puts_LaceO(out, stream_line);
       }
 
       if (join->lookup_line)
       {
-        if (tab)  fputs (delim, out);
+        if (tab) {puts_LaceO(out, delim);}
         tab = true;
-        fputs (join->lookup_line, out);
+        puts_LaceO(out, join->lookup_line);
       }
 
       if (!stream_on_left && stream_line != join->field.s)
       {
-        if (tab)  fputs (delim, out);
+        if (tab) {puts_LaceO(out, delim);}
         tab = true;
-        fputs (stream_line, out);
+        puts_LaceO(out, stream_line);
       }
-      fputc ('\n', out);
+      putc_LaceO(out, '\n');
     }
     lose_LineJoin (join);
   }
-  fclose (out);
+  close_LaceO(out);
 
   LoseTable( table );
   lose_Associa (map);
@@ -343,9 +337,7 @@ main_ujoin(unsigned argc, char** argv)
   int
 main(int argc, char** argv)
 {
-  int argi = init_sysCx(&argc, &argv);
-  int istat = main_ujoin(argc-(argi-1), &argv[argi-1]);
-  lose_sysCx();
+  int istat = main_ujoin(argc, argv);
   return istat;
 }
 #endif

@@ -45,7 +45,7 @@ main_waitdo(unsigned argc, char** argv)
 
     if (lace_specific_util(argv[argi]))
     {
-      return lace_builtin_main(argc-argi, &argv[argi]);
+      return lace_builtin_main(argv[argi], argc-argi, &argv[argi]);
     }
     execvp_sysCx (&argv[argi]);
 

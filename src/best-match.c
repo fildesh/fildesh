@@ -1,12 +1,15 @@
 
-#include "cx/fileb.h"
+#include "lace.h"
+#include "lace_compat_errno.h"
 
+#include <assert.h>
 #include <ctype.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
-  static void
+static
+  void
 show_usage_and_exit ()
 {
 #define f(s)  fputs(s "\n", stderr)
@@ -17,39 +20,13 @@ show_usage_and_exit ()
   exit(64);
 }
 
-/** Open a file for reading or writing.
- * Exit with an error status if this is not possible.
- **/
-  static FILE*
-open_file_arg (const char* arg, bool writing)
+static
+  char**
+split_lines (char* buf, unsigned* ret_max_len)
 {
-  FILE* f;
-  if (writing)
-  {
-    if (0 == strcmp (arg, "-"))  f = stdout;
-    else                         f = fopen (arg, "wb");
-  }
-  else
-  {
-    if (0 == strcmp (arg, "-"))  f = stdin;
-    else                         f = fopen (arg, "rb");
-  }
-  if (!f)
-  {
-    DBog2( "Cannot open file for %s: %s\n",
-        writing ? "writing" : "reading",
-        arg );
-    failout_sysCx ("");
-  }
-  return f;
-}
-
-  static char**
-split_lines (char* buf, uint* ret_max_len)
-{
-  uint i;
-  uint n = 1;
-  uint max_len = 1;
+  unsigned i;
+  unsigned n = 1;
+  unsigned max_len = 1;
   char* s = buf;
   char** lines;
 
@@ -62,13 +39,13 @@ split_lines (char* buf, uint* ret_max_len)
     s = &s[1];
   }
 
-  AllocTo( lines, n+1 );
+  lines = (char**) malloc(sizeof(char*)*(n+1));
   lines[n] = 0;
 
   s = buf;
   for (i = 0; i < n; ++i)
   {
-    uint len;
+    unsigned len;
     lines[i] = s;
     len = strlen (s);
     if (len > max_len)  max_len = len;
@@ -82,26 +59,27 @@ split_lines (char* buf, uint* ret_max_len)
 /** Find the length of the longest common subsequence between /x/ and /y/.
  * /width/ of /a/ must not be less than the length of /y/.
  **/
-  static uint
-lcs_count (uint* a, uint width, const char* x, const char* y)
+static
+  unsigned
+lcs_count (unsigned* a, unsigned width, const char* x, const char* y)
 {
-  uint i, j, m, n;
+  unsigned i, j, m, n;
 
-  memset (a, 0, width * sizeof (uint));
+  memset (a, 0, width * sizeof (unsigned));
   m = strlen (x);
   n = strlen (y);
-  Claim2( n ,<=, width );
+  assert(n <= width);
 
   if (m == 0 || n == 0)  return 0;
 
   for (i = 0; i < m; ++i)
   {
-    uint back_j = 0, back_ij = 0;
+    unsigned back_j = 0, back_ij = 0;
     char xc;
     xc = tolower (x[i]);
     for (j = 0; j < n; ++j)
     {
-      uint back_i;
+      unsigned back_i;
       char yc;
       yc = tolower (y[j]);
       back_i = a[j];
@@ -119,16 +97,17 @@ lcs_count (uint* a, uint width, const char* x, const char* y)
   return a[n-1];
 }
 
-  static uint
-matching_line (uint* a, uint width, const char* s, char* const* lines)
+static
+  unsigned
+matching_line (unsigned* a, unsigned width, const char* s, char* const* lines)
 {
-  uint max_count = 0;
-  uint match_idx = 0;
-  uint i;
+  unsigned max_count = 0;
+  unsigned match_idx = 0;
+  unsigned i;
 
   for (i = 0; lines[i]; ++i)
   {
-    uint count;
+    unsigned count;
     count = lcs_count (a, width, s, lines[i]);
     if (count > max_count)
     {
@@ -143,28 +122,27 @@ matching_line (uint* a, uint width, const char* s, char* const* lines)
 main_best_match(unsigned argc, char** argv)
 {
   unsigned argi = 1;
-  uint* lcs_array;
-  XFileB lookup_in[] = {DEFAULT_XFileB};
-  XFileB stream_in[] = {DEFAULT_XFileB};
-  FILE* out;
+  unsigned* lcs_array;
+  LaceX* lookup_in = NULL;
+  LaceX* stream_in = NULL;
+  LaceO* out = NULL;
   char* buf;
   char* s;
   char** lines;
-  uint width;
+  unsigned width;
 
-  if (argi >= argc)
-    show_usage_and_exit ();
+  if (argi + 2 <= argc) {
+    lookup_in = open_LaceXF(argv[argi++]);
+    stream_in = open_LaceXF(argv[argi++]);
+  }
+  if (!lookup_in || !stream_in) {
+    lace_compat_errno_trace();
+    show_usage_and_exit();
+  }
 
-  set_FILE_FileB (&lookup_in->fb, open_file_arg (argv[argi++], false));
-
-  if (argi >= argc)
-    show_usage_and_exit ();
-
-  buf = xget_XFileB (lookup_in);
-  lines = split_lines (buf, &width);
-  AllocTo( lcs_array, width );
-
-  set_FILE_FileB (&stream_in->fb, open_file_arg (argv[argi++], false));
+  buf = slurp_LaceX(lookup_in);
+  lines = split_lines(buf, &width);
+  lcs_array = (unsigned*)malloc(sizeof(unsigned)*width);
 
   while (argi < argc)
   {
@@ -176,26 +154,32 @@ main_best_match(unsigned argc, char** argv)
     }
     else
     {
-      DBog1( "Unknown argument: %s", arg );
+      lace_log_errorf("Unknown argument: %s", arg);
       show_usage_and_exit ();
     }
   }
 
-  out = stdout;
-  for (s = getline_XFile (&stream_in->xf);
-      s;
-      s = getline_XFile (&stream_in->xf))
+  out = open_LaceOF("-");
+  if (!out) {
+    lace_log_error("Cannot open stdout.");
+    return 1;
+  }
+
+  for (s = getline_LaceX(stream_in);
+       s;
+       s = getline_LaceX(stream_in))
   {
-    uint i;
+    unsigned i;
     i = matching_line (lcs_array, width, s, lines);
-    fputs (lines[i], out);
-    fputc ('\n', out);
+    puts_LaceO(out, lines[i]);
+    putc_LaceO(out, '\n');
   }
 
   free (lcs_array);
   free (lines);
-  lose_XFileB (lookup_in);
-  lose_XFileB (stream_in);
+  close_LaceX(lookup_in);
+  close_LaceX(stream_in);
+  close_LaceO(out);
   return 0;
 }
 
@@ -203,9 +187,7 @@ main_best_match(unsigned argc, char** argv)
   int
 main(int argc, char** argv)
 {
-  int argi = init_sysCx(&argc, &argv);
-  int istat = main_best_match(argc-(argi-1), &argv[argi-1]);
-  lose_sysCx();
+  int istat = main_best_match(argc, argv);
   return istat;
 }
 #endif

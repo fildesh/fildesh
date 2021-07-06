@@ -24,6 +24,17 @@ lace_log_warningf(const char* fmt, ...)
   fputc('\n', stderr);
 }
 
+  void
+lace_log_tracef(const char* fmt, ...)
+{
+  va_list argp;
+  fputs("TRACE: ", stderr);
+  va_start(argp, fmt);
+  vfprintf(stderr, fmt, argp);
+  va_end(argp);
+  fputc('\n', stderr);
+}
+
 static const char* filename_to_print(const char* file) {
   const char* tmp = strrchr(file, '/');
   if (tmp) {file = &tmp[1];}

@@ -75,6 +75,7 @@ const char* filename_LaceOF(LaceO*);
 
 void lace_log_errorf(const char*, ...);
 void lace_log_warningf(const char*, ...);
+void lace_log_tracef(const char*, ...);
 void lace_log_error_(
     const char* file, const char* func, unsigned line, const char* msg);
 void lace_log_warning_(

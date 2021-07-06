@@ -30,7 +30,6 @@ cc_binary(
         "lace.c",
         "utilace.h",
         "best-match.c",
-        #"elastic_poll.c",
         "execfd.c",
         "godo.c",
         "ssh-all.c",
@@ -50,10 +49,7 @@ cc_binary(
     ],
     defines = [
         "LACE_BUILTIN_LIBRARY",
-    ] + select({
-        "@platforms//os:windows": ["LACE_BUILTIN_FORBID_XPIPE"],
-        "//conditions:default": [],
-    }),
+    ],
     deps = [
         "//src/cx:cx_lib",
     ],
@@ -64,20 +60,70 @@ cc_binary(
     visibility = ["//:__pkg__"],
 )
 
+cc_binary(
+    name = "bestmatch",
+    srcs = ["best-match.c"],
+    deps = ["//:lace_lib"],
+    visibility = ["//test/builtin:__pkg__"],
+)
 
-#cc_binary(
-#    name = "chatty",
-#    srcs = [
-#        "chatty.c",
-#    ],
-#    deps = [
-#        "//src/cx:cx_lib",
-#    ],
-#    linkopts = select({
-#        ":linux_os": ["-lrt"],
-#        ":mac_osx": ["-lc"],
-#    }),
-#    target_compatible_with = [
-#        "@bazel_tools//platforms:linux",
-#    ],
-#)
+cc_binary(
+    name = "chatty",
+    srcs = ["chatty.c"],
+    deps = ["//:lace_lib"],
+    linkopts = select({
+        "@platforms//os:linux": ["-lrt"],
+        "//conditions:default": [],
+    }),
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
+    visibility = ["//test/src:__pkg__"],
+)
+
+cc_binary(
+    name = "elastic_aio",
+    srcs = ["elastic_aio.c"],
+    deps = ["//src/cx:cx_lib"],
+    linkopts = select({
+        "@platforms//os:linux": ["-lrt"],
+        "//conditions:default": [],
+    }),
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
+    visibility = ["//test/builtin:__pkg__"],
+)
+
+cc_binary(
+    name = "elastic_poll",
+    srcs = ["elastic_poll.c"],
+    deps = ["//src/cx:cx_lib"],
+    target_compatible_with = select({
+        "@platforms//os:windows": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }),
+    visibility = ["//test/builtin:__pkg__"],
+)
+
+cc_binary(
+    name = "sshall",
+    srcs = ["ssh-all.c"],
+    deps = ["//:lace_lib"],
+    visibility = ["//test/builtin:__pkg__"],
+)
+
+cc_binary(
+    name = "ujoin",
+    srcs = ["ujoin.c"],
+    deps = ["//src/cx:cx_lib"],
+    visibility = ["//test/builtin:__pkg__"],
+)
+
+cc_binary(
+    name = "waitdo",
+    srcs = ["waitdo.c", "utilace.h"],
+    deps = ["//src/cx:cx_lib"],
+    visibility = ["//test/builtin:__pkg__"],
+)
+

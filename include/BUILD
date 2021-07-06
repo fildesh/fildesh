@@ -5,6 +5,7 @@ exports_files([
     "lace_compat_fd.h",
     "lace_compat_file.h",
     "lace_compat_sh.h",
+    "lace_compat_string.h",
     "lace_posix_thread.h",
     "lace_tool.h",
 ])

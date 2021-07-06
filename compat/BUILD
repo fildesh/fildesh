@@ -3,6 +3,7 @@ exports_files([
     "fd.c",
     "file.c",
     "sh.c",
+    "string.c",
 ], visibility = [
     "//:__pkg__",
 ])

@@ -1,4 +1,8 @@
 
+if (UNIX AND NOT APPLE)
+  add_test(NAME chatty_test COMMAND chatty)
+endif()
+
 add_executable(delimit_edge_test
   "delimit_edge_test.c")
 target_link_libraries(delimit_edge_test lace_lib)

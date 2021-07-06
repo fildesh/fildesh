@@ -70,6 +70,8 @@ execvp_sysCx (char* const* argv);
 bool
 kill_please_sysCx(pid_t pid);
 
+char*
+mktmppath_sysCx(const char* hint);
 void
 setenv_sysCx (const char* key, const char* val);
 void

@@ -3,6 +3,13 @@ load("//tool:spawn.bzl", "spawn_test")
 
 #### add
 
+cc_test(
+    name = "add_float_test",
+    srcs = ["add_float_test.c", "//builtin:add.c"],
+    deps = ["//:lace_lib", "//:lace_tool_lib"],
+    defines = ["LACE_BUILTIN_LIBRARY"],
+)
+
 spawn_test(
     name = "lace_as_add_test",
     args = [
@@ -20,6 +27,16 @@ spawn_test(
         "//:lace",
         "//tool:comparispawn",
     ],
+)
+
+#### bestmatch
+
+cc_test(
+    name = "bestmatch_test",
+    srcs = ["bestmatch_test.c"],
+    deps = ["//:lace_lib", "//:lace_tool_lib"],
+    data = ["//src:bestmatch"],
+    args = ["$(location //src:bestmatch)"],
 )
 
 #### cmp
@@ -65,6 +82,28 @@ lace_expect_test(
     expect = ":hello_newline_x2.txt",
 )
 
+cc_test(
+    name = "elastic_aio_tee_test",
+    srcs = ["elastic_alt_tee_test.c"],
+    deps = ["//:lace_lib", "//:lace_tool_lib"],
+    data = ["//src:elastic_aio"],
+    args = ["$(location //src:elastic_aio)"],
+)
+cc_test(
+    name = "elastic_poll_tee_test",
+    srcs = ["elastic_alt_tee_test.c"],
+    deps = ["//:lace_lib", "//:lace_tool_lib"],
+    data = ["//src:elastic_poll"],
+    args = ["$(location //src:elastic_poll)"],
+)
+cc_test(
+    name = "elastic_pthread_tee_test",
+    srcs = ["elastic_alt_tee_test.c"],
+    deps = ["//:lace_lib", "//:lace_tool_lib"],
+    data = ["//builtin:elastic_pthread"],
+    args = ["$(location //builtin:elastic_pthread)"],
+)
+
 #### godo
 
 cc_test(
@@ -84,6 +123,33 @@ cc_test(
     args = [
         "$(location //tool:expectish)",
         "$(location //test/expect:hello.txt)",
+    ],
+)
+
+#### sshall
+
+cc_binary(
+    name = "echocat",
+    srcs = [
+        "echocat.c",
+        "//builtin:zec.c",
+    ],
+    deps = ["//:lace_lib"],
+    defines = ["LACE_BUILTIN_LIBRARY"],
+    testonly = True,
+)
+
+cc_test(
+    name = "sshall_test",
+    srcs = ["sshall_test.c"],
+    deps = ["//:lace_lib", "//:lace_tool_lib"],
+    data = [
+        ":echocat",
+        "//src:sshall",
+    ],
+    args = [
+        "$(location //src:sshall)",
+        "$(location :echocat)"
     ],
 )
 
@@ -117,6 +183,16 @@ cc_test(
     ],
 )
 
+#### ujoin
+
+cc_test(
+    name = "ujoin_test",
+    srcs = ["ujoin_test.c"],
+    deps = ["//:lace_lib", "//:lace_tool_lib"],
+    data = ["//src:ujoin"],
+    args = ["$(location //src:ujoin)"],
+)
+
 #### void
 
 cc_test(
@@ -129,16 +205,28 @@ cc_test(
     ],
 )
 
+#### waitdo
+
+cc_test(
+    name = "waitdo_test",
+    args = ["$(location //src:waitdo)", "$(location //tool:shout)"],
+    srcs = ["waitdo_test.c"],
+    deps = [
+        "//:lace_lib",
+        "//:lace_tool_lib",
+    ],
+    data = [
+        "//src:waitdo",
+        "//tool:shout",
+    ],
+)
+
 #### xpipe
 
 lace_expect_test(
     name = "xpipe_nested_test",
     srcs = ["xpipe_nested.lace"],
     expect = "//test/expect:xpipe_nested.txt",
-    target_compatible_with = select({
-        "@platforms//os:windows": ["@platforms//:incompatible"],
-        "//conditions:default": [],
-    }),
 )
 
 #### zec

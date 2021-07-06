@@ -6,6 +6,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <stdarg.h>
 
 #ifdef _MSC_VER
 #include <windows.h>
@@ -71,6 +72,7 @@ lace_compat_fd_close(lace_compat_fd_t fd)
   return 0;
 }
 
+static
   lace_compat_fd_t
 lace_compat_fd_duplicate(lace_compat_fd_t fd)
 {
@@ -94,11 +96,62 @@ lace_compat_fd_move_to(lace_compat_fd_t dst, lace_compat_fd_t oldfd)
 #else
     int istat = dup2(oldfd, dst);
 #endif
-    if (istat < 0) {return -1;}
-    if (0 != lace_compat_fd_close(oldfd)) {return -1;}
+    if (istat < 0) {lace_compat_fd_close(oldfd); return -1;}
+    if (0 != lace_compat_fd_close(oldfd)) {lace_compat_fd_close(dst); return -1;}
   }
-  if (0 != lace_compat_fd_cloexec(dst)) {return -1;}
   return 0;
+}
+
+  lace_compat_fd_t
+lace_compat_fd_move_off_stdio(lace_compat_fd_t fd)
+{
+  unsigned i;
+  lace_compat_fd_t fds[4] = {-1, -1, -1, -1};
+  if (fd < 0 || fd > 2) {return fd;}
+  fds[0] = fd;
+  for (i = 1; i < 4; ++i) {
+    fds[i] = lace_compat_fd_duplicate(fd);
+    if (fds[i] < 0 || fds[i] > 2) {
+      fd = fds[i];
+      fds[i] = -1;
+      break;
+    }
+  }
+  for (i = 0; i < 4 && fds[i] >= 0; ++i) {
+    lace_compat_fd_close(fds[i]);
+  }
+  if (fd >= 0) {
+    lace_compat_fd_cloexec(fd);
+  }
+  return fd;
+}
+
+  lace_compat_fd_t
+lace_compat_fd_reserve()
+{
+  int fds[2] = {-1, -1};
+  int istat;
+#ifdef _MSC_VER
+  istat = _pipe(fds, 0, 0);
+#else
+  istat = pipe(fds);
+#endif
+  if (istat < 0) {return istat;}
+  if (fds[0] > 2) {
+    lace_compat_fd_close(fds[1]);
+    lace_compat_fd_cloexec(fds[0]);
+    return fds[0];
+  }
+  if (fds[1] > 2) {
+    lace_compat_fd_close(fds[0]);
+    lace_compat_fd_cloexec(fds[1]);
+    return fds[1];
+  }
+
+  fds[0] = lace_compat_fd_move_off_stdio(fds[0]);
+  lace_compat_fd_close(fds[1]);
+  if (fds[0] >= 0) {lace_compat_fd_cloexec(fds[0]);}
+  return fds[0];
 }
 
   int
@@ -112,11 +165,28 @@ lace_compat_fd_pipe(lace_compat_fd_t* ret_produce,
 #else
   istat = pipe(fds);
 #endif
+
+  if (istat == 0 && fds[0] <= 2) {
+    fds[0] = lace_compat_fd_move_off_stdio(fds[0]);
+  } else if (istat == 0 && fds[0] > 2) {
+    istat = lace_compat_fd_cloexec(fds[0]);
+  }
+  if (istat == 0 && fds[1] <= 2) {
+    fds[1] = lace_compat_fd_move_off_stdio(fds[1]);
+  } else if (istat == 0 && fds[1] > 2) {
+    istat = lace_compat_fd_cloexec(fds[1]);
+  }
+
+  if (istat != 0 || fds[0] < 0 || fds[1] < 0) {
+    *ret_produce = -1;
+    *ret_consume = -1;
+    if (fds[0] >= 0) {lace_compat_fd_close(fds[0]);}
+    if (fds[1] >= 0) {lace_compat_fd_close(fds[1]);}
+    return -1;
+  }
+
   *ret_produce = fds[1];
   *ret_consume = fds[0];
-  if (istat != 0) {return -1;}
-  if (0 != lace_compat_fd_cloexec(fds[0])) {return -1;}
-  if (0 != lace_compat_fd_cloexec(fds[1])) {return -1;}
   return 0;
 }
 
@@ -144,8 +214,10 @@ lace_compat_fd_read(lace_compat_fd_t fd, void* buf, size_t buf_capacity)
   return (size_t)n;
 }
 
-  int
-lace_compat_fd_spawnvp_wait(const lace_compat_fd_t* fds_to_inherit, const char* const* argv)
+
+  lace_compat_pid_t
+lace_compat_fd_spawnvp(const lace_compat_fd_t* fds_to_inherit,
+                       const char* const* argv)
 {
   lace_compat_pid_t pid;
   int e = 0;
@@ -170,6 +242,34 @@ lace_compat_fd_spawnvp_wait(const lace_compat_fd_t* fds_to_inherit, const char* 
     errno = e;
     return -1;
   }
+  return pid;
+}
+
+  lace_compat_pid_t
+lace_compat_fd_spawnlp(const lace_compat_fd_t* fds_to_inherit,
+                       const char* cmd, ...)
+{
+  const unsigned max_argc = 50;
+  const char* argv[51];
+  va_list argp;
+  unsigned i;
+
+  if (!cmd) {return -1;}
+  argv[0] = cmd;
+  va_start(argp, cmd);
+  for (i = 1; i <= max_argc && argv[i-1]; ++i) {
+    argv[i] = va_arg(argp, const char*);
+  }
+  va_end(argp);
+  if (argv[i-1]) {return -1;}
+  return lace_compat_fd_spawnvp(fds_to_inherit, argv);
+}
+
+  int
+lace_compat_fd_spawnvp_wait(const lace_compat_fd_t* fds_to_inherit, const char* const* argv)
+{
+  lace_compat_pid_t pid = lace_compat_fd_spawnvp(fds_to_inherit, argv);
+  if (pid < 0) {return -1;}
   return lace_compat_sh_wait(pid);
 }
 

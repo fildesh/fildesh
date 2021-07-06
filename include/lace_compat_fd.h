@@ -9,10 +9,12 @@ int
 lace_compat_fd_close(lace_compat_fd_t fd);
 int
 lace_compat_fd_inherit(int fd);
-lace_compat_fd_t
-lace_compat_fd_duplicate(lace_compat_fd_t fd);
 int
 lace_compat_fd_move_to(lace_compat_fd_t dst, lace_compat_fd_t oldfd);
+lace_compat_fd_t
+lace_compat_fd_move_off_stdio(lace_compat_fd_t fd);
+lace_compat_fd_t
+lace_compat_fd_reserve();
 int
 lace_compat_fd_pipe(lace_compat_fd_t* ret_produce,
                     lace_compat_fd_t* ret_consume);

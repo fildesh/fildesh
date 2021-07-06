@@ -73,8 +73,10 @@ open_sibling_LaceOF(const char* sibling, const char* filename)
   static const char dev_stdout[] = "/dev/stdout";
   static const char dev_fd_prefix[] = "/dev/fd/";
   static const unsigned dev_fd_prefix_length = sizeof(dev_fd_prefix)-1;
-  const size_t filename_length = strlen(filename);
+  const size_t filename_length = (filename ? strlen(filename) : 0);
   LaceOF of[1];
+
+  if (!filename) {return NULL;}
 
   if (0 == strcmp("-", filename) || 0 == strcmp(dev_stdout, filename)) {
     return open_fd_LaceOF(1);
@@ -147,6 +149,7 @@ open_fd_LaceOF(lace_fd_t fd)
 {
   LaceO filename[1] = {DEFAULT_LaceO};
   LaceOF* of;
+  fd = lace_compat_fd_move_off_stdio(fd);
   if (fd < 0) {return NULL;}
   of = (LaceOF*) malloc(sizeof(LaceOF));
   *of = default_LaceOF();

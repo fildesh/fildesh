@@ -5,10 +5,9 @@
 
 #include "syscx.h"
 
+#include "alphatab.h"
 #include "associa.h"
-#include "fileb.h"
 #include "lgtable.h"
-#include "ofile.h"
 #include "rbtree.h"
 
 
@@ -110,35 +109,37 @@ insert_TNode (RBTree* t, LgTable* lgt,
 output_dot_fn (BSTNode* x, void* args)
 {
   TNode* a = CastUp( TNode, rbt, CastUp( RBTNode, bst, x ) );
-  OFile* of = (OFile*) ((void**)args)[0];
+  FILE* out = (FILE*) ((void**)args)[0];
 
-  printf_OFile (of, "q%u [label = \"%s\", color = \"%s\"];\n",
-      a->val,
-      a->key,
+  fprintf(
+      out, "q%u [label = \"%s\", color = \"%s\"];\n",
+      a->val, a->key,
       (a->rbt.red) ? "red" : "black");
 
   if (x->joint) {
     TNode* b = CastUp( TNode, rbt, CastUp( RBTNode, bst, x->joint ) );
-    printf_OFile (of, "q%u -> q%u;\n", b->val, a->val);
+    fprintf(out, "q%u -> q%u;\n", b->val, a->val);
   }
-  flush_OFile (of);
+  fflush(out);
 }
 
   void
 output_dot (BSTree* t)
 {
   void* args[1];
-  OFileB ofb[] = {DEFAULT_OFileB};
-  OFile* of = &ofb->of;
-  args[0] = of;
+  FILE* out;
 
-  open_FileB (&ofb->fb, "", "out.dot");
+  out = fopen("out.dot", "wb");
+  if (!out) {
+    lace_log_error("Cannot open out.dot for writing");
+  }
+  args[0] = out;
 
-  oput_cstr_OFile (of, "digraph tree {\n");
+  fputs("digraph tree {\n", out);
   output_dot_fn (t->sentinel, args);
   walk_BSTree (t, Yes, output_dot_fn, args);
-  oput_cstr_OFile (of, "}\n");
-  lose_OFileB (ofb);
+  fputs("}\n", out);
+  fclose(out);
 }
 
 static

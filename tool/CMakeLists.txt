@@ -2,6 +2,7 @@ add_executable(cembed cembed.c)
 add_executable(cswitch cswitch.c)
 add_executable(expectish expectish.c)
 add_executable(shout shout.c)
+add_executable(shout_stdout "shout.c")
 add_executable(spawn spawn.c)
 
 add_library(lace_tool_lib STATIC

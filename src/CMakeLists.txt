@@ -53,8 +53,7 @@ add_executable(lace
 
 set_property(TARGET lace APPEND PROPERTY COMPILE_DEFINITIONS LACE_BUILTIN_LIBRARY)
 if (WIN32)
-  set_property(TARGET lace APPEND PROPERTY COMPILE_DEFINITIONS
-    LACE_BUILTIN_FORBID_XPIPE)
+  # Nothing special.
 elseif (APPLE)
   set_property(TARGET lace APPEND PROPERTY COMPILE_DEFINITIONS
     LACE_BUILTIN_PERMIT_ELASTIC_POLL)
@@ -68,8 +67,8 @@ endif()
 target_link_libraries(lace cx_lib ${CMAKE_THREAD_LIBS_INIT} ${LACE_EXTRA_ELASTIC_AIO_LIBS})
 
 
-add_executable(best-match "best-match.c")
-target_link_libraries(best-match cx_lib)
+add_executable(bestmatch "best-match.c")
+target_link_libraries(bestmatch lace_lib)
 
 add_executable(execfd "execfd.c" "utilace.h")
 target_link_libraries(execfd cx_lib)
@@ -77,8 +76,8 @@ target_link_libraries(execfd cx_lib)
 add_executable(godo "godo.c" "utilace.h")
 target_link_libraries(godo cx_lib)
 
-add_executable(ssh-all "ssh-all.c")
-target_link_libraries(ssh-all cx_lib)
+add_executable(sshall "ssh-all.c")
+target_link_libraries(sshall lace_lib)
 
 add_executable(transpose "transpose.c")
 target_link_libraries(transpose cx_lib)
@@ -100,10 +99,9 @@ if (UNIX AND NOT APPLE)
   set_property (TARGET elastic_aio
     APPEND PROPERTY COMPILE_DEFINITIONS _POSIX_C_SOURCE=199309L)
 
-  add_executable(chatty
-    chatty.c)
-  target_link_libraries (chatty cx_lib ${LACE_EXTRA_ELASTIC_AIO_LIBS})
-  set_property (TARGET chatty
+  add_executable(chatty "chatty.c")
+  target_link_libraries(chatty lace_lib ${LACE_EXTRA_ELASTIC_AIO_LIBS})
+  set_property(TARGET chatty
     APPEND PROPERTY COMPILE_DEFINITIONS _POSIX_C_SOURCE=201112L)
 endif ()
 

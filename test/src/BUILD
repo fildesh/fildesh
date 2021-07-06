@@ -1,3 +1,13 @@
+load("//tool:spawn.bzl", "spawn_test")
+
+spawn_test(
+    name = "chatty_test",
+    args = ["$(location //src:chatty)"],
+    data = ["//src:chatty"],
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
+)
 
 cc_test(
     name = "delimit_edge_test",

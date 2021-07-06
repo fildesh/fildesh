@@ -1,6 +1,9 @@
 
-#include "cx/fileb.h"
-#include "cx/ospc.h"
+#include "lace.h"
+#include "lace_compat_errno.h"
+#include "lace_compat_fd.h"
+#include "lace_compat_sh.h"
+#include "lace_compat_string.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -11,7 +14,8 @@
 
 /** Show usage and exit with a bad status.
  **/
-  static void
+static
+  void
 show_usage_and_exit ()
 {
 #define f( s )  fputs(s "\n", stderr)
@@ -23,42 +27,43 @@ show_usage_and_exit ()
   exit(64);
 }
 
-
 /** Fork and run an ssh command to /host/.
  * Have it run the command(s) specified by /cmd/ in a POSIX shell.
  **/
-  static void
-spawn_ssh (const char* cmd, const char* host)
+static
+  void
+spawn_ssh(const char* ssh_exe, const char* cmd, const char* host)
 {
-  DeclTable( const_cstr, args );
-  OSPc ospc[] = {DEFAULT_OSPc};
-  bool good = true;
-  uint i;
+  int istat;
+  const lace_compat_fd_t fds_to_inherit[] = {0, -1};
+  lace_compat_fd_t fd_to_remote = -1;
+  lace_compat_fd_t fd_remote_source = -1;
+  LaceO* to_remote = NULL;
+  lace_compat_pid_t pid;
 
-  ospc->cmd = cons1_AlphaTab ("ssh");
-  PushTable( args, "-o" );
-  PushTable( args, "StrictHostKeyChecking=no" );
-  PushTable( args, "-o" );
-  PushTable( args, "PasswordAuthentication=no" );
-  PushTable( args, host );
-  PushTable( args, "sh" );
-  PushTable( args, "-s" );
-  PushTable( args, host );
+  istat = lace_compat_fd_pipe(&fd_to_remote, &fd_remote_source);
+  assert(istat == 0);
+  istat = lace_compat_fd_move_to(0, fd_remote_source);
+  assert(istat == 0);
+  to_remote = open_fd_LaceOF(fd_to_remote);
 
-  UFor( i, args.sz ) {
-    PushTable( ospc->args, cons1_AlphaTab (args.s[i]) );
+  pid = lace_compat_fd_spawnlp(
+      fds_to_inherit,
+      ssh_exe,
+      "-o", "StrictHostKeyChecking=no",
+      "-o", "PasswordAuthentication=no",
+      host,
+      "sh", "-s", host,
+      NULL);
+
+  if (pid >= 0) {
+    puts_LaceO(to_remote, cmd);
   }
-
-  stdxpipe_OSPc (ospc);
-  good = spawn_OSPc (ospc);
-  AssertSafe( good, "spawn()" );
-
-  oput_cstr_OFile (ospc->of, cmd);
-  good = close_OSPc (ospc);
-  AssertSafe( good, "close_OSPc()" );
-
-  lose_OSPc (ospc);
-  LoseTable( args );
+  close_LaceO(to_remote);
+  if (pid >= 0) {
+    istat = lace_compat_sh_wait(pid);
+    if (istat < 0) {lace_compat_errno_trace();}
+  }
 }
 
   int
@@ -66,18 +71,24 @@ main_ssh_all(unsigned argc, char** argv)
 {
   unsigned argi = 1;
   LaceX* in = NULL;
+  const char* ssh_exe = "ssh";
   char* line;
 
+  if (argv[argi] && 0 == strcmp(argv[argi], "-ssh")) {
+    argi += 1;
+    ssh_exe = argv[argi];
+    argi += 1;
+  }
   if (argi >= argc)  show_usage_and_exit ();
 
   in = open_LaceXF(argv[argi]);
   if (!in) {
-    DBog1( "File: %s", argv[argi] );
-    failout_sysCx ("Cannot open file for reading!");
+    lace_log_errorf("Cannot open file: %s", argv[argi]);
+    return 1;
   }
 
-  ++ argi;
-  if (argi >= argc)  show_usage_and_exit ();
+  argi += 1;
+  if (argi + 1 != argc)  show_usage_and_exit ();
 
   for (line = getline_LaceX(in);
        line;
@@ -85,14 +96,14 @@ main_ssh_all(unsigned argc, char** argv)
   {
     int q = 0;
     int r = strlen (line);
-    while (q < r && strchr (WhiteSpaceChars, line[q]  ))  ++q;
-    while (r > q && strchr (WhiteSpaceChars, line[r-1]))  --r;
+    while (q < r && strchr(lace_compat_string_blank_bytes, line[q]  )) {++q;}
+    while (r > q && strchr(lace_compat_string_blank_bytes, line[r-1])) {--r;}
 
     if (r == q)  continue;
-    line[r] = 0;
+    line[r] = '\0';
     line = &line[q];
 
-    spawn_ssh (argv[argi], line);
+    spawn_ssh(ssh_exe, argv[argi], line);
   }
 
   close_LaceX(in);
@@ -103,9 +114,7 @@ main_ssh_all(unsigned argc, char** argv)
   int
 main(int argc, char** argv)
 {
-  int argi = init_sysCx(&argc, &argv);
-  int istat = main_ssh_all(argc-(argi-1), &argv[argi-1]);
-  lose_sysCx();
+  int istat = main_ssh_all(argc, argv);
   return istat;
 }
 #endif

@@ -1,25 +1,4 @@
 
-config_setting(
-    name = "linux_os",
-    constraint_values = [
-        "@bazel_tools//platforms:linux",
-    ]
-)
-
-config_setting(
-    name = "mac_osx",
-    constraint_values = [
-        "@bazel_tools//platforms:osx",
-    ]
-)
-
-config_setting(
-    name = "windows_os",
-    constraint_values = [
-        "@bazel_tools//platforms:windows",
-    ]
-)
-
 cc_library(
     name = "cx_lib",
     srcs = [
@@ -30,13 +9,7 @@ cc_library(
         "bstree.c",
         "bstree.h",
         "def.h",
-        "fileb.c",
-        "fileb.h",
         "lgtable.h",
-        "ofile.c",
-        "ofile.h",
-        "ospc.c",
-        "ospc.h",
         "rbtree.c",
         "rbtree.h",
         "synhax.h",
@@ -45,14 +18,7 @@ cc_library(
         "table.h",
         "urandom.c",
         "urandom.h",
-        "xfile.c",
-        "xfile.h",
     ],
-    linkopts = select({
-        ":linux_os": [],
-        ":mac_osx": [],
-        ":windows_os": ["-DEFAULTLIB:ws2_32.lib"],
-    }),
     deps = [
         "//:lace_lib",
     ],
@@ -67,22 +33,8 @@ cc_test(
 )
 
 cc_test(
-    name = "fileb_test",
-    srcs = ["fileb_test.c"],
-    deps = [":cx_lib"],
-    size = "small",
-)
-
-cc_test(
     name = "lgtable_test",
     srcs = ["lgtable_test.c"],
-    deps = [":cx_lib"],
-    size = "small",
-)
-
-cc_test(
-    name = "ospc_test",
-    srcs = ["ospc_test.c"],
     deps = [":cx_lib"],
     size = "small",
 )

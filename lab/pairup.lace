@@ -90,5 +90,6 @@ $(X wrong_section) void
 
 # Re-order and print columns.
 $(XO a) sed -e 's/\(.*\)\t\(.*\)\t\(.*\)/\2\t\1\t\3/'
-$(X a) expand -t 15,26
+$(XO a) expand -t 15,26
+$(X a) stdout
 
