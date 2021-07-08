@@ -16,8 +16,6 @@ add_library (cx_lib STATIC
   "syscx.c"
   "syscx.h"
   "table.h"
-  "urandom.c"
-  "urandom.h"
   )
 
 add_executable(bittable_test

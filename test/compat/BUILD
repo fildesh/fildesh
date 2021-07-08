@@ -1,5 +1,11 @@
 
 cc_test(
+    name = "random_bytes_test",
+    srcs = ["random_bytes_test.c"],
+    deps = ["//:lace_compat_lib"],
+)
+
+cc_test(
     name = "sh_escape_argv_test",
     srcs = ["sh_escape_argv_test.c"],
     deps = ["//:lace_compat_lib"],

@@ -11,15 +11,23 @@ cc_library(
         "//compat:errno.c",
         "//compat:fd.c",
         "//compat:file.c",
+        "//compat:random.c",
         "//compat:sh.c",
         "//compat:string.c",
         "//include:lace_compat_errno.h",
         "//include:lace_compat_fd.h",
         "//include:lace_compat_file.h",
+        "//include:lace_compat_random.h",
         "//include:lace_compat_sh.h",
         "//include:lace_compat_string.h",
     ],
     includes = ["include"],
+    linkopts = select({
+        "@platforms//os:windows": [
+            "-DEFAULTLIB:advapi32.lib",  # For RtlGenRandom().
+        ],
+        "//conditions:default": [],
+    }),
     visibility = ["//visibility:public"],
 )
 

@@ -16,8 +16,6 @@ cc_library(
         "syscx.c",
         "syscx.h",
         "table.h",
-        "urandom.c",
-        "urandom.h",
     ],
     deps = [
         "//:lace_lib",
