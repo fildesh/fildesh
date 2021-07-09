@@ -11,7 +11,8 @@ typedef CRITICAL_SECTION pthread_mutex_t;
 static inline int
 pthread_create(pthread_t* thread, void* ignored, void* (*fn)(void*), void* arg) {
   (void) ignored;
-  *thread = (pthread_t) _beginthread((void (*)(void*)) fn, 0, arg);
+  *thread = (pthread_t) _beginthreadex(
+      NULL, 0, (void (*)(void*)) fn, arg, 0, NULL);
   return (*thread < 0 ? -1 : 0);
 }
 static inline int
