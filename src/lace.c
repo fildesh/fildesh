@@ -1185,9 +1185,7 @@ int lace_builtin_main(const char* name, unsigned argc, char** argv)
   return f(argc, argv);
 }
 
-static
-  void*
-builtin_command_thread_fn(BuiltinCommandThreadArg* st)
+LACE_POSIX_THREAD_FUNCTION(builtin_command_thread_fn, BuiltinCommandThreadArg*, st)
 {
   typedef struct LaceBuiltinMainMap LaceBuiltinMainMap;
   struct LaceBuiltinMainMap {
@@ -1271,7 +1269,6 @@ builtin_command_thread_fn(BuiltinCommandThreadArg* st)
   }
   free(st->argv);
   free(st);
-  return NULL;
 }
 
 static
@@ -1391,9 +1388,8 @@ spawn_commands (TableT(Command) cmds)
       arg->command = cmd;
       arg->argv = DupliT(char*, argv.s, argv.sz);
       cmd->pid = 0;
-      istat = pthread_create(&cmd->thread, NULL,
-                             (void* (*) (void*)) builtin_command_thread_fn,
-                             arg);
+      istat = pthread_create(
+          &cmd->thread, NULL, builtin_command_thread_fn, arg);
       if (istat < 0) {
         lace_log_errorf("Could not pthread_create(). File: %s", argv.s[0]);
         failout_sysCx(0);

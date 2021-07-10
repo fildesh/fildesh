@@ -17,7 +17,6 @@ typedef struct WritingThreadState WritingThreadState;
 struct WritingThreadState
 {
   bool done;
-  bool waiting;
   pthread_t thread;
   pthread_cond_t buf_cond;
   pthread_mutex_t buf_mutex;
@@ -31,7 +30,6 @@ static
 init_WritingThreadState(WritingThreadState* st)
 {
   st->done = false;
-  st->waiting = true;
   pthread_cond_init(&st->buf_cond, NULL);
   pthread_mutex_init(&st->buf_mutex, NULL);
   st->buf = default_LaceO();
@@ -70,21 +68,18 @@ StateMsg(const char* msg, const char* name) {
 #endif
 }
 
-static
-  void*
-writing_thread_fn(WritingThreadState* st) {
+LACE_POSIX_THREAD_FUNCTION(writing_thread_fn, WritingThreadState*, st)
+{
   bool done = false;
 
   while (!done) {
     pthread_mutex_lock(&st->buf_mutex);
     StateMsg("loop start", st->filename);
-    if (st->buf.size == 0 && !st->done) {
-      st->waiting = true;
-      StateMsg("waiting", st->filename);
+    StateMsg("waiting", st->filename);
+    while (st->buf.size == 0 && !st->done) {
       pthread_cond_wait(&st->buf_cond, &st->buf_mutex);
-      StateMsg("done waiting", st->filename);
-      st->waiting = false;
     }
+    StateMsg("done waiting", st->filename);
     done = st->done;
     memcpy(grow_LaceO(st->outfile, st->buf.size),
            &st->buf.at[0], st->buf.size);
@@ -110,7 +105,6 @@ writing_thread_fn(WritingThreadState* st) {
   close_LaceO(&st->buf);
   close_LaceO(st->outfile);
   st->outfile = NULL;
-  return NULL;
 }
 
 /** Reading is actually done on the main thread.**/
@@ -124,10 +118,7 @@ reading_routine(LaceX* in, WritingThreadState* wstates, size_t wstate_count)
 
   for (i = 0; i < wstate_count; ++i) {
     WritingThreadState* st = &wstates[i];
-    istat = pthread_create(
-        &st->thread, NULL,
-        (void* (*) (void*)) writing_thread_fn,
-        st);
+    istat = pthread_create(&st->thread, NULL, writing_thread_fn, st);
     if (istat != 0) {
       StateMsg("error on pthread create", "");
       nspawned = i;
@@ -150,9 +141,7 @@ reading_routine(LaceX* in, WritingThreadState* wstates, size_t wstate_count)
           memcpy(grow_LaceO(&st->buf, nbytes),
                  &in->at[in->off],
                  nbytes);
-          if (st->waiting) {
-            pthread_cond_signal(&st->buf_cond);
-          }
+          pthread_cond_signal(&st->buf_cond);
         }
         pthread_mutex_unlock(&st->buf_mutex);
       }
@@ -171,10 +160,8 @@ reading_routine(LaceX* in, WritingThreadState* wstates, size_t wstate_count)
     if (!st->done) {
       StateMsg("setting done", st->filename);
       st->done = true;
-      if (st->waiting) {
-        StateMsg("signaling done", st->filename);
-        pthread_cond_signal(&st->buf_cond);
-      }
+      StateMsg("signaling done", st->filename);
+      pthread_cond_signal(&st->buf_cond);
     }
     pthread_mutex_unlock(&st->buf_mutex);
     StateMsg("joining", st->filename);

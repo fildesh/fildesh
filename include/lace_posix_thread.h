@@ -1,19 +1,38 @@
 #ifndef LACE_POSIX_THREAD_H_
 #define LACE_POSIX_THREAD_H_
 
-#ifdef _MSC_VER
+#ifndef _MSC_VER
+#include <pthread.h>
+
+#define LACE_POSIX_THREAD_FUNCTION(name, T, arg) \
+  static void name##_lace_posix_thread_function(T arg); \
+  static void* name(void* voidarg) { \
+    name##_lace_posix_thread_function((T) voidarg); \
+    return NULL; \
+  } \
+  void name##_lace_posix_thread_function(T arg)
+#else
 #include <windows.h>
 #include <process.h>
 typedef HANDLE pthread_t;
 typedef CONDITION_VARIABLE pthread_cond_t;
 typedef CRITICAL_SECTION pthread_mutex_t;
 
+#define LACE_POSIX_THREAD_FUNCTION(name, T, arg) \
+  static void name##_lace_posix_thread_function(T arg); \
+  static unsigned __stdcall name(void* voidarg) { \
+    name##_lace_posix_thread_function((T) voidarg); \
+    return 0; \
+  } \
+  void name##_lace_posix_thread_function(T arg)
+
 static inline int
-pthread_create(pthread_t* thread, void* ignored, void* (*fn)(void*), void* arg) {
+pthread_create(pthread_t* thread, void* ignored, unsigned (__stdcall *fn)(void*), void* arg) {
   (void) ignored;
   *thread = (pthread_t) _beginthreadex(
-      NULL, 0, (void (*)(void*)) fn, arg, 0, NULL);
-  return (*thread < 0 ? -1 : 0);
+      NULL, 0, fn, arg, 0, NULL);
+  /* The handle is 0 on error.*/
+  return (*thread == 0 ? -1 : 0);
 }
 static inline int
 pthread_cond_init(pthread_cond_t* cond, void* ignored) {
@@ -66,8 +85,6 @@ pthread_mutex_destroy(pthread_mutex_t* mutex) {
   DeleteCriticalSection(mutex);
   return 0;
 }
-#else
-#include <pthread.h>
 #endif
 
 #endif  /* LACE_POSIX_THREAD_H_ */

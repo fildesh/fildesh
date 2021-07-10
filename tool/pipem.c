@@ -31,7 +31,8 @@ struct LaceToolPipemOutput {
   int consume_fd;
 };
 
-static void* produce_thread_fn(LaceToolPipemInput* arg) {
+LACE_POSIX_THREAD_FUNCTION(produce_thread_fn, LaceToolPipemInput*, arg)
+{
   size_t i = 0;
   while (i < arg->input_size) {
     size_t n = lace_compat_fd_write(
@@ -42,10 +43,10 @@ static void* produce_thread_fn(LaceToolPipemInput* arg) {
     i += n;
   }
   lace_compat_fd_close(arg->produce_fd);
-  return NULL;
 }
 
-static void* consume_thread_fn(LaceToolPipemOutput* arg) {
+LACE_POSIX_THREAD_FUNCTION(consume_thread_fn, LaceToolPipemOutput*, arg)
+{
   size_t capacity = 0;
   arg->output_size = 0;
   while (1) {
@@ -75,7 +76,6 @@ static void* consume_thread_fn(LaceToolPipemOutput* arg) {
     (*arg->output_storage)[arg->output_size] = '\0';
   }
   lace_compat_fd_close(arg->consume_fd);
-  return NULL;
 }
 
   size_t
@@ -124,16 +124,12 @@ lace_tool_pipem(size_t input_size, const char* input_data, int const source_fd,
 
   if (produce_fd >= 0) {
     istat = pthread_create(
-        &produce_thread, NULL,
-        (void* (*) (void*)) produce_thread_fn,
-        &produce_thread_arg);
+        &produce_thread, NULL, produce_thread_fn, &produce_thread_arg);
     assert(istat == 0);
   }
   if (consume_fd >= 0) {
     istat = pthread_create(
-        &consume_thread, NULL,
-        (void* (*) (void*)) consume_thread_fn,
-        &consume_thread_arg);
+        &consume_thread, NULL, consume_thread_fn, &consume_thread_arg);
     assert(istat == 0);
   }
 
