@@ -21,3 +21,8 @@ bazel run --config=asan-libfuzzer //test/fuzz:grow_mpop_fuzz_test_run
 bazel test -c dbg --test_output=all --cache_test_results=no --run_under='valgrind --trace-children=yes' //test/src:kve_test
 ```
 
+### Lint
+```shell
+# Casting function pointers is usually unsafe (https://stackoverflow.com/a/559671/5039395).
+grep -E -e '\([^()]*\(\*\) *\([^()]*\)' -R builtin compat src test tool
+```

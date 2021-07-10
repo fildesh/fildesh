@@ -8,10 +8,9 @@
 int
 main_transpose(unsigned argc, char** argv);
 
-static void run_transpose(void* ignored) {
+LACE_TOOL_PIPEM_NULLARY_CALLBACK(run_transpose) {
   const char* argv[] = {"transpose", ",", NULL};
   int istat = main_transpose(2, (char**)argv);
-  (void) ignored;
   assert(istat == 0);
 }
 

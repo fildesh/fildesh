@@ -13,7 +13,7 @@ struct PipemFnArg {
 
 int lace_builtin_time2sec_main(int, char**, LaceX**, LaceO**);
 
-void run_waitdo(const PipemFnArg* st) {
+LACE_TOOL_PIPEM_CALLBACK(run_waitdo, const PipemFnArg*, st) {
   lace_compat_fd_t fds_to_inherit[] = {0, 1, -1};
   int istat = lace_compat_fd_spawnlp_wait(
       fds_to_inherit,
@@ -38,7 +38,7 @@ int main(int argc, char** argv) {
 
   output_size = lace_tool_pipem(
       input_data_size, input_data, 0,
-      (void (*) (void*))run_waitdo, st,
+      run_waitdo, st,
       1, &output_data);
   assert(output_size == expect_size);
   assert(0 == memcmp(output_data, expect_data, expect_size));

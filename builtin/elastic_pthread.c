@@ -68,7 +68,7 @@ StateMsg(const char* msg, const char* name) {
 #endif
 }
 
-LACE_POSIX_THREAD_FUNCTION(writing_thread_fn, WritingThreadState*, st)
+LACE_POSIX_THREAD_CALLBACK(writing_thread_fn, WritingThreadState*, st)
 {
   bool done = false;
 

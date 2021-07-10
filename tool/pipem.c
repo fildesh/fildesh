@@ -31,7 +31,7 @@ struct LaceToolPipemOutput {
   int consume_fd;
 };
 
-LACE_POSIX_THREAD_FUNCTION(produce_thread_fn, LaceToolPipemInput*, arg)
+LACE_POSIX_THREAD_CALLBACK(produce_thread_fn, LaceToolPipemInput*, arg)
 {
   size_t i = 0;
   while (i < arg->input_size) {
@@ -45,7 +45,7 @@ LACE_POSIX_THREAD_FUNCTION(produce_thread_fn, LaceToolPipemInput*, arg)
   lace_compat_fd_close(arg->produce_fd);
 }
 
-LACE_POSIX_THREAD_FUNCTION(consume_thread_fn, LaceToolPipemOutput*, arg)
+LACE_POSIX_THREAD_CALLBACK(consume_thread_fn, LaceToolPipemOutput*, arg)
 {
   size_t capacity = 0;
   arg->output_size = 0;

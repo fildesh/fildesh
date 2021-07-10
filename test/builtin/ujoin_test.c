@@ -13,7 +13,7 @@ struct PipemFnArg {
   const char* argv[10];
 };
 
-static void run_query_ujoin(PipemFnArg* st) {
+LACE_TOOL_PIPEM_CALLBACK(run_query_ujoin, PipemFnArg*, st) {
   if (!st->input_large) {
     int istat;
     istat = lace_compat_fd_spawnvp_wait(st->fds, st->argv);
@@ -23,7 +23,7 @@ static void run_query_ujoin(PipemFnArg* st) {
     st->input_large = NULL;
     lace_tool_pipem(
         strlen(input_large), input_large, 0,
-        (void (*) (void*))run_query_ujoin, st,
+        run_query_ujoin, st,
         -1, NULL);
   }
 }
@@ -82,7 +82,7 @@ int main(int argc, char** argv) {
 
   output_size = lace_tool_pipem(
       strlen(input_small), input_small, inherit_fds[0],
-      (void (*) (void*))run_query_ujoin, st,
+      run_query_ujoin, st,
       1, &output_data);
 
   assert(output_size == expect_size);

@@ -18,7 +18,7 @@ struct ComparispawnFnArg {
   int status;
 };
 
-static void run_fn(ComparispawnFnArg* st) {
+LACE_TOOL_PIPEM_CALLBACK(run_fn, ComparispawnFnArg*, st) {
   const lace_compat_fd_t fds_to_close[] = {1, -1};
   st->status = lace_compat_fd_spawnvp_wait(
       fds_to_close, (const char**)st->argv);
@@ -40,7 +40,7 @@ int main(int argc, char** argv)
   st->status = -1;
   output_size = lace_tool_pipem(
       0, NULL, -1,
-      (void (*) (void*))run_fn, st,
+      run_fn, st,
       1, &output_data);
 
   if (st->status != 0) {

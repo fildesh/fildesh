@@ -15,7 +15,7 @@ struct PipemFnArg {
   const char* expect_string;
 };
 
-static void run_expect_elastic(PipemFnArg* st) {
+LACE_TOOL_PIPEM_CALLBACK(run_expect_elastic, PipemFnArg*, st) {
   lace_compat_fd_t fd = st->tee_fds[st->tee_index];
   const unsigned tee_index = st->tee_index++;
   if (fd < 0) {
@@ -32,7 +32,7 @@ static void run_expect_elastic(PipemFnArg* st) {
     lace_log_tracef("Piping tee_index %u", tee_index);
     output_size = lace_tool_pipem(
         0, NULL, -1,
-        (void (*) (void*))run_expect_elastic, st,
+        run_expect_elastic, st,
         fd, &output_data);
     lace_log_tracef("Checking tee_index %u", tee_index);
     assert(output_size == st->expect_size);
@@ -64,7 +64,7 @@ int main(int argc, char** argv) {
   }
   lace_tool_pipem(
       st->expect_size, st->expect_string, 0,
-      (void (*) (void*))run_expect_elastic, st,
+      run_expect_elastic, st,
       -1, NULL);
 
   return 0;

@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-void run_void(const char* void_exe) {
+LACE_TOOL_PIPEM_CALLBACK(run_void, const char*, void_exe) {
   const int fds_to_close[] = {0, 1, -1};
   int istat = lace_compat_fd_spawnlp_wait(fds_to_close, void_exe, NULL);
   assert(istat == 0);
@@ -27,7 +27,7 @@ int main(int argc, char** argv) {
 
   output_size = lace_tool_pipem(
       input_size, input_data, 0,
-      (void (*) (void*))run_void, void_exe,
+      run_void, void_exe,
       1, NULL);
   assert(output_size == 0);
   free(input_data);

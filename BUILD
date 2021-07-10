@@ -55,9 +55,7 @@ cc_library(
     srcs = [
         "//include:lace_posix_thread.h",
         "//include:lace_tool.h",
-        "//tool:expectish.c",
         "//tool:pipem.c",
-        "//tool:shout.c",
     ],
     defines = ["LACE_TOOL_LIBRARY"],
     includes = ["include"],

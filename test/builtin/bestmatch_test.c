@@ -13,7 +13,7 @@ struct PipemFnArg {
   const char* argv[10];
 };
 
-static void run_query_bestmatch(PipemFnArg* st) {
+LACE_TOOL_PIPEM_CALLBACK(run_query_bestmatch, PipemFnArg*, st) {
   if (!st->input_query) {
     int istat;
     istat = lace_compat_fd_spawnvp_wait(st->fds, st->argv);
@@ -23,7 +23,7 @@ static void run_query_bestmatch(PipemFnArg* st) {
     st->input_query = NULL;
     lace_tool_pipem(
         strlen(input_query), input_query, 0,
-        (void (*) (void*))run_query_bestmatch, st,
+        run_query_bestmatch, st,
         -1, NULL);
   }
 }
@@ -79,7 +79,7 @@ int main(int argc, char** argv) {
 
   output_size = lace_tool_pipem(
       strlen(input_table), input_table, inherit_fds[0],
-      (void (*) (void*))run_query_bestmatch, st,
+      run_query_bestmatch, st,
       1, &output_data);
 
   assert(output_size == expect_size);

@@ -6,9 +6,8 @@ add_executable(shout_stdout "shout.c")
 add_executable(spawn spawn.c)
 
 add_library(lace_tool_lib STATIC
-  "expectish.c"
   "pipem.c"
-  "shout.c"
+  "${CMAKE_SOURCE_DIR}/include/lace_posix_thread.h"
   "${CMAKE_SOURCE_DIR}/include/lace_tool.h"
   )
 set_property(TARGET lace_tool_lib

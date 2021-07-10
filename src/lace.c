@@ -1185,7 +1185,7 @@ int lace_builtin_main(const char* name, unsigned argc, char** argv)
   return f(argc, argv);
 }
 
-LACE_POSIX_THREAD_FUNCTION(builtin_command_thread_fn, BuiltinCommandThreadArg*, st)
+LACE_POSIX_THREAD_CALLBACK(builtin_command_thread_fn, BuiltinCommandThreadArg*, st)
 {
   typedef struct LaceBuiltinMainMap LaceBuiltinMainMap;
   struct LaceBuiltinMainMap {

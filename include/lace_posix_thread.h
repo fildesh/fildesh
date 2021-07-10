@@ -4,13 +4,13 @@
 #ifndef _MSC_VER
 #include <pthread.h>
 
-#define LACE_POSIX_THREAD_FUNCTION(name, T, arg) \
-  static void name##_lace_posix_thread_function(T arg); \
+#define LACE_POSIX_THREAD_CALLBACK(name, T, arg) \
+  static void name##_lace_posix_thread_callback(T arg); \
   static void* name(void* voidarg) { \
-    name##_lace_posix_thread_function((T) voidarg); \
+    name##_lace_posix_thread_callback((T) voidarg); \
     return NULL; \
   } \
-  void name##_lace_posix_thread_function(T arg)
+  void name##_lace_posix_thread_callback(T arg)
 #else
 #include <windows.h>
 #include <process.h>
@@ -18,13 +18,13 @@ typedef HANDLE pthread_t;
 typedef CONDITION_VARIABLE pthread_cond_t;
 typedef CRITICAL_SECTION pthread_mutex_t;
 
-#define LACE_POSIX_THREAD_FUNCTION(name, T, arg) \
-  static void name##_lace_posix_thread_function(T arg); \
+#define LACE_POSIX_THREAD_CALLBACK(name, T, arg) \
+  static void name##_lace_posix_thread_callback(T arg); \
   static unsigned __stdcall name(void* voidarg) { \
-    name##_lace_posix_thread_function((T) voidarg); \
+    name##_lace_posix_thread_callback((T) voidarg); \
     return 0; \
   } \
-  void name##_lace_posix_thread_function(T arg)
+  void name##_lace_posix_thread_callback(T arg)
 
 static inline int
 pthread_create(pthread_t* thread, void* ignored, unsigned (__stdcall *fn)(void*), void* arg) {
