@@ -8,21 +8,35 @@
 #include <fcntl.h>
 #include <stdarg.h>
 
-#ifdef _MSC_VER
+#ifndef _MSC_VER
+#include <unistd.h>
+#else
 #include <windows.h>
 #include <io.h>
-#else
-#include <unistd.h>
+/* For _CrtSetReportMode().*/
+#include <crtdbg.h>
+
+static void invalid_parameter_noop_handler(
+    const wchar_t* expression,
+    const wchar_t* function,
+    const wchar_t* file,
+    unsigned int line,
+    uintptr_t reserved)
+{
+  (void) expression;
+  (void) function;
+  (void) file;
+  (void) line;
+  (void) reserved;
+  /* Nothing.*/
+}
 #endif
+
 
   int
 lace_compat_fd_cloexec(int fd)
 {
-#ifdef _MSC_VER
-  BOOL success = SetHandleInformation(
-      (HANDLE)_get_osfhandle(fd), HANDLE_FLAG_INHERIT, 0);
-  if (!success) {return -1;}
-#else
+#ifndef _MSC_VER
   int istat;
   int flags = fcntl(fd, F_GETFD);
   if (flags == -1) {return -1;}
@@ -30,6 +44,10 @@ lace_compat_fd_cloexec(int fd)
   flags |= FD_CLOEXEC;
   istat = fcntl(fd, F_SETFD, flags);
   if (istat == -1) {return -1;}
+#else
+  BOOL success = SetHandleInformation(
+      (HANDLE)_get_osfhandle(fd), HANDLE_FLAG_INHERIT, 0);
+  if (!success) {return -1;}
 #endif
   return 0;
 }
@@ -37,11 +55,7 @@ lace_compat_fd_cloexec(int fd)
   int
 lace_compat_fd_inherit(int fd)
 {
-#ifdef _MSC_VER
-  BOOL success = SetHandleInformation(
-      (HANDLE)_get_osfhandle(fd), HANDLE_FLAG_INHERIT, 1);
-  if (!success) {return -1;}
-#else
+#ifndef _MSC_VER
   int istat;
   int flags = fcntl(fd, F_GETFD);
   if (flags == -1) {return -1;}
@@ -49,6 +63,10 @@ lace_compat_fd_inherit(int fd)
   flags &= ~FD_CLOEXEC;
   istat = fcntl(fd, F_SETFD, flags);
   if (istat == -1) {return -1;}
+#else
+  BOOL success = SetHandleInformation(
+      (HANDLE)_get_osfhandle(fd), HANDLE_FLAG_INHERIT, 1);
+  if (!success) {return -1;}
 #endif
   return 0;
 }
@@ -58,10 +76,10 @@ lace_compat_fd_close(lace_compat_fd_t fd)
 {
   int istat;
   assert(fd >= 0);
-#ifdef _MSC_VER
-  istat = _close(fd);
-#else
+#ifndef _MSC_VER
   istat = close(fd);
+#else
+  istat = _close(fd);
 #endif
   if (istat != 0) {
     int e = lace_compat_errno_trace();
@@ -77,10 +95,15 @@ static
 lace_compat_fd_duplicate(lace_compat_fd_t fd)
 {
   int newfd;
-#ifdef _MSC_VER
-  newfd = _dup(fd);
-#else
+#ifndef _MSC_VER
   newfd = dup(fd);
+#else
+  const _invalid_parameter_handler old_handler =
+    _set_thread_local_invalid_parameter_handler(invalid_parameter_noop_handler);
+  const int old_report_mode = _CrtSetReportMode(_CRT_ASSERT, 0);
+  newfd = _dup(fd);
+  _CrtSetReportMode(_CRT_ASSERT, old_report_mode);
+  _set_thread_local_invalid_parameter_handler(old_handler);
 #endif
   if (0 > newfd) {return -1;}
   if (0 != lace_compat_fd_cloexec(newfd)) {return -1;}
@@ -91,10 +114,10 @@ lace_compat_fd_duplicate(lace_compat_fd_t fd)
 lace_compat_fd_move_to(lace_compat_fd_t dst, lace_compat_fd_t oldfd)
 {
   if (dst != oldfd) {
-#ifdef _MSC_VER
-    int istat = _dup2(oldfd, dst);
-#else
+#ifndef _MSC_VER
     int istat = dup2(oldfd, dst);
+#else
+    int istat = _dup2(oldfd, dst);
 #endif
     if (istat < 0) {lace_compat_fd_close(oldfd); return -1;}
     if (0 != lace_compat_fd_close(oldfd)) {lace_compat_fd_close(dst); return -1;}
@@ -106,14 +129,26 @@ lace_compat_fd_move_to(lace_compat_fd_t dst, lace_compat_fd_t oldfd)
 lace_compat_fd_move_off_stdio(lace_compat_fd_t fd)
 {
   unsigned i;
+  int e = 0;
   lace_compat_fd_t fds[4] = {-1, -1, -1, -1};
   if (fd < 0 || fd > 2) {return fd;}
   fds[0] = fd;
   for (i = 1; i < 4; ++i) {
     fds[i] = lace_compat_fd_duplicate(fd);
-    if (fds[i] < 0 || fds[i] > 2) {
+    if (fds[i] > 2) {
+      /* We'll return this file descriptor; avoid closing it.*/
       fd = fds[i];
       fds[i] = -1;
+      break;
+    }
+    if (fds[i] < 0) {
+      e = lace_compat_errno_trace();
+      if (e == EBADF) {
+        /* Original file descriptor is bad; avoid closing it.*/
+        fds[0] = fds[i-1];
+        fds[i-1] = -1;
+      }
+      fd = -1;
       break;
     }
   }
@@ -122,6 +157,8 @@ lace_compat_fd_move_off_stdio(lace_compat_fd_t fd)
   }
   if (fd >= 0) {
     lace_compat_fd_cloexec(fd);
+  } else {
+    errno = e;
   }
   return fd;
 }
@@ -131,10 +168,10 @@ lace_compat_fd_reserve()
 {
   int fds[2] = {-1, -1};
   int istat;
-#ifdef _MSC_VER
-  istat = _pipe(fds, 0, 0);
-#else
+#ifndef _MSC_VER
   istat = pipe(fds);
+#else
+  istat = _pipe(fds, 0, 0);
 #endif
   if (istat < 0) {return istat;}
   if (fds[0] > 2) {
@@ -160,10 +197,10 @@ lace_compat_fd_pipe(lace_compat_fd_t* ret_produce,
 {
   int fds[2] = {-1, -1};
   int istat;
-#ifdef _MSC_VER
-  istat = _pipe(fds, 0, 0);
-#else
+#ifndef _MSC_VER
   istat = pipe(fds);
+#else
+  istat = _pipe(fds, 0, 0);
 #endif
 
   if (istat == 0 && fds[0] <= 2) {
@@ -193,10 +230,10 @@ lace_compat_fd_pipe(lace_compat_fd_t* ret_produce,
   size_t
 lace_compat_fd_write(lace_compat_fd_t fd, const void* data, size_t data_size)
 {
-#ifdef _MSC_VER
-  long n = _write(fd, data, data_size);
-#else
+#ifndef _MSC_VER
   ssize_t n = write(fd, data, data_size);
+#else
+  long n = _write(fd, data, data_size);
 #endif
   if (n <= 0) {return 0;}
   return (size_t)n;
@@ -205,10 +242,10 @@ lace_compat_fd_write(lace_compat_fd_t fd, const void* data, size_t data_size)
   size_t
 lace_compat_fd_read(lace_compat_fd_t fd, void* buf, size_t buf_capacity)
 {
-#ifdef _MSC_VER
-  long n = _read(fd, buf, buf_capacity);
-#else
+#ifndef _MSC_VER
   ssize_t n = read(fd, buf, buf_capacity);
+#else
+  long n = _read(fd, buf, buf_capacity);
 #endif
   if (n <= 0) {return 0;}
   return (size_t)n;

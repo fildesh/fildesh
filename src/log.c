@@ -40,7 +40,7 @@ static const char* filename_to_print(const char* file) {
   if (tmp) {file = &tmp[1];}
   tmp = strrchr(file, '\\');
   if (tmp) {file = &tmp[1];}
-  return tmp;
+  return file;
 }
 
 

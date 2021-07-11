@@ -79,13 +79,13 @@ open_sibling_LaceOF(const char* sibling, const char* filename)
   if (!filename) {return NULL;}
 
   if (0 == strcmp("-", filename) || 0 == strcmp(dev_stdout, filename)) {
-    return open_fd_LaceOF(1);
+    return open_fd_LaceO(1);
   }
   if (0 == strncmp(dev_fd_prefix, filename, dev_fd_prefix_length)) {
     int fd = -1;
     char* s = lace_parse_int(&fd, &filename[dev_fd_prefix_length]);
     if (!s) {return NULL;}
-    return open_fd_LaceOF(fd);
+    return open_fd_LaceO(fd);
   }
 
   *of = default_LaceOF();
@@ -114,7 +114,7 @@ open_sibling_LaceOF(const char* sibling, const char* filename)
         _O_BINARY |
         _O_NOINHERIT);
     const int mode = _S_IREAD | _S_IWRITE;
-    of->fd = _open(filename, flags, mode);
+    of->fd = _open(of->filename, flags, mode);
 #else
     const int flags = (
         O_WRONLY | O_CREAT | O_TRUNC |
@@ -123,7 +123,7 @@ open_sibling_LaceOF(const char* sibling, const char* filename)
     const int mode
       = S_IWUSR | S_IWGRP | S_IWOTH
       | S_IRUSR | S_IRGRP | S_IROTH;
-    of->fd = open(filename, flags, mode);
+    of->fd = open(of->filename, flags, mode);
     if (of->fd >= 0) {
       lace_compat_fd_cloexec(of->fd);
     }
@@ -141,9 +141,10 @@ open_sibling_LaceOF(const char* sibling, const char* filename)
 }
 
   LaceO*
-open_fd_LaceOF(lace_fd_t fd)
+open_fd_LaceO(lace_fd_t fd)
 {
-  LaceO filename[1] = {DEFAULT_LaceO};
+  char filename[LACE_FD_PATH_SIZE_MAX];
+  unsigned filename_size;
   LaceOF* of;
   fd = lace_compat_fd_move_off_stdio(fd);
   if (fd < 0) {return NULL;}
@@ -152,10 +153,9 @@ open_fd_LaceOF(lace_fd_t fd)
   /* File descriptor.*/
   of->fd = fd;
   /* Filename.*/
-  puts_LaceO(filename, "/dev/fd/");
-  print_int_LaceO(filename, fd);
-  putc_LaceO(filename, '\0');
-  of->filename = &filename->at[0];
+  filename_size = 1 + lace_encode_fd_path(filename, fd);
+  of->filename = (char*)malloc(filename_size);
+  memcpy(of->filename, filename, filename_size);
   /* Cloexec.*/
   lace_compat_fd_cloexec(fd);
   return &of->base;
@@ -180,7 +180,7 @@ open_arg_LaceOF(unsigned argi, char** argv, LaceO** outputv)
         return NULL; /* Better not steal the real stdout.*/
       }
     }
-    return open_fd_LaceOF(1);
+    return open_fd_LaceO(1);
   }
   return open_LaceOF(argv[argi]);
 }

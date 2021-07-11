@@ -76,7 +76,7 @@ int main (int argc, char** argv)
   if (connecting) {
     char buf[1024];
     int sock = -1;
-    LaceX* in = open_fd_LaceXF(0);
+    LaceX* in = open_fd_LaceX(0);
 
     /* Wait for parent proc to be ready.*/
     slurp_LaceX(in);

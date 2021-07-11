@@ -50,14 +50,12 @@ lace_builtin_time2sec_main(unsigned argc, char** argv,
   unsigned width = 0;
 
   if (argi < argc && 0 == strcmp("-w", argv[argi])) {
+    int tmp_int = -1;
     ++ argi;
-    if (argi < argc) {
-      int tmp_int = -1;
-      if (lace_parse_int(&tmp_int, argv[argi++]) && tmp_int >= 0) {
-        width = (unsigned) tmp_int;
-      } else {
-        return 64;
-      }
+    if (lace_parse_int(&tmp_int, argv[argi++]) && tmp_int >= 0) {
+      width = (unsigned) tmp_int;
+    } else {
+      return 64;
     }
   }
 

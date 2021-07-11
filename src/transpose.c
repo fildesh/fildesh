@@ -2,6 +2,7 @@
 /** Simple utility to transpose based on a delimiter.**/
 
 #include "lace.h"
+#include "lace_compat_string.h"
 #include "cx/alphatab.h"
 #include "cx/table.h"
 
@@ -23,7 +24,7 @@ main_transpose(unsigned argc, char** argv)
     return 64;
   }
 
-  in = open_fd_LaceXF(0);
+  in = open_fd_LaceX(0);
   for (slice = sliceline_LaceX(in);
        slice.at;
        slice = sliceline_LaceX(in))
@@ -42,7 +43,7 @@ main_transpose(unsigned argc, char** argv)
       if (width > max_width) {
         max_width = width;
       }
-      PushTable( *row, dup_cstr(field) );
+      PushTable( *row, lace_compat_string_duplicate(field) );
       if (row->sz > ncols) {
         ncols = row->sz;
       }
@@ -55,7 +56,7 @@ main_transpose(unsigned argc, char** argv)
   }
   close_LaceX(in);
 
-  out = open_fd_LaceOF(1);
+  out = open_fd_LaceO(1);
   for (i = 0; i < ncols; ++i) {
     unsigned j;
     for (j = 0; j < mat.sz; ++j) {

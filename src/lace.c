@@ -9,6 +9,7 @@
 #include "lace_compat_errno.h"
 #include "lace_compat_fd.h"
 #include "lace_compat_sh.h"
+#include "lace_compat_string.h"
 #include "lace_posix_thread.h"
 #include "utilace.h"
 
@@ -230,6 +231,15 @@ lose_Commands (TableT(Command)* cmds)
   free(cmds);
 }
 
+static char* lace_strdup(const char* s) {
+  return lace_compat_string_duplicate(s);
+}
+
+static char* lace_fd_strdup(lace_fd_t fd) {
+  char buf[LACE_INT_BASE10_SIZE_MAX];
+  lace_encode_int_base10(buf, fd);
+  return lace_strdup(buf);
+}
 
   static SymVal*
 getf_SymVal (Associa* map, const char* s)
@@ -249,18 +259,18 @@ getf_SymVal (Associa* map, const char* s)
   static uint
 count_ws (const char* s)
 {
-  return strspn (s, WhiteSpaceChars);
+  return strspn (s, lace_compat_string_blank_bytes);
 }
   static uint
 count_non_ws (const char* s)
 {
-  return strcspn (s, WhiteSpaceChars);
+  return strcspn (s, lace_compat_string_blank_bytes);
 }
   static uint
 trim_trailing_ws (char* s)
 {
   uint n = strlen (s);
-  while (0 < n && strchr (WhiteSpaceChars, s[n-1]))  --n;
+  while (0 < n && strchr (lace_compat_string_blank_bytes, s[n-1]))  --n;
   s[n] = '\0';
   return n;
 }
@@ -302,10 +312,10 @@ parse_here_doc (LaceX* in, const char* term, size_t* text_nlines)
   if (term[3] == ':')
   {
     term = strchr (term, ')');
-    if (!term)  return dup_cstr ("");
+    if (!term) {return lace_strdup("");}
     term = &term[1];
     term = &term[count_ws (term)];
-    s = dup_cstr (term);
+    s = lace_strdup(term);
     trim_trailing_ws (s);
     return s;
   }
@@ -524,7 +534,7 @@ parse_file(TableT(Command)* cmds, LaceX* in, const char* this_filename)
         PushTable( cmd->extra_args, forget_AlphaTab (&xname));
       }
       PushTable( cmd->args, *TopTable( cmd->extra_args ) );
-      cmd->line = dup_cstr (sym);
+      cmd->line = lace_strdup(sym);
     }
     else
     {
@@ -660,7 +670,7 @@ add_iarg_Command (Command* cmd, int in, bool scrap_newline)
   static char*
 add_extra_arg_Command (Command* cmd, const char* s)
 {
-  PushTable( cmd->extra_args, dup_cstr (s) );
+  PushTable( cmd->extra_args, lace_strdup(s) );
   return *TopTable( cmd->extra_args );
 }
 
@@ -677,7 +687,7 @@ add_tmp_file_Command (Command* cmd, uint x, const char* tmpdir)
 {
   char buf[1024];
   sprintf (buf, "%s/%u", tmpdir, x);
-  PushTable( cmd->tmp_files, dup_cstr (buf) );
+  PushTable( cmd->tmp_files, lace_strdup(buf) );
   return cmd->tmp_files.s[cmd->tmp_files.sz - 1];
 }
 
@@ -1141,6 +1151,7 @@ int (*lace_specific_util (const char* arg)) (unsigned, char**)
   static const LaceBuiltinMap builtins[] = {
     {"add", lace_main_add},
     {"best-match", main_best_match},
+    {"bestmatch", main_best_match},
     {"cmp", lace_main_cmp},
     {"elastic", lace_main_elastic},
     {"elastic_pthread", lace_main_elastic_pthread},
@@ -1232,11 +1243,11 @@ LACE_POSIX_THREAD_CALLBACK(builtin_command_thread_fn, BuiltinCommandThreadArg*, 
     outputs[i] = NULL;
   }
   if (cmd->stdis >= 0) {
-    inputs[0] = open_fd_LaceXF(cmd->stdis);
+    inputs[0] = open_fd_LaceX(cmd->stdis);
     cmd->stdis = -1;
   }
   if (cmd->stdos >= 0) {
-    outputs[0] = open_fd_LaceOF(cmd->stdos);
+    outputs[0] = open_fd_LaceO(cmd->stdos);
     cmd->stdos = -1;
   }
 
@@ -1326,53 +1337,53 @@ spawn_commands (TableT(Command) cmds)
       PushTable( fdargs, p );
     }
 
-    PushTable( argv, dup_cstr (exename_of_sysCx ()) );
-    PushTable( argv, dup_cstr (MagicArgv1_sysCx) );
+    PushTable( argv, lace_strdup(exename_of_sysCx ()) );
+    PushTable( argv, lace_strdup(MagicArgv1_sysCx) );
 
     if (cmd->stdis >= 0)
     {
-      PushTable( argv, dup_cstr ("-stdxfd") );
-      PushTable( argv, itoa_dup_cstr (cmd->stdis) );
+      PushTable( argv, lace_strdup("-stdxfd") );
+      PushTable( argv, lace_fd_strdup(cmd->stdis) );
     }
     if (cmd->stdos >= 0)
     {
-      PushTable( argv, dup_cstr ("-stdofd") );
-      PushTable( argv, itoa_dup_cstr (cmd->stdos) );
+      PushTable( argv, lace_strdup("-stdofd") );
+      PushTable( argv, lace_fd_strdup(cmd->stdos) );
     }
 
     if (fdargs.sz > 0) {
-      PushTable( argv, dup_cstr ("--") );
-      PushTable( argv, dup_cstr ("-as") );
-      PushTable( argv, dup_cstr ("execfd") );
-      PushTable( argv, dup_cstr ("-exe") );
-      PushTable( argv, dup_cstr (cmd->args.s[0]) );
+      PushTable( argv, lace_strdup("--") );
+      PushTable( argv, lace_strdup("-as") );
+      PushTable( argv, lace_strdup("execfd") );
+      PushTable( argv, lace_strdup("-exe") );
+      PushTable( argv, lace_strdup(cmd->args.s[0]) );
 
       for (j = 0; j < fdargs.sz; ++j)
       {
         uint2 p = fdargs.s[j];
-        PushTable( cmd->extra_args, itoa_dup_cstr (p.s[1]) );
+        PushTable( cmd->extra_args, lace_fd_strdup(p.s[1]) );
         cmd->args.s[p.s[0]] = *TopTable( cmd->extra_args );
-        PushTable( argv, itoa_dup_cstr (p.s[0]) );
+        PushTable( argv, lace_fd_strdup(p.s[0]) );
       }
 
-      PushTable( argv, dup_cstr ("--") );
-      PushTable( argv, dup_cstr (cmd->args.s[0]) );
+      PushTable( argv, lace_strdup("--") );
+      PushTable( argv, lace_strdup(cmd->args.s[0]) );
     }
     else if (lace_specific_util (cmd->args.s[0])) {
       use_thread = lace_builtin_is_threadsafe(cmd->args.s[0]);
-      PushTable( argv, dup_cstr ("--") );
-      PushTable( argv, dup_cstr ("-as") );
-      PushTable( argv, dup_cstr (cmd->args.s[0]));
+      PushTable( argv, lace_strdup("--") );
+      PushTable( argv, lace_strdup("-as") );
+      PushTable( argv, lace_strdup(cmd->args.s[0]));
     }
     else {
       fix_known_flags_Command(cmd);
-      PushTable( argv, dup_cstr ("-exec") );
-      PushTable( argv, dup_cstr (cmd->args.s[0]));
-      PushTable( argv, dup_cstr ("--") );
+      PushTable( argv, lace_strdup("-exec") );
+      PushTable( argv, lace_strdup(cmd->args.s[0]));
+      PushTable( argv, lace_strdup("--") );
     }
 
     for (j = 1; j < cmd->args.sz; ++j)
-      PushTable( argv, dup_cstr (cmd->args.s[j]) );
+      PushTable( argv, lace_strdup(cmd->args.s[j]) );
 
     PushTable( argv, 0 );
 
@@ -1426,8 +1437,6 @@ int main_lace(unsigned argc, char** argv)
 {
   DeclTable( AlphaTab, script_args );
   TableT(Command)* cmds = NULL;
-  const char* stdin_sym = 0;
-  const char* stdout_sym = 0;
   bool use_stdin = true;
   AlphaTab* tmppath = NULL;
   LaceX* in = NULL;
@@ -1468,54 +1477,43 @@ int main_lace(unsigned argc, char** argv)
       argv[argi] = argv[0];
       return lace_builtin_main(builtin_name, argc-argi, &argv[argi]);
     }
-    else if (eq_cstr (arg, "-stdio")) {
-      arg = argv[argi++];
-      stdin_sym = arg;
-      stdout_sym = arg;
-    }
     else if (eq_cstr (arg, "-stdin")) {
-      stdin_sym = argv[argi++];
-    }
-    else if (eq_cstr (arg, "-stdout")) {
-      stdout_sym = argv[argi++];
-    }
-    else if (eq_cstr (arg, "-stdinfile")) {
       const char* stdin_filepath = argv[argi++];
       lace_fd_t fd = open_lace_xfd(stdin_filepath);
       if (fd >= 0) {
         istat = lace_compat_fd_move_to(0, fd);
         lace_compat_fd_inherit(0);
         if (istat != 0) {
-          failout_sysCx("Failed to dup2 -stdinfile.");
+          failout_sysCx("Failed to dup2 -stdin.");
         }
       } else {
-        failout_sysCx("Failed to open -stdinfile.");
+        failout_sysCx("Failed to open -stdin.");
       }
     }
-    else if (eq_cstr (arg, "-stdoutfile")) {
+    else if (eq_cstr (arg, "-stdout")) {
       const char* stdout_filepath = argv[argi++];
       lace_fd_t fd = open_lace_ofd(stdout_filepath);
       if (fd >= 0) {
         istat = lace_compat_fd_move_to(1, fd);
         lace_compat_fd_inherit(1);
         if (istat != 0) {
-          failout_sysCx("Failed to dup2 -stdoutfile.");
+          failout_sysCx("Failed to dup2 -stdout.");
         }
       } else {
-        failout_sysCx("Failed to open -stdoutfile.");
+        failout_sysCx("Failed to open -stdout.");
       }
     }
-    else if (eq_cstr (arg, "-stderrfile")) {
-      const char* stdout_filepath = argv[argi++];
-      lace_fd_t fd = open_lace_ofd(stdout_filepath);
+    else if (eq_cstr (arg, "-stderr")) {
+      const char* stderr_filepath = argv[argi++];
+      lace_fd_t fd = open_lace_ofd(stderr_filepath);
       if (fd >= 0) {
         istat = lace_compat_fd_move_to(2, fd);
         lace_compat_fd_inherit(2);
         if (istat != 0) {
-          failout_sysCx("Failed to dup2 -stderrfile.");
+          failout_sysCx("Failed to dup2 -stderr.");
         }
       } else {
-        failout_sysCx("Failed to open -stderrfile.");
+        failout_sysCx("Failed to open -stderr.");
       }
     }
     else {
@@ -1591,18 +1589,6 @@ int main_lace(unsigned argc, char** argv)
   }
   LoseTable( script_args );
 
-  if (stdin_sym) {
-    Command* cmd = Grow1Table( *cmds );
-    AlphaTab line = DEFAULT_AlphaTab;
-    init_Command (cmd);
-    cat_cstr_AlphaTab (&line, "$(O ");
-    cat_cstr_AlphaTab (&line, stdin_sym);
-    cat_cstr_AlphaTab (&line, ") stdin");
-    cmd->line = forget_AlphaTab (&line);
-    cmd->kind = RunCommand;
-    sep_line (&cmd->args, cmd->line);
-  }
-
   lace_compat_errno_trace();
   lace_compat_fd_cloexec(0);
   lace_compat_fd_cloexec(1);
@@ -1610,17 +1596,6 @@ int main_lace(unsigned argc, char** argv)
   close_LaceX(in);
   lace_compat_errno_trace();
 
-  if (stdout_sym) {
-    Command* cmd = Grow1Table( *cmds );
-    AlphaTab line = DEFAULT_AlphaTab;
-    init_Command (cmd);
-    cat_cstr_AlphaTab (&line, "$(X ");
-    cat_cstr_AlphaTab (&line, stdout_sym);
-    cat_cstr_AlphaTab (&line, ") stdout");
-    cmd->line = forget_AlphaTab (&line);
-    cmd->kind = RunCommand;
-    sep_line (&cmd->args, cmd->line);
-  }
   PackTable( *cmds );
 
   lace_compat_errno_trace();

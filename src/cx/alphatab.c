@@ -3,14 +3,6 @@
 #include "alphatab.h"
 #include <stdio.h>
 
-  char*
-itoa_dup_cstr (int x)
-{
-  char buf[50];
-  sprintf (buf, "%i", x);
-  return dup_cstr (buf);
-}
-
   Sign
 cmp_AlphaTab (const AlphaTab* a, const AlphaTab* b)
 {

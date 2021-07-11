@@ -17,12 +17,6 @@ set_property(TARGET add_float_test
   APPEND PROPERTY COMPILE_DEFINITIONS LACE_BUILTIN_LIBRARY)
 add_test(NAME add_float_test COMMAND add_float_test)
 
-add_test(NAME lace_as_add_test COMMAND
-  comparispawn "${CMAKE_CURRENT_SOURCE_DIR}/summed_integers.txt"
-  "${lace_exe}" -stdinfile "${CMAKE_CURRENT_SOURCE_DIR}/integers.txt"
-  -as add
-  )
-
 #### bestmatch
 
 add_executable(bestmatch_test "bestmatch_test.c")
@@ -73,6 +67,22 @@ set_property(TARGET godo_test
   APPEND PROPERTY COMPILE_DEFINITIONS LACE_BUILTIN_LIBRARY)
 add_test(NAME godo_test COMMAND
   godo_test "$<TARGET_FILE:expectish>" "${CMAKE_SOURCE_DIR}/test/expect/hello.txt")
+
+#### lace
+
+add_test(NAME lace_as_add_test COMMAND
+  comparispawn "${CMAKE_CURRENT_SOURCE_DIR}/summed_integers.txt"
+  "${lace_exe}" -stdin "${CMAKE_CURRENT_SOURCE_DIR}/integers.txt"
+  -as add
+  )
+
+add_executable(lace_cli_hello_test "lace_cli_hello_test.c")
+target_link_libraries(lace_cli_hello_test lace_lib lace_tool_lib)
+add_test(NAME lace_cli_hello_test COMMAND lace_cli_hello_test "${lace_exe}")
+
+add_executable(lace_usage_test "lace_usage_test.c")
+target_link_libraries(lace_usage_test lace_compat_lib)
+add_test(NAME lace_usage_test COMMAND lace_usage_test "${lace_exe}")
 
 #### sshall
 

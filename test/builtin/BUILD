@@ -10,25 +10,6 @@ cc_test(
     defines = ["LACE_BUILTIN_LIBRARY"],
 )
 
-spawn_test(
-    name = "lace_as_add_test",
-    args = [
-        "$(location //tool:comparispawn)",
-        "$(location summed_integers.txt)",
-        "$(location //:lace)",
-        "-stdinfile",
-        "$(location integers.txt)",
-        "-as",
-        "add",
-    ],
-    data = [
-        "integers.txt",
-        "summed_integers.txt",
-        "//:lace",
-        "//tool:comparispawn",
-    ],
-)
-
 #### bestmatch
 
 cc_test(
@@ -124,6 +105,43 @@ cc_test(
         "$(location //tool:expectish)",
         "$(location //test/expect:hello.txt)",
     ],
+)
+
+#### lace
+
+spawn_test(
+    name = "lace_as_add_test",
+    args = [
+        "$(location //tool:comparispawn)",
+        "$(location summed_integers.txt)",
+        "$(location //:lace)",
+        "-stdin",
+        "$(location integers.txt)",
+        "-as",
+        "add",
+    ],
+    data = [
+        "integers.txt",
+        "summed_integers.txt",
+        "//:lace",
+        "//tool:comparispawn",
+    ],
+)
+
+cc_test(
+    name = "lace_cli_hello_test",
+    srcs = ["lace_cli_hello_test.c"],
+    deps = ["//:lace_lib", "//:lace_tool_lib"],
+    data = ["//:lace"],
+    args = ["$(location //:lace)"],
+)
+
+cc_test(
+    name = "lace_usage_test",
+    srcs = ["lace_usage_test.c"],
+    deps = ["//:lace_compat_lib"],
+    data = ["//:lace"],
+    args = ["$(location //:lace)"],
 )
 
 #### sshall

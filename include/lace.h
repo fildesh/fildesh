@@ -47,13 +47,10 @@ LaceX* open_LaceXA();
 
 LaceX* open_LaceXF(const char* filename);
 LaceX* open_sibling_LaceXF(const char* sibling, const char* filename);
-LaceX* open_fd_LaceXF(lace_fd_t fd);
+LaceX* open_fd_LaceX(lace_fd_t fd);
 LaceX* open_arg_LaceXF(unsigned argi, char** argv, LaceX** inputv);
 
 const char* filename_LaceXF(LaceX*);
-
-char* lace_parse_int(int* ret, const char* in);
-char* lace_parse_double(double* ret, const char* in);
 
 size_t write_LaceO(LaceO*);
 void close_LaceO(LaceO*);
@@ -67,10 +64,18 @@ void print_double_LaceO(LaceO*, double);
 
 LaceO* open_LaceOF(const char* filename);
 LaceO* open_sibling_LaceOF(const char* sibling, const char* filename);
-LaceO* open_fd_LaceOF(lace_fd_t fd);
+LaceO* open_fd_LaceO(lace_fd_t fd);
 LaceO* open_arg_LaceOF(unsigned argi, char** argv, LaceO** outputv);
 
 const char* filename_LaceOF(LaceO*);
+
+
+char* lace_parse_int(int* ret, const char* in);
+char* lace_parse_double(double* ret, const char* in);
+#define LACE_INT_BASE10_SIZE_MAX (1 + (unsigned)(CHAR_BIT*sizeof(int)) / 3 + 1)
+unsigned lace_encode_int_base10(char*, lace_fd_t);
+#define LACE_FD_PATH_SIZE_MAX (8+LACE_INT_BASE10_SIZE_MAX)
+unsigned lace_encode_fd_path(char*, lace_fd_t);
 
 
 void lace_log_errorf(const char*, ...);
@@ -80,12 +85,12 @@ void lace_log_error_(
     const char* file, const char* func, unsigned line, const char* msg);
 void lace_log_warning_(
     const char* file, const char* func, unsigned line, const char* msg);
-#ifdef _MSC_VER
-#define lace_log_error(s)  lace_log_error_(__FILE__,__FUNCTION__,__LINE__,s)
-#define lace_log_warning(s)  lace_log_warning_(__FILE__,__FUNCTION__,__LINE__,s)
-#else
+#ifndef _MSC_VER
 #define lace_log_error(s)  lace_log_error_(__FILE__,__extension__ __func__,__LINE__, s)
 #define lace_log_warning(s)  lace_log_warning_(__FILE__,__extension__ __func__,__LINE__, s)
+#else
+#define lace_log_error(s)  lace_log_error_(__FILE__,__FUNCTION__,__LINE__,s)
+#define lace_log_warning(s)  lace_log_warning_(__FILE__,__FUNCTION__,__LINE__,s)
 #endif
 
 

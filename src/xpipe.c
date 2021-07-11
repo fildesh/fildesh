@@ -35,7 +35,7 @@ run_with_line(const char* lace_exe, unsigned argc, const char** argv,
     if (istat != 0) {lace_compat_errno_trace(); return;}
     istat = lace_compat_fd_move_to(0, spawned_source_fd);
     if (istat != 0) {lace_compat_errno_trace(); return;}
-    to_spawned = open_fd_LaceOF(to_spawned_fd);
+    to_spawned = open_fd_LaceO(to_spawned_fd);
     if (!to_spawned) {return;}
   }
 

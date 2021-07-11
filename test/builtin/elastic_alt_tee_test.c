@@ -2,7 +2,6 @@
 #include "lace_compat_fd.h"
 #include "lace_tool.h"
 #include <assert.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -24,10 +23,10 @@ LACE_TOOL_PIPEM_CALLBACK(run_expect_elastic, PipemFnArg*, st) {
     istat = lace_compat_fd_spawnvp_wait(st->tee_fds, st->elastic_argv);
     assert(istat == 0);
   } else {
-    char tee_arg[30];
+    char tee_arg[LACE_FD_PATH_SIZE_MAX];
     size_t output_size;
     char* output_data = NULL;
-    sprintf(tee_arg, "/dev/fd/%u", (unsigned)fd);
+    lace_encode_fd_path(tee_arg, fd);
     st->elastic_argv[tee_index] = tee_arg;
     lace_log_tracef("Piping tee_index %u", tee_index);
     output_size = lace_tool_pipem(

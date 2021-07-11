@@ -97,31 +97,10 @@ puts_LaceO(LaceO* o, const char* s)
   void
 print_int_LaceO(LaceO* out, int q)
 {
-  char buf[1 + (CHAR_BIT * sizeof(int)) / 3];
-  unsigned i = sizeof(buf);
-
-  if (q == 0) {
-    putc_LaceO(out, '0');
-    return;
-  } else if (q < 0) {
-    q = -q;
-    buf[0] = '-';
-  } else {
-    buf[0] = '\0';
-  }
-
-  while (q > 0) {
-    buf[--i] = '0' + (char)(q % 10);
-    q /= 10;
-  }
-
-  if (buf[0] == '-') {
-    buf[--i] = '-';
-  }
-
-  memcpy(grow_LaceO(out, sizeof(buf)-i),
-         &buf[i],
-         sizeof(buf)-i);
+  unsigned n = lace_encode_int_base10(
+      grow_LaceO(out, LACE_INT_BASE10_SIZE_MAX),
+      q);
+  out->size -= LACE_INT_BASE10_SIZE_MAX - n;
   maybe_flush_LaceO(out);
 }
 

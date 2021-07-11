@@ -9,5 +9,7 @@ lace_compat_string_byte_translate(
     const char* needles,
     const char* const* replacements,
     const char* lhs, const char* rhs);
+char*
+lace_compat_string_duplicate(const char*);
 
 #endif

@@ -8,16 +8,12 @@
 #include <stdio.h>
 #include <string.h>
 
-static
-  void
-show_usage_and_exit ()
-{
+static void print_usage() {
 #define f(s)  fputs(s "\n", stderr)
   f( "Usage: best-match TABLE QUERIES [OPTION]*" );
   f( "    TABLE is a file used for lookup." );
   f( "    QUERIES is a file, each line prompts an output of the closest match from TABLE." );
 #undef f
-  exit(64);
 }
 
 static
@@ -121,10 +117,13 @@ matching_line (unsigned* a, unsigned width, const char* s, char* const* lines)
   int
 main_best_match(unsigned argc, char** argv)
 {
+  int exstatus = 0;
   unsigned argi = 1;
   unsigned* lcs_array;
   LaceX* lookup_in = NULL;
   LaceX* stream_in = NULL;
+  const char* lookup_in_arg = NULL;
+  const char* stream_in_arg = NULL;
   LaceO* out = NULL;
   char* buf;
   char* s;
@@ -132,32 +131,52 @@ main_best_match(unsigned argc, char** argv)
   unsigned width;
 
   if (argi + 2 <= argc) {
-    lookup_in = open_LaceXF(argv[argi++]);
-    stream_in = open_LaceXF(argv[argi++]);
+    lookup_in_arg = argv[argi++];
+    stream_in_arg = argv[argi++];
+  } else {
+    exstatus = 64;
   }
-  if (!lookup_in || !stream_in) {
-    lace_compat_errno_trace();
-    show_usage_and_exit();
+
+  while (argi < argc && exstatus == 0) {
+    const char* arg = argv[argi];
+    ++ argi;
+    if (0 == strcmp (arg, "-h")) {
+      print_usage();
+      exstatus = 1;
+    }
+    else {
+      lace_log_errorf("Unknown argument: %s", arg);
+      exstatus = 64;
+    }
+  }
+
+  if (exstatus == 0) {
+    lookup_in = open_LaceXF(lookup_in_arg);
+    if (!lookup_in) {
+      lace_compat_errno_trace();
+      lace_log_errorf("bestmatch: cannot open %s", lookup_in_arg);
+      exstatus = 66;
+    }
+  }
+  if (exstatus == 0) {
+    stream_in = open_LaceXF(stream_in_arg);
+    if (!stream_in) {
+      lace_compat_errno_trace();
+      lace_log_errorf("bestmatch: cannot open %s", stream_in_arg);
+      exstatus = 66;
+    }
+  }
+
+  if (exstatus != 0) {
+    close_LaceX(lookup_in);
+    close_LaceX(stream_in);
+    print_usage();
+    return exstatus;
   }
 
   buf = slurp_LaceX(lookup_in);
   lines = split_lines(buf, &width);
   lcs_array = (unsigned*)malloc(sizeof(unsigned)*width);
-
-  while (argi < argc)
-  {
-    const char* arg = argv[argi];
-    ++ argi;
-    if (0 == strcmp (arg, "-h"))
-    {
-      show_usage_and_exit ();
-    }
-    else
-    {
-      lace_log_errorf("Unknown argument: %s", arg);
-      show_usage_and_exit ();
-    }
-  }
 
   out = open_LaceOF("-");
   if (!out) {

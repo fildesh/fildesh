@@ -75,3 +75,16 @@ lace_compat_string_byte_translate(
   return dst;
 }
 
+  char*
+lace_compat_string_duplicate(const char* s)
+{
+  char* p;
+  size_t size;
+  if (!s) {return NULL;}
+  size = strlen(s)+1;
+  p = (char*) malloc(size);
+  if (!p) {return NULL;}
+  memcpy(p, s, size);
+  return p;
+}
+

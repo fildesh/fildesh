@@ -27,7 +27,7 @@ static
   void
 pipe_to_file(lace_fd_t fd, const char* name)
 {
-  LaceX* in = open_fd_LaceXF(fd);
+  LaceX* in = open_fd_LaceX(fd);
   LaceO* out = NULL;
 
   if (in) {
@@ -53,7 +53,7 @@ static
   char*
 readin_fd(lace_fd_t fd, bool scrap_newline)
 {
-  LaceX* in = open_fd_LaceXF(fd);
+  LaceX* in = open_fd_LaceX(fd);
   char* s = slurp_LaceX(in);
   if (scrap_newline && in->size >= 1 && s[in->size-1] == '\n') {
     s[in->size-1] = '\0';

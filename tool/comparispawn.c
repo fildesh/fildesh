@@ -44,13 +44,10 @@ int main(int argc, char** argv)
       1, &output_data);
 
   if (st->status != 0) {
-    fprintf(stderr, "WARNING from comparispawn: %s exited with status %d.\n",
+    fprintf(stderr, "ERROR from comparispawn: %s exited with status %d.\n",
             argv[2], st->status);
-    /* Why does this happen on Windows?*/
-#if 0
     if (output_data) {free(output_data);}
     return 1;
-#endif
   }
 
   expect_in = open_LaceXF(argv[1]);

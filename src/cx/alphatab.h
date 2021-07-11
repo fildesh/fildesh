@@ -8,20 +8,7 @@ DeclTableT( AlphaTab, AlphaTab );
 
 #define DEFAULT_AlphaTab  DEFAULT_Table
 
-static const char WhiteSpaceChars[] = " \t\v\r\n";
-
 /* dflt_AlphaTab() - Jump down to this for AlphaTab functions.*/
-
-/** Duplicate a C string.**/
-qual_inline
-  char*
-dup_cstr (const char* s)
-{
-  zuint n = strlen (s) + 1;
-  char* dst;
-  Duplic( dst, s, n );
-  return dst;
-}
 
 qual_inline
   Sign
@@ -201,8 +188,6 @@ assign2_AlphaTab (AlphaTab* dst, const AlphaTab* src, zuint beg, zuint end)
   dst->s[sz] = '\0';
 }
 
-char*
-itoa_dup_cstr (int x);
 Sign
 cmp_AlphaTab (const AlphaTab* a, const AlphaTab* b);
 Sign

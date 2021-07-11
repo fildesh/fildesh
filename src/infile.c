@@ -82,13 +82,13 @@ open_sibling_LaceXF(const char* sibling, const char* filename)
   if (!filename) {return NULL;}
 
   if (0 == strcmp("-", filename) || 0 == strcmp(dev_stdin, filename)) {
-    return open_fd_LaceXF(0);
+    return open_fd_LaceX(0);
   }
   if (0 == strncmp(dev_fd_prefix, filename, dev_fd_prefix_length)) {
     int fd = -1;
     char* s = lace_parse_int(&fd, &filename[dev_fd_prefix_length]);
     if (!s) {return NULL;}
-    return open_fd_LaceXF(fd);
+    return open_fd_LaceX(fd);
   }
 
   *xf = default_LaceXF();
@@ -138,9 +138,10 @@ open_sibling_LaceXF(const char* sibling, const char* filename)
 }
 
   LaceX*
-open_fd_LaceXF(lace_fd_t fd)
+open_fd_LaceX(lace_fd_t fd)
 {
-  LaceO filename[1] = {DEFAULT_LaceO};
+  char filename[LACE_FD_PATH_SIZE_MAX];
+  unsigned filename_size;
   LaceXF* xf;
   fd = lace_compat_fd_move_off_stdio(fd);
   if (fd < 0) {return NULL;}
@@ -149,10 +150,9 @@ open_fd_LaceXF(lace_fd_t fd)
   /* File descriptor.*/
   xf->fd = fd;
   /* Filename.*/
-  puts_LaceO(filename, "/dev/fd/");
-  print_int_LaceO(filename, fd);
-  putc_LaceO(filename, '\0');
-  xf->filename = &filename->at[0];
+  filename_size = 1 + lace_encode_fd_path(filename, fd);
+  xf->filename = (char*)malloc(filename_size);
+  memcpy(xf->filename, filename, filename_size);
   /* Cloexec.*/
   lace_compat_fd_cloexec(fd);
   return &xf->base;
@@ -177,7 +177,7 @@ open_arg_LaceXF(unsigned argi, char** argv, LaceX** inputv)
         return NULL; /* Better not steal the real stdin.*/
       }
     }
-    return open_fd_LaceXF(0);
+    return open_fd_LaceX(0);
   }
   return open_LaceXF(argv[argi]);
 }

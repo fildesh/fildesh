@@ -2,7 +2,6 @@
 #include "lace_compat_fd.h"
 #include "lace_tool.h"
 #include <assert.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -61,7 +60,7 @@ int main(int argc, char** argv) {
   const size_t expect_size = strlen(expect_data);
   size_t output_size;
   char* output_data = NULL;
-  char fd_arg[30];
+  char fd_arg[LACE_FD_PATH_SIZE_MAX];
   PipemFnArg st[1];
   lace_compat_fd_t inherit_fds[] = {0, 0, 1, -1};
 
@@ -69,7 +68,7 @@ int main(int argc, char** argv) {
 
   inherit_fds[0] = lace_compat_fd_reserve();
   assert(inherit_fds[0] >= 0);
-  sprintf(fd_arg, "/dev/fd/%u", (unsigned)inherit_fds[0]);
+  lace_encode_fd_path(fd_arg, inherit_fds[0]);
   st->fds = inherit_fds;
   st->input_query = input_query;
   st->argv[0] = argv[1];

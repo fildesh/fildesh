@@ -36,13 +36,6 @@ foreach (f ${plain_example_test_list})
     )
 endforeach ()
 
-# TODO: Test this in C because comparispawn doesn't escape spaces!
-#add_test (NAME cli_hello
-#  COMMAND
-#  comparispawn "${CMAKE_CURRENT_SOURCE_DIR}/expect/hello.txt"
-#  ${lace_exe} -stdout - -- "|< ${zec_exe} / 'hello'"
-#  )
-
 add_test (NAME example_args2
   WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
   COMMAND

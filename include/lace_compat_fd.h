@@ -6,9 +6,9 @@ typedef int lace_compat_fd_t;
 int
 lace_compat_fd_cloexec(int fd);
 int
-lace_compat_fd_close(lace_compat_fd_t fd);
-int
 lace_compat_fd_inherit(int fd);
+int
+lace_compat_fd_close(lace_compat_fd_t fd);
 int
 lace_compat_fd_move_to(lace_compat_fd_t dst, lace_compat_fd_t oldfd);
 lace_compat_fd_t

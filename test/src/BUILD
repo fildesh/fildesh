@@ -62,6 +62,13 @@ cc_test(
 )
 
 cc_test(
+    name = "sibling_file_test",
+    srcs = ["sibling_file_test.c"],
+    deps = ["//:lace_lib"],
+    size = "small",
+)
+
+cc_test(
     name = "size_test",
     srcs = ["size_test.c"],
     deps = ["//:lace_lib"],

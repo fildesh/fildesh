@@ -43,7 +43,7 @@ lace_builtin_add_main(unsigned argc, char** argv,
   {
     fputs("Just run without arguments and type numbers.\n", stderr);
     fputs("You'll figure it out.\n", stderr);
-    return 1;
+    return 64;
   }
 
   in = open_arg_LaceXF(0, argv, inputv);

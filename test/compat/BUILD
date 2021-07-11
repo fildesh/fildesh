@@ -1,5 +1,11 @@
 
 cc_test(
+    name = "fd_move_off_stdio_test",
+    srcs = ["fd_move_off_stdio_test.c"],
+    deps = ["//:lace_compat_lib"],
+)
+
+cc_test(
     name = "random_bytes_test",
     srcs = ["random_bytes_test.c"],
     deps = ["//:lace_compat_lib"],

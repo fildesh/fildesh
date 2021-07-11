@@ -1,6 +1,7 @@
 
 #include "lace.h"
 #include "lace_compat_errno.h"
+#include "lace_compat_string.h"
 #include "cx/alphatab.h"
 #include "cx/associa.h"
 
@@ -34,8 +35,7 @@ lose_LineJoin (LineJoin* join)
   lose_AlphaTab (&join->field);
 }
 
-  static void
-show_usage_and_exit ()
+static void print_usage()
 {
 #define f(s)  fputs(s "\n", stderr)
   f("Usage: ujoin SMALL LARGE [OPTION]*");
@@ -49,7 +49,6 @@ show_usage_and_exit ()
   f("    -nomatch FILE  Put lines whose fields could not be matched here.");
   f("    -dupmatch FILE  Put fields who got matched here.");
 #undef f
-  exit(64);
 }
 
   static TableT(LineJoin)
@@ -75,7 +74,7 @@ setup_lookup_table(LaceX* in, const char* delim)
     if (delim)
       s = strstr (s, delim);
     else
-      s = &s[strcspn (s, WhiteSpaceChars)];
+      s = &s[strcspn (s, lace_compat_string_blank_bytes)];
 
     if (!s || s[0] == '\0')
       s = 0;
@@ -85,7 +84,7 @@ setup_lookup_table(LaceX* in, const char* delim)
       join->field.sz = IdxEltTable( join->field, s );
       s[0] = 0;
       if (delim)  s = &s[delim_sz];
-      else        s = &s[1 + strspn (&s[1], WhiteSpaceChars)];
+      else        s = &s[1 + strspn (&s[1], lace_compat_string_blank_bytes)];
     }
     join->lookup_line = s;
   }
@@ -114,7 +113,7 @@ compare_lines(LaceX* in, Associa* map, const char* delim,
     ++ line_no;
 
     if (delim)  payload = strstr (line, delim);
-    else        payload = &line[strcspn (line, WhiteSpaceChars)];
+    else        payload = &line[strcspn (line, lace_compat_string_blank_bytes)];
 
     if (!payload || payload[0] == '\0')
       payload = 0;
@@ -162,9 +161,10 @@ compare_lines(LaceX* in, Associa* map, const char* delim,
       if (delim)
         payload = &payload[delim_sz];
       else
-        payload = &payload[1 + strspn (&payload[1], WhiteSpaceChars)];
+        payload = &payload[1 + strspn(&payload[1],
+                                      lace_compat_string_blank_bytes)];
 
-      join->stream_line = dup_cstr (payload);
+      join->stream_line = lace_compat_string_duplicate(payload);
     }
   }
 }
@@ -177,6 +177,8 @@ main_ujoin(unsigned argc, char** argv)
   const char* dflt_record = 0;
   bool keep_join_field = true;
   bool stream_on_left = false;
+  const char* lookup_in_arg = NULL;
+  const char* stream_in_arg = NULL;
   LaceX* lookup_in = NULL;
   LaceX* stream_in = NULL;
   LaceO* nomatch_out = NULL;
@@ -185,90 +187,99 @@ main_ujoin(unsigned argc, char** argv)
   unsigned argi = 1;
   TableT(LineJoin) table;
   Associa map[1];
-  uint i;
-
-  InitAssocia( AlphaTab, LineJoin*, *map, cmp_AlphaTab );
+  int exstatus = 0;
+  unsigned i;
 
   if (argi + 2 <= argc) {
-    lookup_in = open_LaceXF(argv[argi++]);
-    stream_in = open_LaceXF(argv[argi++]);
-  }
-  if (!lookup_in || !stream_in) {
-    lace_compat_errno_trace();
-    show_usage_and_exit();
+    lookup_in_arg = argv[argi++];
+    stream_in_arg = argv[argi++];
+  } else {
+    exstatus = 64;
   }
 
-  while (argi < argc)
-  {
+  while (argi < argc && exstatus == 0) {
     const char* arg = argv[argi];
     ++ argi;
-    if (0 == strcmp (arg, "-h"))
-    {
-      show_usage_and_exit ();
-    }
-    else if (0 == strcmp (arg, "-o"))
-    {
+    if (0 == strcmp(arg, "-o")) {
       out = open_LaceOF(argv[argi++]);
       if (!out) {
         lace_log_error("Output (-o) needs an argument.");
-        return 64;
+        exstatus = 73;
       }
     }
-    else if (0 == strcmp (arg, "-x"))
-    {
+    else if (0 == strcmp(arg, "-x")) {
       keep_join_field = false;
     }
-    else if (0 == strcmp (arg, "-l"))
-    {
+    else if (0 == strcmp(arg, "-l")) {
       stream_on_left = true;
     }
-    else if (0 == strcmp (arg, "-ws"))
-    {
+    else if (0 == strcmp(arg, "-ws")) {
       delim = 0;
     }
-    else if (0 == strcmp (arg, "-d"))
-    {
+    else if (0 == strcmp(arg, "-d")) {
       delim = argv[argi++];
-      if (!delim) {
+      if (!delim || !delim[0]) {
         lace_log_error("Delimiter (-d) needs an argument.");
-        return 64;
+        exstatus = 64;
       }
-      Claim2( strlen (delim) ,>, 0 );
     }
-    else if (0 == strcmp (arg, "-p"))
-    {
+    else if (0 == strcmp(arg, "-p")) {
       dflt_record = argv[argi++];
       if (!dflt_record) {
         lace_log_error("Need argument for default record (-p).");
-        return 64;
+        exstatus = 64;
       }
     }
-    else if (0 == strcmp (arg, "-nomatch"))
-    {
+    else if (0 == strcmp(arg, "-nomatch")) {
       nomatch_out = open_LaceOF(argv[argi++]);
       if (!nomatch_out) {
         lace_log_error("Need argument for nomatch file (-nomatch).");
-        return 64;
+        exstatus = 73;
       }
     }
-    else if (0 == strcmp (arg, "-dupmatch"))
-    {
+    else if (0 == strcmp(arg, "-dupmatch")) {
       dupmatch_out = open_LaceOF(argv[argi++]);
       if (!dupmatch_out) {
         lace_log_error("Need argument for dupmatch file (-dupmatch).");
-        return 64;
+        exstatus = 73;
       }
     }
-    else
-    {
+    else {
       lace_log_errorf("Unknown argument: %s", arg);
-      return 64;
+        exstatus = 64;
     }
+  }
+
+  if (exstatus == 0) {
+    lookup_in = open_LaceXF(lookup_in_arg);
+    if (!lookup_in) {
+      lace_compat_errno_trace();
+      lace_log_errorf("ujoin: cannot open %s", lookup_in_arg);
+      exstatus = 66;
+    }
+  }
+  if (exstatus == 0) {
+    stream_in = open_LaceXF(stream_in_arg);
+    if (!stream_in) {
+      lace_compat_errno_trace();
+      lace_log_errorf("ujoin: cannot open %s", stream_in_arg);
+      exstatus = 66;
+    }
+  }
+
+  if (exstatus != 0) {
+    close_LaceX(lookup_in);
+    close_LaceX(stream_in);
+    close_LaceO(nomatch_out);
+    close_LaceO(dupmatch_out);
+    print_usage();
+    return exstatus;
   }
 
   table = setup_lookup_table(lookup_in, delim);
   close_LaceX(lookup_in);
 
+  InitAssocia( AlphaTab, LineJoin*, *map, cmp_AlphaTab );
   UFor( i, table.sz ) {
     LineJoin* join = &table.s[i];
     insert_Associa (map, &join->field, &join);

@@ -20,7 +20,7 @@ lace_builtin_cmp_main(int argc, char** argv,
   if (!lhs || !rhs) {
     close_LaceX(lhs);
     close_LaceX(rhs);
-    return 64;
+    return 66;
   }
 
   read_LaceX(lhs);

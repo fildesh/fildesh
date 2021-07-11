@@ -45,7 +45,7 @@ spawn_ssh(const char* ssh_exe, const char* cmd, const char* host)
   assert(istat == 0);
   istat = lace_compat_fd_move_to(0, fd_remote_source);
   assert(istat == 0);
-  to_remote = open_fd_LaceOF(fd_to_remote);
+  to_remote = open_fd_LaceO(fd_to_remote);
 
   pid = lace_compat_fd_spawnlp(
       fds_to_inherit,

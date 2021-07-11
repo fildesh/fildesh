@@ -170,14 +170,22 @@ reading_routine(LaceX* in, WritingThreadState* wstates, size_t wstate_count)
   StateMsg("end of", "input");
 }
 
+static void cleanup_wstates(WritingThreadState* wstates, unsigned wstate_count) {
+  unsigned i;
+  if (!wstates) {return;}
+  for (i = 0; i < wstate_count; ++i) {
+    lose_WritingThreadState(&wstates[i]);
+  }
+  free(wstates);
+}
+
   int
 lace_builtin_elastic_pthread_main(unsigned argc, char** argv,
                                   LaceX** inputv, LaceO** outputv)
 {
   WritingThreadState* wstates = NULL;
-  size_t wstate_count = 0;
+  unsigned wstate_count = 0;
   LaceX* in = NULL;
-  unsigned i;
   unsigned argi;
 
   StateMsg("begin", "main_elastic()");
@@ -188,21 +196,22 @@ lace_builtin_elastic_pthread_main(unsigned argc, char** argv,
   /**** BEGIN ARGUMENT_PARSING ****/
   for (argi = 1; argi < argc; ++argi) {
     const char* arg = argv[argi];
-    WritingThreadState* st;
-
     if (0 == strcmp(arg, "-x")) {
       const char* xfilename = argv[++argi];
       in = open_arg_LaceXF(argi, argv, inputv);
       if (!in) {
         lace_log_errorf("failed to open: %s", xfilename);
-        return 1;
+        cleanup_wstates(wstates, wstate_count);
+        return 66;
       }
     } else {
+      WritingThreadState* st;
       if (0 == strcmp(arg, "-o")) {
-        arg = argv[++argi];
-        if (argi == argc) {
+        const char* ofilename = argv[++argi];
+        if (!ofilename) {
           lace_log_error("Need output file after -o.");
-          return 1;
+          cleanup_wstates(wstates, wstate_count);
+          return 64;
         }
       }
 
@@ -214,7 +223,8 @@ lace_builtin_elastic_pthread_main(unsigned argc, char** argv,
         st->filename = filename_LaceOF(st->outfile);
       } else {
         lace_log_errorf("failed to open: %s", argv[argi]);
-        return 1;
+        cleanup_wstates(wstates, wstate_count);
+        return 73;
       }
       st->outfile->flush_lgsize = 0;  /* No automatic flushing.*/
     }
@@ -224,6 +234,7 @@ lace_builtin_elastic_pthread_main(unsigned argc, char** argv,
     in = open_arg_LaceXF(0, argv, inputv);
     if (!in) {
       lace_log_error("Failed to open: /dev/stdin");
+      cleanup_wstates(wstates, wstate_count);
       return 1;
     }
   }
@@ -243,10 +254,7 @@ lace_builtin_elastic_pthread_main(unsigned argc, char** argv,
 
   reading_routine(in, wstates, wstate_count);
 
-  for (i = 0; i < wstate_count; ++i) {
-    lose_WritingThreadState(&wstates[i]);
-  }
-  free(wstates);
+  cleanup_wstates(wstates, wstate_count);
   StateMsg("end", "main_elastic()");
   return 0;
 }

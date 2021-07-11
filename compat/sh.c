@@ -3,6 +3,9 @@
 #include "lace_compat_string.h"
 
 #ifdef _MSC_VER
+/* For _chdir().*/
+#include <direct.h>
+
 #include <io.h>
 #include <process.h>
 #else
