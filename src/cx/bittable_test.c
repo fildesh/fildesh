@@ -103,8 +103,9 @@ testfn_cache_BitTable ()
 
 int main(int argc, char** argv)
 {
-  int argi = init_sysCx (&argc, &argv);
-  (void) argi;
+  (void) argc;
+  (void) argv;
+  init_sysCx();
 
   testfn_BitTable();
   testfn_cache_BitTable();

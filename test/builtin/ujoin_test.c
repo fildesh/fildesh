@@ -7,23 +7,31 @@
 
 typedef struct PipemFnArg PipemFnArg;
 struct PipemFnArg {
-  const lace_compat_fd_t* fds;
+  lace_compat_fd_t stdin_fd;
+  lace_compat_fd_t stdout_fd;
   const char* input_large;
-  const char* argv[10];
+  char* argv[10];
 };
 
-LACE_TOOL_PIPEM_CALLBACK(run_query_ujoin, PipemFnArg*, st) {
+LACE_TOOL_PIPEM_CALLBACK(run_query_ujoin, in_fd, out_fd, PipemFnArg*, st) {
   if (!st->input_large) {
+    lace_compat_fd_t extra_fds[] = {-1, -1};
     int istat;
-    istat = lace_compat_fd_spawnvp_wait(st->fds, st->argv);
+    extra_fds[0] = in_fd;
+    lace_encode_fd_path(st->argv[2], in_fd);
+    istat = lace_compat_fd_spawnvp_wait(
+        st->stdin_fd, st->stdout_fd, 2, extra_fds,
+        (const char**)st->argv);
     assert(istat == 0);
   } else {
     const char* input_large = st->input_large;
     st->input_large = NULL;
+    st->stdin_fd = in_fd;
+    st->stdout_fd = out_fd;
     lace_tool_pipem(
-        strlen(input_large), input_large, 0,
+        strlen(input_large), input_large,
         run_query_ujoin, st,
-        -1, NULL);
+        NULL);
   }
 }
 
@@ -62,27 +70,22 @@ int main(int argc, char** argv) {
   char* output_data = NULL;
   char fd_arg[LACE_FD_PATH_SIZE_MAX];
   PipemFnArg st[1];
-  lace_compat_fd_t inherit_fds[] = {0, 0, 1, -1};
 
   assert(argc == 2);
 
-  inherit_fds[0] = lace_compat_fd_reserve();
-  assert(inherit_fds[0] >= 0);
-  lace_encode_fd_path(fd_arg, inherit_fds[0]);
-  st->fds = inherit_fds;
   st->input_large = input_large;
   st->argv[0] = argv[1];
-  st->argv[1] = fd_arg;
-  st->argv[2] = "-";
+  st->argv[1] = "-";
+  st->argv[2] = fd_arg;
   st->argv[3] = "-l";
   st->argv[4] = "-p";
   st->argv[5] = "x";
   st->argv[6] = NULL;
 
   output_size = lace_tool_pipem(
-      strlen(input_small), input_small, inherit_fds[0],
+      strlen(input_small), input_small,
       run_query_ujoin, st,
-      1, &output_data);
+      &output_data);
 
   assert(output_size == expect_size);
   assert(0 == memcmp(output_data, expect_data, expect_size));

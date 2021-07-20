@@ -71,7 +71,7 @@ add_executable(bestmatch "best-match.c")
 target_link_libraries(bestmatch lace_lib)
 
 add_executable(execfd "execfd.c" "utilace.h")
-target_link_libraries(execfd cx_lib)
+target_link_libraries(execfd lace_lib)
 
 add_executable(godo "godo.c" "utilace.h")
 target_link_libraries(godo cx_lib)

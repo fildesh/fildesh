@@ -59,6 +59,17 @@ if (UNIX)
   endif()
 endif()
 
+#### execfd
+
+add_executable(execfd_test "execfd_test.c" "${CMAKE_SOURCE_DIR}/src/execfd.c")
+target_link_libraries(execfd_test lace_lib lace_tool_lib)
+set_property(TARGET execfd_test
+  APPEND PROPERTY COMPILE_DEFINITIONS UNIT_TESTING)
+add_test(NAME execfd_test COMMAND
+  "${CMAKE_COMMAND}" -E env "TEST_TMPDIR=${CMAKE_CURRENT_BINARY_DIR}"
+  "$<TARGET_FILE:execfd_test>" "$<TARGET_FILE:zec>")
+
+
 #### godo
 
 add_executable(godo_test "godo_test.c" "${CMAKE_SOURCE_DIR}/src/godo.c")

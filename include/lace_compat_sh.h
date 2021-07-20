@@ -22,9 +22,11 @@ int
 lace_compat_sh_wait(lace_compat_pid_t);
 
 lace_compat_pid_t
-lace_compat_fd_spawnvp(const int* fds_to_close, const char* const* argv);
+lace_compat_fd_spawnvp(int stdin_fd, int stdout_fd, int stderr_fd,
+                       const int* fds_to_close, const char* const* argv);
 lace_compat_pid_t
-lace_compat_fd_spawnlp(const int* fds_to_close, const char* cmd, ...);
+lace_compat_fd_spawnlp(int stdin_fd, int stdout_fd, int stderr_fd,
+                       const int* fds_to_close, const char* cmd, ...);
 
 int
 lace_compat_sh_chdir(const char*);

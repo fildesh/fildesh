@@ -45,6 +45,7 @@ bool parse_double_LaceX(LaceX*, double*);
 
 LaceX* open_LaceXA();
 
+lace_fd_t lace_arg_open_readonly(const char*);
 LaceX* open_LaceXF(const char* filename);
 LaceX* open_sibling_LaceXF(const char* sibling, const char* filename);
 LaceX* open_fd_LaceX(lace_fd_t fd);
@@ -62,6 +63,7 @@ void puts_LaceO(LaceO*, const char*);
 void print_int_LaceO(LaceO*, int);
 void print_double_LaceO(LaceO*, double);
 
+lace_fd_t lace_arg_open_writeonly(const char*);
 LaceO* open_LaceOF(const char* filename);
 LaceO* open_sibling_LaceOF(const char* sibling, const char* filename);
 LaceO* open_fd_LaceO(lace_fd_t fd);
@@ -85,12 +87,16 @@ void lace_log_error_(
     const char* file, const char* func, unsigned line, const char* msg);
 void lace_log_warning_(
     const char* file, const char* func, unsigned line, const char* msg);
+void lace_log_trace_(
+    const char* file, const char* func, unsigned line, const char* msg);
 #ifndef _MSC_VER
 #define lace_log_error(s)  lace_log_error_(__FILE__,__extension__ __func__,__LINE__, s)
 #define lace_log_warning(s)  lace_log_warning_(__FILE__,__extension__ __func__,__LINE__, s)
+#define lace_log_trace(s)  lace_log_trace_(__FILE__,__extension__ __func__,__LINE__, s)
 #else
 #define lace_log_error(s)  lace_log_error_(__FILE__,__FUNCTION__,__LINE__,s)
 #define lace_log_warning(s)  lace_log_warning_(__FILE__,__FUNCTION__,__LINE__,s)
+#define lace_log_trace(s)  lace_log_trace_(__FILE__,__FUNCTION__,__LINE__,s)
 #endif
 
 

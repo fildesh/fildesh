@@ -85,6 +85,21 @@ cc_test(
     args = ["$(location //builtin:elastic_pthread)"],
 )
 
+#### execfd
+
+cc_test(
+    name = "execfd_test",
+    srcs = [
+        "execfd_test.c",
+        "//src:execfd.c",
+        "//src:utilace.h",
+    ],
+    defines = ["UNIT_TESTING"],
+    deps = ["//:lace_lib", "//:lace_tool_lib"],
+    data = ["//builtin:zec"],
+    args = ["$(location //builtin:zec)"],
+)
+
 #### godo
 
 cc_test(

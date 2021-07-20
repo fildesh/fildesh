@@ -1,20 +1,11 @@
 
 #include "lace.h"
 #include "lace_compat_fd.h"
+#include "lace_compat_string.h"
 
 #include <assert.h>
-#include <fcntl.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#ifdef _MSC_VER
-#include <io.h>
-#else
-#include <unistd.h>
-#endif
-
-#include <sys/stat.h>
 
 typedef struct LaceOF LaceOF;
 struct LaceOF {
@@ -102,34 +93,10 @@ open_sibling_LaceOF(const char* sibling, const char* filename)
     memcpy(&of->filename[sibling_dirlen], filename, filename_length+1);
   }
   else {
-    of->filename = malloc(filename_length+1);
-    memcpy(of->filename, filename, filename_length+1);
+    of->filename = lace_compat_string_duplicate(filename);
   }
 
-  { /* Open.*/
-#ifdef _MSC_VER
-    const int flags = (
-        _O_WRONLY | _O_CREAT | _O_TRUNC |
-        _O_APPEND |
-        _O_BINARY |
-        _O_NOINHERIT);
-    const int mode = _S_IREAD | _S_IWRITE;
-    of->fd = _open(of->filename, flags, mode);
-#else
-    const int flags = (
-        O_WRONLY | O_CREAT | O_TRUNC |
-        O_APPEND |
-        0 /* O_CLOEXEC is below */);
-    const int mode
-      = S_IWUSR | S_IWGRP | S_IWOTH
-      | S_IRUSR | S_IRGRP | S_IROTH;
-    of->fd = open(of->filename, flags, mode);
-    if (of->fd >= 0) {
-      lace_compat_fd_cloexec(of->fd);
-    }
-#endif
-  }
-  of->fd = lace_compat_fd_move_off_stdio(of->fd);
+  of->fd = lace_compat_file_open_writeonly(of->filename);
   if (of->fd >= 0) {
     LaceOF* p = malloc(sizeof(LaceOF));
     *p = *of;
@@ -140,13 +107,35 @@ open_sibling_LaceOF(const char* sibling, const char* filename)
   return NULL;
 }
 
+  lace_fd_t
+lace_arg_open_writeonly(const char* filename)
+{
+  static const char dev_stdout[] = "/dev/stdout";
+  static const char dev_fd_prefix[] = "/dev/fd/";
+  static const unsigned dev_fd_prefix_length = sizeof(dev_fd_prefix)-1;
+
+  if (!filename) {return -1;}
+
+  if (0 == strcmp("-", filename) || 0 == strcmp(dev_stdout, filename)) {
+    return lace_compat_fd_claim(1);
+  }
+  if (0 == strncmp(dev_fd_prefix, filename, dev_fd_prefix_length)) {
+    int fd = -1;
+    char* s = lace_parse_int(&fd, &filename[dev_fd_prefix_length]);
+    if (!s) {return -1;}
+    return lace_compat_fd_claim(fd);
+  }
+
+  return lace_compat_file_open_writeonly(filename);
+}
+
   LaceO*
 open_fd_LaceO(lace_fd_t fd)
 {
   char filename[LACE_FD_PATH_SIZE_MAX];
   unsigned filename_size;
   LaceOF* of;
-  fd = lace_compat_fd_move_off_stdio(fd);
+  fd = lace_compat_fd_claim(fd);
   if (fd < 0) {return NULL;}
   of = (LaceOF*) malloc(sizeof(LaceOF));
   *of = default_LaceOF();
@@ -156,8 +145,6 @@ open_fd_LaceO(lace_fd_t fd)
   filename_size = 1 + lace_encode_fd_path(filename, fd);
   of->filename = (char*)malloc(filename_size);
   memcpy(of->filename, filename, filename_size);
-  /* Cloexec.*/
-  lace_compat_fd_cloexec(fd);
   return &of->base;
 }
 

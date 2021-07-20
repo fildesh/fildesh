@@ -20,7 +20,7 @@ run_with_line(const char* lace_exe, unsigned argc, const char** argv,
   /* We create a new stdin for the spawned process.
    * It inherits stdout too, but we want to reuse it.
    */
-  lace_compat_fd_t inherited_fds[] = {0, -1};
+  lace_compat_fd_t source_fd = -1;
   const char** actual_argv;
   int istat;
   unsigned offset = 0;
@@ -30,10 +30,7 @@ run_with_line(const char* lace_exe, unsigned argc, const char** argv,
 
   {
     lace_compat_fd_t to_spawned_fd = -1;
-    lace_compat_fd_t spawned_source_fd = -1;
-    istat = lace_compat_fd_pipe(&to_spawned_fd, &spawned_source_fd);
-    if (istat != 0) {lace_compat_errno_trace(); return;}
-    istat = lace_compat_fd_move_to(0, spawned_source_fd);
+    istat = lace_compat_fd_pipe(&to_spawned_fd, &source_fd);
     if (istat != 0) {lace_compat_errno_trace(); return;}
     to_spawned = open_fd_LaceO(to_spawned_fd);
     if (!to_spawned) {return;}
@@ -49,7 +46,7 @@ run_with_line(const char* lace_exe, unsigned argc, const char** argv,
   }
   actual_argv[offset] = NULL;
 
-  pid = lace_compat_fd_spawnvp(inherited_fds, actual_argv);
+  pid = lace_compat_fd_spawnvp(source_fd, 1, 2, NULL, actual_argv);
   free(actual_argv);
   if (pid >= 0) {
     puts_LaceO(to_spawned, line);

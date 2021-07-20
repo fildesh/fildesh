@@ -31,9 +31,11 @@ static const size_t expected_output_size = sizeof(expected_output)-1;
 
 int lace_builtin_time2sec_main(int, char**, LaceX**, LaceO**);
 
-LACE_TOOL_PIPEM_NULLARY_CALLBACK(run_time2sec) {
+LACE_TOOL_PIPEM_NULLARY_CALLBACK(run_time2sec, in_fd, out_fd) {
   const char* const argv[2] = { "time2sec", NULL };
-  int istat = lace_builtin_time2sec_main(1, (char**)argv, NULL, NULL);
+  LaceX* in = open_fd_LaceX(in_fd);
+  LaceO* out = open_fd_LaceO(out_fd);
+  int istat = lace_builtin_time2sec_main(1, (char**)argv, &in, &out);
   assert(istat == 0);
 }
 
@@ -42,9 +44,9 @@ int main() {
   char* output_data = NULL;
 
   output_size = lace_tool_pipem(
-      input_data_size, input_data, 0,
+      input_data_size, input_data,
       run_time2sec, NULL,
-      1, &output_data);
+      &output_data);
   assert(output_size == expected_output_size);
   assert(0 == memcmp(output_data, expected_output, output_size));
 

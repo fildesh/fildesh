@@ -65,3 +65,14 @@ lace_log_warning_(
       filename_to_print(file),
       line, func, msg);
 }
+
+void
+lace_log_trace_(
+    const char* file, const char* func, unsigned line, const char* msg)
+{
+  fprintf(
+      stderr,
+      "TRACE %s(%u) in %s: %s\n",
+      filename_to_print(file),
+      line, func, msg);
+}

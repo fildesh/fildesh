@@ -1,5 +1,6 @@
 
 #include "utilace.h"
+#include "lace_compat_sh.h"
 #include "cx/syscx.h"
 
 #include <stdio.h>
@@ -47,7 +48,7 @@ main_waitdo(unsigned argc, char** argv)
     {
       return lace_builtin_main(argv[argi], argc-argi, &argv[argi]);
     }
-    execvp_sysCx (&argv[argi]);
+    lace_compat_sh_exec((const char**)&argv[argi]);
 
     fprintf (ErrOut, "%s - Failed to execute:%s\n", ExeName, argv[2]);
   }
@@ -60,9 +61,6 @@ main_waitdo(unsigned argc, char** argv)
   int
 main(int argc, char** argv)
 {
-  int argi = init_sysCx(&argc, &argv);
-  int istat = main_waitdo(argc-(argi-1), &argv[argi-1]);
-  lose_sysCx();
-  return istat;
+  return main_waitdo((unsigned)argc, argv);
 }
 #endif

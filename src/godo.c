@@ -24,7 +24,7 @@ main_godo(unsigned argc, char** argv)
   argv = &argv[2];
 #ifdef LACE_BUILTIN_LIBRARY
   {
-    int istat = lace_compat_fd_spawnvp_wait(NULL, (const char**)argv);
+    int istat = lace_compat_fd_spawnvp_wait(0, 1, 2, NULL, (const char**)argv);
     if (istat >= 0) {return istat;}
   }
 #else

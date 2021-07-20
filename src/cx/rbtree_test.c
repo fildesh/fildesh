@@ -299,8 +299,9 @@ testfn_Associa ()
 
 int main(int argc, char** argv)
 {
-  int argi = init_sysCx (&argc, &argv);
-  (void) argi;
+  (void) argc;
+  (void) argv;
+  init_sysCx();
 
   testfn_RBTree();
   testfn_Associa();

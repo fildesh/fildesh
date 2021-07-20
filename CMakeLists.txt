@@ -20,7 +20,9 @@ string(REPLACE "/DNDEBUG" "" CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}
 if (UNIX)
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -ansi -pedantic")
   set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -ansi -pedantic")
-  #set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Werror")
+  if (NOT APPLE)
+    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror")
+  endif()
 else()
   set (CMAKE_C_FLAGS "/W4 /MP")
   # Disable warning: 'fopen' unsafe, use fopen_s instead

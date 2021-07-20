@@ -8,16 +8,6 @@
 #include <string.h>
 
 
-static void create_pipe(int* ret_produce, int* ret_consume) {
-  int istat = lace_compat_fd_pipe(ret_produce, ret_consume);
-  assert(0 == istat);
-}
-
-static void move_fd_to(int dst, int oldfd) {
-  int istat = lace_compat_fd_move_to(dst, oldfd);
-  assert(istat == 0);
-}
-
 typedef struct LaceToolPipemInput LaceToolPipemInput;
 typedef struct LaceToolPipemOutput LaceToolPipemOutput;
 struct LaceToolPipemInput {
@@ -79,15 +69,18 @@ LACE_POSIX_THREAD_CALLBACK(consume_thread_fn, LaceToolPipemOutput*, arg)
 }
 
   size_t
-lace_tool_pipem(size_t input_size, const char* input_data, int const source_fd,
-                void (*fn)(void*), void* arg,
-                int const sink_fd, char** output_storage)
+lace_tool_pipem(
+    size_t input_size, const char* input_data,
+    void (*fn)(lace_compat_fd_t,lace_compat_fd_t,void*), void* arg,
+    char** output_storage)
 {
   int istat;
-  int produce_fd = -1;
+  lace_compat_fd_t source_fd = -1;
+  lace_compat_fd_t produce_fd = -1;
   pthread_t produce_thread;
   LaceToolPipemInput produce_thread_arg;
-  int consume_fd = -1;
+  lace_compat_fd_t sink_fd = -1;
+  lace_compat_fd_t consume_fd = -1;
   pthread_t consume_thread;
   LaceToolPipemOutput consume_thread_arg;
 #ifndef _MSC_VER
@@ -95,24 +88,19 @@ lace_tool_pipem(size_t input_size, const char* input_data, int const source_fd,
 #endif
 
   assert(input_data || input_size == 0);
-  assert(source_fd >= 0 || (!input_data && input_size == 0));
   assert(fn);
+
+  if (input_size > 0) {
+    istat = lace_compat_fd_pipe(&produce_fd, &source_fd);
+    assert(istat == 0);
+  }
+  if (output_storage) {
+    istat = lace_compat_fd_pipe(&sink_fd, &consume_fd);
+    assert(istat == 0);
+  }
+
+  assert(source_fd >= 0 || (!input_data && input_size == 0));
   assert(sink_fd >= 0 || !output_storage);
-
-  if (source_fd >= 0) {
-    int tmp_source_fd = -1;
-    create_pipe(&produce_fd, &tmp_source_fd);
-    assert(produce_fd != source_fd);
-    assert(produce_fd != sink_fd);
-    move_fd_to(source_fd, tmp_source_fd);
-  }
-
-  if (sink_fd >= 0) {
-    int tmp_sink_fd = -1;
-    create_pipe(&tmp_sink_fd, &consume_fd);
-    assert(consume_fd != sink_fd);
-    move_fd_to(sink_fd, tmp_sink_fd);
-  }
 
   produce_thread_arg.input_data = input_data;
   produce_thread_arg.input_size = input_size;
@@ -133,7 +121,7 @@ lace_tool_pipem(size_t input_size, const char* input_data, int const source_fd,
     assert(istat == 0);
   }
 
-  fn(arg);
+  fn(source_fd, sink_fd, arg);
 
   if (produce_fd >= 0) {
     istat = pthread_join(produce_thread, NULL);

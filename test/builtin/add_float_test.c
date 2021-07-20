@@ -8,10 +8,12 @@
 
 int lace_builtin_add_main(int, char**, LaceX**, LaceO**);
 
-LACE_TOOL_PIPEM_NULLARY_CALLBACK(run_add) {
+LACE_TOOL_PIPEM_NULLARY_CALLBACK(run_add, in_fd, out_fd) {
   const char* const argv[] = {"add", NULL};
+  LaceX* in = open_fd_LaceX(in_fd);
+  LaceO* out = open_fd_LaceO(out_fd);
   int istat;
-  istat = lace_builtin_add_main(1, (char**)argv, NULL, NULL);
+  istat = lace_builtin_add_main(1, (char**)argv, &in, &out);
   assert(istat == 0);
 }
 
@@ -34,9 +36,9 @@ static void add_ints_test() {
   char* output_data = NULL;
 
   output_size = lace_tool_pipem(
-      input_data_size, input_data, 0,
+      input_data_size, input_data,
       run_add, NULL,
-      1, &output_data);
+      &output_data);
   fprintf(stderr, "Got:\n%s", output_data);
   assert(output_size == expect_size);
   assert(0 == memcmp(output_data, expect_data, expect_size));
@@ -60,9 +62,9 @@ static void add_floats_test() {
   char* output_data = NULL;
 
   output_size = lace_tool_pipem(
-      input_data_size, input_data, 0,
+      input_data_size, input_data,
       run_add, NULL,
-      1, &output_data);
+      &output_data);
   fprintf(stderr, "Got:\n%s", output_data);
   assert(output_size == expect_size);
   assert(0 == memcmp(output_data, expect_data, expect_size));

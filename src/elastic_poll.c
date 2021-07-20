@@ -187,7 +187,7 @@ main_elastic_poll(unsigned argc, char** argv)
       pfd = &pollfds.s[0];
 
       io->filename = arg;
-      pfd->fd = open_lace_xfd(io->filename);
+      pfd->fd = lace_arg_open_readonly(io->filename);
     } else {
       if (eq_cstr(arg, "-o")) {
         if (argi == argc) {
@@ -201,7 +201,7 @@ main_elastic_poll(unsigned argc, char** argv)
 
       Zeroize( *io );
       io->filename = arg;
-      pfd->fd = open_lace_ofd(io->filename);
+      pfd->fd = lace_arg_open_writeonly(io->filename);
     }
 
     if (pfd->fd < 0) {
@@ -214,7 +214,7 @@ main_elastic_poll(unsigned argc, char** argv)
     io = &ios.s[0];
     pfd = &pollfds.s[0];
     io->filename = "/dev/stdin";
-    pfd->fd = open_lace_xfd("-");
+    pfd->fd = lace_arg_open_readonly("-");
   }
 
   if (pollfds.sz == 1) {
@@ -222,7 +222,7 @@ main_elastic_poll(unsigned argc, char** argv)
     pfd = Grow1Table(pollfds);
     Zeroize( *io );
     io->filename = "/dev/stdout";
-    pfd->fd = open_lace_ofd("-");
+    pfd->fd = lace_arg_open_writeonly("-");
   }
   /**** END ARGUMENT_PARSING ****/
 
@@ -262,9 +262,10 @@ main_elastic_poll(unsigned argc, char** argv)
   int
 main(int argc, char** argv)
 {
-  int argi = init_sysCx(&argc, &argv);
-  int istat = main_elastic_poll(argc-(argi-1), &argv[argi-1]);
+  int exstatus;
+  init_sysCx();
+  exstatus = main_elastic_poll((unsigned)argc, argv);
   lose_sysCx();
-  return istat;
+  return exstatus;
 }
 #endif

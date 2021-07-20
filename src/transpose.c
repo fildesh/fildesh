@@ -7,7 +7,8 @@
 #include "cx/table.h"
 
   int
-main_transpose(unsigned argc, char** argv)
+lace_builtin_transpose_main(unsigned argc, char** argv,
+                            LaceX** inputs, LaceO** outputs)
 {
   DeclTableT( cstr_row, TableT(cstr) );
   DeclTable( cstr_row, mat );
@@ -24,7 +25,7 @@ main_transpose(unsigned argc, char** argv)
     return 64;
   }
 
-  in = open_fd_LaceX(0);
+  in = open_arg_LaceXF(0, argv, inputs);
   for (slice = sliceline_LaceX(in);
        slice.at;
        slice = sliceline_LaceX(in))
@@ -56,7 +57,7 @@ main_transpose(unsigned argc, char** argv)
   }
   close_LaceX(in);
 
-  out = open_fd_LaceO(1);
+  out = open_arg_LaceOF(0, argv, outputs);
   for (i = 0; i < ncols; ++i) {
     unsigned j;
     for (j = 0; j < mat.sz; ++j) {
@@ -91,6 +92,10 @@ main_transpose(unsigned argc, char** argv)
   }
   LoseTable( mat );
   return 0;
+}
+
+int main_transpose(unsigned argc, char** argv) {
+  return lace_builtin_transpose_main(argc, argv, NULL, NULL);
 }
 
 #ifndef LACE_BUILTIN_LIBRARY

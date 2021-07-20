@@ -4,12 +4,10 @@
 #ifndef sysCx_H_
 #define sysCx_H_
 
-static const char MagicArgv1_sysCx[] = "--opts://sysCx";
-
 const char*
 exename_of_sysCx ();
-int
-init_sysCx (int* pargc, char*** pargv);
+void
+init_sysCx();
 void
 push_losefn_sysCx (void (*f) ());
 void
@@ -59,14 +57,6 @@ typedef int fd_t;
 
 #include "def.h"
 
-int
-open_lace_xfd(const char* filename);
-int
-open_lace_ofd(const char* filename);
-pid_t
-spawnvp_sysCx (char* const* argv);
-void
-execvp_sysCx (char* const* argv);
 bool
 kill_please_sysCx(pid_t pid);
 
@@ -77,8 +67,6 @@ setenv_sysCx (const char* key, const char* val);
 void
 tacenv_sysCx (const char* key, const char* val);
 
-bool
-chmodu_sysCx (const char* pathname, bool r, bool w, bool x);
 bool
 mkdir_sysCx (const char* pathname);
 bool

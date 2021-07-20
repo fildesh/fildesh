@@ -1,20 +1,11 @@
 
 #include "lace.h"
 #include "lace_compat_fd.h"
+#include "lace_compat_string.h"
 
 #include <assert.h>
-#include <fcntl.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#ifdef _MSC_VER
-#include <io.h>
-#else
-#include <unistd.h>
-#endif
-
-#include <sys/stat.h>
 
 typedef struct LaceXF LaceXF;
 struct LaceXF {
@@ -105,28 +96,10 @@ open_sibling_LaceXF(const char* sibling, const char* filename)
     memcpy(&xf->filename[sibling_dirlen], filename, filename_length+1);
   }
   else {
-    xf->filename = malloc(filename_length+1);
-    memcpy(xf->filename, filename, filename_length+1);
+    xf->filename = lace_compat_string_duplicate(filename);
   }
 
-  { /* Open.*/
-#ifdef _MSC_VER
-    const int flags = (
-        _O_RDONLY |
-        _O_BINARY |
-        _O_NOINHERIT);
-    xf->fd = _open(xf->filename, flags);
-#else
-    const int flags = (
-        O_RDONLY |
-        0 /* O_CLOEXEC is below */);
-    xf->fd = open(xf->filename, flags);
-    if (xf->fd >= 0) {
-      lace_compat_fd_cloexec(xf->fd);
-    }
-#endif
-  }
-  xf->fd = lace_compat_fd_move_off_stdio(xf->fd);
+  xf->fd = lace_compat_file_open_readonly(xf->filename);
   if (xf->fd >= 0) {
     LaceXF* p = malloc(sizeof(LaceXF));
     *p = *xf;
@@ -137,13 +110,46 @@ open_sibling_LaceXF(const char* sibling, const char* filename)
   return NULL;
 }
 
+  lace_fd_t
+lace_arg_open_readonly(const char* filename)
+{
+  static const char dev_stdin[] = "/dev/stdin";
+  static const char dev_null[] = "/dev/null";
+  static const char dev_fd_prefix[] = "/dev/fd/";
+  static const unsigned dev_fd_prefix_length = sizeof(dev_fd_prefix)-1;
+
+  if (!filename) {return -1;}
+
+  if (0 == strcmp("-", filename) || 0 == strcmp(dev_stdin, filename)) {
+    return lace_compat_fd_claim(0);
+  }
+  if (0 == strcmp(dev_null, filename)) {
+    lace_compat_fd_t fd = -1;
+    lace_compat_fd_t tmp_fd = -1;
+    int istat;
+    istat = lace_compat_fd_pipe(&tmp_fd, &fd);
+    if (istat != 0) {return -1;}
+    istat = lace_compat_fd_close(tmp_fd);
+    if (istat != 0) {lace_compat_fd_close(fd); return -1;}
+    return fd;
+  }
+  if (0 == strncmp(dev_fd_prefix, filename, dev_fd_prefix_length)) {
+    int fd = -1;
+    char* s = lace_parse_int(&fd, &filename[dev_fd_prefix_length]);
+    if (!s) {return -1;}
+    return lace_compat_fd_claim(fd);
+  }
+
+  return lace_compat_file_open_readonly(filename);
+}
+
   LaceX*
 open_fd_LaceX(lace_fd_t fd)
 {
   char filename[LACE_FD_PATH_SIZE_MAX];
   unsigned filename_size;
   LaceXF* xf;
-  fd = lace_compat_fd_move_off_stdio(fd);
+  fd = lace_compat_fd_claim(fd);
   if (fd < 0) {return NULL;}
   xf = (LaceXF*) malloc(sizeof(LaceXF));
   *xf = default_LaceXF();
@@ -153,8 +159,6 @@ open_fd_LaceX(lace_fd_t fd)
   filename_size = 1 + lace_encode_fd_path(filename, fd);
   xf->filename = (char*)malloc(filename_size);
   memcpy(xf->filename, filename, filename_size);
-  /* Cloexec.*/
-  lace_compat_fd_cloexec(fd);
   return &xf->base;
 }
 

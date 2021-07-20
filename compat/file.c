@@ -2,6 +2,12 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
+
+#ifdef _MSC_VER
+#include <windows.h>
+#include <io.h>
+#endif
 
   const char*
 lace_compat_file_basename(const char* filepath)
@@ -22,11 +28,11 @@ lace_compat_file_basename(const char* filepath)
   char*
 lace_compat_file_abspath(const char* filepath)
 {
-#ifdef _WIN32
-  return _fullpath(NULL, filepath, _MAX_PATH);
-#else
+#ifndef _MSC_VER
   /* This also resolves symlinks. Whatever.*/
   return realpath(filepath, NULL);
+#else
+  return _fullpath(NULL, filepath, _MAX_PATH);
 #endif
 }
 
@@ -51,3 +57,19 @@ lace_compat_file_catpath(const char* dir, const char* filename)
   p[i] = '\0';
   return p;
 }
+
+  int
+lace_compat_file_chmod_u_rwx(const char* filename, int r, int w, int x)
+{
+  int istat, mode;
+#ifndef _MSC_VER
+  mode = (r ? S_IRUSR : 0) | (w ? S_IWUSR : 0) | (x ? S_IXUSR : 0);
+  istat = chmod(filename, mode);
+#else
+  (void) x;
+  mode = (r ? _S_IREAD : 0) | (w ? _S_IWRITE : 0);
+  istat = _chmod(filename, mode);
+#endif
+  return istat;
+}
+

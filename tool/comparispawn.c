@@ -18,10 +18,9 @@ struct ComparispawnFnArg {
   int status;
 };
 
-LACE_TOOL_PIPEM_CALLBACK(run_fn, ComparispawnFnArg*, st) {
-  const lace_compat_fd_t fds_to_close[] = {1, -1};
+LACE_TOOL_PIPEM_CALLBACK(run_fn, in_fd, out_fd, ComparispawnFnArg*, st) {
   st->status = lace_compat_fd_spawnvp_wait(
-      fds_to_close, (const char**)st->argv);
+      in_fd, out_fd, 2, NULL, (const char**)st->argv);
 }
 
 int main(int argc, char** argv)
@@ -39,9 +38,9 @@ int main(int argc, char** argv)
   st->argv = (const char**) &argv[2];
   st->status = -1;
   output_size = lace_tool_pipem(
-      0, NULL, -1,
+      0, NULL,
       run_fn, st,
-      1, &output_data);
+      &output_data);
 
   if (st->status != 0) {
     fprintf(stderr, "ERROR from comparispawn: %s exited with status %d.\n",

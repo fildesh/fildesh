@@ -114,19 +114,15 @@ int main (int argc, char** argv)
     struct sockaddr_storage client_addr;
     socklen_t client_addr_nbytes = sizeof(client_addr);
     ssize_t nbytes = 0;
-    lace_compat_fd_t fds_to_inherit[] = {0, -1};
+    lace_compat_fd_t source_fd = -1;
     lace_compat_fd_t fd_to_child = -1;
     lace_compat_pid_t pid;
 
-    {
-      lace_compat_fd_t child_source_fd = -1;
-      istat = lace_compat_fd_pipe(&fd_to_child, &child_source_fd);
-      if (istat != 0) {lace_compat_errno_trace(); return 1;}
-      istat = lace_compat_fd_move_to(0, child_source_fd);
-      if (istat != 0) {lace_compat_errno_trace(); return 1;}
-    }
+    istat = lace_compat_fd_pipe(&fd_to_child, &source_fd);
+    if (istat != 0) {lace_compat_errno_trace(); return 1;}
 
-    pid = lace_compat_fd_spawnlp(fds_to_inherit, argv[0], "-connect", NULL);
+    pid = lace_compat_fd_spawnlp(
+        source_fd, 1, 2, NULL, argv[0], "-connect", NULL);
     if (pid < 0) {lace_compat_errno_trace(); return 126;}
 
     listen_sock = socket(addr->ai_family,

@@ -18,10 +18,10 @@ struct PipemFnArg {
   const char* echocat_exe;
 };
 
-LACE_TOOL_PIPEM_CALLBACK(run_waitdo, const PipemFnArg*, st) {
-  lace_compat_fd_t fds_to_inherit[] = {0, 1, -1};
-  int istat = lace_compat_fd_spawnlp_wait(
-      fds_to_inherit,
+LACE_TOOL_PIPEM_CALLBACK(run_waitdo, in_fd, out_fd, const PipemFnArg*, st) {
+  int istat;
+  istat = lace_compat_fd_spawnlp_wait(
+      in_fd, out_fd, 2, NULL,
       st->sshall_exe, "-ssh", st->echocat_exe, "-",
       ExpectHostCommand, NULL);
   assert(istat == 0);
@@ -49,9 +49,9 @@ int main(int argc, char** argv) {
   st->echocat_exe = argv[2];
 
   output_size = lace_tool_pipem(
-      input_data_size, input_data, 0,
+      input_data_size, input_data,
       run_waitdo, st,
-      1, &output_data);
+      &output_data);
   fprintf(stderr, "Got:\n%s\n", output_data);
   assert(output_size == expect_size);
   assert(0 == memcmp(output_data, expect_data, expect_size));

@@ -1,22 +1,23 @@
 
 #include "lace.h"
+#include "lace_compat_fd.h"
+#include "lace_compat_file.h"
+#include "lace_compat_sh.h"
 #include "utilace.h"
-#include "cx/bittable.h"
-#include "cx/syscx.h"
 
 #include <stdio.h>
-#include <sys/stat.h>
+#include <stdlib.h>
+#include <string.h>
 
 static
   void
-show_usage_and_exit ()
+show_usage()
 {
 #define f(s)  fputs(s, stderr); fputc('\n', stderr);
   f( "Usage: execfd [-exe name] [argi]* -- [arg|fd]*" );
   f( "  Each /argi/ is an index which has a file descriptor in it." );
   f( "  Index zero is the executable name." );
 #undef f
-  failout_sysCx ("Bad args...");
 }
 
 /** Read from the file descriptor /in/ and write to file /name/.
@@ -44,8 +45,8 @@ pipe_to_file(lace_fd_t fd, const char* name)
       in->size = 0;
     }
   }
-  if (in) {close_LaceX(in);}
-  if (out) {close_LaceO(out);}
+  close_LaceX(in);
+  close_LaceO(out);
 }
 
 
@@ -70,72 +71,113 @@ readin_fd(lace_fd_t fd, bool scrap_newline)
   int
 main_execfd(unsigned argc, char** argv)
 {
+  int exstatus = 0;
   unsigned argi = 1;
   unsigned off = 0;
-  BitTable bt = cons2_BitTable (argc, 0);
+  unsigned i;
+  lace_fd_t stdin_fd = 0;
+  lace_fd_t stdout_fd = 1;
+  unsigned char* bt = (unsigned char*) malloc(argc);
   char* exe = 0;
 
-  while (argv[argi] && 0 != strcmp(argv[argi], "--"))
+  memset(bt, 0, argc);
+
+  while (argv[argi] && 0 != strcmp(argv[argi], "--") && exstatus == 0)
   {
     if (0 == strcmp(argv[argi], "-exe")) {
       exe = argv[++argi];
+    } else if (0 == strcmp(argv[argi], "-stdin")) {
+      stdin_fd = lace_arg_open_readonly(argv[++argi]);
+      if (stdout_fd < 0) {
+        lace_log_errorf("Cannot open -stdin: %s", argv[argi]);
+        exstatus = 64;
+      }
+    } else if (0 == strcmp(argv[argi], "-stdout")) {
+      stdout_fd = lace_arg_open_writeonly(argv[++argi]);
+      if (stdout_fd < 0) {
+        lace_log_errorf("Cannot open -stdout: %s", argv[argi]);
+        exstatus = 64;
+      }
     } else {
       int idx = 0;
       if (lace_parse_int(&idx, argv[argi]) && idx >= 0) {
-        set1_BitTable(bt, (unsigned)idx);
+        bt[idx] = 1;
       } else {
-        DBog1( "Cannot parse index from arg: %s", argv[argi] );
-        show_usage_and_exit ();
-      }
-    }
-    ++ argi;
-  }
-  if (!argv[argi]) {
-    show_usage_and_exit ();
-  }
-  off = ++ argi;
-
-  while (argv[argi])
-  {
-    if (test_BitTable (bt, argi-off))
-    {
-      int fd = -1;
-      if (!lace_parse_int(&fd, argv[argi]) || fd < 0) {
-        DBog1( "Cannot parse fd from arg: %s", argv[argi] );
-        show_usage_and_exit ();
-      }
-      else if (argi == off) {
-        if (!exe) {
-          failout_sysCx ("Need to provide -exe argument.");
-        }
-
-        pipe_to_file (fd, exe);
-        argv[argi] = exe;
-        chmodu_sysCx (argv[argi], true, true, true);
-      }
-      else {
-        argv[argi] = readin_fd (fd, true);
-        push_losefn1_sysCx ((void (*) (void*)) free, argv[argi]);
+        lace_log_errorf("Cannot parse index from arg: %s", argv[argi]);
+        show_usage();
+        exstatus = 64;
       }
     }
     ++ argi;
   }
 
-  lose_BitTable (&bt);
+  if (exstatus == 0) {
+    if (argv[argi] && argv[argi+1]) {
+      argi += 1;
+      off = argi;
+    } else {
+      exstatus = 64;
+    }
+  }
 
+  for (i = 0; i < argc-off && exstatus == 0; ++i) {
+    int fd = -1;
+    if (bt[i] == 0) {continue;}
+    if (!lace_parse_int(&fd, argv[off+i]) || fd < 0) {
+      lace_log_errorf("Cannot parse fd from arg: %s", argv[off+i]);
+      exstatus = 64;
+    } else if (i == 0) {
+      if (exe) {
+        pipe_to_file(fd, exe);
+        argv[off+i] = exe;
+        lace_compat_file_chmod_u_rwx(argv[off+i], 1, 1, 1);
+      } else {
+        lace_log_error("Need to provide -exe argument.");
+        exstatus = 64;
+      }
+    } else {
+      argv[off+i] = readin_fd(fd, true);
+    }
+  }
+
+  if (exstatus != 0) {
+    show_usage();
+    free(bt);
+    return exstatus;
+  }
+
+#if defined(LACE_BUILTIN_LIBRARY) || defined(UNIT_TESTING)
   if (lace_specific_util(argv[off])) {
-    return lace_builtin_main(argv[off], argc-off, &argv[off]);
+    argv[off-2] = argv[0];
+    argv[off-1] = "-as";
+    exstatus = lace_compat_fd_spawnvp_wait(
+        stdin_fd, stdout_fd, 2, NULL, (const char**)&argv[off-2]);
+  } else {
+    exstatus = lace_compat_fd_spawnvp_wait(
+        stdin_fd, stdout_fd, 2, NULL, (const char**)&argv[off]);
   }
-  execvp_sysCx (&argv[off]);
-  return 1;
+#else
+  exstatus = -1;
+  lace_compat_fd_move_to(0, stdin_fd);
+  lace_compat_fd_move_to(1, stdout_fd);
+  lace_compat_sh_exec((const char**)&argv[off]);
+#endif
+
+  for (i = 1; i < argc-off; ++i) {
+    if (bt[i] != 0) {
+      free(argv[off+i]);
+    }
+  }
+  free(bt);
+
+  if (exstatus < 0) {exstatus = 126;}
+  return exstatus;
 }
 
-#ifndef LACE_BUILTIN_LIBRARY
+#if !defined(LACE_BUILTIN_LIBRARY) && !defined(UNIT_TESTING)
   int
 main(int argc, char** argv)
 {
-  int argi = init_sysCx(&argc, &argv);
-  int istat = main_execfd(argc-(argi-1), &argv[argi-1]);
-  return istat;
+  return main_execfd((unsigned)argc, argv);
 }
 #endif

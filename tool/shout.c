@@ -4,6 +4,10 @@
  * Keep small; built often.
  **/
 #include <stdio.h>
+#ifdef _MSC_VER
+#include <fcntl.h>
+#include <io.h>
+#endif
 
 #ifndef LACE_TOOL_LIBRARY
 #define lace_tool_shout_main main
@@ -11,6 +15,9 @@
 int lace_tool_shout_main(int argc, char** argv) {
   FILE* f = stdout;
   int argi;
+#ifdef _MSC_VER
+  _setmode(_fileno(f), _O_BINARY);
+#endif
   if (argc < 3 || !argv[1] || !argv[2]) {
     return 64;  /* EX_USAGE: Command line usage error.*/
   }

@@ -16,9 +16,11 @@ exports_files([
 ])
 
 exports_files([
+    "execfd.c",
     "godo.c",
     "time2sec.c",
     "transpose.c",
+    "utilace.h",
     "void.c",
 ], visibility = [
     "//test/builtin:__pkg__",
@@ -53,10 +55,6 @@ cc_binary(
     deps = [
         "//src/cx:cx_lib",
     ],
-    linkopts = select({
-        "@platforms//os:windows": [],
-        "//conditions:default": ["-pthread"],
-    }),
     visibility = ["//:__pkg__"],
 )
 
@@ -103,6 +101,13 @@ cc_binary(
         "@platforms//os:windows": ["@platforms//:incompatible"],
         "//conditions:default": [],
     }),
+    visibility = ["//test/builtin:__pkg__"],
+)
+
+cc_binary(
+    name = "execfd",
+    srcs = ["execfd.c", "utilace.h"],
+    deps = ["//:lace_lib"],
     visibility = ["//test/builtin:__pkg__"],
 )
 

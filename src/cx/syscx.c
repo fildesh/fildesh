@@ -30,111 +30,19 @@ signal_hook_sysCx (int sig)
   failout_sysCx ("");
 }
 
-static
-  fd_t
-parse_fd_arg_sysCx (const char* s)
-{
-  int fd = -1;
-  if (!s)  return -1;
-  s = lace_parse_int(&fd, s);
-  if (!s)  return -1;
-  return fd;
-}
-
-static
-  void
-parse_args_sysCx (int* pargc, char*** pargv)
-{
-  char* execing = NULL;
-  int argc = *pargc;
-  char** argv = *pargv;
-  int argi = 0;
-  ExeName = argv[argi++];
-
-  if (!argv[argi])  return;
-  if (!eql_cstr (argv[argi++], MagicArgv1_sysCx))  return;
-
-  while (argv[argi] && !eql_cstr (argv[argi], "--"))
-  {
-    char* arg = argv[argi++];
-    if (eql_cstr (arg, "-stdxfd"))
-    {
-      fd_t fd = parse_fd_arg_sysCx (argv[argi++]);
-      if (fd >= 0) {
-        if (fd != 0) {
-          lace_compat_fd_move_to(0, fd);
-          lace_compat_fd_inherit(0);
-        }
-      } else {
-        DBog1( "Bad -stdxfd argument: %s", argv[argi-1] );
-        failout_sysCx ("");
-      }
-    }
-    else if (eql_cstr (arg, "-stdofd"))
-    {
-      fd_t fd = parse_fd_arg_sysCx (argv[argi++]);
-      if (fd >= 0) {
-        if (fd != 1) {
-          lace_compat_fd_move_to(1, fd);
-          lace_compat_fd_inherit(1);
-        }
-      } else {
-        DBog1( "Bad -stdofd argument: %s", argv[argi-1] );
-        failout_sysCx ("");
-      }
-    }
-    if (eql_cstr (arg, "-closefd"))
-    {
-      fd_t fd = parse_fd_arg_sysCx (argv[argi++]);
-      if (fd >= 0) {
-        lace_compat_fd_close(fd);
-      } else {
-        DBog1( "Bad -closefd argument: %s", argv[argi-1] );
-        failout_sysCx ("");
-      }
-    }
-    else if (eql_cstr (arg, "-exec"))
-    {
-      execing = argv[argi++];
-    }
-  }
-
-  {
-    int i;
-    for (i = 1; i <= argc-argi; ++i) {
-      argv[i] = argv[argi+i];
-    }
-  }
-
-  *pargc = argc - argi;
-  *pargv = argv;
-
-  if (execing) {
-    /* Only exec if it's a different program.*/
-    if (0 != strcmp(argv[0], execing)) {
-      argv[0] = execing;
-      execvp_sysCx(argv);
-    }
-  }
-}
-
 /** Initialize the system.
  *
  * \return The number one.
  * \sa lose_sysCx()
  **/
-  int
-init_sysCx (int* pargc, char*** pargv)
+void init_sysCx()
 {
-  parse_args_sysCx (pargc, pargv);
-
   signal (SIGSEGV, signal_hook_sysCx);
 #ifndef LACE_POSIX_SOURCE
   _setmode(_fileno(stdin), _O_BINARY);
   _setmode(_fileno(stdout), _O_BINARY);
   _setmode(_fileno(stderr), _O_BINARY);
 #endif
-  return 1;
 }
 
   void
@@ -202,101 +110,6 @@ failout_sysCx (const char* msg)
     abort();
   else
     exit(1);
-}
-
-  int
-open_lace_xfd(const char* filename)
-{
-  static const char dev_fd_prefix[] = "/dev/fd/";
-  int fd = -1;
-  if (eq_cstr("-", filename)) {
-    fd = 0;
-  }
-  else if (pfxeq_cstr(dev_fd_prefix, filename)) {
-    lace_parse_int(&fd, &filename[strlen(dev_fd_prefix)]);
-  }
-  else {
-#ifdef LACE_POSIX_SOURCE
-    fd = open(filename, O_RDONLY);
-#else
-    fd = _open(filename, _O_RDONLY);
-#endif
-  }
-  if (fd >= 0) {
-    lace_compat_fd_cloexec(fd);
-  }
-  return fd;
-}
-
-  int
-open_lace_ofd(const char* filename)
-{
-  static const char dev_fd_prefix[] = "/dev/fd/";
-#ifdef LACE_POSIX_SOURCE
-  const int flags =  O_WRONLY | O_CREAT | O_TRUNC | O_APPEND;
-  const int mode
-    = S_IWUSR | S_IWGRP | S_IWOTH
-    | S_IRUSR | S_IRGRP | S_IROTH;
-#else
-  const int flags = _O_WRONLY | _O_CREAT | _O_TRUNC | O_APPEND;
-  const int mode = _S_IREAD | _S_IWRITE;
-#endif
-  int fd = -1;
-  if (eq_cstr("-", filename)) {
-    fd = 1;
-  }
-  else if (pfxeq_cstr(dev_fd_prefix, filename)) {
-    lace_parse_int(&fd, &filename[strlen(dev_fd_prefix)]);
-  }
-  else {
-#ifdef LACE_POSIX_SOURCE
-    fd = open(filename, flags, mode);
-#else
-    fd = _open(filename, flags, mode);
-#endif
-  }
-  if (fd >= 0) {
-    lace_compat_fd_cloexec(fd);
-  }
-  return fd;
-}
-
-  pid_t
-spawnvp_sysCx (char* const* argv)
-{
-  pid_t pid;
-#ifdef LACE_POSIX_SOURCE
-  if (eql_cstr (argv[0], exename_of_sysCx ()) &&
-      eql_cstr (argv[1], MagicArgv1_sysCx))
-  {
-    pid = fork();
-    if (pid == 0) {
-      int argc = 0;
-      DeclTable( cstr, t );
-      uint i;
-      while (argv[argc])  ++ argc;
-
-      SizeTable( t, argc+1 );
-      for (i = 0; i < t.sz; ++i) {
-        t.s[i] = argv[i];
-      }
-      parse_args_sysCx (&argc, &t.s);
-      execvp_sysCx (t.s);
-    }
-  } else {
-    pid = lace_compat_sh_spawn((const char**)argv);
-  }
-#else
-  pid = lace_compat_sh_spawn((const char**)argv);
-#endif
-  return pid;
-}
-
-  void
-execvp_sysCx (char* const* argv)
-{
-  lace_compat_sh_exec((const char**)argv);
-  failout_sysCx ("execvp() failed!");
 }
 
   bool
@@ -391,19 +204,6 @@ tacenv_sysCx (const char* key, const char* val)
 
   setenv_sysCx (key, cstr_AlphaTab (dec));
   lose_AlphaTab (dec);
-}
-
-  bool
-chmodu_sysCx (const char* pathname, bool r, bool w, bool x)
-{
-  int ret = -1;
-#ifdef LACE_POSIX_SOURCE
-  chmod (pathname, (r ? S_IRUSR : 0) | (w ? S_IWUSR : 0) | (x ? S_IXUSR : 0));
-#else
-  (void) x;
-  _chmod (pathname, (r ? _S_IREAD : 0) | (w ? _S_IWRITE : 0));
-#endif
-  return (ret == 0);
 }
 
   bool
