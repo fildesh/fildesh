@@ -28,6 +28,7 @@ spawn_test(
         "$(location //builtin:cmp)",
         "$(location :hello_newline.txt)",
         "$(location :hello_newline.txt)",
+        "-o", "-",
     ],
     data = [
         ":hello_newline.txt",
@@ -39,6 +40,7 @@ spawn_test(
     args = [
         "!",
         "$(location //builtin:cmp)",
+        "-o", "-",
         "$(location :hello_newline.txt)",
         "$(location :hello_newline_x2.txt)",
     ],

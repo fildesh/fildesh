@@ -28,9 +28,11 @@ add_test(NAME bestmatch_test COMMAND
 
 add_test(NAME cmp_equal_test COMMAND cmp
   "${CMAKE_CURRENT_SOURCE_DIR}/hello_newline.txt"
-  "${CMAKE_CURRENT_SOURCE_DIR}/hello_newline.txt")
+  "${CMAKE_CURRENT_SOURCE_DIR}/hello_newline.txt"
+  "-o" "-")
 
 add_test(NAME cmp_diff_test COMMAND spawn ! "$<TARGET_FILE:cmp>"
+  "-o" "-"
   "${CMAKE_CURRENT_SOURCE_DIR}/hello_newline.txt"
   "${CMAKE_CURRENT_SOURCE_DIR}/hello_newline_x2.txt")
 
