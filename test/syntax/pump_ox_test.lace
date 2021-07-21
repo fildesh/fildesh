@@ -1,0 +1,8 @@
+# Compare bytes from above and below.
+
+$(O expect) zec / "these are the expected bytes" /
+
+|< $(Xv pumped) cmp $(XF expect) -
+|> stdout
+
+$(O^ pumped) zec / "these are the expected bytes" /

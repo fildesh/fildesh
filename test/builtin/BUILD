@@ -1,5 +1,5 @@
 load("//tool:comparispawn.bzl", "lace_expect_test")
-load("//tool:spawn.bzl", "spawn_test")
+load("//tool:spawn.bzl", "lace_test", "spawn_test")
 
 #### add
 
@@ -98,6 +98,13 @@ cc_test(
     deps = ["//:lace_lib", "//:lace_tool_lib"],
     data = ["//builtin:zec"],
     args = ["$(location //builtin:zec)"],
+)
+
+lace_test(
+    name = "execfd_script_test",
+    srcs = ["execfd_script_test.lace"],
+    args = ["$(location //builtin:zec)"],
+    data = ["//builtin:zec"],
 )
 
 #### godo

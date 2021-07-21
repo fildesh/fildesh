@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-int main_execfd(unsigned argc, char** argv);
+int lace_builtin_execfd_main(unsigned, char**, LaceX**, LaceO**);
 
 typedef struct PipemFnArg PipemFnArg;
 struct PipemFnArg {
@@ -48,7 +48,7 @@ LACE_TOOL_PIPEM_CALLBACK(run_execfd, in_fd, out_fd, PipemFnArg*, st) {
     for (i = 0; st->argv[i]; ++i) {
       lace_log_tracef("argv[%u] = %s", i, st->argv[i]);
     }
-    istat = main_execfd(i, (char**)st->argv);
+    istat = lace_builtin_execfd_main(i, (char**)st->argv, NULL, NULL);
     assert(istat == 0);
   }
 }

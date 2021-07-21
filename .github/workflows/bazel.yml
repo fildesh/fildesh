@@ -37,6 +37,7 @@ jobs:
           bazel-bin*/src/*
           bazel-bin*/test/*
           bazel-bin*/tool/*
+          !bazel-bin*/test/syntax/
           !bazel-bin*/**/_objs/
           !bazel-bin*/**/*.cppmap
           !bazel-bin*/**/*.params

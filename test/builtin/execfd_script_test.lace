@@ -1,0 +1,10 @@
+# Same test as //test/builtin:execfd_test
+
+$(O exe) zec $(1) / /
+$(O hello) zec / "hello" /
+$(O world) zec / "world" /
+$(O expect) zec / "hello there world" /
+
+|< $(XF exe) / $(XA hello) " there " $(XA world) /
+|- cmp $(XF expect)
+|> stdout

@@ -2,6 +2,7 @@
 add_subdirectory(compat)
 add_subdirectory(tool)
 add_subdirectory(src)
+add_subdirectory(syntax)
 
 set (lace_exe "$<TARGET_FILE:lace>")
 set (zec_exe "$<TARGET_FILE:zec>")

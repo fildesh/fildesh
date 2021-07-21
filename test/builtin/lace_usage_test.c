@@ -36,13 +36,23 @@ cmp_usage_tests(const char* lace_exe, const char* bad_filename)
   int istat;
   istat = lace_compat_fd_spawnlp_wait(
       0, 1, 2, NULL, lace_exe, "-as", "cmp",
-      "need_one_more_than_thin", NULL);
+      "/dev/null", "/dev/null", NULL);
+  assert(istat == 0);
+
+  istat = lace_compat_fd_spawnlp_wait(
+      0, 1, 2, NULL, lace_exe, "-as", "cmp",
+      "-", NULL);
   assert(istat == 64);
 
   istat = lace_compat_fd_spawnlp_wait(
       0, 1, 2, NULL, lace_exe, "-as", "cmp",
-      "need", "one_less", "than_this", NULL);
+      "/dev/null", "/dev/null", "too_many_files", NULL);
   assert(istat == 64);
+
+  istat = lace_compat_fd_spawnlp_wait(
+      0, 1, 2, NULL, lace_exe, "-as", "cmp",
+      "-o", bad_filename, NULL);
+  assert(istat == 73);
 
   /* First open should fail.*/
   istat = lace_compat_fd_spawnlp_wait(
@@ -80,6 +90,34 @@ elastic_pthread_usage_tests(const char* lace_exe, const char* bad_filename)
       0, 1, 2, NULL, lace_exe, "-as", "elastic_pthread",
       "-o", bad_filename, NULL);
   assert(istat == 73);
+}
+
+static void
+execfd_usage_tests(const char* lace_exe, const char* bad_filename)
+{
+  int istat;
+  istat = lace_compat_fd_spawnlp_wait(
+      0, 1, 2, NULL, lace_exe, "-as", "execfd", NULL);
+  assert(istat == 64);
+
+  istat = lace_compat_fd_spawnlp_wait(
+      0, 1, 2, NULL, lace_exe, "-as", "execfd",
+      "-stdin", bad_filename, NULL);
+  assert(istat == 66);
+
+  istat = lace_compat_fd_spawnlp_wait(
+      0, 1, 2, NULL, lace_exe, "-as", "execfd",
+      "-stdout", bad_filename, NULL);
+  assert(istat == 73);
+
+  istat = lace_compat_fd_spawnlp_wait(
+      0, 1, 2, NULL, lace_exe, "-as", "execfd", "--", NULL);
+  assert(istat == 64);
+
+  istat = lace_compat_fd_spawnlp_wait(
+      0, 1, 2, NULL, lace_exe, "-as", "execfd",
+      "3", "--", "missing", "index", "three", NULL);
+  assert(istat == 64);
 }
 
 static void
@@ -136,6 +174,7 @@ int main(int argc, char** argv) {
   bestmatch_usage_tests(lace_exe, bad_filename);
   cmp_usage_tests(lace_exe, bad_filename);
   elastic_pthread_usage_tests(lace_exe, bad_filename);
+  execfd_usage_tests(lace_exe, bad_filename);
   time2sec_usage_tests(lace_exe);
   ujoin_usage_tests(lace_exe, bad_filename);
 

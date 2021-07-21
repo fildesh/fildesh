@@ -55,6 +55,28 @@ static inline LaceXF default_LaceXF() {
   return tmp;
 }
 
+static lace_fd_t lace_open_null_readonly() {
+  lace_compat_fd_t fd = -1;
+  lace_compat_fd_t tmp_fd = -1;
+  int istat;
+  istat = lace_compat_fd_pipe(&tmp_fd, &fd);
+  if (istat != 0) {return -1;}
+  istat = lace_compat_fd_close(tmp_fd);
+  if (istat != 0) {lace_compat_fd_close(fd); return -1;}
+  return fd;
+}
+
+static LaceX* open_null_LaceXF() {
+  LaceXF* xf;
+  lace_compat_fd_t fd = lace_open_null_readonly();
+  if (fd < 0) {return NULL;}
+  xf = (LaceXF*) malloc(sizeof(LaceXF));
+  *xf = default_LaceXF();
+  xf->fd = fd;
+  xf->filename = lace_compat_string_duplicate("/dev/null");
+  return &xf->base;
+}
+
   LaceX*
 open_LaceXF(const char* filename)
 {
@@ -65,6 +87,7 @@ open_LaceXF(const char* filename)
 open_sibling_LaceXF(const char* sibling, const char* filename)
 {
   static const char dev_stdin[] = "/dev/stdin";
+  static const char dev_null[] = "/dev/null";
   static const char dev_fd_prefix[] = "/dev/fd/";
   static const unsigned dev_fd_prefix_length = sizeof(dev_fd_prefix)-1;
   const size_t filename_length = (filename ? strlen(filename) : 0);
@@ -74,6 +97,9 @@ open_sibling_LaceXF(const char* sibling, const char* filename)
 
   if (0 == strcmp("-", filename) || 0 == strcmp(dev_stdin, filename)) {
     return open_fd_LaceX(0);
+  }
+  if (0 == strcmp(dev_null, filename)) {
+    return open_null_LaceXF();
   }
   if (0 == strncmp(dev_fd_prefix, filename, dev_fd_prefix_length)) {
     int fd = -1;
@@ -124,14 +150,7 @@ lace_arg_open_readonly(const char* filename)
     return lace_compat_fd_claim(0);
   }
   if (0 == strcmp(dev_null, filename)) {
-    lace_compat_fd_t fd = -1;
-    lace_compat_fd_t tmp_fd = -1;
-    int istat;
-    istat = lace_compat_fd_pipe(&tmp_fd, &fd);
-    if (istat != 0) {return -1;}
-    istat = lace_compat_fd_close(tmp_fd);
-    if (istat != 0) {lace_compat_fd_close(fd); return -1;}
-    return fd;
+    return lace_open_null_readonly();
   }
   if (0 == strncmp(dev_fd_prefix, filename, dev_fd_prefix_length)) {
     int fd = -1;

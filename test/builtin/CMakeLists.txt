@@ -69,6 +69,8 @@ add_test(NAME execfd_test COMMAND
   "${CMAKE_COMMAND}" -E env "TEST_TMPDIR=${CMAKE_CURRENT_BINARY_DIR}"
   "$<TARGET_FILE:execfd_test>" "$<TARGET_FILE:zec>")
 
+add_test(NAME execfd_script_test COMMAND
+  lace -x "${CMAKE_CURRENT_SOURCE_DIR}/execfd_script_test.lace" "$<TARGET_FILE:zec>")
 
 #### godo
 

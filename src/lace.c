@@ -240,9 +240,21 @@ static char* lace_strdup(const char* s) {
   return lace_compat_string_duplicate(s);
 }
 
+static char* lace_uint_strdup(unsigned x) {
+  char buf[LACE_INT_BASE10_SIZE_MAX];
+  lace_encode_int_base10(buf, x);
+  return lace_strdup(buf);
+}
+
 static char* lace_fd_strdup(lace_fd_t fd) {
   char buf[LACE_INT_BASE10_SIZE_MAX];
   lace_encode_int_base10(buf, fd);
+  return lace_strdup(buf);
+}
+
+static char* lace_fd_path_strdup(lace_fd_t fd) {
+  char buf[LACE_FD_PATH_SIZE_MAX];
+  lace_encode_fd_path(buf, fd);
   return lace_strdup(buf);
 }
 
@@ -666,7 +678,6 @@ add_ios_Command (Command* cmd, int in, int out)
   static void
 add_iarg_Command (Command* cmd, int in, bool scrap_newline)
 {
-  add_ios_Command (cmd, in, -1);
   GrowTable( cmd->iargs, 1 );
   TopTable( cmd->iargs )->fd = in;
   TopTable( cmd->iargs )->scrap_newline = scrap_newline;
@@ -688,10 +699,12 @@ add_fd_arg_Command (Command* cmd, int fd)
 }
 
   static char*
-add_tmp_file_Command (Command* cmd, uint x, const char* tmpdir)
+add_tmp_file_Command(Command* cmd, uint x, const char* tmpdir,
+                     const char* extension)
 {
-  char buf[1024];
-  sprintf (buf, "%s/%u", tmpdir, x);
+  char buf[2048];
+  assert(extension);
+  sprintf (buf, "%s/%u%s", tmpdir, x, extension);
   PushTable( cmd->tmp_files, lace_strdup(buf) );
   return cmd->tmp_files.s[cmd->tmp_files.sz - 1];
 }
@@ -842,14 +855,11 @@ setup_commands (TableT(Command)* cmds,
         }
         else if (kind == IDescFileVal)
         {
-          add_ios_Command (cmd, fd, -1);
-          if (arg_q > 0)
-          {
+          if (arg_q > 0) {
             cmd->args.s[arg_q] = add_fd_arg_Command (cmd, fd);
-          }
-          else
-          {
-            cmd->args.s[0] = add_tmp_file_Command (cmd, ntmp_files, tmpdir);
+            add_ios_Command (cmd, fd, -1);
+          } else {
+            cmd->args.s[0] = add_tmp_file_Command(cmd, ntmp_files, tmpdir, ".exe");
             ++ ntmp_files;
             if (sym->arg_idx < UINT_MAX)
               cmds->s[sym->cmd_idx].args.s[sym->arg_idx] = cmd->args.s[0];
@@ -863,7 +873,7 @@ setup_commands (TableT(Command)* cmds,
             failout_Command (cmd, "Not a HERE doc file?", arg);
           }
           cmd->args.s[arg_q] =
-            add_tmp_file_Command (cmd, ntmp_files, tmpdir);
+            add_tmp_file_Command(cmd, ntmp_files, tmpdir, ".txt");
           ++ ntmp_files;
           /* Write the temp file now.*/
           write_here_doc_file (cmd->args.s[arg_q],
@@ -898,8 +908,8 @@ setup_commands (TableT(Command)* cmds,
           else
           {
             char* s;
-            s = add_tmp_file_Command (&cmds->s[sym->cmd_idx],
-                ntmp_files, tmpdir);
+            s = add_tmp_file_Command(&cmds->s[sym->cmd_idx],
+                ntmp_files, tmpdir, ".exe");
             ++ ntmp_files;
             cmds->s[sym->cmd_idx].args.s[0] = s;
             cmd->args.s[arg_q] = s;
@@ -1085,7 +1095,6 @@ int main_elastic_aio(unsigned argc, char** argv);
 #ifdef LACE_BUILTIN_PERMIT_ELASTIC_POLL
 int main_elastic_poll(unsigned argc, char** argv);
 #endif
-int main_execfd(unsigned argc, char** argv);
 int main_godo(unsigned argc, char** argv);
 int main_lace(unsigned argc, char** argv);
 int main_ssh_all(unsigned argc, char** argv);
@@ -1102,6 +1111,9 @@ static int lace_main_cmp(unsigned argc, char** argv) {
 }
 static int lace_main_elastic_pthread(unsigned argc, char** argv) {
   return lace_builtin_elastic_pthread_main(argc, argv, NULL, NULL);
+}
+static int main_execfd(unsigned argc, char** argv) {
+  return lace_builtin_execfd_main(argc, argv, NULL, NULL);
 }
 static int lace_main_seq(unsigned argc, char** argv) {
   return lace_builtin_seq_main(argc, argv, NULL, NULL);
@@ -1135,6 +1147,7 @@ bool lace_builtin_is_threadsafe(const char* name)
     "elastic",
 #endif
     "elastic_pthread",
+    "execfd",
     "seq",
     "time2sec",
     "void",
@@ -1219,6 +1232,7 @@ LACE_POSIX_THREAD_CALLBACK(builtin_command_thread_fn, BuiltinCommandThreadArg*, 
     {"elastic", lace_builtin_elastic_pthread_main},
 #endif
     {"elastic_pthread", lace_builtin_elastic_pthread_main},
+    {"execfd", lace_builtin_execfd_main},
     {"seq", lace_builtin_seq_main},
     {"time2sec", lace_builtin_time2sec_main},
     {"void", lace_builtin_void_main},
@@ -1233,6 +1247,8 @@ LACE_POSIX_THREAD_CALLBACK(builtin_command_thread_fn, BuiltinCommandThreadArg*, 
   LaceO** outputs = NULL;
   int (*main_fn)(unsigned, char**, LaceX**, LaceO**) = NULL;
   unsigned i;
+  char* name = NULL;
+  bool only_argv = false;
 
   assert(cmd->iargs.sz == 0);
   assert(cmd->exec_fd < 0);
@@ -1243,8 +1259,24 @@ LACE_POSIX_THREAD_CALLBACK(builtin_command_thread_fn, BuiltinCommandThreadArg*, 
     }
   }
 
+  /* We should have found something. Retain argv[0].*/
+  assert(offset >= 2);
+  name = st->argv[offset];
+  st->argv[offset] = st->argv[offset-2];
+  st->argv[offset-2] = name;
+
+  assert(lace_builtin_is_threadsafe(name));
+  for (i = 0; builtins[i].name; ++i) {
+    if (0 == strcmp(name, builtins[i].name)) {
+      main_fn = builtins[i].main_fn;
+      break;
+    }
+  }
+  assert(main_fn);
+
   argc -= offset;
   argv = &st->argv[offset];
+  only_argv = (0 == strcmp("execfd", name));
   inputs = (LaceX**) malloc(sizeof(LaceX*) * (argc+1));
   outputs = (LaceO**) malloc(sizeof(LaceO*) * (argc+1));
   for (i = 0; i <= argc; ++i) {
@@ -1260,14 +1292,16 @@ LACE_POSIX_THREAD_CALLBACK(builtin_command_thread_fn, BuiltinCommandThreadArg*, 
     cmd->stdos = -1;
   }
 
-  for (i = 0; builtins[i].name; ++i) {
-    if (0 == strcmp(argv[0], builtins[i].name)) {
-      main_fn = builtins[i].main_fn;
-      break;
+  if (false) {
+    for (i = 0; i < argc; ++i) {
+      lace_log_tracef("%u argv[%u]: %s", cmd->line_num, i, argv[i]);
     }
   }
-  if (main_fn) {
+
+  if (main_fn && !only_argv) {
     cmd->status = main_fn(argc, argv, inputs, outputs);
+  } else if (main_fn && only_argv) {
+    cmd->status = main_fn(argc, argv, NULL, NULL);
   } else {
     cmd->status = -1;
   }
@@ -1310,6 +1344,40 @@ fix_known_flags_Command(Command* cmd) {
   }
 }
 
+static
+  void
+add_inheritfd_flags_Command(TableT(cstr)* argv, Command* cmd, bool inprocess) {
+  unsigned i;
+  if (!inprocess) {
+    for (i = 0; i < cmd->iargs.sz; ++i) {
+      add_ios_Command(cmd, cmd->iargs.s[i].fd, -1);
+    }
+    return;
+  }
+
+  for (i = 0; i < cmd->is.sz; ++i) {
+    PushTable( *argv, lace_strdup("-inheritfd") );
+    PushTable( *argv, lace_fd_strdup(cmd->is.s[i]) );
+  }
+  for (i = 0; i < cmd->os.sz; ++i) {
+    PushTable( *argv, lace_strdup("-inheritfd") );
+    PushTable( *argv, lace_fd_strdup(cmd->os.s[i]) );
+  }
+  cmd->iargs.sz = 0;
+
+  if (cmd->stdis >= 0) {
+    PushTable( *argv, lace_strdup("-stdin") );
+    PushTable( *argv, lace_fd_path_strdup(cmd->stdis) );
+    PushTable( cmd->is, cmd->stdis );
+    cmd->stdis = -1;
+  }
+  if (cmd->stdos >= 0) {
+    PushTable( *argv, lace_strdup("-stdout") );
+    PushTable( *argv, lace_fd_path_strdup(cmd->stdos) );
+    PushTable( cmd->os, cmd->stdos );
+    cmd->stdos = -1;
+  }
+}
 
   static void
 spawn_commands(const char* lace_exe, TableT(Command) cmds)
@@ -1349,18 +1417,22 @@ spawn_commands(const char* lace_exe, TableT(Command) cmds)
     fix_known_flags_Command(cmd);
 
     if (fdargs.sz > 0) {
+      use_thread = true;
       PushTable( argv, lace_strdup(lace_exe) );
       PushTable( argv, lace_strdup("-as") );
       PushTable( argv, lace_strdup("execfd") );
       PushTable( argv, lace_strdup("-exe") );
       PushTable( argv, lace_strdup(cmd->args.s[0]) );
 
+      add_inheritfd_flags_Command(&argv, cmd, use_thread);
+      if (use_thread) {cmd->exec_fd = -1;}
+
       for (j = 0; j < fdargs.sz; ++j)
       {
         uint2 p = fdargs.s[j];
         PushTable( cmd->extra_args, lace_fd_strdup(p.s[1]) );
         cmd->args.s[p.s[0]] = *TopTable( cmd->extra_args );
-        PushTable( argv, lace_fd_strdup(p.s[0]) );
+        PushTable( argv, lace_uint_strdup(p.s[0]) );
       }
 
       PushTable( argv, lace_strdup("--") );
@@ -1371,6 +1443,10 @@ spawn_commands(const char* lace_exe, TableT(Command) cmds)
       PushTable( argv, lace_strdup(lace_exe) );
       PushTable( argv, lace_strdup("-as") );
       PushTable( argv, lace_strdup(cmd->args.s[0]));
+      if (0 == strcmp("execfd", cmd->args.s[0])) {
+        add_inheritfd_flags_Command(&argv, cmd, use_thread);
+        if (use_thread) {cmd->exec_fd = -1;}
+      }
     }
     else {
       PushTable( argv, lace_strdup(cmd->args.s[0]));
