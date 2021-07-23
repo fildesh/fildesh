@@ -11,7 +11,7 @@
 #include <errno.h>
 #include <signal.h>
 
-DeclTableT( HookFn, struct { void (*f) (); void* x; } );
+DeclTableT( HookFn, struct { void (*f) (void*); void* x; } );
 
 static DeclTable( HookFn, LoseFns );
 static const char* ExeName = 0;
@@ -46,17 +46,10 @@ void init_sysCx()
 }
 
   void
-push_losefn_sysCx (void (*f) ())
+push_losefn_sysCx (void (*f) (void*), void* x)
 {
   DeclGrow1Table( HookFn, hook, LoseFns );
   hook->f = f;
-  hook->x = 0;
-}
-  void
-push_losefn1_sysCx (void (*f) (void*), void* x)
-{
-  DeclGrow1Table( HookFn, hook, LoseFns );
-  hook->f = (void (*) ()) f;
   hook->x = x;
 }
 
@@ -70,10 +63,7 @@ lose_sysCx ()
   for (i = 0; i < LoseFns.sz; ++i) {
     /* Do in reverse because it's a stack.*/
     DeclEltTable( HookFn, hook, LoseFns, LoseFns.sz-i-1 );
-    if (hook->x)
-      ((void (*) (void*)) hook->f) (hook->x);
-    else
-      hook->f ();
+    hook->f(hook->x);
   }
   LoseTable( LoseFns );
   LoseFns.sz = 0;

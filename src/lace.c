@@ -48,6 +48,7 @@ typedef enum CommandKind CommandKind;
 
 typedef struct SymVal SymVal;
 typedef struct Command Command;
+typedef struct CommandHookup CommandHookup;
 typedef struct BuiltinCommandThreadArg BuiltinCommandThreadArg;
 
 DeclTableT( Command, Command );
@@ -81,6 +82,14 @@ struct Command
 
   /** Use this if it's a HERE document.**/
   char* doc;
+};
+
+/* See the setup_commands() phase.*/
+struct CommandHookup {
+  char* temporary_directory;
+  unsigned tmpfile_count;
+  Associa map;
+  Associa add_map; /* Temporarily hold new symbols for the current line.*/
 };
 
 struct SymVal
@@ -223,8 +232,9 @@ lose_Command (Command* cmd)
 }
 
   static void
-lose_Commands (TableT(Command)* cmds)
+lose_Commands (void* arg)
 {
+  TableT(Command)* cmds = (TableT(Command)*) arg;
   unsigned i;
   for (i = 0; i < cmds->sz; ++i) {
     if (cmds->s[i].kind == RunCommand && cmds->s[i].pid > 0)
@@ -699,13 +709,36 @@ add_fd_arg_Command (Command* cmd, int fd)
   return add_extra_arg_Command (cmd, buf);
 }
 
+  static void
+remove_tmppath(void* temporary_directory)
+{
+  if (!rmdir_sysCx((char*)temporary_directory))
+    lace_log_warningf("Temp directory not removed: %s",
+                      (char*)temporary_directory);
+  free(temporary_directory);
+  lace_log_trace("freed temporary_directory");
+}
+
   static char*
-add_tmp_file_Command(Command* cmd, uint x, const char* tmpdir,
+add_tmp_file_Command(Command* cmd,
+                     CommandHookup* cmd_hookup,
                      const char* extension)
 {
   char buf[2048];
   assert(extension);
-  sprintf (buf, "%s/%u%s", tmpdir, x, extension);
+  if (!cmd_hookup->temporary_directory) {
+    cmd_hookup->temporary_directory = mktmppath_sysCx("lace");
+    lace_compat_errno_clear();
+    if (!cmd_hookup->temporary_directory) {
+      lace_log_error("Unable to create temp directory.");
+      failout_sysCx(0);
+    }
+    push_losefn_sysCx(remove_tmppath, cmd_hookup->temporary_directory);
+  }
+
+  sprintf(buf, "%s/%u%s", cmd_hookup->temporary_directory,
+          cmd_hookup->tmpfile_count, extension);
+  cmd_hookup->tmpfile_count += 1;
   PushTable( cmd->tmp_files, lace_strdup(buf) );
   return cmd->tmp_files.s[cmd->tmp_files.sz - 1];
 }
@@ -728,15 +761,17 @@ write_here_doc_file (const char* name, const char* doc)
 }
 
   static void
-setup_commands (TableT(Command)* cmds,
-    const char* tmpdir)
+setup_commands(TableT(Command)* cmds)
 {
-  uint ntmp_files = 0;
-  Associa map[1];
-  Associa add_map[1]; /* Temporarily hold new symbols for the current line.*/
+  CommandHookup cmd_hookup[1];
+  Associa* map = &cmd_hookup->map;
+  /* Temporarily hold new symbols for the current line.*/
+  Associa* add_map = &cmd_hookup->add_map;
   Assoc* assoc;
-  uint i;
+  unsigned i;
 
+  cmd_hookup->temporary_directory = NULL;
+  cmd_hookup->tmpfile_count = 0;
   InitAssocia( AlphaTab, SymVal, *map, cmp_AlphaTab );
   InitAssocia( AlphaTab, SymVal, *add_map, cmp_AlphaTab );
 
@@ -860,8 +895,7 @@ setup_commands (TableT(Command)* cmds,
             cmd->args.s[arg_q] = add_fd_arg_Command (cmd, fd);
             add_ios_Command (cmd, fd, -1);
           } else {
-            cmd->args.s[0] = add_tmp_file_Command(cmd, ntmp_files, tmpdir, ".exe");
-            ++ ntmp_files;
+            cmd->args.s[0] = add_tmp_file_Command(cmd, cmd_hookup, ".exe");
             if (sym->arg_idx < UINT_MAX)
               cmds->s[sym->cmd_idx].args.s[sym->arg_idx] = cmd->args.s[0];
             cmd->exec_fd = fd;
@@ -874,8 +908,7 @@ setup_commands (TableT(Command)* cmds,
             failout_Command (cmd, "Not a HERE doc file?", arg);
           }
           cmd->args.s[arg_q] =
-            add_tmp_file_Command(cmd, ntmp_files, tmpdir, ".txt");
-          ++ ntmp_files;
+            add_tmp_file_Command(cmd, cmd_hookup, ".txt");
           /* Write the temp file now.*/
           write_here_doc_file (cmd->args.s[arg_q],
               sym->as.here_doc);
@@ -910,8 +943,7 @@ setup_commands (TableT(Command)* cmds,
           {
             char* s;
             s = add_tmp_file_Command(&cmds->s[sym->cmd_idx],
-                ntmp_files, tmpdir, ".exe");
-            ++ ntmp_files;
+                cmd_hookup, ".exe");
             cmds->s[sym->cmd_idx].args.s[0] = s;
             cmd->args.s[arg_q] = s;
           }
@@ -1076,16 +1108,6 @@ show_usage_and_exit ()
   fprintf(stderr, "Usage: %s [[-f] SCRIPTFILE | -- SCRIPT]\n",
           exename_of_sysCx ());
   failout_sysCx(0);
-}
-
-  static void
-remove_tmppath (AlphaTab* tmppath)
-{
-  if (!rmdir_sysCx (cstr_AlphaTab (tmppath)))
-    lace_log_warningf("Temp directory not removed: %s", cstr_AlphaTab(tmppath));
-  lose_AlphaTab(tmppath);
-  free(tmppath);
-  lace_log_trace("freed tmppath");
 }
 
 
@@ -1515,7 +1537,6 @@ int main_lace(unsigned argc, char** argv)
   DeclTable( AlphaTab, script_args );
   TableT(Command)* cmds = NULL;
   bool use_stdin = true;
-  AlphaTab* tmppath = NULL;
   LaceX* in = NULL;
   unsigned argi = 1;
   unsigned i;
@@ -1609,17 +1630,9 @@ int main_lace(unsigned argc, char** argv)
     }
   }
 
-  tmppath = AllocT(AlphaTab, 1);
-  *tmppath = dflt1_AlphaTab(mktmppath_sysCx("lace"));
-  lace_compat_errno_clear();
-  if (tmppath->sz == 0) {
-    lace_log_error("Unable to create temp directory.");
-    failout_sysCx(0);
-  }
-  push_losefn1_sysCx ((void (*) (void*)) remove_tmppath, tmppath);
   cmds = AllocT(TableT(Command), 1);
   InitTable(*cmds);
-  push_losefn1_sysCx ((void (*) (void*)) lose_Commands, cmds);
+  push_losefn_sysCx(lose_Commands, cmds);
 
   if (use_stdin) {
     in = open_LaceXF("-");
@@ -1673,7 +1686,7 @@ int main_lace(unsigned argc, char** argv)
   PackTable( *cmds );
 
   lace_compat_errno_trace();
-  setup_commands (cmds, ccstr_of_AlphaTab (tmppath));
+  setup_commands(cmds);
   lace_compat_errno_trace();
 
 

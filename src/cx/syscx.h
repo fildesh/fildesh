@@ -9,9 +9,7 @@ exename_of_sysCx ();
 void
 init_sysCx();
 void
-push_losefn_sysCx (void (*f) ());
-void
-push_losefn1_sysCx (void (*f) (void*), void* x);
+push_losefn_sysCx (void (*f) (void*), void* x);
 void
 lose_sysCx ();
 
