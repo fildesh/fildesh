@@ -37,14 +37,14 @@ $(H N)
 
 
 # Create a sequence of numbers from 1 to {N}.
-|< seq 1 $(N)
+|< seq 1 $(XA N)
 # Split off a new stream called {fivesum}.
 |- elastic - $(OF fivesum)
 
 # Add up all the numbers.
 |- tr '\n' ' '
 |- add
-|- zec / 'The sum of 1 to ' $(N) ' is ' / -
+|- zec / 'The sum of 1 to ' $(XA N) ' is ' / -
 |> zec $(O allsum)
 
 
@@ -54,7 +54,7 @@ $(H N)
 |- grep -e '[05]$'
 |- tr '\n' ' '
 |- add
-|- zec / 'The sum of 1 to ' $(N) ' by 5 is ' / -
+|- zec / 'The sum of 1 to ' $(XA N) ' by 5 is ' / -
 |> zec $(O fivesum)
 
 |< zec $(XF allsum) $(XF fivesum)

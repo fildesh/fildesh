@@ -1,6 +1,10 @@
+#include "lace.h"
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
+
+/* Trace disabled by default.*/
+static const bool lace_log_trace_on = false;
 
   void
 lace_log_errorf(const char* fmt, ...)
@@ -28,6 +32,7 @@ lace_log_warningf(const char* fmt, ...)
 lace_log_tracef(const char* fmt, ...)
 {
   va_list argp;
+  if (!lace_log_trace_on) {return;}
   fputs("TRACE: ", stderr);
   va_start(argp, fmt);
   vfprintf(stderr, fmt, argp);
@@ -70,6 +75,7 @@ void
 lace_log_trace_(
     const char* file, const char* func, unsigned line, const char* msg)
 {
+  if (!lace_log_trace_on) {return;}
   fprintf(
       stderr,
       "TRACE %s(%u) in %s: %s\n",

@@ -30,7 +30,7 @@ $(H N)
 ## Begin pipeline.
 
 # Start at {N} and read subsequent values from {pump}.
-|< zec / $(N) "\n" / -   $(Xv pump)
+|< zec / $(XA N) "\n" / -   $(Xv pump)
 # Loop until we hit 1.
 |- sed --line-buffered -e '/^1$/q'
 |- elastic - $(OF i)
@@ -43,6 +43,6 @@ $(H N)
 |< zec $(X i)
 |- tr '\n' ' '
 |- add
-|- zec / 'The sum of 1 to ' $(N) ' is ' / -
+|- zec / 'The sum of 1 to ' $(XA N) ' is ' / -
 |> stdout
 

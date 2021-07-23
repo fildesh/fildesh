@@ -77,19 +77,19 @@ $(H prog)
 
 
 ## Begin pipeline.
-|< seq 1 $(N)
-|- zec / $(N) "\n" / - $(XFv pump)
+|< seq 1 $(XA N)
+|- zec / $(XA N) "\n" / - $(XFv pump)
 #|- elastic - inspect1.txt
 
-# To use awk, comment the next line and uncomment the last $(comment).
+# To use awk, comment the next line and uncomment the last $(XA comment).
 $(H comment)
-|- awk $(script)
+|- awk $(XA script)
 # Use this command if fflush() not implemented in your awk.
-#stdbuf -oL awk $(X a) $(script) $(O a)
+#stdbuf -oL awk $(X a) $(XA script) $(O a)
 $(H comment)
 
 # Instead of awk script, use a C program!
-$(O exe) zec / $(prog) /
+$(O exe) zec / $(XA prog) /
 $(X exe) gcc -O3 -o $(OF exe) -xc -
 |- $(XF exe)
 #$(H comment)
@@ -99,6 +99,6 @@ $(X exe) gcc -O3 -o $(OF exe) -xc -
 |- wc -l
 # Remove any weird platform-specific indenting from wordcount.
 |- grep -o -E -e '[0-9]+'
-|- zec / 'The sum of 1 to ' $(N) ' is ' / -
+|- zec / 'The sum of 1 to ' $(XA N) ' is ' / -
 |> stdout
 

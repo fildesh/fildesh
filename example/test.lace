@@ -14,9 +14,9 @@ llo
 $(H low)
 
 # Concatenate the above
-$(O echo) zec / "hello\nup\njello " $(heredoc) \
-  " d e\nyel" $(low) \
-  "\nfel" $(low) '\no' "break\nyesbreak" /
+$(O echo) zec / "hello\nup\njello " $(XA heredoc) \
+  " d e\nyel" $(XA low) \
+  "\nfel" $(XA low) '\no' "break\nyesbreak" /
 
 grep llo $(X echo) $(O grep)
 
@@ -26,13 +26,13 @@ s/llo/cko/
 $(H heredoc) b
 
 # Test specifying a output before an input of the same name.
-$(O grep) sed -e $(heredoc) $(X grep)
+$(O grep) sed -e $(XA heredoc) $(X grep)
 
 $(H script)
 { print "prefix " $0; }
 $(H script)
 
-$(O awk) awk $(script) $(X grep)
+$(O awk) awk $(XA script) $(X grep)
 
 $(X awk) stdout
 

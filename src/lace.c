@@ -587,6 +587,7 @@ parse_sym (char* s, bool firstarg)
   i = count_non_ws (s);
   if (s[i] == '\0') {
     uint n = i-1;
+    lace_log_warningf("For forward compatibility, please change %s to use the $(XA ...) syntax.", s);
 
     if (s[n] != ')')
       return NSymValKinds;

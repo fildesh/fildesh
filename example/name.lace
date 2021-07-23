@@ -8,14 +8,14 @@
 
 $(<< includetest.lace)
 
-$(> msg) "Hello there " $(username) '!'
+$(> msg) "Hello there " $(XA username) '!'
 
-$(> passmsg) $(msg) "\nYour password is " $(password) '!'
+$(> passmsg) $(XA msg) "\nYour password is " $(XA password) '!'
 
-$(> greetmsg) $(msg) "\nHow are you today?"
+$(> greetmsg) $(XA msg) "\nHow are you today?"
 
-|< zec / $(greetmsg) "\n" /
-|- zec - / $(passmsg) "\n" /
+|< zec / $(XA greetmsg) "\n" /
+|- zec - / $(XA passmsg) "\n" /
 |> stdout
 
 
