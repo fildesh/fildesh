@@ -21,6 +21,15 @@ bazel run --config=asan-libfuzzer //test/fuzz:grow_mpop_fuzz_test_run
 bazel test -c dbg --test_output=all --cache_test_results=no --run_under='valgrind --trace-children=yes' //test/src:kve_test
 ```
 
+### Leak Check
+```shell
+bazel build //src:lace
+./bazel-bin/src/lace s/leak_check.lace
+# Don't worry if the `xargs ... grep ...` command fails.
+# Grep exits with a nonzero status because some
+# (hopefully most) testlogs do not have messages about leaks.
+```
+
 ### Lint
 ```shell
 # Casting function pointers is usually unsafe (https://stackoverflow.com/a/559671/5039395).

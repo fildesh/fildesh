@@ -1,0 +1,25 @@
+#!/usr/bin/env lace
+
+$(H directories)
+builtin
+compat
+fault
+src
+syntax
+tool
+$(H directories)
+
+# Step 1: Remove the old logs.
+|< zec / $(XA directories) /
+|- xargs "-I{}" -d "\n" find "bazel-testlogs/test/{}/" -regex '.*/test.log'
+|- xargs "-I{}" -d "\n" rm "{}"
+|- void
+# Step 2: Run tests.
+|- waitdo zec / $(XA directories) /
+|- xargs "-I{}" -d "\n" bazel test --nocache_test_results --config=valgrindie "//test/{}/..."
+|- void
+|- waitdo zec / $(XA directories) /
+# Step 3: Grep for messages about memory leaks.
+|- xargs "-I{}" -d "\n" find "bazel-testlogs/test/{}/" -regex '.*/test.log'
+|- xargs "-I{}" -d "\n" grep -H -E -e "lost:.* bytes in .* blocks" "{}"
+|> stdout
