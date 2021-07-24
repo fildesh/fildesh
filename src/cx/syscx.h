@@ -13,8 +13,6 @@ push_losefn_sysCx (void (*f) (void*), void* x);
 void
 lose_sysCx ();
 
-/* synhax.h - failout_sysCx() */
-
 #if defined(_MSC_VER)
 #elif defined(__APPLE__)
 #define LACE_POSIX_SOURCE

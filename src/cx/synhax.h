@@ -246,9 +246,6 @@ static const size_t Static00[] = {0,0};
   DBog0(msg); \
   return (ret); \
 } while (0)
-
-void
-failout_sysCx (const char* msg);
 #endif
 
 #if !defined(NDEBUG)
@@ -259,8 +256,8 @@ failout_sysCx (const char* msg);
 { \
   if (!(x)) \
   { \
-    DBog1( "%s failed.", #x ); \
-    failout_sysCx (""); \
+    lace_log_error( #x ## "failed" ); \
+    exit(1); \
   } \
 } while (0)
 #define Given( x )  Claim(x)

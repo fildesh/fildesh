@@ -27,7 +27,8 @@ static
 signal_hook_sysCx (int sig)
 {
   lace_log_errorf("Caught signal: %d", sig);
-  failout_sysCx ("");
+  lose_sysCx();
+  exit(1);
 }
 
 /** Initialize the system.
@@ -67,39 +68,6 @@ lose_sysCx ()
   }
   LoseTable( LoseFns );
   LoseFns.sz = 0;
-}
-
-  void
-failout_sysCx (const char* msg)
-{
-  if (msg)
-  {
-    int err = errno;
-    /* Use literal stderr just in case we have memory problems.*/
-    FILE* f = stderr;
-
-    fprintf (f, "FAILOUT: %s\n", exename_of_sysCx ());
-
-#ifdef LACE_POSIX_SOURCE
-    {
-      char hostname[128];
-      uint n = ArraySz(hostname);
-      gethostname(hostname, n);
-      hostname[n-1] = 0;
-      fprintf (f, "^^^ Host: %s\n", hostname);
-    }
-#endif
-
-    if (msg[0])
-      fprintf (f, "^^^ Reason: %s\n", msg);
-    if (err != 0)
-      fprintf (f, "^^^ errno:%d %s\n", err, strerror (err));
-  }
-  lose_sysCx ();
-  if (false)
-    abort();
-  else
-    exit(1);
 }
 
   bool

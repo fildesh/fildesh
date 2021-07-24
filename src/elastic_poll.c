@@ -2,19 +2,20 @@
  * \file elastic_poll.c
  * Echo stdin to stdout with an arbitrary sized buffer.
  **/
+#include "lace.h"
 #include "lace_compat_fd.h"
-#include "cx/syscx.h"
-#include "cx/alphatab.h"
 #include "cx/table.h"
 
 #include <errno.h>
+#include <fcntl.h>
 #include <poll.h>
 #include <stdio.h>
+#include <unistd.h>
 
 /* #define DEBUGGING */
 
 #ifdef DEBUGGING
-#define StateMsg(msg, i, istat)  DBog3("%s %u %d", msg, i, istat)
+#define StateMsg(msg, i, istat)  lace_log_tracef("%s %u %d", msg, i, istat)
 #else
 #define StateMsg(msg, i, istat)
 #endif
@@ -145,7 +146,7 @@ handle_read_write(TableT(IOState) ios, TableT(pollfd) pollfds) {
 
 static
   int
-setfd_nonblock_sysCx(fd_t fd)
+setfd_nonblock(lace_fd_t fd)
 {
   int istat;
   istat = fcntl(fd, F_GETFD);
@@ -165,6 +166,7 @@ main_elastic_poll(unsigned argc, char** argv)
   DeclTable( IOState, ios );
   DeclTable( pollfd, pollfds );
   uint i;
+  int exstatus = 0;
 
   /* Initialize input.*/
   io = Grow1Table( ios );
@@ -174,12 +176,14 @@ main_elastic_poll(unsigned argc, char** argv)
   pfd->fd = -1;
 
   /**** BEGIN ARGUMENT_PARSING ****/
-  while (argi < argc) {
+  while (argi < argc && exstatus == 0) {
     const char* arg = argv[argi++];
 
-    if (eq_cstr(arg, "-x")) {
+    if (0 == strcmp(arg, "-x")) {
       if (argi == argc) {
-        failout_sysCx("Need input file after -x.");
+        lace_log_error("Need input file after -x.");
+        exstatus = 64;
+        break;
       }
       arg = argv[argi++];
 
@@ -188,10 +192,16 @@ main_elastic_poll(unsigned argc, char** argv)
 
       io->filename = arg;
       pfd->fd = lace_arg_open_readonly(io->filename);
+      if (pfd->fd < 0) {
+        lace_log_errorf("failed to open -x: %s", io->filename);
+        exstatus = 66;
+      }
     } else {
-      if (eq_cstr(arg, "-o")) {
+      if (0 == strcmp(arg, "-o")) {
         if (argi == argc) {
-          failout_sysCx("Need input file after -o.");
+          lace_log_error("Need output file after -o.");
+          exstatus = 64;
+          break;
         }
         arg = argv[argi++];
       }
@@ -202,41 +212,42 @@ main_elastic_poll(unsigned argc, char** argv)
       Zeroize( *io );
       io->filename = arg;
       pfd->fd = lace_arg_open_writeonly(io->filename);
-    }
-
-    if (pfd->fd < 0) {
-      DBog1("failed to open: %s\n", io->filename);
-      failout_sysCx(0);
+      if (pfd->fd < 0) {
+        lace_log_errorf("failed to -o: %s", io->filename);
+        exstatus = 73;
+      }
     }
   }
 
-  if (pollfds.s[0].fd == -1) {
+  if (exstatus == 0 && pollfds.s[0].fd == -1) {
     io = &ios.s[0];
     pfd = &pollfds.s[0];
     io->filename = "/dev/stdin";
     pfd->fd = lace_arg_open_readonly("-");
+    if (pfd->fd < 0) {exstatus = 66;}
   }
 
-  if (pollfds.sz == 1) {
+  if (exstatus == 0 && pollfds.sz == 1) {
     io = Grow1Table( ios );
     pfd = Grow1Table(pollfds);
     Zeroize( *io );
     io->filename = "/dev/stdout";
     pfd->fd = lace_arg_open_writeonly("-");
+    if (pfd->fd < 0) {exstatus = 73;}
   }
   /**** END ARGUMENT_PARSING ****/
 
-  for (i = 0; i < ios.sz; ++i) {
+  for (i = 0; i < ios.sz && exstatus == 0; ++i) {
     io = &ios.s[i];
     pfd = &pollfds.s[i];
-    istat = setfd_nonblock_sysCx(pfd->fd);
+    istat = setfd_nonblock(pfd->fd);
     if (istat < 0) {
-      DBog1("failed to set nonblocking: %s\n", io->filename);
-      failout_sysCx(0);
+      lace_log_errorf("failed to set nonblocking: %s\n", io->filename);
+      exstatus = 72;
     }
   }
 
-  while (prepare_for_poll(ios, pollfds)) {
+  while (exstatus == 0 && prepare_for_poll(ios, pollfds)) {
     const int infinite_poll_timeout = -1;
 
     istat = poll(pollfds.s, pollfds.sz, infinite_poll_timeout);
@@ -262,10 +273,6 @@ main_elastic_poll(unsigned argc, char** argv)
   int
 main(int argc, char** argv)
 {
-  int exstatus;
-  init_sysCx();
-  exstatus = main_elastic_poll((unsigned)argc, argv);
-  lose_sysCx();
-  return exstatus;
+  return main_elastic_poll((unsigned)argc, argv);
 }
 #endif

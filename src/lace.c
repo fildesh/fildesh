@@ -757,7 +757,7 @@ add_tmp_file_Command(Command* cmd,
     lace_compat_errno_clear();
     if (!cmd_hookup->temporary_directory) {
       lace_log_error("Unable to create temp directory.");
-      failout_sysCx(0);
+      exit(1);
     }
     push_losefn_sysCx(remove_tmppath, cmd_hookup->temporary_directory);
   }
@@ -1088,7 +1088,7 @@ setup_commands(TableT(Command)* cmds)
     if (x->kind == ODescVal)
     {
       lace_log_errorf("Dangling output stream! Symbol: %s", x->name.s);
-      failout_sysCx ("");
+      exit(1);
     }
     lose_SymVal (x);
   }
@@ -1129,11 +1129,10 @@ add_util_path_env ()
 }
 
   static void
-show_usage_and_exit ()
+show_usage()
 {
   fprintf(stderr, "Usage: %s [[-f] SCRIPTFILE | -- SCRIPT]\n",
           exename_of_sysCx ());
-  failout_sysCx(0);
 }
 
 
@@ -1527,7 +1526,7 @@ spawn_commands(const char* lace_exe, TableT(Command) cmds, Associa* alias_map)
           &cmd->thread, NULL, builtin_command_thread_fn, arg);
       if (istat < 0) {
         lace_log_errorf("Could not pthread_create(). File: %s", argv.s[0]);
-        failout_sysCx(0);
+        exit(1);
       }
     } else {
       lace_compat_fd_t* fds_to_inherit =
@@ -1540,7 +1539,7 @@ spawn_commands(const char* lace_exe, TableT(Command) cmds, Associa* alias_map)
       close_Command(cmd);
       if (cmd->pid < 0) {
         lace_log_errorf("Could not spawnvp(). File: %s", argv.s[0]);
-        failout_sysCx(0);
+        exit(1);
       }
       for (argi = 0; argi < argv.sz; ++argi)
         free (argv.s[argi]);
@@ -1594,7 +1593,11 @@ int main_lace(unsigned argc, char** argv)
     arg = argv[argi++];
     if (eq_cstr (arg, "--")) {
       use_stdin = false;
-      if (argi >= argc)  show_usage_and_exit ();
+      if (argi >= argc) {
+        show_usage();
+        exstatus = 64;
+        break;
+      }
       if (!in) {
         in = open_LaceXA();
       }
@@ -1672,7 +1675,11 @@ int main_lace(unsigned argc, char** argv)
     else {
       /* Optional -f flag.*/
       if (eq_cstr (arg, "-x") || eq_cstr (arg, "-f")) {
-        if (argi >= argc)  show_usage_and_exit ();
+        if (argi >= argc) {
+          show_usage();
+          exstatus = 64;
+          break;
+        }
         arg = argv[argi++];
       }
       if (eq_cstr (arg, "-"))
