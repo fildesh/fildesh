@@ -197,54 +197,50 @@ static inline LaceO default_LaceO() {LaceO tmp = DEFAULT_LaceO; return tmp;}
 
 static inline
   void*
-grow_LaceA_(void** at, size_t* count, lace_lgsize_t* allocated_lgcount,
-            size_t element_size, size_t capac,
+grow_LaceA_(void** p_at, size_t* p_count, lace_lgsize_t* p_allocated_lgcount,
+            size_t element_size, size_t difference,
             void* (*realloc_fn) (void*, size_t))
 {
-  *count += capac;
-  if (*allocated_lgcount < LACE_LGSIZE_MAX && /* Allocation is not fixed.*/
-      (*count << 1) > ((size_t)1 << *allocated_lgcount)) {
-    void* p;
-    if (*allocated_lgcount == 0) {
-      *at = 0;
-      *allocated_lgcount = 1;
-    }
-    while (*count > ((size_t)1 << *allocated_lgcount)) {
-      *allocated_lgcount += 1;
-    }
+  void* at = *p_at;
+  const size_t count = *p_count + difference;
+  lace_lgsize_t allocated_lgcount = *p_allocated_lgcount;
 
-    *allocated_lgcount += 1;
-    p = realloc_fn(*at, element_size << (*allocated_lgcount - 1));
-    if (!p) {
-      *count -= capac;
-      return NULL;
+  if ((count << 1) > ((size_t)1 << allocated_lgcount)) {
+    if (allocated_lgcount == 0) {
+      allocated_lgcount = 1;
     }
-    *at = p;
+    do {
+      allocated_lgcount += 1;
+    } while ((count << 1) > ((size_t)1 << allocated_lgcount));
+    at = realloc_fn(at, element_size << (allocated_lgcount - 1));
+    if (!at) {return NULL;}
+
+    *p_at = at;
+    *p_allocated_lgcount = allocated_lgcount;
   }
-  return (void*)((uintptr_t)*at + (*count - capac) * element_size);
+  *p_count = count;
+  return (void*)((uintptr_t)at + (count - difference) * element_size);
 }
 
 static inline
   void
-mpop_LaceA_(void** at, size_t* count, lace_lgsize_t* allocated_lgcount,
-            size_t element_size, size_t capac,
+mpop_LaceA_(void** p_at, size_t* p_count, lace_lgsize_t* p_allocated_lgcount,
+            size_t element_size, size_t difference,
             void* (*realloc_fn) (void*, size_t))
 {
-  *count -= capac;
-  if (*allocated_lgcount == LACE_LGSIZE_MAX) {
-    /* This allocation is fixed. */
-    return;
-  }
-  if ((*allocated_lgcount >= 3) && ((*count >> (*allocated_lgcount - 3)) == 0)) {
-    while ((*allocated_lgcount >= 4) && ((*count >> (*allocated_lgcount - 4)) == 0))
-      *allocated_lgcount -= 1;
-    *allocated_lgcount -= 1;
+  void* at = *p_at;
+  const size_t count = *p_count - difference;
+  lace_lgsize_t allocated_lgcount = *p_allocated_lgcount;
 
-    if (*allocated_lgcount > 0) {
-      *at = realloc_fn(*at, element_size << (*allocated_lgcount - 1));
-    } else {
-      *at = realloc_fn(*at, 0);
-    }
+  *p_count = count;
+  if ((allocated_lgcount >= 3) && ((count >> (allocated_lgcount - 3)) == 0)) {
+    do {
+      allocated_lgcount -= 1;
+    } while ((allocated_lgcount >= 3) && ((count >> (allocated_lgcount - 3)) == 0));
+
+    at = realloc_fn(at, element_size << (allocated_lgcount - 1));
+    if (at) {*p_at = at;}
+    *p_allocated_lgcount = allocated_lgcount;
   }
 }
 

@@ -15,7 +15,6 @@ slicechrs_easy_test()
 
   in->at = content;
   in->size = strlen(content);
-  in->alloc_lgsize = LACE_LGSIZE_MAX;
 
   slice = slicechrs_LaceX(in, delims);
   assert(0 == strcmp(slice.at, ""));

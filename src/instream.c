@@ -5,6 +5,19 @@
 #include <stdlib.h>
 #include <string.h>
 
+static inline bool sliced_LaceX(const LaceX* slice) {
+  return (slice->at && (slice->alloc_lgsize == 0));
+}
+
+static inline LaceX slice_LaceX(LaceX* in, size_t beg_off, size_t end_off) {
+  LaceX slice = DEFAULT_LaceX;
+  assert(beg_off <= end_off);
+  slice.at = &in->at[beg_off];
+  slice.size = end_off - beg_off;
+  slice.flush_lgsize = 0;
+  return slice;
+}
+
   size_t
 read_LaceX(LaceX* in)
 {
@@ -19,11 +32,11 @@ read_LaceX(LaceX* in)
   void
 close_LaceX(LaceX* in)
 {
-  if (!in) { return; }
+  if (!in) {return;}
   if (in->vt && in->vt->close_fn) {
     in->vt->close_fn(in);
   }
-  if (in->at) {
+  if (in->at && !sliced_LaceX(in)) {
     free(in->at);
     in->at = NULL;
     in->size = 0;
@@ -53,7 +66,7 @@ flush_LaceX(LaceX* x)
     memmove(x->at, &x->at[x->off], x->size);
   }
   x->off = 0;
-  if (x->alloc_lgsize == LACE_LGSIZE_MAX) {
+  if (sliced_LaceX(x)) {
     x->at[x->size] = '\0';
   }
 }
@@ -75,7 +88,7 @@ static
   char*
 cstr_of_LaceX(LaceX* in)
 {
-  if (in->alloc_lgsize < LACE_LGSIZE_MAX) {
+  if (!sliced_LaceX(in)) {
     *grow_LaceX(in, 1) = '\0';
     in->size -= 1;
   }
@@ -119,15 +132,13 @@ slicechr_LaceX(LaceX* in, const char delim)
   }
   assert(in->at[in->size] == '\0');
 
-  slice.at = &in->at[ret_off];
-  slice.alloc_lgsize = LACE_LGSIZE_MAX;
   if (s) {
     in->off = 1 + (s - in->at);
-    slice.size = in->off - ret_off - 1;
+    slice = slice_LaceX(in, ret_off, in->off-1);
     slice.at[slice.size] = '\0';
   } else {
     assert(in->off == in->size);
-    slice.size = in->size - ret_off;
+    slice = slice_LaceX(in, ret_off, in->size);
   }
   assert(slice.at[slice.size] == '\0');
   return slice;
@@ -173,15 +184,13 @@ slicechrs_LaceX(LaceX* in, const char* delims)
   }
   assert(in->at[in->size] == '\0');
 
-  slice.at = &in->at[ret_off];
-  slice.alloc_lgsize = LACE_LGSIZE_MAX;
   if (end < in->size) {
     in->off = end + 1;
-    slice.size = in->off - ret_off - 1;
+    slice = slice_LaceX(in, ret_off, in->off-1);
     slice.at[slice.size] = '\0';
   } else {
     assert(in->off == in->size);
-    slice.size = in->size - ret_off;
+    slice = slice_LaceX(in, ret_off, in->size);
   }
   assert(slice.at[slice.size] == '\0');
   return slice;
@@ -215,15 +224,13 @@ slicespan_LaceX(LaceX* in, const char* span)
   }
   assert(in->at[in->size] == '\0');
 
-  slice.at = &in->at[ret_off];
-  slice.alloc_lgsize = LACE_LGSIZE_MAX;
   if (end < in->size) {
     in->off = end;
-    slice.size = in->off - ret_off;
+    slice = slice_LaceX(in, ret_off, in->off);
     assert(slice.at[slice.size] != '\0');
   } else {
     assert(in->off == in->size);
-    slice.size = in->size - ret_off;
+    slice = slice_LaceX(in, ret_off, in->size);
     assert(slice.at[slice.size] == '\0');
   }
   return slice;
@@ -264,15 +271,13 @@ slicestr_LaceX(LaceX* in, const char* delim)
   }
   assert(in->at[in->size] == '\0');
 
-  slice.at = &in->at[ret_off];
-  slice.alloc_lgsize = LACE_LGSIZE_MAX;
   if (s) {
     in->off = delim_length + (s - in->at);
-    slice.size = in->off - ret_off - delim_length;
+    slice = slice_LaceX(in, ret_off, in->off-delim_length);
     slice.at[slice.size] = '\0';
   } else {
     in->off = in->size;
-    slice.size = in->size - ret_off;
+    slice = slice_LaceX(in, ret_off, in->size);
   }
   assert(slice.at[slice.size] == '\0');
   return slice;

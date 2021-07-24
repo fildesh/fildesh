@@ -25,7 +25,7 @@ close_LaceO(LaceO* o)
   if (o->vt && o->vt->close_fn) {
     o->vt->close_fn(o);
   }
-  if (o->at) {
+  if (o->at && o->alloc_lgsize > 0) {
     free(o->at);
     o->at = NULL;
     o->size = 0;

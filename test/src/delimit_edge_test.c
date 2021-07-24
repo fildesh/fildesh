@@ -18,7 +18,6 @@ slicestr_long_delim_no_match_test()
 
   in->at = content;
   in->size = content_length;
-  in->alloc_lgsize = LACE_LGSIZE_MAX;
 
   /* Run the test with various offsets.*/
   for (i = 0; i < content_length; ++i) {

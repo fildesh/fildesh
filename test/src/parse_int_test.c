@@ -16,7 +16,6 @@ parse_int_easy_test()
 
   in->at = content;
   in->size = strlen(content);
-  in->alloc_lgsize = LACE_LGSIZE_MAX;
 
   good = parse_int_LaceX(in, &got);
   assert(good);
