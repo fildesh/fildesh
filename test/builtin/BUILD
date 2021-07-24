@@ -180,6 +180,12 @@ cc_binary(
     defines = ["LACE_BUILTIN_LIBRARY"],
     testonly = True,
 )
+lace_test(
+    name = "echocat_test",
+    srcs = ["echocat_test.lace"],
+    aliases = ["echocat=$(location :echocat)"],
+    data = [":echocat"],
+)
 
 cc_test(
     name = "sshall_test",

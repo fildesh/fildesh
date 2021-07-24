@@ -1,0 +1,9 @@
+#!/usr/bin/env lace
+
+# Run this with `-alias echocat=$(location //test/builtin:echocat)`.
+
+$(O expect) zec / "hello there\nworld\n" /
+
+|< zec / "world\n" /
+|- echocat "hello" "there"
+|> cmp $(XF expect)

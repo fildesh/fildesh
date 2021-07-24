@@ -106,6 +106,9 @@ set_property(TARGET echocat
   APPEND PROPERTY COMPILE_DEFINITIONS LACE_BUILTIN_LIBRARY)
 target_link_libraries(echocat lace_lib)
 
+add_test(NAME echocat_test COMMAND
+  lace -alias "echocat=$<TARGET_FILE:echocat>" -f "${CMAKE_CURRENT_SOURCE_DIR}/echocat_test.lace")
+
 add_executable(sshall_test "sshall_test.c")
 target_link_libraries(sshall_test lace_lib lace_tool_lib)
 add_test(NAME sshall_test COMMAND sshall_test "$<TARGET_FILE:sshall>" "$<TARGET_FILE:echocat>")

@@ -268,6 +268,32 @@ static char* lace_fd_path_strdup(lace_fd_t fd) {
   return lace_strdup(buf);
 }
 
+
+static sign_t pstrcmp_callback(const void* plhs, const void* prhs) {
+  const char* lhs = *(const char* const*)plhs;
+  const char* rhs = *(const char* const*)prhs;
+  return strcmp(lhs, rhs);
+}
+
+static void init_strmap(Associa* map) {
+  InitAssocia( char*, char*, *map, pstrcmp_callback );
+}
+static void lose_strmap(Associa* map) {
+  lose_Associa(map);
+}
+
+static void ensure_strmap(Associa* map, char* k, char* v) {
+  Assoc* assoc = ensure_Associa(map, &k);
+  *(char**)val_of_Assoc(map, assoc) = v;
+}
+
+static char* lookup_strmap(Associa* map, const char* k) {
+  Assoc* assoc = lookup_Associa(map, &k);
+  if (!assoc) {return NULL;}
+  return *(char**)val_of_Assoc(map, assoc);
+}
+
+
   static SymVal*
 getf_SymVal (Associa* map, const char* s)
 {
@@ -1350,7 +1376,12 @@ LACE_POSIX_THREAD_CALLBACK(builtin_command_thread_fn, BuiltinCommandThreadArg*, 
 
 static
   void
-fix_known_flags_Command(Command* cmd) {
+fix_known_flags_Command(Command* cmd, Associa* alias_map) {
+  char* replacement = lookup_strmap(alias_map, cmd->args.s[0]);
+  if (replacement) {
+    cmd->args.s[0] = replacement;
+  }
+
   if (eq_cstr("sed", cmd->args.s[0])) {
     uint i;
     for (i = 1; i < cmd->args.sz; ++i) {
@@ -1403,7 +1434,7 @@ add_inheritfd_flags_Command(TableT(cstr)* argv, Command* cmd, bool inprocess) {
 }
 
   static void
-spawn_commands(const char* lace_exe, TableT(Command) cmds)
+spawn_commands(const char* lace_exe, TableT(Command) cmds, Associa* alias_map)
 {
   DeclTable( cstr, argv );
   DeclTable( uint2, fdargs );
@@ -1437,7 +1468,7 @@ spawn_commands(const char* lace_exe, TableT(Command) cmds)
       PushTable( fdargs, p );
     }
 
-    fix_known_flags_Command(cmd);
+    fix_known_flags_Command(cmd, alias_map);
 
     if (fdargs.sz > 0) {
       use_thread = true;
@@ -1540,7 +1571,12 @@ int main_lace(unsigned argc, char** argv)
   LaceX* in = NULL;
   unsigned argi = 1;
   unsigned i;
+  Associa alias_map[1];
+  bool exiting = false;
+  int exstatus = 0;
   int istat;
+
+  init_strmap(alias_map);
 
   /* add_util_path_env (); */
   (void) add_util_path_env;
@@ -1553,7 +1589,7 @@ int main_lace(unsigned argc, char** argv)
   signal(SIGPIPE, SIG_IGN);
 #endif
 
-  while (argi < argc) {
+  while (argi < argc && exstatus == 0 && !exiting) {
     const char* arg;
     arg = argv[argi++];
     if (eq_cstr (arg, "--")) {
@@ -1573,7 +1609,8 @@ int main_lace(unsigned argc, char** argv)
     else if (eq_cstr (arg, "-as")) {
       const char* builtin_name = argv[argi];
       argv[argi] = argv[0];
-      return lace_builtin_main(builtin_name, argc-argi, &argv[argi]);
+      exstatus = lace_builtin_main(builtin_name, argc-argi, &argv[argi]);
+      exiting = true;
     }
     else if (eq_cstr (arg, "-stdin")) {
       const char* stdin_filepath = argv[argi++];
@@ -1581,10 +1618,27 @@ int main_lace(unsigned argc, char** argv)
       if (fd >= 0) {
         istat = lace_compat_fd_move_to(0, fd);
         if (istat != 0) {
-          failout_sysCx("Failed to dup2 -stdin.");
+          lace_log_error("Failed to dup2 -stdin.");
+          exstatus = 72;
         }
       } else {
         lace_log_errorf("Failed to open stdin: %s", stdin_filepath);
+        exstatus = 66;
+      }
+    }
+    else if (eq_cstr(arg, "-alias")) {
+      char* k = argv[argi++];
+      char* v = NULL;
+     if (k) {
+       v = strchr(k, '=');
+     }
+     if (k && v) {
+       v[0] = '\0';
+       v = &v[1];
+       ensure_strmap(alias_map, k, v);
+     } else {
+        lace_log_errorf("Failed alias: %s", k);
+        exstatus = 64;
       }
     }
     else if (eq_cstr (arg, "-stdout")) {
@@ -1593,10 +1647,12 @@ int main_lace(unsigned argc, char** argv)
       if (fd >= 0) {
         istat = lace_compat_fd_move_to(1, fd);
         if (istat != 0) {
-          failout_sysCx("Failed to dup2 -stdout.");
+          lace_log_error("Failed to dup2 -stdout.");
+          exstatus = 72;
         }
       } else {
         lace_log_errorf("Failed to open stdout: %s", stdout_filepath);
+        exstatus = 73;
       }
     }
     else if (eq_cstr (arg, "-stderr")) {
@@ -1605,10 +1661,12 @@ int main_lace(unsigned argc, char** argv)
       if (fd >= 0) {
         istat = lace_compat_fd_move_to(2, fd);
         if (istat != 0) {
-          failout_sysCx("Failed to dup2 -stderr.");
+          lace_log_error("Failed to dup2 -stderr.");
+          exstatus = 72;
         }
       } else {
         lace_log_errorf("Failed to open stderr: %s", stderr_filepath);
+        exstatus = 73;
       }
     }
     else {
@@ -1624,10 +1682,16 @@ int main_lace(unsigned argc, char** argv)
       in = open_LaceXF(arg);
       if (!in) {
         lace_log_errorf("Cannot read script. File: %s", arg);
-        failout_sysCx(0);
+        exstatus = 66;
       }
       break;
     }
+  }
+
+  if (exiting || exstatus != 0) {
+    LoseTable( script_args );
+    lose_strmap(alias_map);
+    return exstatus;
   }
 
   cmds = AllocT(TableT(Command), 1);
@@ -1695,8 +1759,9 @@ int main_lace(unsigned argc, char** argv)
       output_Command (stderr, &cmds->s[i]);
 
   lace_compat_errno_trace();
-  spawn_commands(argv[0], *cmds);
+  spawn_commands(argv[0], *cmds, alias_map);
   lace_compat_errno_trace();
+  lose_strmap(alias_map);
 
   istat = 0;
   for (i = 0; i < cmds->sz; ++i) {
