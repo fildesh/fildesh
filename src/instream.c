@@ -299,11 +299,29 @@ gets_LaceX(LaceX* in, const char* delim)
   return slice.at;
 }
 
-  void
+  bool
 skipchrs_LaceX(LaceX* in, const char* span)
 {
-  slicespan_LaceX(in, span);
+  LaceX slice = slicespan_LaceX(in, span);
   maybe_flush_LaceX(in);
+  return (slice.size > 0);
+}
+
+  bool
+skipstr_LaceX(LaceX* in, const char* s)
+{
+  const size_t n = strlen(s);
+  while (in->size - in->off < n) {
+    if (0 == read_LaceX(in)) {
+      return false;
+    }
+  }
+  if (0 == memcmp(&in->at[in->off], s, n)) {
+    in->off += n;
+    maybe_flush_LaceX(in);
+    return true;
+  }
+  return false;
 }
 
 static const char lace_whitespace[] = " \t\v\r\n";

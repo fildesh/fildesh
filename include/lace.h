@@ -39,7 +39,8 @@ LaceX slicespan_LaceX(LaceX*, const char* span);
 LaceX slicestr_LaceX(LaceX*, const char* delim);
 char* getline_LaceX(LaceX*);
 char* gets_LaceX(LaceX*, const char* delim);
-void skipchrs_LaceX(LaceX*, const char* span);
+bool skipchrs_LaceX(LaceX*, const char* span);
+bool skipstr_LaceX(LaceX*, const char* s);
 bool parse_int_LaceX(LaceX*, int*);
 bool parse_double_LaceX(LaceX*, double*);
 

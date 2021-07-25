@@ -52,6 +52,11 @@ add_executable(size_test
 target_link_libraries(size_test lace_lib)
 add_test(NAME size_test COMMAND size_test)
 
+add_executable(skipstr_test
+  "skipstr_test.c")
+target_link_libraries(skipstr_test lace_lib)
+add_test(NAME skipstr_test COMMAND skipstr_test)
+
 add_executable(slicechrs_test
   "slicechrs_test.c")
 target_link_libraries(slicechrs_test lace_lib)

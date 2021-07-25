@@ -76,6 +76,13 @@ cc_test(
 )
 
 cc_test(
+    name = "skipstr_test",
+    srcs = ["skipstr_test.c"],
+    deps = ["//:lace_lib"],
+    size = "small",
+)
+
+cc_test(
     name = "slicechrs_test",
     srcs = ["slicechrs_test.c"],
     deps = ["//:lace_lib"],
