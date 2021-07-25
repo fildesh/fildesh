@@ -1,4 +1,4 @@
-load("//tool:spawn.bzl", "spawn_test")
+load("@lace//tool:spawn.bzl", "spawn_test")
 
 def lace_expect_test(name, srcs, expect,
                      data=[], args=[], size="small",
@@ -7,13 +7,13 @@ def lace_expect_test(name, srcs, expect,
       name = name,
       data = [
           expect,
-          "//tool:comparispawn",
-          "//:lace",
+          "@lace//tool:comparispawn",
+          "@lace//:lace",
       ] + srcs + data,
       args = [
-          "$(location //tool:comparispawn)",
+          "$(location @lace//tool:comparispawn)",
           "$(location " + expect + ")",
-          "$(location //:lace)",
+          "$(location @lace//:lace)",
           "-x",
           "$(location " + srcs[0] + ")",
       ] + args,

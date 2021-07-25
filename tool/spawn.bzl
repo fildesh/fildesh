@@ -2,9 +2,7 @@
 def spawn_test(name, data=[], args=[], size="small", **kwargs):
   native.cc_test(
       name = name,
-      srcs = [
-          "//tool:spawn.c",
-      ],
+      srcs = ["@lace//tool:spawn.c"],
       data = data,
       args = args,
       size = size,
@@ -18,10 +16,10 @@ def lace_test(name, srcs, aliases=[], data=[], args=[], size="small", **kwargs):
   spawn_test(
       name = name,
       data = [
-          "//:lace",
+          "@lace//:lace",
       ] + srcs + data,
       args = [
-          "$(location //:lace)",
+          "$(location @lace//:lace)",
       ] + alias_args + [
           "-f", "$(location " + srcs[0] + ")",
       ] + args,
