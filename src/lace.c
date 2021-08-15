@@ -58,7 +58,7 @@ DeclTableT( iargs, struct { int fd; bool scrap_newline; } );
 struct Command
 {
   char* line;
-  uint line_num;
+  unsigned line_num;
   CommandKind kind;
   TableT(cstr) args;
   TableT(cstr) extra_args;
@@ -96,9 +96,9 @@ struct SymVal
 {
   AlphaTab name;
   SymValKind kind;
-  uint arg_idx;  /**< If a file.**/
-  uint ios_idx;
-  uint cmd_idx;
+  unsigned arg_idx;  /**< If a file.**/
+  unsigned ios_idx;
+  unsigned cmd_idx;
   union SymVal_union
   {
     int file_desc;
@@ -202,7 +202,7 @@ build_fds_to_inherit_Command(Command* cmd)
   static void
 lose_Command (Command* cmd)
 {
-  uint i;
+  unsigned i;
   close_Command (cmd);
   free (cmd->line);
   switch (cmd->kind) {
@@ -309,27 +309,27 @@ getf_SymVal (Associa* map, const char* s)
   return x;
 }
 
-  static uint
+  static unsigned
 count_ws (const char* s)
 {
   return strspn (s, lace_compat_string_blank_bytes);
 }
-  static uint
+  static unsigned
 count_non_ws (const char* s)
 {
   return strcspn (s, lace_compat_string_blank_bytes);
 }
-  static uint
+  static unsigned
 trim_trailing_ws (char* s)
 {
-  uint n = strlen (s);
+  unsigned n = strlen (s);
   while (0 < n && strchr (lace_compat_string_blank_bytes, s[n-1]))  --n;
   s[n] = '\0';
   return n;
 }
 
   static void
-failout_Command (const Command* cmd, const char* msg, const char* msg2)
+perror_Command(const Command* cmd, const char* msg, const char* msg2)
 {
   if (msg && msg2) {
     lace_log_errorf("Problem on line %u. %s: %s", cmd->line_num, msg, msg2);
@@ -338,8 +338,6 @@ failout_Command (const Command* cmd, const char* msg, const char* msg2)
   } else {
     lace_log_errorf("Problem on line %u.", cmd->line_num);
   }
-  lose_sysCx ();
-  exit (1);
 }
 
 /** HERE document is created by
@@ -404,7 +402,7 @@ parse_line (LaceX* xf, size_t* text_nlines)
 
   while ((s = getline_LaceX(xf)))
   {
-    uint n;
+    unsigned n;
     bool multiline = false;
     *text_nlines += 1;
 
@@ -433,7 +431,7 @@ sep_line (TableT(cstr)* args, char* s)
     if (s[0] == '\0')  break;
 
     if (s[0] == '\'') {
-      uint i;
+      unsigned i;
       s = &s[1];
       PushTable( *args, s );
       i = strcspn (s, "'");
@@ -444,8 +442,8 @@ sep_line (TableT(cstr)* args, char* s)
       s = &s[i];
     }
     else if (s[0] == '"') {
-      uint i = 0;
-      uint j = 0;
+      unsigned i = 0;
+      unsigned j = 0;
       s = &s[1];
       PushTable( *args, s );
 
@@ -475,7 +473,7 @@ sep_line (TableT(cstr)* args, char* s)
       s = &s[j];
     }
     else if (s[0] == '$' && s[1] == '(') {
-      uint i;
+      unsigned i;
       PushTable( *args, s );
       s = &s[2];
       i = strcspn (s, ")");
@@ -496,12 +494,13 @@ sep_line (TableT(cstr)* args, char* s)
   PackTable( *args );
 }
 
-  static void
+static
+  int
 parse_file(TableT(Command)* cmds, LaceX* in, const char* this_filename)
 {
+  int istat = 0;
   size_t text_nlines = 0;
-  while (true)
-  {
+  while (istat == 0) {
     char* line;
     Command* cmd;
     line = parse_line(in, &text_nlines);
@@ -533,13 +532,14 @@ parse_file(TableT(Command)* cmds, LaceX* in, const char* this_filename)
 
       src = open_sibling_LaceXF(this_filename, filename);
       if (!src) {
-        failout_Command(cmd, "Failed to include file", filename);
+        perror_Command(cmd, "Failed to include file", filename);
+        istat = -1;
+        break;
       }
-
       lose_Command (TopTable( *cmds ));
       MPopTable( *cmds, 1 );
 
-      parse_file(cmds, src, filename_LaceXF(src));
+      istat = parse_file(cmds, src, filename_LaceXF(src));
       close_LaceX(src);
     }
     else if (pfxeq_cstr ("$(>", line) ||
@@ -554,7 +554,9 @@ parse_file(TableT(Command)* cmds, LaceX* in, const char* this_filename)
       sym = &sym[count_ws(sym)];
       begline = strchr (sym, ')');
       if (!begline) {
-        failout_Command (cmd, "Unclosed paren in variable def.", 0);
+        perror_Command(cmd, "Unclosed paren in variable def.", 0);
+        istat = -1;
+        break;
       }
 
       begline[0] = '\0';
@@ -595,12 +597,13 @@ parse_file(TableT(Command)* cmds, LaceX* in, const char* this_filename)
       sep_line (&cmd->args, cmd->line);
     }
   }
+  return istat;
 }
 
   static SymValKind
 parse_sym (char* s, bool firstarg)
 {
-  uint i, o;
+  unsigned i, o;
   SymValKind kind = NSymValKinds;
 
   if (firstarg && s[0] == '|') {
@@ -622,7 +625,7 @@ parse_sym (char* s, bool firstarg)
 
   i = count_non_ws (s);
   if (s[i] == '\0') {
-    uint n = i-1;
+    unsigned n = i-1;
     lace_log_warningf("For forward compatibility, please change %s to use the $(XA ...) syntax.", s);
 
     if (s[n] != ')')
@@ -680,7 +683,7 @@ parse_sym (char* s, bool firstarg)
 
   if (kind != NSymValKinds)
   {
-    uint n;
+    unsigned n;
     i += count_ws (&s[i]);
     n = strcspn (&s[i], ")");
     if (s[i+n] == ')')
@@ -696,10 +699,10 @@ parse_sym (char* s, bool firstarg)
   return kind;
 }
 
-  static uint
+  static unsigned
 add_ios_Command (Command* cmd, int in, int out)
 {
-  uint idx = UINT_MAX;
+  unsigned idx = UINT_MAX;
   if (in >= 0) {
     idx = cmd->is.sz;
     PushTable( cmd->is, in );
@@ -757,7 +760,7 @@ add_tmp_file_Command(Command* cmd,
     lace_compat_errno_clear();
     if (!cmd_hookup->temporary_directory) {
       lace_log_error("Unable to create temp directory.");
-      exit(1);
+      return NULL;
     }
     push_losefn_sysCx(remove_tmppath, cmd_hookup->temporary_directory);
   }
@@ -773,7 +776,7 @@ add_tmp_file_Command(Command* cmd,
   static void
 write_here_doc_file (const char* name, const char* doc)
 {
-  uint n;
+  unsigned n;
   FILE* out;
 
   out = fopen (name, "wb");
@@ -786,7 +789,8 @@ write_here_doc_file (const char* name, const char* doc)
   fclose (out);
 }
 
-  static void
+static
+  int
 setup_commands(TableT(Command)* cmds)
 {
   CommandHookup cmd_hookup[1];
@@ -794,6 +798,7 @@ setup_commands(TableT(Command)* cmds)
   /* Temporarily hold new symbols for the current line.*/
   Associa* add_map = &cmd_hookup->add_map;
   Assoc* assoc;
+  int istat = 0;
   unsigned i;
 
   cmd_hookup->temporary_directory = NULL;
@@ -801,9 +806,15 @@ setup_commands(TableT(Command)* cmds)
   InitAssocia( AlphaTab, SymVal, *map, cmp_AlphaTab );
   InitAssocia( AlphaTab, SymVal, *add_map, cmp_AlphaTab );
 
-  UFor( i, cmds->sz ) {
-    uint arg_q = 0;
-    uint arg_r = 0;
+#define FailBreak(cmd, msg, arg) do { \
+  perror_Command(cmd, msg, arg); \
+  istat = -1; \
+  break; \
+} while (0)
+
+  for (i = 0; i < cmds->sz && istat == 0; ++i) {
+    unsigned arg_q = 0;
+    unsigned arg_r = 0;
     Command* cmd = &cmds->s[i];
 
     /* The command defines a HERE document.*/
@@ -858,8 +869,9 @@ setup_commands(TableT(Command)* cmds)
           lace_fd_t fd[2];
           Command* xcmd = &cmds->s[sym->cmd_idx];
 
-          if (0 != lace_compat_fd_pipe(&fd[1], &fd[0]))
-            failout_Command (cmd, "Failed to create pipe for variable", arg);
+          if (0 != lace_compat_fd_pipe(&fd[1], &fd[0])) {
+            FailBreak(cmd, "Failed to create pipe for variable", arg);
+          }
 
           add_ios_Command (xcmd, -1, fd[1]);
           PushTable( xcmd->args, add_fd_arg_Command (xcmd, fd[1]) );
@@ -868,7 +880,7 @@ setup_commands(TableT(Command)* cmds)
           cmd->args.s[arg_q] = 0;
         }
         else {
-          failout_Command (cmd, "Unknown source for argument", arg);
+          FailBreak(cmd, "Unknown source for argument", arg);
         }
         ++ arg_q;
       }
@@ -877,8 +889,9 @@ setup_commands(TableT(Command)* cmds)
         SymVal* sym = getf_SymVal (map, arg);
         Command* last = &cmds->s[sym->cmd_idx];
 
-        if (last->kind != RunCommand)
-          failout_Command (cmd, "Stdout stream not coming from a command?", arg);
+        if (last->kind != RunCommand) {
+          FailBreak(cmd, "Stdout stream not coming from a command?", arg);
+        }
 
         lace_compat_fd_close(sym->as.file_desc);
 
@@ -899,13 +912,13 @@ setup_commands(TableT(Command)* cmds)
         if (kind == IHereDocFileVal)
         {
           if (sym->kind != HereDocVal) {
-            failout_Command (cmd, "Unknown HERE doc", arg);
+            FailBreak(cmd, "Unknown HERE doc", arg);
           }
         }
         else
         {
           if (sym->kind != ODescVal) {
-            failout_Command (cmd, "Unknown source for", arg);
+            FailBreak(cmd, "Unknown source for", arg);
           }
           sym->kind = NSymValKinds;
         }
@@ -922,6 +935,9 @@ setup_commands(TableT(Command)* cmds)
             add_ios_Command (cmd, fd, -1);
           } else {
             cmd->args.s[0] = add_tmp_file_Command(cmd, cmd_hookup, ".exe");
+            if (!cmd->args.s[0]) {
+              FailBreak(cmd, "Cannot create tmpfile for executable.", NULL);
+            }
             if (sym->arg_idx < UINT_MAX)
               cmds->s[sym->cmd_idx].args.s[sym->arg_idx] = cmd->args.s[0];
             cmd->exec_fd = fd;
@@ -931,10 +947,13 @@ setup_commands(TableT(Command)* cmds)
         else
         {
           if (kind != IHereDocFileVal) {
-            failout_Command (cmd, "Not a HERE doc file?", arg);
+            FailBreak(cmd, "Not a HERE doc file?", arg);
           }
           cmd->args.s[arg_q] =
             add_tmp_file_Command(cmd, cmd_hookup, ".txt");
+          if (!cmd->args.s[arg_q]) {
+            FailBreak(cmd, "Cannot create tmpfile for heredoc.", NULL);
+          }
           /* Write the temp file now.*/
           write_here_doc_file (cmd->args.s[arg_q],
               sym->as.here_doc);
@@ -948,8 +967,9 @@ setup_commands(TableT(Command)* cmds)
         SymVal* sym = getf_SymVal (map, arg);
         int fd;
 
-        if (sym->kind != IFutureDescVal)
-          failout_Command (cmd, "Argument should be a stream to the past", arg);
+        if (sym->kind != IFutureDescVal) {
+          FailBreak(cmd, "Argument should be a stream to the past", arg);
+        }
 
         sym->kind = NSymValKinds;
         fd = sym->as.file_desc;
@@ -970,6 +990,9 @@ setup_commands(TableT(Command)* cmds)
             char* s;
             s = add_tmp_file_Command(&cmds->s[sym->cmd_idx],
                 cmd_hookup, ".exe");
+            if (!s) {
+              FailBreak(cmd, "Cannot create tmpfile for executable.", NULL);
+            }
             cmds->s[sym->cmd_idx].args.s[0] = s;
             cmd->args.s[arg_q] = s;
           }
@@ -1001,8 +1024,9 @@ setup_commands(TableT(Command)* cmds)
         InitDomMax( sym->arg_idx );
         InitDomMax( sym->ios_idx );
 
-        if (0 != lace_compat_fd_pipe(&fd[1], &fd[0]))
-          failout_Command (cmd, "Failed to create pipe for variable", arg);
+        if (0 != lace_compat_fd_pipe(&fd[1], &fd[0])) {
+          FailBreak(cmd, "Failed to create pipe for variable", arg);
+        }
         assert(fd[0] >= 0);
         assert(fd[1] >= 0);
 
@@ -1026,8 +1050,9 @@ setup_commands(TableT(Command)* cmds)
         InitDomMax( sym->arg_idx );
         InitDomMax( sym->ios_idx );
 
-        if (0 != lace_compat_fd_pipe(&fd[1], &fd[0]))
-          failout_Command (cmd, "Failed to create pipe for variable", arg);
+        if (0 != lace_compat_fd_pipe(&fd[1], &fd[0])) {
+          FailBreak(cmd, "Failed to create pipe for variable", arg);
+        }
 
         sym->as.file_desc = fd[1];
         if (kind == IFutureDescVal)
@@ -1070,7 +1095,7 @@ setup_commands(TableT(Command)* cmds)
       SymVal* sym = getf_SymVal (map, ccstr_of_AlphaTab (add_key));
 
       if (!(sym->kind==NSymValKinds || sym->kind==HereDocVal || sym->kind==DefVal)) {
-        failout_Command (cmd, "Trying to overwrite an existing stream variable",
+        FailBreak(cmd, "Trying to overwrite an existing stream variable",
             ccstr_of_AlphaTab (add_key));
       }
 
@@ -1079,22 +1104,23 @@ setup_commands(TableT(Command)* cmds)
       give_Associa (add_map, tmp_assoc);
     } while (assoc);
   }
+#undef FailBreak
 
   for (assoc = beg_Associa (map);
       assoc;
       assoc = next_Assoc (assoc))
   {
     SymVal* x = (SymVal*) val_of_Assoc (map, assoc);
-    if (x->kind == ODescVal)
-    {
+    if (x->kind == ODescVal && istat == 0) {
       lace_log_errorf("Dangling output stream! Symbol: %s", x->name.s);
-      exit(1);
+      istat = -1;
     }
     lose_SymVal (x);
   }
 
   lose_Associa (map);
   lose_Associa (add_map);
+  return istat;
 }
 
   static void
@@ -1382,7 +1408,7 @@ fix_known_flags_Command(Command* cmd, Associa* alias_map) {
   }
 
   if (eq_cstr("sed", cmd->args.s[0])) {
-    uint i;
+    unsigned i;
     for (i = 1; i < cmd->args.sz; ++i) {
       const char* arg = cmd->args.s[i];
       if (eq_cstr("--line-buffered", arg)) {
@@ -1432,18 +1458,19 @@ add_inheritfd_flags_Command(TableT(cstr)* argv, Command* cmd, bool inprocess) {
   }
 }
 
-  static void
+  static int
 spawn_commands(const char* lace_exe, TableT(Command) cmds, Associa* alias_map)
 {
   DeclTable( cstr, argv );
   DeclTable( uint2, fdargs );
-  uint i;
+  unsigned i;
+  int istat = 0;
 
-  for (i = 0; i < cmds.sz; ++i)
+  for (i = 0; i < cmds.sz && istat == 0; ++i)
   {
     Command* cmd = &cmds.s[i];
     bool use_thread = false;
-    uint argi, j;
+    unsigned argi, j;
 
     if (cmd->kind != RunCommand && cmd->kind != DefCommand)  continue;
 
@@ -1517,7 +1544,6 @@ spawn_commands(const char* lace_exe, TableT(Command) cmds, Associa* alias_map)
     }
 
     if (use_thread) {
-      int istat;
       BuiltinCommandThreadArg* arg = AllocT(BuiltinCommandThreadArg, 1);
       arg->command = cmd;
       arg->argv = DupliT(char*, argv.s, argv.sz);
@@ -1526,7 +1552,6 @@ spawn_commands(const char* lace_exe, TableT(Command) cmds, Associa* alias_map)
           &cmd->thread, NULL, builtin_command_thread_fn, arg);
       if (istat < 0) {
         lace_log_errorf("Could not pthread_create(). File: %s", argv.s[0]);
-        exit(1);
       }
     } else {
       lace_compat_fd_t* fds_to_inherit =
@@ -1539,7 +1564,7 @@ spawn_commands(const char* lace_exe, TableT(Command) cmds, Associa* alias_map)
       close_Command(cmd);
       if (cmd->pid < 0) {
         lace_log_errorf("Could not spawnvp(). File: %s", argv.s[0]);
-        exit(1);
+        istat = -1;
       }
       for (argi = 0; argi < argv.sz; ++argi)
         free (argv.s[argi]);
@@ -1549,6 +1574,7 @@ spawn_commands(const char* lace_exe, TableT(Command) cmds, Associa* alias_map)
   }
   LoseTable( argv );
   LoseTable( fdargs );
+  return istat;
 }
 
 
@@ -1734,7 +1760,7 @@ int main_lace(unsigned argc, char** argv)
     }
   }
 
-  UFor( i, script_args.sz ) {
+  for (i = 0; i < script_args.sz; ++i) {
     Command* cmd = Grow1Table( *cmds );
     AlphaTab line = DEFAULT_AlphaTab;
     cat_cstr_AlphaTab (&line, "$(H: ");
@@ -1750,30 +1776,42 @@ int main_lace(unsigned argc, char** argv)
   LoseTable( script_args );
 
   lace_compat_errno_trace();
-  parse_file(cmds, in, filename_LaceXF(in));
+  istat = parse_file(cmds, in, filename_LaceXF(in));
   close_LaceX(in);
   lace_compat_errno_trace();
 
   PackTable( *cmds );
 
-  lace_compat_errno_trace();
-  setup_commands(cmds);
-  lace_compat_errno_trace();
+  if (istat == 0) {
+    lace_compat_errno_trace();
+    istat = setup_commands(cmds);
+    lace_compat_errno_trace();
+  }
 
+  if (exstatus == 0 && istat != 0) {
+    exstatus = 65;
+  }
 
-  if (false)
-    for (i = 0; i < cmds->sz; ++i)
+  if (false && exstatus == 0) {
+    for (i = 0; i < cmds->sz; ++i) {
       output_Command (stderr, &cmds->s[i]);
+    }
+  }
 
-  lace_compat_errno_trace();
-  spawn_commands(argv[0], *cmds, alias_map);
-  lace_compat_errno_trace();
+  if (exstatus == 0) {
+    lace_compat_errno_trace();
+    istat = spawn_commands(argv[0], *cmds, alias_map);
+    lace_compat_errno_trace();
+  }
   lose_strmap(alias_map);
+  if (exstatus == 0 && istat != 0) {
+    exstatus = 126;
+  }
 
   istat = 0;
   for (i = 0; i < cmds->sz; ++i) {
     Command* cmd = &cmds->s[i];
-    if (cmd->kind == RunCommand || cmd->kind == DefCommand) {
+    if ((cmd->kind == RunCommand || cmd->kind == DefCommand) && cmd->pid >= 0) {
       if (cmd->pid == 0) {
         pthread_join(cmd->thread, NULL);
       } else {
@@ -1793,6 +1831,9 @@ int main_lace(unsigned argc, char** argv)
     lose_Command(cmd);
   }
   lace_compat_errno_trace();
-  return istat;
+  if (exstatus == 0) {
+    exstatus = istat;
+  }
+  return exstatus;
 }
 

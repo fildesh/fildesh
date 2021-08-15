@@ -5,3 +5,10 @@ lace_test(
     srcs = ["false_test.lace"],
     expect_failure = True,
 )
+
+lace_test(
+    name = "include_missing_test",
+    srcs = ["include_missing_test.lace"],
+    expect_failure = True,
+)
+
