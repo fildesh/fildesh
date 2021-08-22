@@ -1,3 +1,6 @@
+[![Bazel](https://github.com/grencez/lace/actions/workflows/bazel.yml/badge.svg)](https://github.com/grencez/lace/actions/workflows/bazel.yml)
+[![CMake](https://github.com/grencez/lace/actions/workflows/cmake.yml/badge.svg)](https://github.com/grencez/lace/actions/workflows/cmake.yml)
+\
 [![Coverage Status](https://coveralls.io/repos/github/grencez/lace/badge.svg?branch=trunk)](https://coveralls.io/github/grencez/lace?branch=trunk)
 
 # The Lace Programming Language

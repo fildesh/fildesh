@@ -49,10 +49,8 @@ lace_builtin_cmp_main(unsigned argc, char** argv,
     if (!out) {exstatus = 70;}
   }
 
-  if (!rhs && inputs && inputs[0]) {
+  if (lhs && !rhs) {
     rhs = open_arg_LaceXF(0, argv, inputs);
-    assert(rhs);
-    if (!rhs) {exstatus = 70;}
   }
 
   if (exstatus == 0 && (!lhs || !rhs)) {

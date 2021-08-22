@@ -1,0 +1,13 @@
+# Mixing many inputs should be valid.
+# but forced to inherit a file descriptor. 
+
+$(O expect) zec / "hello there world" /
+
+$(O hello) zec / "hello" /
+$(O there) zec / "there" /
+$(O world) zec / "world" /
+
+|< zec $(XF hello) / " " $(XA there) " " / - $(X world)
+|- cmp $(XF expect)
+|> stdout
+

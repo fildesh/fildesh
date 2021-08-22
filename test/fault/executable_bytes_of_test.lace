@@ -1,0 +1,12 @@
+# Like //test/syntax:executable_bytes_ofxf_test
+# but I forgot to move the `$(OF exe)` to be an arg of `zec`,
+# so the output file would be interpreted as the program to execute.
+# Totally nonsensical.
+
+$(OF exe) zec $(XA 1) / /
+$(O expect) zec / "hello there world" /
+
+|< $(XF exe) / "hello" " there " "world" /
+|- cmp $(XF expect)
+|> stdout
+

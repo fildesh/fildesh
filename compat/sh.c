@@ -56,6 +56,7 @@ lace_compat_sh_spawn(const char* const* argv)
   pid = fork();
   if (pid == 0) {
     execvp(argv[0], (char**)argv);
+    lace_compat_errno_trace();
     exit(126);
   }
 #endif

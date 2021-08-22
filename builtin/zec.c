@@ -21,7 +21,7 @@ write_all(LaceO* out, const char* buf, size_t sz)
 
 static
   void
-show_usage ()
+show_usage()
 {
 #define W( a )  fputs(a "\n", stderr)
   W("Usage: zec [OPTIONS] [FILE...] / [STRING...] / [FILE...]");
@@ -29,8 +29,9 @@ show_usage ()
   W("   or: zec [OPTIONS] [FILE...]");
   W("The FILE and STRING contents are output in order.");
   W("OPTIONS:");
-  W("  -paste  Operate like the paste utility without delimiters.");
-  W("          The STRINGs can act as a delimiter or as a prefix/suffix.");
+  W("  -o FILE -- Write to a file instead of stdout.");
+  W("  -paste -- Operate like the paste utility without delimiters.");
+  W("            The STRINGs can act as a delimiter or as a prefix/suffix.");
 #undef W
 }
 

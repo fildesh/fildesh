@@ -66,15 +66,19 @@ struct Command
   pthread_t thread;
   pid_t pid;
   int status;
-  int stdis; /**< Standard input stream.**/
+  lace_fd_t stdis; /**< Standard input stream.**/
   TableT( int ) is; /**< Input streams.**/
-  int stdos; /**< Standard output stream.**/
+  lace_fd_t stdos; /**< Standard output stream.**/
   TableT( int ) os; /** Output streams.**/
+  /** File descriptor to close upon exit.**/
+  TableT( int ) exit_fds;
   /** If >= 0, this is a file descriptor that will
    * close when the program command is safe to run.
    **/
-  int exec_fd;
-  /** If != 0, this is the contents of a file to execute.**/
+  lace_fd_t exec_fd;
+  /** Whether exec_fd actually has bytes, rather than just used for signaling.*/
+  bool exec_fd_has_bytes;
+  /** If != NULL, this is the contents of a file to execute.**/
   const char* exec_doc;
 
   /** Use these input streams to fill corresponding (null) arguments.**/
@@ -134,12 +138,14 @@ init_Command (Command* cmd)
   InitTable( cmd->extra_args );
   InitTable( cmd->tmp_files );
   cmd->pid = -1;
-  cmd->exec_fd = -1;
-  cmd->exec_doc = 0;
   cmd->stdis = -1;
   InitTable( cmd->is );
   cmd->stdos = -1;
   InitTable( cmd->os );
+  InitTable( cmd->exit_fds );
+  cmd->exec_fd = -1;
+  cmd->exec_fd_has_bytes = false;
+  cmd->exec_doc = NULL;
   InitTable( cmd->iargs );
 }
 
@@ -167,11 +173,15 @@ close_Command (Command* cmd)
   LoseTable( cmd->os );
   InitTable( cmd->os );
 
-  LoseTable( cmd->iargs );
-  InitTable( cmd->iargs );
+  LoseTable( cmd->exit_fds );
+  InitTable( cmd->exit_fds );
 
   cmd->exec_fd = -1;
-  cmd->exec_doc = 0;
+  cmd->exec_fd_has_bytes = false;
+  cmd->exec_doc = NULL;
+
+  LoseTable( cmd->iargs );
+  InitTable( cmd->iargs );
 }
 
 static
@@ -181,7 +191,7 @@ build_fds_to_inherit_Command(Command* cmd)
   size_t i, off;
   lace_compat_fd_t* fds = (lace_compat_fd_t*)
     malloc(sizeof(lace_compat_fd_t) *
-           (cmd->is.sz + cmd->os.sz + 2));
+           (cmd->is.sz + cmd->os.sz + 1));
 
   off = 0;
   for (i = 0; i < cmd->is.sz; ++i) {
@@ -194,7 +204,6 @@ build_fds_to_inherit_Command(Command* cmd)
   }
   LoseTable( cmd->os );
   InitTable( cmd->os );
-  fds[off++] = cmd->exec_fd;
   fds[off] = -1;
   return fds;
 }
@@ -806,11 +815,11 @@ setup_commands(TableT(Command)* cmds)
   InitAssocia( AlphaTab, SymVal, *map, cmp_AlphaTab );
   InitAssocia( AlphaTab, SymVal, *add_map, cmp_AlphaTab );
 
-#define FailBreak(cmd, msg, arg) do { \
+#define FailBreak(cmd, msg, arg) { \
   perror_Command(cmd, msg, arg); \
   istat = -1; \
   break; \
-} while (0)
+}
 
   for (i = 0; i < cmds->sz && istat == 0; ++i) {
     unsigned arg_q = 0;
@@ -853,7 +862,14 @@ setup_commands(TableT(Command)* cmds)
       const SymValKind kind = parse_sym (arg, (arg_r == 0));
 
 
-      if (kind == HereDocVal || kind == IDescArgVal)
+      if (arg_q == 0 && (kind == ODescFileVal || kind == OFutureDescFileVal)) {
+        FailBreak(cmd, "Cannot execute file that this command intends to write",
+                  arg);
+      }
+      else if (arg_q == 0 && kind == IFutureDescFileVal) {
+        FailBreak(cmd, "Executable bytes cannot come from below", arg);
+      }
+      else if (kind == HereDocVal || kind == IDescArgVal)
       {
         SymVal* sym = getf_SymVal (map, arg);
         if (sym->kind == HereDocVal) {
@@ -863,7 +879,7 @@ setup_commands(TableT(Command)* cmds)
           lace_fd_t fd = sym->as.file_desc;
           sym->kind = NSymValKinds;
           add_iarg_Command (cmd, fd, true);
-          cmd->args.s[arg_q] = 0;
+          cmd->args.s[arg_q] = NULL;
         }
         else if (sym->kind == DefVal) {
           lace_fd_t fd[2];
@@ -877,7 +893,7 @@ setup_commands(TableT(Command)* cmds)
           PushTable( xcmd->args, add_fd_arg_Command (xcmd, fd[1]) );
 
           add_iarg_Command (cmd, fd[0], true);
-          cmd->args.s[arg_q] = 0;
+          cmd->args.s[arg_q] = NULL;
         }
         else {
           FailBreak(cmd, "Unknown source for argument", arg);
@@ -930,16 +946,33 @@ setup_commands(TableT(Command)* cmds)
         }
         else if (kind == IDescFileVal)
         {
+          add_ios_Command(cmd, fd, -1);
           if (arg_q > 0) {
             cmd->args.s[arg_q] = add_fd_arg_Command (cmd, fd);
-            add_ios_Command (cmd, fd, -1);
           } else {
             cmd->args.s[0] = add_tmp_file_Command(cmd, cmd_hookup, ".exe");
             if (!cmd->args.s[0]) {
               FailBreak(cmd, "Cannot create tmpfile for executable.", NULL);
             }
-            if (sym->arg_idx < UINT_MAX)
-              cmds->s[sym->cmd_idx].args.s[sym->arg_idx] = cmd->args.s[0];
+            if (sym->arg_idx < UINT_MAX) {
+              static const char dev_fd_prefix[] = "/dev/fd/";
+              static const unsigned dev_fd_prefix_length =
+                sizeof(dev_fd_prefix)-1;
+              Command* src_cmd = &cmds->s[sym->cmd_idx];
+              char* src_fd_filename = src_cmd->args.s[sym->arg_idx];
+              int src_fd = -1;
+              assert(0 == memcmp(src_fd_filename, dev_fd_prefix,
+                                 dev_fd_prefix_length));
+              lace_parse_int(&src_fd, &src_fd_filename[dev_fd_prefix_length]);
+              assert(src_fd >= 0);
+
+              PushTable(src_cmd->exit_fds, src_fd);
+              /* Replace fd path with tmpfile name.*/
+              src_cmd->args.s[sym->arg_idx] = cmd->args.s[0];
+            } else {
+              /* Source command isn't directly creating file.*/
+              cmd->exec_fd_has_bytes = true;
+            }
             cmd->exec_fd = fd;
           }
           ++ arg_q;
@@ -1061,13 +1094,9 @@ setup_commands(TableT(Command)* cmds)
         }
         else
         {
+          assert(arg_q > 0 && "executable bytes cannot come from below");
           sym->ios_idx = add_ios_Command (cmd, -1, fd[0]);
           cmd->args.s[arg_q] = add_fd_arg_Command (cmd, fd[0]);
-          if (arg_q == 0)
-          {
-            sym->arg_idx = 0;
-            cmd->exec_fd = fd[0];
-          }
           ++ arg_q;
         }
       }
@@ -1077,6 +1106,9 @@ setup_commands(TableT(Command)* cmds)
         ++ arg_q;
       }
     }
+
+    /* This guard might not be necessary.*/
+    if (istat != 0) {break;}
 
     if (cmd->args.sz > 0)
       cmd->args.sz = arg_q;
@@ -1427,39 +1459,76 @@ static
   void
 add_inheritfd_flags_Command(TableT(cstr)* argv, Command* cmd, bool inprocess) {
   unsigned i;
-  if (!inprocess) {
+
+  if (inprocess) {
+    /* Let command inherit all input file descriptors except:
+     * - The fd providing executable bytes (or signaling that they are ready).
+     * - The fds providing input arguments. See inprocess else clause.
+     */
+    for (i = 0; i < cmd->is.sz; ++i) {
+      const lace_fd_t fd = cmd->is.s[i];
+      if (fd != cmd->exec_fd) {
+        PushTable( *argv, lace_strdup("-inheritfd") );
+        PushTable( *argv, lace_fd_strdup(fd) );
+      }
+    }
+    /* Let command inherit all output file descriptors except:
+     * - The fds that must be closed on exit.
+     */
+    for (i = 0; i < cmd->os.sz; ++i) {
+      const lace_fd_t fd = cmd->os.s[i];
+      bool inherit = true;
+      unsigned j;
+      for (j = 0; j < cmd->exit_fds.sz && inherit; ++j) {
+        inherit = (fd != cmd->exit_fds.s[j]);
+      }
+      if (inherit) {
+        PushTable( *argv, lace_strdup("-inheritfd") );
+        PushTable( *argv, lace_fd_strdup(fd) );
+      }
+    }
+
+    if (cmd->stdis >= 0) {
+      PushTable( *argv, lace_strdup("-stdin") );
+      PushTable( *argv, lace_fd_path_strdup(cmd->stdis) );
+      PushTable( cmd->is, cmd->stdis );
+    }
+    cmd->stdis = -1;
+    if (cmd->stdos >= 0) {
+      PushTable( *argv, lace_strdup("-stdout") );
+      PushTable( *argv, lace_fd_path_strdup(cmd->stdos) );
+      PushTable( cmd->os, cmd->stdos );
+    }
+    cmd->stdos = -1;
+  } else {
     for (i = 0; i < cmd->iargs.sz; ++i) {
       add_ios_Command(cmd, cmd->iargs.s[i].fd, -1);
     }
-    return;
   }
 
-  for (i = 0; i < cmd->is.sz; ++i) {
-    PushTable( *argv, lace_strdup("-inheritfd") );
-    PushTable( *argv, lace_fd_strdup(cmd->is.s[i]) );
-  }
-  for (i = 0; i < cmd->os.sz; ++i) {
-    PushTable( *argv, lace_strdup("-inheritfd") );
-    PushTable( *argv, lace_fd_strdup(cmd->os.s[i]) );
-  }
-  cmd->iargs.sz = 0;
+  LoseTable(cmd->iargs);
+  InitTable(cmd->iargs);
 
-  if (cmd->stdis >= 0) {
-    PushTable( *argv, lace_strdup("-stdin") );
-    PushTable( *argv, lace_fd_path_strdup(cmd->stdis) );
-    PushTable( cmd->is, cmd->stdis );
-    cmd->stdis = -1;
+  if (cmd->exec_fd >= 0) {
+    if (!cmd->exec_fd_has_bytes) {
+      PushTable( *argv, lace_strdup("-waitfd") );
+      PushTable( *argv, lace_fd_strdup(cmd->exec_fd) );
+    }
+    add_ios_Command(cmd, cmd->exec_fd, -1);
   }
-  if (cmd->stdos >= 0) {
-    PushTable( *argv, lace_strdup("-stdout") );
-    PushTable( *argv, lace_fd_path_strdup(cmd->stdos) );
-    PushTable( cmd->os, cmd->stdos );
-    cmd->stdos = -1;
+  cmd->exec_fd = -1;
+
+  for (i = 0; i < cmd->exit_fds.sz; ++i) {
+    PushTable( *argv, lace_strdup("-exitfd") );
+    PushTable( *argv, lace_fd_strdup(cmd->exit_fds.s[i]) );
   }
+  LoseTable(cmd->exit_fds);
+  InitTable(cmd->exit_fds);
 }
 
   static int
-spawn_commands(const char* lace_exe, TableT(Command) cmds, Associa* alias_map)
+spawn_commands(const char* lace_exe, TableT(Command) cmds,
+               Associa* alias_map, bool forkonly)
 {
   DeclTable( cstr, argv );
   DeclTable( uint2, fdargs );
@@ -1486,26 +1555,33 @@ spawn_commands(const char* lace_exe, TableT(Command) cmds, Associa* alias_map)
       }
     }
     Claim2( fdargs.sz ,==, cmd->iargs.sz );
-    if (cmd->exec_fd >= 0)
-    {
-      uint2 p;
-      p.s[0] = 0;
-      p.s[1] = cmd->exec_fd;
-      PushTable( fdargs, p );
-    }
 
     fix_known_flags_Command(cmd, alias_map);
 
-    if (fdargs.sz > 0) {
-      use_thread = true;
-      PushTable( argv, lace_strdup(lace_exe) );
-      PushTable( argv, lace_strdup("-as") );
-      PushTable( argv, lace_strdup("execfd") );
-      PushTable( argv, lace_strdup("-exe") );
-      PushTable( argv, lace_strdup(cmd->args.s[0]) );
+    if (cmd->exec_fd >= 0 || fdargs.sz > 0 || cmd->exit_fds.sz > 0) {
+      const char* execfd_exe = lookup_strmap(alias_map, "execfd");
+      if (execfd_exe) {
+        PushTable( argv, lace_strdup(execfd_exe) );
+      } else {
+        if (!forkonly) {
+          use_thread = true;
+        }
+        PushTable( argv, lace_strdup(lace_exe) );
+        PushTable( argv, lace_strdup("-as") );
+        PushTable( argv, lace_strdup("execfd") );
+      }
+      if (cmd->exec_fd >= 0) {
+        PushTable( argv, lace_strdup("-exe") );
+        PushTable( argv, lace_strdup(cmd->args.s[0]) );
+        if (cmd->exec_fd_has_bytes) {
+          uint2 p;
+          p.s[0] = 0;
+          p.s[1] = cmd->exec_fd;
+          PushTable( fdargs, p );
+        }
+      }
 
       add_inheritfd_flags_Command(&argv, cmd, use_thread);
-      if (use_thread) {cmd->exec_fd = -1;}
 
       for (j = 0; j < fdargs.sz; ++j)
       {
@@ -1519,14 +1595,12 @@ spawn_commands(const char* lace_exe, TableT(Command) cmds, Associa* alias_map)
       PushTable( argv, lace_strdup(cmd->args.s[0]) );
     }
     else if (lace_specific_util (cmd->args.s[0])) {
-      use_thread = lace_builtin_is_threadsafe(cmd->args.s[0]);
+      if (!forkonly) {
+        use_thread = lace_builtin_is_threadsafe(cmd->args.s[0]);
+      }
       PushTable( argv, lace_strdup(lace_exe) );
       PushTable( argv, lace_strdup("-as") );
       PushTable( argv, lace_strdup(cmd->args.s[0]));
-      if (0 == strcmp("execfd", cmd->args.s[0])) {
-        add_inheritfd_flags_Command(&argv, cmd, use_thread);
-        if (use_thread) {cmd->exec_fd = -1;}
-      }
     }
     else {
       PushTable( argv, lace_strdup(cmd->args.s[0]));
@@ -1597,6 +1671,7 @@ int main_lace(unsigned argc, char** argv)
   unsigned argi = 1;
   unsigned i;
   Associa alias_map[1];
+  bool forkonly = false;
   bool exiting = false;
   int exstatus = 0;
   int istat;
@@ -1641,20 +1716,6 @@ int main_lace(unsigned argc, char** argv)
       exstatus = lace_builtin_main(builtin_name, argc-argi, &argv[argi]);
       exiting = true;
     }
-    else if (eq_cstr (arg, "-stdin")) {
-      const char* stdin_filepath = argv[argi++];
-      lace_fd_t fd = lace_arg_open_readonly(stdin_filepath);
-      if (fd >= 0) {
-        istat = lace_compat_fd_move_to(0, fd);
-        if (istat != 0) {
-          lace_log_error("Failed to dup2 -stdin.");
-          exstatus = 72;
-        }
-      } else {
-        lace_log_errorf("Failed to open stdin: %s", stdin_filepath);
-        exstatus = 66;
-      }
-    }
     else if (eq_cstr(arg, "-alias")) {
       char* k = argv[argi++];
       char* v = NULL;
@@ -1668,6 +1729,23 @@ int main_lace(unsigned argc, char** argv)
      } else {
         lace_log_errorf("Failed alias: %s", k);
         exstatus = 64;
+      }
+    }
+    else if (eq_cstr(arg, "-forkonly")) {
+      forkonly = true;
+    }
+    else if (eq_cstr (arg, "-stdin")) {
+      const char* stdin_filepath = argv[argi++];
+      lace_fd_t fd = lace_arg_open_readonly(stdin_filepath);
+      if (fd >= 0) {
+        istat = lace_compat_fd_move_to(0, fd);
+        if (istat != 0) {
+          lace_log_error("Failed to dup2 -stdin.");
+          exstatus = 72;
+        }
+      } else {
+        lace_log_errorf("Failed to open stdin: %s", stdin_filepath);
+        exstatus = 66;
       }
     }
     else if (eq_cstr (arg, "-stdout")) {
@@ -1800,7 +1878,7 @@ int main_lace(unsigned argc, char** argv)
 
   if (exstatus == 0) {
     lace_compat_errno_trace();
-    istat = spawn_commands(argv[0], *cmds, alias_map);
+    istat = spawn_commands(argv[0], *cmds, alias_map, forkonly);
     lace_compat_errno_trace();
   }
   lose_strmap(alias_map);
@@ -1811,6 +1889,9 @@ int main_lace(unsigned argc, char** argv)
   istat = 0;
   for (i = 0; i < cmds->sz; ++i) {
     Command* cmd = &cmds->s[i];
+    if (false && exstatus == 0) {
+      output_Command(stderr, cmd);
+    }
     if ((cmd->kind == RunCommand || cmd->kind == DefCommand) && cmd->pid >= 0) {
       if (cmd->pid == 0) {
         pthread_join(cmd->thread, NULL);

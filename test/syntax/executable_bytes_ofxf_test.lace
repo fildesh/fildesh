@@ -1,0 +1,10 @@
+# Like executable_bytes_oxf_test.lace
+# but with an output file providing the executable bytes.
+
+zec -o $(OF exe) $(XA 1) / /
+$(O expect) zec / "hello there world" /
+
+|< $(XF exe) / "hello" " there " "world" /
+|- cmp $(XF expect)
+|> stdout
+

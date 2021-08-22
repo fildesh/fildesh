@@ -18,11 +18,14 @@ def spawn_test(name, data=[], args=[],
 
 def lace_test(name, srcs, aliases=[], data=[], args=[],
               expect_failure=False,
+              forkonly=False,
               size="small",
               **kwargs):
-  alias_args = []
+  lace_options = []
   for a in aliases:
-    alias_args += ["-alias", a]
+    lace_options += ["-alias", a]
+  if forkonly:
+    lace_options += ["-forkonly"]
   spawn_test(
       name = name,
       data = [
@@ -30,7 +33,7 @@ def lace_test(name, srcs, aliases=[], data=[], args=[],
       ] + srcs + data,
       args = [
           "$(location @lace//:lace)",
-      ] + alias_args + [
+      ] + lace_options + [
           "-f", "$(location " + srcs[0] + ")",
       ] + args,
       expect_failure = expect_failure,

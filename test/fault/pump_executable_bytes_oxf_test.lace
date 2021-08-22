@@ -1,0 +1,10 @@
+# Like //test/syntax:executable_bytes_test.lace
+# but with the executable bytes piped from below.
+
+$(O expect) zec / "hello there world" /
+
+|< $(XFv exe) / "hello" " there " "world" /
+|- cmp $(XF expect)
+|> stdout
+
+$(O^ exe) zec $(XA 1) / /

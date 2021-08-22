@@ -32,6 +32,7 @@ char* grow_LaceX(LaceX*, size_t);
 void flush_LaceX(LaceX*);
 void maybe_flush_LaceX(LaceX*);
 char* slurp_LaceX(LaceX*);
+void wait_close_LaceX(LaceX*);
 LaceX slicechr_LaceX(LaceX*, const char delim);
 LaceX sliceline_LaceX(LaceX*);
 LaceX slicechrs_LaceX(LaceX*, const char* delims);

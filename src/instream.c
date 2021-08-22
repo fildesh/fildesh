@@ -100,8 +100,19 @@ cstr_of_LaceX(LaceX* in)
 slurp_LaceX(LaceX* in)
 {
   maybe_flush_LaceX(in);
-  while (0 < read_LaceX(in)) {/* Yummy.*/}
+  while (read_LaceX(in) > 0) {/* Yummy.*/}
   return cstr_of_LaceX(in);
+}
+
+  void
+wait_close_LaceX(LaceX* in)
+{
+  if (!in) {return;}
+  do {
+    in->off = 0;
+    in->size = 0;
+  } while (read_LaceX(in) > 0);
+  close_LaceX(in);
 }
 
 /** Like strcspn or strtok but returns a slice.**/
