@@ -2,6 +2,7 @@
 [![CMake](https://github.com/grencez/lace/actions/workflows/cmake.yml/badge.svg)](https://github.com/grencez/lace/actions/workflows/cmake.yml)
 \
 [![Coverage Status](https://coveralls.io/repos/github/grencez/lace/badge.svg?branch=trunk)](https://coveralls.io/github/grencez/lace?branch=trunk)
+[![Total alerts](https://img.shields.io/lgtm/alerts/g/grencez/lace.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/grencez/lace/alerts/)
 
 # The Lace Programming Language
 
