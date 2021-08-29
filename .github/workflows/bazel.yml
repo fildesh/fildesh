@@ -2,7 +2,7 @@ name: Bazel
 on: [push, pull_request]
 
 jobs:
-  build:
+  test:
     strategy:
       fail-fast: false
       matrix:

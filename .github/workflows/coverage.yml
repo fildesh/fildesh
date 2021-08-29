@@ -17,7 +17,7 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
 
-    - name: Run tests
+    - name: Coverage
       run: >
         bazel coverage
         --instrument_test_targets

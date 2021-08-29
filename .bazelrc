@@ -1,8 +1,18 @@
+#build --cxxopt='-std=c++17'
+
 # Define the --config=asan-libfuzzer configuration.
+build:asan-libfuzzer --//test:enable_full_fuzzing
 build:asan-libfuzzer --action_env=CC=clang --action_env=CXX=clang++
 build:asan-libfuzzer --@rules_fuzzing//fuzzing:cc_engine=@rules_fuzzing//fuzzing/engines:libfuzzer
 build:asan-libfuzzer --@rules_fuzzing//fuzzing:cc_engine_instrumentation=libfuzzer
 build:asan-libfuzzer --@rules_fuzzing//fuzzing:cc_engine_sanitizer=asan
+
+# Benchmark.
+build:benchmark --//test:enable_full_benchmarking
+build:benchmark --compilation_mode=opt
+build:benchmark --nocache_test_results
+build:benchmark --test_output=all
+build:benchmark --jobs=1
 
 # STrace.
 build:strace --run_under='strace -f'

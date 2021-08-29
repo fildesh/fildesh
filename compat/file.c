@@ -4,7 +4,9 @@
 #include <string.h>
 #include <sys/stat.h>
 
-#ifdef _MSC_VER
+#ifndef _MSC_VER
+#include <unistd.h>
+#else
 #include <windows.h>
 #include <io.h>
 #endif
@@ -73,3 +75,22 @@ lace_compat_file_chmod_u_rwx(const char* filename, int r, int w, int x)
   return istat;
 }
 
+  int
+lace_compat_file_rm(const char* filepath)
+{
+#ifndef _MSC_VER
+  return unlink(filepath);
+#else
+  return _unlink(filepath);
+#endif
+}
+
+  int
+lace_compat_file_rmdir(const char* dirpath)
+{
+#ifndef _MSC_VER
+  return rmdir(dirpath);
+#else
+  return _rmdir(dirpath);
+#endif
+}

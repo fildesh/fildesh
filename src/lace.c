@@ -233,7 +233,7 @@ lose_Command (Command* cmd)
   LoseTable( cmd->extra_args );
 
   UFor( i, cmd->tmp_files.sz ) {
-    remove (cmd->tmp_files.s[i]);
+    lace_compat_file_rm(cmd->tmp_files.s[i]);
     free (cmd->tmp_files.s[i]);
   }
   LoseTable( cmd->tmp_files );
@@ -750,9 +750,11 @@ add_fd_arg_Command (Command* cmd, int fd)
   static void
 remove_tmppath(void* temporary_directory)
 {
-  if (!rmdir_sysCx((char*)temporary_directory))
+  if (0 != lace_compat_file_rmdir((char*)temporary_directory)) {
+    lace_compat_errno_trace();
     lace_log_warningf("Temp directory not removed: %s",
                       (char*)temporary_directory);
+  }
   free(temporary_directory);
   lace_log_trace("freed temporary_directory");
 }

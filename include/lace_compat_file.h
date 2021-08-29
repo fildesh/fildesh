@@ -10,5 +10,9 @@ lace_compat_file_catpath(const char* dir, const char* filename);
 
 int
 lace_compat_file_chmod_u_rwx(const char* filename, int r, int w, int x);
+int
+lace_compat_file_rm(const char*);
+int
+lace_compat_file_rmdir(const char*);
 
 #endif

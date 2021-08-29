@@ -175,15 +175,3 @@ mkdir_sysCx (const char* pathname)
 #endif
   return (ret == 0);
 }
-
-  bool
-rmdir_sysCx (const char* pathname)
-{
-  int ret = -1;
-#ifdef LACE_POSIX_SOURCE
-  ret = rmdir (pathname);
-#else
-  ret = _rmdir (pathname);
-#endif
-  return (ret == 0);
-}

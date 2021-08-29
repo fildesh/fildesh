@@ -65,8 +65,6 @@ tacenv_sysCx (const char* key, const char* val);
 
 bool
 mkdir_sysCx (const char* pathname);
-bool
-rmdir_sysCx (const char* pathname);
 Bool
 randomize_sysCx(void* p, uint size);
 

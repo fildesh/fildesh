@@ -17,6 +17,14 @@ bazel_skylib_workspace()
 
 
 http_archive(
+    name = "google_benchmark",
+    sha256 = "03ddc88d9f381b056bc742592fb46cea11600329ecc7c9604618cdca438adee6",
+    strip_prefix = "benchmark-1.5.6",
+    urls = ["https://github.com/google/benchmark/archive/v1.5.6.zip"],
+)
+
+
+http_archive(
     name = "rules_fuzzing",
     sha256 = "127d7c45e9b7520b3c42145b3cb1b8c26477cdaed0521b02a0298907339fefa1",
     strip_prefix = "rules_fuzzing-0.2.0",

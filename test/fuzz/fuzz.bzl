@@ -5,7 +5,8 @@ def cc_fuzz_test(name, srcs, deps):
       name = name,
       srcs = srcs + ["//test/fuzz:fuzz_common.c"],
       deps = deps,
-      target_compatible_with = [
-          "@platforms//os:linux",
-      ],
+      target_compatible_with = select({
+          "//test/fuzz:full_fuzzing": [],
+          "//conditions:default": ["@platforms//os:linux"],
+      })
   )

@@ -19,12 +19,29 @@ typedef int lace_fd_t;
 typedef uint8_t lace_lgsize_t;
 #define LACE_LGSIZE_MAX UCHAR_MAX
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct LaceX_VTable LaceX_VTable;
 typedef struct LaceX LaceX;
 typedef struct LaceO_VTable LaceO_VTable;
 typedef struct LaceO LaceO;
 typedef struct LaceKV LaceKV;
 typedef struct LaceKVE LaceKVE;
+
+
+struct LaceX {
+  char* at;
+  size_t size;
+  size_t off;
+  lace_lgsize_t alloc_lgsize;
+  lace_lgsize_t flush_lgsize;
+  const LaceX_VTable* vt;
+};
+#define DEFAULT_LaceX  { NULL, 0, 0, 0, 12, NULL }
+#define DEFAULT1_LaceX(vt)  { NULL, 0, 0, 0, 12, vt }
+
 
 size_t read_LaceX(LaceX*);
 void close_LaceX(LaceX*);
@@ -136,17 +153,6 @@ struct LaceX_VTable
     free_##T##_LaceX, \
   }}
 
-struct LaceX {
-  char* at;
-  size_t size;
-  size_t off;
-  lace_lgsize_t alloc_lgsize;
-  lace_lgsize_t flush_lgsize;
-  const LaceX_VTable* vt;
-};
-#define DEFAULT_LaceX  { NULL, 0, 0, 0, 12, NULL }
-#define DEFAULT1_LaceX(vt)  { NULL, 0, 0, 0, 12, vt }
-
 struct LaceO_VTable
 {
   void (*write_fn)(LaceO*);
@@ -246,4 +252,7 @@ mpop_LaceA_(void** p_at, size_t* p_count, lace_lgsize_t* p_allocated_lgcount,
   }
 }
 
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
 #endif
