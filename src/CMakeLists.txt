@@ -1,6 +1,5 @@
 
-add_library(lace_lib STATIC
-  $<TARGET_OBJECTS:lace_compat_lib>
+add_library(lace_lib_obj OBJECT
   "infile.c"
   "instream.c"
   "kve.c"
@@ -10,6 +9,10 @@ add_library(lace_lib STATIC
   "outstream.c"
   "string.c"
   "${CMAKE_SOURCE_DIR}/include/lace.h"
+  )
+add_library(lace_lib STATIC
+  $<TARGET_OBJECTS:lace_lib_obj>
+  $<TARGET_OBJECTS:lace_compat_lib_obj>
   )
 
 

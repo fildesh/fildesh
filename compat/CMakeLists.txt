@@ -1,4 +1,4 @@
-add_library(lace_compat_lib STATIC
+add_library(lace_compat_lib_obj OBJECT
   "errno.c"
   "fd.c"
   "fd_exclusive.h"
@@ -13,4 +13,6 @@ add_library(lace_compat_lib STATIC
   "${CMAKE_SOURCE_DIR}/include/lace_compat_sh.h"
   "${CMAKE_SOURCE_DIR}/include/lace_compat_string.h"
   )
+add_library(lace_compat_lib STATIC
+  $<TARGET_OBJECTS:lace_compat_lib_obj>)
 target_link_libraries(lace_compat_lib ${CMAKE_THREAD_LIBS_INIT})

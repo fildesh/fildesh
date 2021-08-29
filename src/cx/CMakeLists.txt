@@ -1,7 +1,5 @@
 
-add_library (cx_lib STATIC
-  $<TARGET_OBJECTS:lace_compat_lib>
-  $<TARGET_OBJECTS:lace_lib>
+add_library(cx_lib_obj OBJECT
   "alphatab.c"
   "alphatab.h"
   "associa.h"
@@ -16,6 +14,11 @@ add_library (cx_lib STATIC
   "syscx.c"
   "syscx.h"
   "table.h"
+  )
+add_library(cx_lib STATIC
+  $<TARGET_OBJECTS:cx_lib_obj>
+  $<TARGET_OBJECTS:lace_lib_obj>
+  $<TARGET_OBJECTS:lace_compat_lib_obj>
   )
 
 add_executable(bittable_test
