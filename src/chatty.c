@@ -166,7 +166,7 @@ int main (int argc, char** argv)
     }
 
     if (sock >= 0) {close(sock);}
-    if (listen_sock >= 0) {close(listen_sock);}
+    close(listen_sock);
     lace_compat_sh_wait(pid);
   }
 

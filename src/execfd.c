@@ -195,7 +195,7 @@ lace_builtin_execfd_main(unsigned argc, char** argv,
   if (exstatus == 0) {
     for (i = argc-off; i < argc; ++i) {
       if (bt[i] != 0) {
-        lace_log_errorf("Index %u is out of range.", argv[i]);
+        lace_log_errorf("Index %u is out of range.", i);
         exstatus = 64;
       }
     }

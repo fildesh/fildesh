@@ -149,8 +149,8 @@ qual_inline
   void
 del_LgTableIntl (TableT(LgTableIntl)* intls)
 {
-  bitint i = 0, j;
-  /* Claim2( intls->sz ,>, 2 ); */
+  zuint i = 0, j;
+  Claim2( intls->sz ,<, BITINT_MAX );
   for (j = 0; j < intls->sz; ++j)
   {
     if (intls->s[j].lgsz != intls->sz-1)
