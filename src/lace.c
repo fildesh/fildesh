@@ -1204,7 +1204,6 @@ int main_elastic_aio(unsigned argc, char** argv);
 int main_elastic_poll(unsigned argc, char** argv);
 #endif
 int main_godo(unsigned argc, char** argv);
-int main_lace(unsigned argc, char** argv);
 int main_ssh_all(unsigned argc, char** argv);
 int main_transpose(unsigned argc, char** argv);
 int main_ujoin(unsigned argc, char** argv);
@@ -1222,6 +1221,9 @@ static int lace_main_elastic_pthread(unsigned argc, char** argv) {
 }
 static int main_execfd(unsigned argc, char** argv) {
   return lace_builtin_execfd_main(argc, argv, NULL, NULL);
+}
+static int main_lace(unsigned argc, char** argv) {
+  return lace_builtin_lace_main(argc, argv, NULL, NULL);
 }
 static int lace_main_seq(unsigned argc, char** argv) {
   return lace_builtin_seq_main(argc, argv, NULL, NULL);
@@ -1654,22 +1656,14 @@ spawn_commands(const char* lace_exe, TableT(Command) cmds,
 }
 
 
-int main(int argc, char** argv)
-{
-  int exstatus;
-  init_sysCx();
-  exstatus = main_lace((unsigned)argc, argv);
-  lose_sysCx();
-  return exstatus;
-}
-
-
-int main_lace(unsigned argc, char** argv)
+  int
+lace_builtin_lace_main(unsigned argc, char** argv,
+                       LaceX** inputv, LaceO** outputv)
 {
   DeclTable( AlphaTab, script_args );
   TableT(Command)* cmds = NULL;
   bool use_stdin = true;
-  LaceX* in = NULL;
+  LaceX* script_in = NULL;
   unsigned argi = 1;
   unsigned i;
   Associa alias_map[1];
@@ -1677,6 +1671,13 @@ int main_lace(unsigned argc, char** argv)
   bool exiting = false;
   int exstatus = 0;
   int istat;
+
+  /* With all the signal handling below,
+   * primarily to clean up the temp directory,
+   * it's not clear how to act as a proper builtin.
+   */
+  assert(!inputv);
+  assert(!outputv);
 
   init_strmap(alias_map);
 
@@ -1701,15 +1702,15 @@ int main_lace(unsigned argc, char** argv)
         exstatus = 64;
         break;
       }
-      if (!in) {
-        in = open_LaceXA();
+      if (!script_in) {
+        script_in = open_LaceXA();
       }
       while (argi < argc) {
         size_t sz;
         arg = argv[argi++];
         sz = strlen(arg);
-        memcpy(grow_LaceX(in, sz), arg, sz);
-        *grow_LaceX(in, 1) = '\n';
+        memcpy(grow_LaceX(script_in, sz), arg, sz);
+        *grow_LaceX(script_in, 1) = '\n';
       }
     }
     else if (eq_cstr (arg, "-as")) {
@@ -1788,12 +1789,20 @@ int main_lace(unsigned argc, char** argv)
         }
         arg = argv[argi++];
       }
-      if (eq_cstr (arg, "-"))
-        break;
       use_stdin = false;
-      PushTable( script_args, cons1_AlphaTab (arg) );
-      in = open_LaceXF(arg);
-      if (!in) {
+      if (!arg) {
+        PushTable( script_args, cons1_AlphaTab("/dev/fd/something") );
+        script_in = open_arg_LaceXF(argi-1, argv, inputv);
+        if (!script_in) {
+          lace_log_errorf("Cannot read script from builtin.");
+          exstatus = 66;
+        }
+        break;
+      }
+      PushTable( script_args, cons1_AlphaTab(arg) );
+      script_in = open_arg_LaceXF(argi-1, argv, inputv);
+      if (!script_in) {
+        lace_compat_errno_trace();
         lace_log_errorf("Cannot read script. File: %s", arg);
         exstatus = 66;
       }
@@ -1812,8 +1821,8 @@ int main_lace(unsigned argc, char** argv)
   push_losefn_sysCx(lose_Commands, cmds);
 
   if (use_stdin) {
-    in = open_LaceXF("-");
-    PushTable( script_args, cons1_AlphaTab ("-") );
+    script_in = open_arg_LaceXF(0, argv, inputv);
+    PushTable( script_args, cons1_AlphaTab("/dev/stdin") );
   }
 
   while (argi < argc) {
@@ -1856,8 +1865,8 @@ int main_lace(unsigned argc, char** argv)
   LoseTable( script_args );
 
   lace_compat_errno_trace();
-  istat = parse_file(cmds, in, filename_LaceXF(in));
-  close_LaceX(in);
+  istat = parse_file(cmds, script_in, filename_LaceXF(script_in));
+  close_LaceX(script_in);
   lace_compat_errno_trace();
 
   PackTable( *cmds );

@@ -31,7 +31,7 @@ if (UNIX)
   endif()
 endif()
 
-add_executable(lace
+add_library(lace_builtin_lib_obj OBJECT
   "lace.c"
   "utilace.h"
   "best-match.c"
@@ -53,21 +53,30 @@ add_executable(lace
   "${CMAKE_SOURCE_DIR}/include/lace_builtin.h"
   "${CMAKE_SOURCE_DIR}/include/lace_posix_thread.h"
   )
+add_library(lace_builtin_lib STATIC
+  $<TARGET_OBJECTS:lace_builtin_lib_obj>
+  $<TARGET_OBJECTS:cx_lib_obj>
+  $<TARGET_OBJECTS:lace_lib_obj>
+  $<TARGET_OBJECTS:lace_compat_lib_obj>
+  )
 
-set_property(TARGET lace APPEND PROPERTY COMPILE_DEFINITIONS LACE_BUILTIN_LIBRARY)
+set_property(TARGET lace_builtin_lib_obj APPEND PROPERTY COMPILE_DEFINITIONS
+  LACE_BUILTIN_LIBRARY)
+
 if (WIN32)
   # Nothing special.
 elseif (APPLE)
-  set_property(TARGET lace APPEND PROPERTY COMPILE_DEFINITIONS
+  set_property(TARGET lace_builtin_lib_obj APPEND PROPERTY COMPILE_DEFINITIONS
     LACE_BUILTIN_PERMIT_ELASTIC_POLL)
 else()
-  set_property(TARGET lace
+  set_property(TARGET lace_builtin_lib_obj
     APPEND PROPERTY COMPILE_DEFINITIONS
     LACE_BUILTIN_PERMIT_ELASTIC_AIO
     LACE_BUILTIN_PERMIT_ELASTIC_POLL)
 endif()
 
-target_link_libraries(lace cx_lib ${CMAKE_THREAD_LIBS_INIT} ${LACE_EXTRA_ELASTIC_AIO_LIBS})
+add_executable(lace "main_lace.c")
+target_link_libraries(lace lace_builtin_lib ${CMAKE_THREAD_LIBS_INIT} ${LACE_EXTRA_ELASTIC_AIO_LIBS})
 
 
 add_executable(bestmatch "best-match.c")

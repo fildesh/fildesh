@@ -26,8 +26,8 @@ exports_files([
     "//test/builtin:__pkg__",
 ])
 
-cc_binary(
-    name = "lace",
+cc_library(
+    name = "lace_builtin_lib",
     srcs = [
         "lace.c",
         "utilace.h",
@@ -55,6 +55,12 @@ cc_binary(
     deps = [
         "//src/cx:cx_lib",
     ],
+)
+
+cc_binary(
+    name = "lace",
+    srcs = ["main_lace.c"],
+    deps = [":lace_builtin_lib"],
     visibility = ["//:__pkg__"],
 )
 
