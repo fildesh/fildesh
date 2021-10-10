@@ -1,5 +1,5 @@
 
-workspace(name = "lace")
+workspace(name = "fildesh")
 
 load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 

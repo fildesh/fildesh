@@ -1,7 +1,7 @@
-#!/usr/bin/env lace
+#!/usr/bin/env fildesh
 
-# Run from the parent directory to list some .lace files in example/,
-# but their .lace is changed to .txt by `sed`.
+# Run from the parent directory to list some .fildesh files in example/,
+# but their .fildesh is changed to .txt by `sed`.
 
 # Things are done in a pretty silly way.
 
@@ -9,23 +9,23 @@
 
 # This is used for a test, so let's just some specific files.
 |- grep \
-    -e '^hello.lace$' \
-    -e '^cycle.lace$'
+    -e '^hello.fildesh$' \
+    -e '^cycle.fildesh$'
 
 |- sort
 
 # We could use this commented line, but let's be more convoluted.
-#|- sed -e 's/lace$/txt/'
+#|- sed -e 's/fildesh$/txt/'
 
-# Create a string containing a `lace` program that runs `sed`.
+# Create a string containing a `fildesh` program that runs `sed`.
 $(H silly)
 |< stdin
-|- sed -e 's/lace$/txt/'
+|- sed -e 's/fildesh$/txt/'
 |> stdout
 $(H silly)
 
-# For each line of input, have `lace` execute the `silly` script.
-|- xpipe lace -- $(XA silly)
+# For each line of input, have `fildesh` execute the `silly` script.
+|- xpipe fildesh -- $(XA silly)
 
 # Construct a stream for a prefix to use for each line.
 # This is silly because the stream is converted to a string on the next line!

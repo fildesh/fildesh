@@ -59,7 +59,7 @@ cc_library(
 )
 
 cc_binary(
-    name = "lace",
+    name = "fildesh",
     srcs = ["main_lace.c"],
     deps = [":lace_builtin_lib"],
     visibility = ["//:__pkg__"],

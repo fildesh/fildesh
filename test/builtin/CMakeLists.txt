@@ -1,7 +1,7 @@
 
 #add_test(NAME elastic_catfile_test COMMAND
 #  comparispawn "${CMAKE_CURRENT_SOURCE_DIR}/hello_newline.txt"
-#  ${lace_exe} --
+#  ${fildesh_exe} --
 #  "|< zec"
 #  "|- waitdo -- rm -f ${CMAKE_CURRENT_BINARY_DIR}/elastic_catfile_output.txt"
 #  "|- waitdo -- elastic -x ${CMAKE_CURRENT_SOURCE_DIR}/hello_newline.txt -o ${CMAKE_CURRENT_BINARY_DIR}/elastic_catfile_output.txt"
@@ -40,12 +40,12 @@ add_test(NAME cmp_diff_test COMMAND spawn ! "$<TARGET_FILE:cmp>"
 
 add_test(NAME elastic_cat_test COMMAND
   comparispawn "${CMAKE_CURRENT_SOURCE_DIR}/hello_newline.txt"
-  ${lace_exe} -x "${CMAKE_CURRENT_SOURCE_DIR}/elastic_cat.lace"
+  ${fildesh_exe} -x "${CMAKE_CURRENT_SOURCE_DIR}/elastic_cat.fildesh"
   )
 
 add_test(NAME elastic_tee_test COMMAND
   comparispawn "${CMAKE_CURRENT_SOURCE_DIR}/hello_newline_x2.txt"
-  ${lace_exe} -x "${CMAKE_CURRENT_SOURCE_DIR}/elastic_tee.lace"
+  ${fildesh_exe} -x "${CMAKE_CURRENT_SOURCE_DIR}/elastic_tee.fildesh"
   )
 
 add_executable(elastic_alt_tee_test "elastic_alt_tee_test.c")
@@ -72,7 +72,23 @@ add_test(NAME execfd_test COMMAND
   "$<TARGET_FILE:execfd_test>" "$<TARGET_FILE:zec>")
 
 add_test(NAME execfd_script_test COMMAND
-  lace -x "${CMAKE_CURRENT_SOURCE_DIR}/execfd_script_test.lace" "$<TARGET_FILE:zec>")
+  fildesh -x "${CMAKE_CURRENT_SOURCE_DIR}/execfd_script_test.fildesh" "$<TARGET_FILE:zec>")
+
+#### fildesh
+
+add_test(NAME fildesh_as_add_test COMMAND
+  comparispawn "${CMAKE_CURRENT_SOURCE_DIR}/summed_integers.txt"
+  "${fildesh_exe}" -stdin "${CMAKE_CURRENT_SOURCE_DIR}/integers.txt"
+  -as add
+  )
+
+add_executable(fildesh_cli_hello_test "fildesh_cli_hello_test.c")
+target_link_libraries(fildesh_cli_hello_test lace_lib lace_tool_lib)
+add_test(NAME fildesh_cli_hello_test COMMAND fildesh_cli_hello_test "${fildesh_exe}")
+
+add_executable(fildesh_usage_test "fildesh_usage_test.c")
+target_link_libraries(fildesh_usage_test lace_compat_lib)
+add_test(NAME fildesh_usage_test COMMAND fildesh_usage_test "${fildesh_exe}")
 
 #### godo
 
@@ -83,22 +99,6 @@ set_property(TARGET godo_test
 add_test(NAME godo_test COMMAND
   godo_test "$<TARGET_FILE:expectish>" "${CMAKE_SOURCE_DIR}/test/expect/hello.txt")
 
-#### lace
-
-add_test(NAME lace_as_add_test COMMAND
-  comparispawn "${CMAKE_CURRENT_SOURCE_DIR}/summed_integers.txt"
-  "${lace_exe}" -stdin "${CMAKE_CURRENT_SOURCE_DIR}/integers.txt"
-  -as add
-  )
-
-add_executable(lace_cli_hello_test "lace_cli_hello_test.c")
-target_link_libraries(lace_cli_hello_test lace_lib lace_tool_lib)
-add_test(NAME lace_cli_hello_test COMMAND lace_cli_hello_test "${lace_exe}")
-
-add_executable(lace_usage_test "lace_usage_test.c")
-target_link_libraries(lace_usage_test lace_compat_lib)
-add_test(NAME lace_usage_test COMMAND lace_usage_test "${lace_exe}")
-
 #### sshall
 
 add_executable(echocat "echocat.c" "${CMAKE_SOURCE_DIR}/builtin/zec.c")
@@ -107,7 +107,7 @@ set_property(TARGET echocat
 target_link_libraries(echocat lace_lib)
 
 add_test(NAME echocat_test COMMAND
-  lace -alias "echocat=$<TARGET_FILE:echocat>" -f "${CMAKE_CURRENT_SOURCE_DIR}/echocat_test.lace")
+  fildesh -alias "echocat=$<TARGET_FILE:echocat>" -f "${CMAKE_CURRENT_SOURCE_DIR}/echocat_test.fildesh")
 
 add_executable(sshall_test "sshall_test.c")
 target_link_libraries(sshall_test lace_lib lace_tool_lib)
@@ -152,13 +152,13 @@ add_test(NAME waitdo_test COMMAND waitdo_test "$<TARGET_FILE:waitdo>" "$<TARGET_
 
 add_test(NAME xpipe_nested_test COMMAND
   comparispawn "${CMAKE_CURRENT_SOURCE_DIR}/../expect/xpipe_nested.txt"
-  ${lace_exe} -x "${CMAKE_CURRENT_SOURCE_DIR}/xpipe_nested.lace")
+  ${fildesh_exe} -x "${CMAKE_CURRENT_SOURCE_DIR}/xpipe_nested.fildesh")
 
 #### zec
 
 add_test(NAME zec_cat_test COMMAND
   comparispawn "${CMAKE_CURRENT_SOURCE_DIR}/hello_newline.txt"
-  ${lace_exe} -x "${CMAKE_CURRENT_SOURCE_DIR}/zec_cat.lace"
+  ${fildesh_exe} -x "${CMAKE_CURRENT_SOURCE_DIR}/zec_cat.fildesh"
   )
 
 # Only CMake test here that actually uses `spawn`.

@@ -23,8 +23,8 @@ bazel test -c dbg --test_output=all --cache_test_results=no --run_under='valgrin
 
 ### Leak Check
 ```shell
-bazel build //src:lace
-./bazel-bin/src/lace s/leak_check.lace
+bazel build //src:fildesh
+./bazel-bin/src/fildesh s/leak_check.fildesh
 # Don't worry if the `xargs ... grep ...` command fails.
 # Grep exits with a nonzero status because some
 # (hopefully most) testlogs do not have messages about leaks.

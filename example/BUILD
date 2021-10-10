@@ -1,12 +1,12 @@
 
 exports_files([
-    "args.lace",
-    "convoluted.lace",
-    "cycle.lace",
-    "familiar.lace",
-    "hello.lace",
-    "includetest.lace",
-    "name.lace",
-    "silly.lace",
-    "test.lace",
+    "args.fildesh",
+    "convoluted.fildesh",
+    "cycle.fildesh",
+    "familiar.fildesh",
+    "hello.fildesh",
+    "includetest.fildesh",
+    "name.fildesh",
+    "silly.fildesh",
+    "test.fildesh",
 ])

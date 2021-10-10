@@ -1,7 +1,7 @@
 
 alias(
-    name = "lace",
-    actual = "//src:lace",
+    name = "fildesh",
+    actual = "//src:fildesh",
     visibility = ["//visibility:public"],
 )
 

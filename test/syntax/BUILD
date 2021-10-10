@@ -1,41 +1,41 @@
-load("//tool:spawn.bzl", "lace_test")
+load("//tool:spawn.bzl", "fildesh_test")
 
-lace_test(
+fildesh_test(
     name = "concatenate_oooxfxax_test",
-    srcs = ["concatenate_oooxfxax_test.lace"],
+    srcs = ["concatenate_oooxfxax_test.fildesh"],
 )
-lace_test(
+fildesh_test(
     name = "concatenate_forkonly_oooxfxax_test",
-    srcs = ["concatenate_oooxfxax_test.lace"],
+    srcs = ["concatenate_oooxfxax_test.fildesh"],
     forkonly = True,
 )
 
-lace_test(
+fildesh_test(
     name = "executable_bytes_oxf_test",
-    srcs = ["executable_bytes_oxf_test.lace"],
+    srcs = ["executable_bytes_oxf_test.fildesh"],
     args = ["$(location //builtin:zec)"],
     data = ["//builtin:zec"],
 )
-lace_test(
+fildesh_test(
     name = "executable_bytes_ofxf_test",
-    srcs = ["executable_bytes_ofxf_test.lace"],
+    srcs = ["executable_bytes_ofxf_test.fildesh"],
     args = ["$(location //builtin:zec)"],
     data = ["//builtin:zec"],
 )
 
-lace_test(
+fildesh_test(
     name = "pump_ofxf_test",
-    srcs = ["pump_ofxf_test.lace"],
+    srcs = ["pump_ofxf_test.fildesh"],
 )
-lace_test(
+fildesh_test(
     name = "pump_oxf_test",
-    srcs = ["pump_oxf_test.lace"],
+    srcs = ["pump_oxf_test.fildesh"],
 )
-lace_test(
+fildesh_test(
     name = "pump_ofx_test",
-    srcs = ["pump_ofx_test.lace"],
+    srcs = ["pump_ofx_test.fildesh"],
 )
-lace_test(
+fildesh_test(
     name = "pump_ox_test",
-    srcs = ["pump_ox_test.lace"],
+    srcs = ["pump_ox_test.fildesh"],
 )

@@ -1,5 +1,5 @@
-load("//tool:comparispawn.bzl", "lace_expect_test")
-load("//tool:spawn.bzl", "lace_test", "spawn_test")
+load("//tool:comparispawn.bzl", "fildesh_expect_test")
+load("//tool:spawn.bzl", "fildesh_test", "spawn_test")
 
 #### add
 
@@ -53,15 +53,15 @@ spawn_test(
 
 #### elastic
 
-lace_expect_test(
+fildesh_expect_test(
     name = "elastic_cat_test",
-    srcs = ["elastic_cat.lace"],
+    srcs = ["elastic_cat.fildesh"],
     expect = ":hello_newline.txt",
 )
 
-lace_expect_test(
+fildesh_expect_test(
     name = "elastic_tee_test",
-    srcs = ["elastic_tee.lace"],
+    srcs = ["elastic_tee.fildesh"],
     expect = ":hello_newline_x2.txt",
 )
 
@@ -102,11 +102,48 @@ cc_test(
     args = ["$(location //builtin:zec)"],
 )
 
-lace_test(
+fildesh_test(
     name = "execfd_script_test",
-    srcs = ["execfd_script_test.lace"],
+    srcs = ["execfd_script_test.fildesh"],
     args = ["$(location //builtin:zec)"],
     data = ["//builtin:zec"],
+)
+
+#### fildesh
+
+spawn_test(
+    name = "fildesh_as_add_test",
+    args = [
+        "$(location //tool:comparispawn)",
+        "$(location summed_integers.txt)",
+        "$(location //:fildesh)",
+        "-stdin",
+        "$(location integers.txt)",
+        "-as",
+        "add",
+    ],
+    data = [
+        "integers.txt",
+        "summed_integers.txt",
+        "//:fildesh",
+        "//tool:comparispawn",
+    ],
+)
+
+cc_test(
+    name = "fildesh_cli_hello_test",
+    srcs = ["fildesh_cli_hello_test.c"],
+    deps = ["//:lace_lib", "//:lace_tool_lib"],
+    data = ["//:fildesh"],
+    args = ["$(location //:fildesh)"],
+)
+
+cc_test(
+    name = "fildesh_usage_test",
+    srcs = ["fildesh_usage_test.c"],
+    deps = ["//:lace_compat_lib"],
+    data = ["//:fildesh"],
+    args = ["$(location //:fildesh)"],
 )
 
 #### godo
@@ -131,43 +168,6 @@ cc_test(
     ],
 )
 
-#### lace
-
-spawn_test(
-    name = "lace_as_add_test",
-    args = [
-        "$(location //tool:comparispawn)",
-        "$(location summed_integers.txt)",
-        "$(location //:lace)",
-        "-stdin",
-        "$(location integers.txt)",
-        "-as",
-        "add",
-    ],
-    data = [
-        "integers.txt",
-        "summed_integers.txt",
-        "//:lace",
-        "//tool:comparispawn",
-    ],
-)
-
-cc_test(
-    name = "lace_cli_hello_test",
-    srcs = ["lace_cli_hello_test.c"],
-    deps = ["//:lace_lib", "//:lace_tool_lib"],
-    data = ["//:lace"],
-    args = ["$(location //:lace)"],
-)
-
-cc_test(
-    name = "lace_usage_test",
-    srcs = ["lace_usage_test.c"],
-    deps = ["//:lace_compat_lib"],
-    data = ["//:lace"],
-    args = ["$(location //:lace)"],
-)
-
 #### sshall
 
 cc_binary(
@@ -180,9 +180,9 @@ cc_binary(
     defines = ["LACE_BUILTIN_LIBRARY"],
     testonly = True,
 )
-lace_test(
+fildesh_test(
     name = "echocat_test",
-    srcs = ["echocat_test.lace"],
+    srcs = ["echocat_test.fildesh"],
     aliases = ["echocat=$(location :echocat)"],
     data = [":echocat"],
 )
@@ -271,17 +271,17 @@ cc_test(
 
 #### xpipe
 
-lace_expect_test(
+fildesh_expect_test(
     name = "xpipe_nested_test",
-    srcs = ["xpipe_nested.lace"],
+    srcs = ["xpipe_nested.fildesh"],
     expect = "//test/expect:xpipe_nested.txt",
 )
 
 #### zec
 
-lace_expect_test(
+fildesh_expect_test(
     name = "zec_cat_test",
-    srcs = ["zec_cat.lace"],
+    srcs = ["zec_cat.fildesh"],
     expect = ":hello_newline.txt",
 )
 

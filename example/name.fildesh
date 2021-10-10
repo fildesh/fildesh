@@ -6,7 +6,7 @@
 # A variable is declared/assigned by:
 #   $(> varname) 'The variable' " content."
 
-$(<< includetest.lace)
+$(<< includetest.fildesh)
 
 $(> msg) "Hello there " $(XA username) '!'
 

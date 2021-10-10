@@ -767,7 +767,7 @@ add_tmp_file_Command(Command* cmd,
   char buf[2048];
   assert(extension);
   if (!cmd_hookup->temporary_directory) {
-    cmd_hookup->temporary_directory = mktmppath_sysCx("lace");
+    cmd_hookup->temporary_directory = mktmppath_sysCx("fildesh");
     lace_compat_errno_clear();
     if (!cmd_hookup->temporary_directory) {
       lace_log_error("Unable to create temp directory.");
@@ -1298,6 +1298,7 @@ int (*lace_specific_util (const char* arg)) (unsigned, char**)
     {"elastic_poll", main_elastic_poll},
 #endif
     {"execfd", main_execfd},
+    {"fildesh", main_lace},
     {"godo", main_godo},
     {"lace", main_lace},
     {"seq", lace_main_seq},

@@ -76,8 +76,8 @@ else()
     LACE_BUILTIN_PERMIT_ELASTIC_POLL)
 endif()
 
-add_executable(lace "main_lace.c")
-target_link_libraries(lace lace_builtin_lib ${CMAKE_THREAD_LIBS_INIT} ${LACE_EXTRA_ELASTIC_AIO_LIBS})
+add_executable(fildesh "main_lace.c")
+target_link_libraries(fildesh lace_builtin_lib ${CMAKE_THREAD_LIBS_INIT} ${LACE_EXTRA_ELASTIC_AIO_LIBS})
 
 
 add_executable(bestmatch "best-match.c")
@@ -119,5 +119,5 @@ if (UNIX AND NOT APPLE)
 endif ()
 
 
-install(TARGETS lace
+install(TARGETS fildesh
   RUNTIME DESTINATION bin)

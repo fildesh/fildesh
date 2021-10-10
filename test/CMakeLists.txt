@@ -4,7 +4,7 @@ add_subdirectory(tool)
 add_subdirectory(src)
 add_subdirectory(syntax)
 
-set (lace_exe "$<TARGET_FILE:lace>")
+set (fildesh_exe "$<TARGET_FILE:fildesh>")
 set (zec_exe "$<TARGET_FILE:zec>")
 
 add_subdirectory(builtin)
@@ -33,7 +33,7 @@ foreach (f ${plain_example_test_list})
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
     COMMAND
     comparispawn "${CMAKE_CURRENT_SOURCE_DIR}/expect/${f}.txt"
-    ${lace_exe} -x example/${f}.lace
+    ${fildesh_exe} -x example/${f}.fildesh
     )
 endforeach ()
 
@@ -41,5 +41,5 @@ add_test (NAME example_args2
   WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
   COMMAND
   comparispawn "${CMAKE_CURRENT_SOURCE_DIR}/expect/args2.txt"
-  ${lace_exe} -x example/args.lace 2 7
+  ${fildesh_exe} -x example/args.fildesh 2 7
   )

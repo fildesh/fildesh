@@ -1,4 +1,4 @@
-load("//tool:comparispawn.bzl", "lace_expect_test")
+load("//tool:comparispawn.bzl", "fildesh_expect_test")
 load("@bazel_skylib//rules:common_settings.bzl", "bool_flag")
 
 
@@ -15,15 +15,15 @@ bool_flag(
 )
 
 
-lace_expect_test(
+fildesh_expect_test(
     name = "args_test",
-    srcs = ["//example:args.lace"],
+    srcs = ["//example:args.fildesh"],
     expect = "//test/expect:args.txt",
 )
 
-lace_expect_test(
+fildesh_expect_test(
     name = "args2_test",
-    srcs = ["//example:args.lace"],
+    srcs = ["//example:args.fildesh"],
     expect = "//test/expect:args2.txt",
     args = [
         "2",
@@ -31,9 +31,9 @@ lace_expect_test(
     ],
 )
 
-lace_expect_test(
+fildesh_expect_test(
     name = "convoluted_test",
-    srcs = ["//example:convoluted.lace"],
+    srcs = ["//example:convoluted.fildesh"],
     expect = "//test/expect:convoluted.txt",
     target_compatible_with = select({
         "@platforms//os:windows": ["@platforms//:incompatible"],
@@ -41,15 +41,15 @@ lace_expect_test(
     }),
 )
 
-lace_expect_test(
+fildesh_expect_test(
     name = "cycle_test",
-    srcs = ["//example:cycle.lace"],
+    srcs = ["//example:cycle.fildesh"],
     expect = "//test/expect:cycle.txt",
 )
 
-lace_expect_test(
+fildesh_expect_test(
     name = "familiar_test",
-    srcs = ["//example:familiar.lace"],
+    srcs = ["//example:familiar.fildesh"],
     expect = "//test/expect:familiar.txt",
     target_compatible_with = select({
         "@platforms//os:windows": ["@platforms//:incompatible"],
@@ -57,29 +57,29 @@ lace_expect_test(
     }),
 )
 
-lace_expect_test(
+fildesh_expect_test(
     name = "hello_test",
-    srcs = ["//example:hello.lace"],
+    srcs = ["//example:hello.fildesh"],
     expect = "//test/expect:hello.txt",
 )
 
-lace_expect_test(
+fildesh_expect_test(
     name = "name_test",
     srcs = [
-        "//example:name.lace",
-        "//example:includetest.lace",
+        "//example:name.fildesh",
+        "//example:includetest.fildesh",
     ],
     expect = "//test/expect:name.txt",
 )
 
-lace_expect_test(
+fildesh_expect_test(
     name = "silly_test",
-    srcs = ["//example:silly.lace"],
+    srcs = ["//example:silly.fildesh"],
     expect = "//test/expect:silly.txt",
     data = [
-        "//example:args.lace",
-        "//example:cycle.lace",
-        "//example:hello.lace",
+        "//example:args.fildesh",
+        "//example:cycle.fildesh",
+        "//example:hello.fildesh",
     ],
     target_compatible_with = select({
         "@platforms//os:windows": ["@platforms//:incompatible"],
@@ -87,9 +87,9 @@ lace_expect_test(
     }),
 )
 
-lace_expect_test(
+fildesh_expect_test(
     name = "test_test",
-    srcs = ["//example:test.lace"],
+    srcs = ["//example:test.fildesh"],
     expect = "//test/expect:test.txt",
     target_compatible_with = select({
         "@platforms//os:windows": ["@platforms//:incompatible"],

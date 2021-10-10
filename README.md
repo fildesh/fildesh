@@ -1,19 +1,19 @@
-[![Bazel](https://github.com/grencez/lace/actions/workflows/bazel.yml/badge.svg)](https://github.com/grencez/lace/actions/workflows/bazel.yml)
-[![CMake](https://github.com/grencez/lace/actions/workflows/cmake.yml/badge.svg)](https://github.com/grencez/lace/actions/workflows/cmake.yml)
+[![Bazel](https://github.com/fildesh/fildesh/actions/workflows/bazel.yml/badge.svg)](https://github.com/fildesh/fildesh/actions/workflows/bazel.yml)
+[![CMake](https://github.com/fildesh/fildesh/actions/workflows/cmake.yml/badge.svg)](https://github.com/fildesh/fildesh/actions/workflows/cmake.yml)
 \
-[![Coverage Status](https://coveralls.io/repos/github/grencez/lace/badge.svg?branch=trunk)](https://coveralls.io/github/grencez/lace?branch=trunk)
+[![Coverage Status](https://coveralls.io/repos/github/fildesh/fildesh/badge.svg?branch=trunk)](https://coveralls.io/github/fildesh/fildesh?branch=trunk)
 
-# The Lace Programming Language
+# Fildesh: File Descriptor Shell Scripting Language
 
 This is a domain-specific language meant to simplify complex pipelines between programs.
-It allows multiple inputs and outputs, undirected cycles ([example/familiar.lace](example/familiar.lace)), and even directed cycles ([example/cycle.lace](example/cycle.lace)).
+It allows multiple inputs and outputs, undirected cycles ([example/familiar.fildesh](example/familiar.fildesh)), and even directed cycles ([example/cycle.fildesh](example/cycle.fildesh)).
 Though when the dataflow graph has undirected cycles, you should use the `elastic` utility to avoid deadlocks.
 
 ## How to Use
 
 ```
 make
-./bin/lace < example/hello.lace
+./bld/src/fildesh < example/hello.fildesh
 ```
 
 Hopefully that worked, the only real dependencies are `git` (for pulling submodules), `cmake`, a C compiler, and the POSIX librt for the `elastic` tool.
@@ -21,7 +21,7 @@ Hopefully that worked, the only real dependencies are `git` (for pulling submodu
 ## Motivating Example
 
 Let's walk through a fairly useful script!
-Open [example/whophys.lace](example/whophys.lace) in a new window and follow along.
+Open [example/whophys.fildesh](example/whophys.fildesh) in a new window and follow along.
 
 The `whophys` script is made for instructors to easily (or magically) learn the names of students sitting in a computer lab.
 It does this by taking the layout of the computer lab as a variable `lab` and replacing each machine name with the username of whoever is logged in.
