@@ -5,17 +5,17 @@
 #include <string.h>
 
 
-typedef struct LaceXA LaceXA;
-struct LaceXA { LaceX base; };
-static void read_LaceXA(LaceXA* x) {(void)x;}
-static void close_LaceXA(LaceXA* x) {(void)x;}
-static void free_LaceXA(LaceXA* x) {free(x);}
-DEFINE_LaceX_VTable(LaceXA, base);
+typedef struct FildeshXA FildeshXA;
+struct FildeshXA { FildeshX base; };
+static void read_FildeshXA(FildeshXA* x) {(void)x;}
+static void close_FildeshXA(FildeshXA* x) {(void)x;}
+static void free_FildeshXA(FildeshXA* x) {free(x);}
+DEFINE_FildeshX_VTable(FildeshXA, base);
 
 LaceX* open_LaceXA() {
-  LaceXA* x = (LaceXA*) malloc(sizeof(LaceXA));
+  FildeshXA* x = (FildeshXA*) malloc(sizeof(FildeshXA));
   x->base = default_LaceX();
-  x->base.vt = DEFAULT_LaceXA_LaceX_VTable;
+  x->base.vt = DEFAULT_FildeshXA_FildeshX_VTable;
   return &x->base;
 }
 

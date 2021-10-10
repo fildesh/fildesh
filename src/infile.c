@@ -7,8 +7,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-typedef struct LaceXF LaceXF;
-struct LaceXF {
+typedef struct FildeshXF FildeshXF;
+struct FildeshXF {
   LaceX base;
   lace_fd_t fd;
   /* unsigned basename_offset; */
@@ -18,7 +18,7 @@ struct LaceXF {
 
 static
   void
-read_LaceXF(LaceXF* xf)
+read_FildeshXF(FildeshXF* xf)
 {
   static const size_t chunksize = 4096;
   const size_t orig_size = xf->base.size;
@@ -28,7 +28,7 @@ read_LaceXF(LaceXF* xf)
 
 static
   void
-close_LaceXF(LaceXF* xf)
+close_FildeshXF(FildeshXF* xf)
 {
   if (xf->fd >= 0) {
     lace_compat_fd_close(xf->fd);
@@ -42,16 +42,16 @@ close_LaceXF(LaceXF* xf)
 
 static
   void
-free_LaceXF(LaceXF* xf)
+free_FildeshXF(FildeshXF* xf)
 {
   free(xf);
 }
 
-DEFINE_LaceX_VTable(LaceXF, base);
+DEFINE_FildeshX_VTable(FildeshXF, base);
 
-static inline LaceXF default_LaceXF() {
-  LaceXF tmp = {DEFAULT_LaceX, -1, NULL};
-  tmp.base.vt = DEFAULT_LaceXF_LaceX_VTable;
+static inline FildeshXF default_LaceXF() {
+  FildeshXF tmp = {DEFAULT_FildeshX, -1, NULL};
+  tmp.base.vt = DEFAULT_FildeshXF_FildeshX_VTable;
   return tmp;
 }
 
@@ -67,10 +67,10 @@ static lace_fd_t lace_open_null_readonly() {
 }
 
 static LaceX* open_null_LaceXF() {
-  LaceXF* xf;
+  FildeshXF* xf;
   lace_compat_fd_t fd = lace_open_null_readonly();
   if (fd < 0) {return NULL;}
-  xf = (LaceXF*) malloc(sizeof(LaceXF));
+  xf = (FildeshXF*) malloc(sizeof(FildeshXF));
   *xf = default_LaceXF();
   xf->fd = fd;
   xf->filename = lace_compat_string_duplicate("/dev/null");
@@ -91,7 +91,7 @@ open_sibling_LaceXF(const char* sibling, const char* filename)
   static const char dev_fd_prefix[] = "/dev/fd/";
   static const unsigned dev_fd_prefix_length = sizeof(dev_fd_prefix)-1;
   const size_t filename_length = (filename ? strlen(filename) : 0);
-  LaceXF xf[1];
+  FildeshXF xf[1];
 
   if (!filename) {return NULL;}
 
@@ -127,7 +127,7 @@ open_sibling_LaceXF(const char* sibling, const char* filename)
 
   xf->fd = lace_compat_file_open_readonly(xf->filename);
   if (xf->fd >= 0) {
-    LaceXF* p = malloc(sizeof(LaceXF));
+    FildeshXF* p = malloc(sizeof(FildeshXF));
     *p = *xf;
     return &p->base;
   }
@@ -167,10 +167,10 @@ open_fd_LaceX(lace_fd_t fd)
 {
   char filename[LACE_FD_PATH_SIZE_MAX];
   unsigned filename_size;
-  LaceXF* xf;
+  FildeshXF* xf;
   fd = lace_compat_fd_claim(fd);
   if (fd < 0) {return NULL;}
-  xf = (LaceXF*) malloc(sizeof(LaceXF));
+  xf = (FildeshXF*) malloc(sizeof(FildeshXF));
   *xf = default_LaceXF();
   /* File descriptor.*/
   xf->fd = fd;
@@ -206,8 +206,8 @@ open_arg_LaceXF(unsigned argi, char** argv, LaceX** inputv)
 }
 
 const char* filename_LaceXF(LaceX* in) {
-  if (in->vt != DEFAULT_LaceXF_LaceX_VTable) {
+  if (in->vt != DEFAULT_FildeshXF_FildeshX_VTable) {
     return NULL;
   }
-  return lace_castup(LaceXF, base, in)->filename;
+  return lace_castup(FildeshXF, base, in)->filename;
 }

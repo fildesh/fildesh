@@ -1,4 +1,4 @@
-#include "lace.h"
+#include "fildesh.h"
 
 #include <assert.h>
 #include <stdlib.h>
@@ -6,7 +6,7 @@
 
 static
   bool
-testbit_LaceA_(const char data[], size_t bitpos)
+testbit_FildeshA_(const char data[], size_t bitpos)
 {
   return 0 != (1 & (data[bitpos/CHAR_BIT] >> (bitpos % CHAR_BIT)));
 }
@@ -20,11 +20,11 @@ LLVMFuzzerTestOneInput(const uint8_t data[], size_t size) {
 
   int* at = NULL;
   size_t count = 0;
-  lace_lgsize_t allocated_lgcount = 0;
+  fildesh_lgsize_t allocated_lgcount = 0;
 
   for (i = 0; i < size * CHAR_BIT; ++i) {
     size_t j;
-    if (testbit_LaceA_((char*) data, i)) {
+    if (testbit_FildeshA_((char*) data, i)) {
       difference += 1;
       continue;
     }
@@ -32,7 +32,7 @@ LLVMFuzzerTestOneInput(const uint8_t data[], size_t size) {
     if (difference > 0) {
       if (growing) {
         int* dst = (int*)
-          grow_LaceA_((void**)&at, &count, &allocated_lgcount,
+          grow_FildeshA_((void**)&at, &count, &allocated_lgcount,
                       sizeof(int), difference, realloc);
         for (j = 0; j < difference; ++j) {
           dst[j] = (int) j;
@@ -42,7 +42,7 @@ LLVMFuzzerTestOneInput(const uint8_t data[], size_t size) {
         if (difference > count) {
           difference = count;
         }
-        mpop_LaceA_((void**)&at, &count, &allocated_lgcount,
+        mpop_FildeshA_((void**)&at, &count, &allocated_lgcount,
                     sizeof(int), difference, realloc);
       }
       difference = 0;

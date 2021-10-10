@@ -6,27 +6,27 @@
 #include <string.h>
 #include <stdio.h>
 
-typedef struct MockLaceXF MockLaceXF;
-struct MockLaceXF {
-  LaceX x;
+typedef struct MockFildeshXF MockFildeshXF;
+struct MockFildeshXF {
+  FildeshX x;
   unsigned row;
   unsigned col;
   const char* const* lines;
   size_t chunk_size;
 };
 
-static void read_MockLaceXF(MockLaceXF* xf);
-static void close_MockLaceXF(MockLaceXF* xf) {(void) xf;}
-static void free_MockLaceXF(MockLaceXF* xf) {(void) xf;}
-DEFINE_LaceX_VTable(MockLaceXF, x);
-#define DEFAULT_MockLaceXF { \
-  DEFAULT1_LaceX(DEFAULT_MockLaceXF_LaceX_VTable), \
+static void read_MockFildeshXF(MockFildeshXF* xf);
+static void close_MockFildeshXF(MockFildeshXF* xf) {(void) xf;}
+static void free_MockFildeshXF(MockFildeshXF* xf) {(void) xf;}
+DEFINE_FildeshX_VTable(MockFildeshXF, x);
+#define DEFAULT_MockFildeshXF { \
+  DEFAULT1_FildeshX(DEFAULT_MockFildeshXF_FildeshX_VTable), \
   0, 0, NULL, 0, \
 }
 
 
   void
-read_MockLaceXF(MockLaceXF* xf) {
+read_MockFildeshXF(MockFildeshXF* xf) {
   LaceX* x = &xf->x;
   char c;
   unsigned i;
@@ -61,7 +61,7 @@ param2_test_getline(unsigned chunk_size, lace_lgsize_t flush_lgsize) {
     "this is the fifth line",
     NULL,
   };
-  MockLaceXF xf[1] = { DEFAULT_MockLaceXF };
+  MockFildeshXF xf[1] = { DEFAULT_MockFildeshXF };
   char* line;
   xf->chunk_size = chunk_size;
   xf->x.flush_lgsize = flush_lgsize;

@@ -4,7 +4,7 @@
 
 /** Node for linked list, hash map, and red-black tree.
  **/
-struct LaceKVE {
+struct FildeshKVE {
   /** Index of "parent" or "previous" node with extra data in high 3 bits.
    *
    * High bits: red, vexists, vdirect.

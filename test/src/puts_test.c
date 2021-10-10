@@ -6,25 +6,25 @@
 #include <string.h>
 #include <stdio.h>
 
-typedef struct MockLaceOF MockLaceOF;
-struct MockLaceOF {
-  LaceO o;
+typedef struct MockFildeshOF MockFildeshOF;
+struct MockFildeshOF {
+  FildeshO o;
   unsigned index;
   char* content;
   size_t chunk_size;
 };
 
-static void write_MockLaceOF(MockLaceOF* of);
-static void close_MockLaceOF(MockLaceOF* of) {(void) of;}
-static void free_MockLaceOF(MockLaceOF* of) {(void) of;}
-DEFINE_LaceO_VTable(MockLaceOF, o);
-#define DEFAULT_MockLaceOF { \
-  DEFAULT1_LaceO(DEFAULT_MockLaceOF_LaceO_VTable), \
+static void write_MockFildeshOF(MockFildeshOF* of);
+static void close_MockFildeshOF(MockFildeshOF* of) {(void) of;}
+static void free_MockFildeshOF(MockFildeshOF* of) {(void) of;}
+DEFINE_FildeshO_VTable(MockFildeshOF, o);
+#define DEFAULT_MockFildeshOF { \
+  DEFAULT1_FildeshO(DEFAULT_MockFildeshOF_FildeshO_VTable), \
   0, NULL, 0, \
 }
 
   void
-write_MockLaceOF(MockLaceOF* of) {
+write_MockFildeshOF(MockFildeshOF* of) {
   LaceO* o = &of->o;
   unsigned i;
 
@@ -45,7 +45,7 @@ param3_test_puts(unsigned chunk_size, lace_lgsize_t flush_lgsize, const char* de
     "",
     "this is the fifth line",
   };
-  MockLaceOF of[1] = { DEFAULT_MockLaceOF };
+  MockFildeshOF of[1] = { DEFAULT_MockFildeshOF };
   LaceO* o = &of->o;
   of->chunk_size = chunk_size;
   of->o.flush_lgsize = flush_lgsize;

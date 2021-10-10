@@ -51,7 +51,7 @@ close_LaceX(LaceX* in)
   char*
 grow_LaceX(LaceX* in, size_t capac)
 {
-  return (char*) grow_LaceA_(
+  return (char*) grow_FildeshA_(
       (void**)&in->at, &in->size, &in->alloc_lgsize,
       1, capac, realloc);
 }

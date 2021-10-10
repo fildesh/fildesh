@@ -8,6 +8,7 @@ add_library(lace_lib_obj OBJECT
   "outfile.c"
   "outstream.c"
   "string.c"
+  "${CMAKE_SOURCE_DIR}/include/fildesh.h"
   "${CMAKE_SOURCE_DIR}/include/lace.h"
   )
 add_library(lace_lib STATIC

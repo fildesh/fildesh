@@ -35,6 +35,7 @@ cc_library(
 cc_library(
     name = "lace_lib",
     srcs = [
+        "//include:fildesh.h",
         "//include:lace.h",
         "//src:infile.c",
         "//src:instream.c",
