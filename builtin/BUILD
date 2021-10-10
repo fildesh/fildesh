@@ -4,6 +4,7 @@ exports_files([
     "cmp.c",
     "elastic_pthread.c",
     "seq.c",
+    "sponge.c",
     "time2sec.c",
     "void.c",
     "zec.c",
@@ -43,6 +44,13 @@ cc_binary(
 cc_binary(
     name = "seq",
     srcs = ["seq.c"],
+    deps = ["//:lace_lib"],
+    visibility = ["//visibility:public"],
+)
+
+cc_binary(
+    name = "sponge",
+    srcs = ["sponge.c"],
     deps = ["//:lace_lib"],
     visibility = ["//visibility:public"],
 )

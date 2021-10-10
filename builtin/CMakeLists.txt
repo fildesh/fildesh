@@ -12,6 +12,9 @@ target_link_libraries(elastic_pthread lace_lib ${CMAKE_THREAD_LIBS_INIT})
 add_executable(seq "seq.c")
 target_link_libraries(seq cx_lib)
 
+add_executable(sponge "sponge.c")
+target_link_libraries(sponge lace_lib)
+
 add_executable(time2sec "time2sec.c")
 target_link_libraries(time2sec cx_lib)
 

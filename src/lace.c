@@ -1228,6 +1228,9 @@ static int main_lace(unsigned argc, char** argv) {
 static int lace_main_seq(unsigned argc, char** argv) {
   return lace_builtin_seq_main(argc, argv, NULL, NULL);
 }
+static int lace_main_sponge(unsigned argc, char** argv) {
+  return lace_builtin_sponge_main(argc, argv, NULL, NULL);
+}
 static int lace_main_time2sec(unsigned argc, char** argv) {
   return lace_builtin_time2sec_main(argc, argv, NULL, NULL);
 }
@@ -1259,6 +1262,7 @@ bool lace_builtin_is_threadsafe(const char* name)
     "elastic_pthread",
     "execfd",
     "seq",
+    "sponge",
     "time2sec",
     "void",
     "zec",
@@ -1297,6 +1301,7 @@ int (*lace_specific_util (const char* arg)) (unsigned, char**)
     {"godo", main_godo},
     {"lace", main_lace},
     {"seq", lace_main_seq},
+    {"ponge", lace_main_sponge},
     {"ssh-all", main_ssh_all},
     {"time2sec", lace_main_time2sec},
     {"transpose", main_transpose},
@@ -1344,6 +1349,7 @@ LACE_POSIX_THREAD_CALLBACK(builtin_command_thread_fn, BuiltinCommandThreadArg*, 
     {"elastic_pthread", lace_builtin_elastic_pthread_main},
     {"execfd", lace_builtin_execfd_main},
     {"seq", lace_builtin_seq_main},
+    {"sponge", lace_builtin_sponge_main},
     {"time2sec", lace_builtin_time2sec_main},
     {"void", lace_builtin_void_main},
     {"zec", lace_builtin_zec_main},

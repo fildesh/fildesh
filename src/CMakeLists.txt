@@ -47,6 +47,7 @@ add_library(lace_builtin_lib_obj OBJECT
   "${CMAKE_SOURCE_DIR}/builtin/cmp.c"
   "${CMAKE_SOURCE_DIR}/builtin/elastic_pthread.c"
   "${CMAKE_SOURCE_DIR}/builtin/seq.c"
+  "${CMAKE_SOURCE_DIR}/builtin/sponge.c"
   "${CMAKE_SOURCE_DIR}/builtin/time2sec.c"
   "${CMAKE_SOURCE_DIR}/builtin/void.c"
   "${CMAKE_SOURCE_DIR}/builtin/zec.c"
