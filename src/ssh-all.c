@@ -80,7 +80,7 @@ main_ssh_all(unsigned argc, char** argv)
 
   in = open_LaceXF(argv[argi]);
   if (!in) {
-    lace_log_errorf("Cannot open file: %s", argv[argi]);
+    fildesh_log_errorf("Cannot open file: %s", argv[argi]);
     return 1;
   }
 

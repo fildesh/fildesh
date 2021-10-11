@@ -9,8 +9,8 @@
 
 typedef struct FildeshOF FildeshOF;
 struct FildeshOF {
-  LaceO base;
-  lace_fd_t fd;
+  FildeshO base;
+  fildesh_fd_t fd;
   char* filename;
 };
 
@@ -19,7 +19,7 @@ static
   void
 write_FildeshOF(FildeshOF* of)
 {
-  LaceO* o = &of->base;
+  FildeshO* o = &of->base;
   o->off += lace_compat_fd_write(of->fd, &o->at[o->off], o->size - o->off);
 }
 
@@ -46,7 +46,7 @@ free_FildeshOF(FildeshOF* of)
 
 DEFINE_FildeshO_VTable(FildeshOF, base);
 
-static inline FildeshOF default_LaceOF() {
+static inline FildeshOF default_FildeshOF() {
   FildeshOF tmp = {DEFAULT_FildeshO, -1, NULL};
   tmp.base.vt = DEFAULT_FildeshOF_FildeshO_VTable;
   return tmp;
@@ -74,12 +74,12 @@ open_sibling_LaceOF(const char* sibling, const char* filename)
   }
   if (0 == strncmp(dev_fd_prefix, filename, dev_fd_prefix_length)) {
     int fd = -1;
-    char* s = lace_parse_int(&fd, &filename[dev_fd_prefix_length]);
+    char* s = fildesh_parse_int(&fd, &filename[dev_fd_prefix_length]);
     if (!s) {return NULL;}
     return open_fd_LaceO(fd);
   }
 
-  *of = default_LaceOF();
+  *of = default_FildeshOF();
   if (filename[0] != '/' && sibling) {
     size_t sibling_dirlen = 0;
     if (sibling) {
@@ -121,7 +121,7 @@ lace_arg_open_writeonly(const char* filename)
   }
   if (0 == strncmp(dev_fd_prefix, filename, dev_fd_prefix_length)) {
     int fd = -1;
-    char* s = lace_parse_int(&fd, &filename[dev_fd_prefix_length]);
+    char* s = fildesh_parse_int(&fd, &filename[dev_fd_prefix_length]);
     if (!s) {return -1;}
     return lace_compat_fd_claim(fd);
   }
@@ -132,17 +132,17 @@ lace_arg_open_writeonly(const char* filename)
   LaceO*
 open_fd_LaceO(lace_fd_t fd)
 {
-  char filename[LACE_FD_PATH_SIZE_MAX];
+  char filename[FILDESH_FD_PATH_SIZE_MAX];
   unsigned filename_size;
   FildeshOF* of;
   fd = lace_compat_fd_claim(fd);
   if (fd < 0) {return NULL;}
   of = (FildeshOF*) malloc(sizeof(FildeshOF));
-  *of = default_LaceOF();
+  *of = default_FildeshOF();
   /* File descriptor.*/
   of->fd = fd;
   /* Filename.*/
-  filename_size = 1 + lace_encode_fd_path(filename, fd);
+  filename_size = 1 + fildesh_encode_fd_path(filename, fd);
   of->filename = (char*)malloc(filename_size);
   memcpy(of->filename, filename, filename_size);
   return &of->base;
@@ -176,5 +176,5 @@ const char* filename_LaceOF(LaceO* out) {
   if (out->vt != DEFAULT_FildeshOF_FildeshO_VTable) {
     return NULL;
   }
-  return lace_castup(FildeshOF, base, out)->filename;
+  return fildesh_castup(FildeshOF, base, out)->filename;
 }

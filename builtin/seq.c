@@ -14,8 +14,8 @@ lace_builtin_seq_main(unsigned argc, char** argv,
   if (!out) {return 1;}
   if (argc != 3) {return 64;}
 
-  if (!lace_parse_int(&beg_int, argv[1])) {return 64;}
-  if (!lace_parse_int(&end_int, argv[2])) {return 64;}
+  if (!fildesh_parse_int(&beg_int, argv[1])) {return 64;}
+  if (!fildesh_parse_int(&end_int, argv[2])) {return 64;}
 
   for (i = beg_int; i < end_int; ++i) {
     print_int_LaceO(out, i);

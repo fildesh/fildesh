@@ -97,10 +97,10 @@ puts_LaceO(LaceO* o, const char* s)
   void
 print_int_LaceO(LaceO* out, int q)
 {
-  unsigned n = lace_encode_int_base10(
-      grow_LaceO(out, LACE_INT_BASE10_SIZE_MAX),
+  unsigned n = fildesh_encode_int_base10(
+      grow_LaceO(out, FILDESH_INT_BASE10_SIZE_MAX),
       q);
-  out->size -= LACE_INT_BASE10_SIZE_MAX - n;
+  out->size -= FILDESH_INT_BASE10_SIZE_MAX - n;
   maybe_flush_LaceO(out);
 }
 

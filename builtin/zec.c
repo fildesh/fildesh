@@ -111,7 +111,7 @@ lace_builtin_zec_main(unsigned argc, char** argv,
       arg = argv[++argi];
       out = open_arg_LaceOF(argi, argv, outputv);
       if (!out) {
-        lace_log_errorf("Cannot open file for writing! %s\n", arg);
+        fildesh_log_errorf("Cannot open file for writing! %s\n", arg);
         return 1;
       }
     }
@@ -122,7 +122,7 @@ lace_builtin_zec_main(unsigned argc, char** argv,
       unless_arg = argv[++argi];
       if (!unless_arg) {
         show_usage ();
-        lace_log_error("Need a string after -unless.\n");
+        fildesh_log_error("Need a string after -unless.\n");
         return 1;
       }
     }
@@ -134,7 +134,7 @@ lace_builtin_zec_main(unsigned argc, char** argv,
   if (!out) {
     out = open_arg_LaceOF(0, argv, outputv);
     if (!out) {
-      lace_log_error("Cannot open /dev/stdout for writing!\n");
+      fildesh_log_error("Cannot open /dev/stdout for writing!\n");
       return 1;
     }
   }

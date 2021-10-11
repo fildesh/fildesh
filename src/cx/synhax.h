@@ -230,12 +230,12 @@ static const size_t Static00[] = {0,0};
 /** Assign {a} as {0} iff they are not already equal.**/
 #define Ensure0( a )  do { if (a)  a = 0; } while (0)
 
-#define DBog1(s,a)  lace_log_warningf(s,a)
-#define DBog2(s,a,b)  lace_log_warningf(s,a,b)
-#define DBog3(s,a,b,c)  lace_log_warningf(s,a,b,c)
-#define DBog4(s,a,b,c,d)  lace_log_warningf(s,a,b,c,d)
-#define DBog5(s,a,b,c,d,e)  lace_log_warningf(s,a,b,c,d,e)
-#define DBog0(s)  lace_log_warning(s)
+#define DBog1(s,a)  fildesh_log_warningf(s,a)
+#define DBog2(s,a,b)  fildesh_log_warningf(s,a,b)
+#define DBog3(s,a,b,c)  fildesh_log_warningf(s,a,b,c)
+#define DBog4(s,a,b,c,d)  fildesh_log_warningf(s,a,b,c,d)
+#define DBog5(s,a,b,c,d,e)  fildesh_log_warningf(s,a,b,c,d,e)
+#define DBog0(s)  fildesh_log_warning(s)
 #define DBog_zuint(x)  DBog2( "%s:%zu", #x, (zuint)(x) )
 #define DBog_ujint(x)  DBog2( "%s:%lu", #x, (luint)(x) )
 #define DBog_luint(x)  DBog2( "%s:%lu", #x, (luint)(x) )
@@ -256,7 +256,7 @@ static const size_t Static00[] = {0,0};
 { \
   if (!(x)) \
   { \
-    lace_log_error( #x ## "failed" ); \
+    fildesh_log_error( #x ## "failed" ); \
     exit(1); \
   } \
 } while (0)

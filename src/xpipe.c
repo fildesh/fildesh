@@ -52,14 +52,14 @@ run_with_line(const char* lace_exe, unsigned argc, const char** argv,
     puts_LaceO(to_spawned, line);
     putc_LaceO(to_spawned, '\n');
   } else {
-    lace_log_error("Spawn failed.");
+    fildesh_log_error("Spawn failed.");
   }
   close_LaceO(to_spawned);
   if (pid >= 0) {
     istat = lace_compat_sh_wait(pid);
     if (istat != 0) {
       lace_compat_errno_trace();
-      lace_log_errorf("Child (%s) exited with status: %d", actual_argv[0], istat);
+      fildesh_log_errorf("Child (%s) exited with status: %d", actual_argv[0], istat);
     }
   }
 }
@@ -72,13 +72,13 @@ main_xpipe(unsigned argc, char** argv)
   unsigned argi = 1;
 
   if (argi >= argc) {
-    lace_log_error("Need at least one argument.");
+    fildesh_log_error("Need at least one argument.");
     return 64;
   }
 
   in = open_LaceXF("-");
   if (!in) {
-    lace_log_error("Cannot open stdin.");
+    fildesh_log_error("Cannot open stdin.");
     return 1;
   }
 

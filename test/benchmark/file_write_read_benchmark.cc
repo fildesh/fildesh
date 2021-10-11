@@ -178,7 +178,7 @@ static void BM_FileReadLines_fgets(benchmark::State& state) {
   for (auto _ : state) {
     FILE* in = fopen(filename.c_str(), "r");
 		for (int i = 0; i < state.range(0); ++i) {
-      char line[LACE_INT_BASE10_SIZE_MAX+2];
+      char line[FILDESH_INT_BASE10_SIZE_MAX+2];
       line[0] = '\0';
       fgets(line, sizeof(line), in);
       assert(line[0] != '\0');

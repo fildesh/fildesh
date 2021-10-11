@@ -145,7 +145,7 @@ main_best_match(unsigned argc, char** argv)
       exstatus = 1;
     }
     else {
-      lace_log_errorf("Unknown argument: %s", arg);
+      fildesh_log_errorf("Unknown argument: %s", arg);
       exstatus = 64;
     }
   }
@@ -154,7 +154,7 @@ main_best_match(unsigned argc, char** argv)
     lookup_in = open_LaceXF(lookup_in_arg);
     if (!lookup_in) {
       lace_compat_errno_trace();
-      lace_log_errorf("bestmatch: cannot open %s", lookup_in_arg);
+      fildesh_log_errorf("bestmatch: cannot open %s", lookup_in_arg);
       exstatus = 66;
     }
   }
@@ -162,7 +162,7 @@ main_best_match(unsigned argc, char** argv)
     stream_in = open_LaceXF(stream_in_arg);
     if (!stream_in) {
       lace_compat_errno_trace();
-      lace_log_errorf("bestmatch: cannot open %s", stream_in_arg);
+      fildesh_log_errorf("bestmatch: cannot open %s", stream_in_arg);
       exstatus = 66;
     }
   }
@@ -180,7 +180,7 @@ main_best_match(unsigned argc, char** argv)
 
   out = open_LaceOF("-");
   if (!out) {
-    lace_log_error("Cannot open stdout.");
+    fildesh_log_error("Cannot open stdout.");
     return 1;
   }
 

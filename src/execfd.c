@@ -44,20 +44,20 @@ pipe_to_file(lace_fd_t fd, const char* name)
 
   if (!in) {
     exstatus = 66;
-    lace_log_errorf("Cannot open input fd: %d", fd);
+    fildesh_log_errorf("Cannot open input fd: %d", fd);
   }
   if (exstatus == 0) {
     read_LaceX(in);
     if (in->size == 0) {
       exstatus = 66;
-      lace_log_errorf("Empty input fd: %d", fd);
+      fildesh_log_errorf("Empty input fd: %d", fd);
     }
   }
   if (exstatus == 0) {
     out = open_LaceOF(name);
     if (!out) {
       exstatus = 73;
-      lace_log_errorf("Cannot open output file: %s", name);
+      fildesh_log_errorf("Cannot open output file: %s", name);
     }
   }
 
@@ -137,48 +137,48 @@ lace_builtin_execfd_main(unsigned argc, char** argv,
     } else if (0 == strcmp(argv[argi], "-stdin")) {
       stdin_fd = lace_arg_open_readonly(argv[++argi]);
       if (stdin_fd < 0) {
-        lace_log_errorf("Cannot open -stdin: %s", argv[argi]);
+        fildesh_log_errorf("Cannot open -stdin: %s", argv[argi]);
         exstatus = 66;
       }
     } else if (0 == strcmp(argv[argi], "-stdout")) {
       stdout_fd = lace_arg_open_writeonly(argv[++argi]);
       if (stdout_fd < 0) {
-        lace_log_errorf("Cannot open -stdout: %s", argv[argi]);
+        fildesh_log_errorf("Cannot open -stdout: %s", argv[argi]);
         exstatus = 73;
       }
     } else if (0 == strcmp(argv[argi], "-inheritfd")) {
       lace_fd_t fd = -1;
-      if (lace_parse_int(&fd, argv[++argi]) && fd >= 0) {
+      if (fildesh_parse_int(&fd, argv[++argi]) && fd >= 0) {
         fds_to_inherit[inherit_count++] = fd;
         fds_to_inherit[inherit_count] = -1;
       } else {
-        lace_log_errorf("Cannot parse -inheritfd: %s", argv[argi]);
+        fildesh_log_errorf("Cannot parse -inheritfd: %s", argv[argi]);
         exstatus = 64;
       }
     } else if (0 == strcmp(argv[argi], "-waitfd")) {
       lace_fd_t fd = -1;
-      if (lace_parse_int(&fd, argv[++argi]) && fd >= 0) {
+      if (fildesh_parse_int(&fd, argv[++argi]) && fd >= 0) {
         wait_close_LaceX(open_fd_LaceX(fd));
       } else {
-        lace_log_errorf("Cannot parse -waitfd: %s", argv[argi]);
+        fildesh_log_errorf("Cannot parse -waitfd: %s", argv[argi]);
         exstatus = 64;
       }
     } else if (0 == strcmp(argv[argi], "-exitfd")) {
       lace_fd_t fd = -1;
-      if (lace_parse_int(&fd, argv[++argi]) && fd >= 0) {
+      if (fildesh_parse_int(&fd, argv[++argi]) && fd >= 0) {
         exitfds[exitfd_count++] = lace_compat_fd_claim(fd);
       } else {
-        lace_log_errorf("Cannot parse -exitfd: %s", argv[argi]);
+        fildesh_log_errorf("Cannot parse -exitfd: %s", argv[argi]);
         exstatus = 64;
       }
     } else {
       int idx = 0;
-      if (lace_parse_int(&idx, argv[argi]) &&
+      if (fildesh_parse_int(&idx, argv[argi]) &&
           idx >= 0 && (unsigned)idx < argc)
       {
         bt[idx] = 1;
       } else {
-        lace_log_errorf("Cannot parse index from arg: %s", argv[argi]);
+        fildesh_log_errorf("Cannot parse index from arg: %s", argv[argi]);
         exstatus = 64;
       }
     }
@@ -195,7 +195,7 @@ lace_builtin_execfd_main(unsigned argc, char** argv,
   if (exstatus == 0) {
     for (i = argc-off; i < argc; ++i) {
       if (bt[i] != 0) {
-        lace_log_errorf("Index %u is out of range.", i);
+        fildesh_log_errorf("Index %u is out of range.", i);
         exstatus = 64;
       }
     }
@@ -205,8 +205,8 @@ lace_builtin_execfd_main(unsigned argc, char** argv,
     int fd = -1;
     spawn_argv[off+i] = argv[off+i];
     if (bt[i] == 0) {continue;}
-    if (!lace_parse_int(&fd, argv[off+i]) || fd < 0) {
-      lace_log_errorf("Cannot parse fd from arg: %s", argv[off+i]);
+    if (!fildesh_parse_int(&fd, argv[off+i]) || fd < 0) {
+      fildesh_log_errorf("Cannot parse fd from arg: %s", argv[off+i]);
       exstatus = 64;
     } else if (i == 0) {
       if (exe) {
@@ -215,7 +215,7 @@ lace_builtin_execfd_main(unsigned argc, char** argv,
           spawn_argv[off+i] = lace_compat_string_duplicate(exe);
         }
       } else {
-        lace_log_error("Need to provide -exe argument.");
+        fildesh_log_error("Need to provide -exe argument.");
         exstatus = 64;
       }
     } else {

@@ -16,13 +16,13 @@ lace_builtin_sponge_main(unsigned argc, char** argv,
   int exstatus = 0;
 
   if (argc > 2) {
-    lace_log_errorf("At most one argument expected.");
+    fildesh_log_errorf("At most one argument expected.");
     return 64;
   }
 
   in = open_arg_LaceXF(0, argv, inputv);
   if (!in) {
-    lace_log_errorf("Cannot open stdin");
+    fildesh_log_errorf("Cannot open stdin");
     exstatus = 66;
   }
 
@@ -34,13 +34,13 @@ lace_builtin_sponge_main(unsigned argc, char** argv,
     if (argc == 2) {
       out = open_arg_LaceOF(1, argv, outputv);
       if (!out) {
-        lace_log_errorf("Cannot open output file: %s", argv[1]);
+        fildesh_log_errorf("Cannot open output file: %s", argv[1]);
         exstatus = 70;
       }
     } else {
       out = open_arg_LaceOF(0, argv, outputv);
       if (!out) {
-        lace_log_errorf("Cannot open stdout");
+        fildesh_log_errorf("Cannot open stdout");
         exstatus = 70;
       }
     }

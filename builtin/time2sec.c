@@ -52,7 +52,7 @@ lace_builtin_time2sec_main(unsigned argc, char** argv,
   if (argi < argc && 0 == strcmp("-w", argv[argi])) {
     int tmp_int = -1;
     ++ argi;
-    if (lace_parse_int(&tmp_int, argv[argi++]) && tmp_int >= 0) {
+    if (fildesh_parse_int(&tmp_int, argv[argi++]) && tmp_int >= 0) {
       width = (unsigned) tmp_int;
     } else {
       return 64;
@@ -70,7 +70,7 @@ lace_builtin_time2sec_main(unsigned argc, char** argv,
   if (!in || !out) {
     close_LaceX(in);
     close_LaceO(out);
-    lace_log_error("Cannot open stdio!");
+    fildesh_log_error("Cannot open stdio!");
     return 1;
   }
 

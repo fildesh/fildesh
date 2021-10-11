@@ -52,7 +52,7 @@ read_MockFildeshXF(MockFildeshXF* xf) {
 }
 
   void
-param2_test_getline(unsigned chunk_size, lace_lgsize_t flush_lgsize) {
+param2_test_getline(unsigned chunk_size, fildesh_lgsize_t flush_lgsize) {
   static const char* const lines[] = {
     "this is the first line",
     "this is the second line",
@@ -90,7 +90,7 @@ param2_test_getline(unsigned chunk_size, lace_lgsize_t flush_lgsize) {
 
 int main() {
   unsigned chunk_size;
-  lace_lgsize_t flush_lgsize;
+  fildesh_lgsize_t flush_lgsize;
 
   for (chunk_size = 1; chunk_size < 20; ++chunk_size) {
     for (flush_lgsize = 0; flush_lgsize < 4; ++flush_lgsize) {

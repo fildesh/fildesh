@@ -65,13 +65,13 @@ int main (int argc, char** argv)
 
   istat = getaddrinfo(host, service, &crit, &list);
   if (istat != 0) {
-    lace_log_error("getaddrinfo()");
+    fildesh_log_error("getaddrinfo()");
     return 1;
   }
 
   addr = list;
   if (addr->ai_next) {
-    lace_log_warning("Host could bind to multiple!");
+    fildesh_log_warning("Host could bind to multiple!");
   }
   if (connecting) {
     char buf[1024];
@@ -104,7 +104,7 @@ int main (int argc, char** argv)
 
     istat = (int)aio_return(aio);
     if (istat < 0) {lace_compat_errno_trace(); return 1;}
-    if (istat != (int)aio->aio_nbytes) {lace_log_warning("nbytes differs");}
+    if (istat != (int)aio->aio_nbytes) {fildesh_log_warning("nbytes differs");}
 
     close(sock);
   } else {

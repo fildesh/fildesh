@@ -22,23 +22,23 @@ lace_builtin_cmp_main(unsigned argc, char** argv,
     if (0 == strcmp(argv[argi], "-o")) {
       out = open_arg_LaceOF(++argi, argv, outputs);
       if (!out) {
-        lace_log_errorf("Cannot open -o: %s", argv[argi]);
+        fildesh_log_errorf("Cannot open -o: %s", argv[argi]);
         exstatus = 73;
       }
     } else if (!lhs) {
       lhs = open_arg_LaceXF(argi, argv, inputs);
       if (!lhs) {
-        lace_log_errorf("Cannot open LHS: %s", argv[argi]);
+        fildesh_log_errorf("Cannot open LHS: %s", argv[argi]);
         exstatus = 66;
       }
     } else if (!rhs) {
       rhs = open_arg_LaceXF(argi, argv, inputs);
       if (!rhs) {
-        lace_log_errorf("Cannot open RHS: %s", argv[argi]);
+        fildesh_log_errorf("Cannot open RHS: %s", argv[argi]);
         exstatus = 66;
       }
     } else {
-      lace_log_errorf("Unknown arg: ", argv[argi]);
+      fildesh_log_errorf("Unknown arg: ", argv[argi]);
       exstatus = 64;
     }
   }

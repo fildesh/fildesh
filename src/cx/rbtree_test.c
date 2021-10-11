@@ -131,7 +131,7 @@ output_dot (BSTree* t)
 
   out = fopen("out.dot", "wb");
   if (!out) {
-    lace_log_error("Cannot open out.dot for writing");
+    fildesh_log_error("Cannot open out.dot for writing");
   }
   args[0] = out;
 

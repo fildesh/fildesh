@@ -37,7 +37,7 @@ write_MockFildeshOF(MockFildeshOF* of) {
 
 
   void
-param3_test_puts(unsigned chunk_size, lace_lgsize_t flush_lgsize, const char* delim) {
+param3_test_puts(unsigned chunk_size, fildesh_lgsize_t flush_lgsize, const char* delim) {
   static const char* const lines[] = {
     "this is the first line",
     "this is the second line",
@@ -87,7 +87,7 @@ param3_test_puts(unsigned chunk_size, lace_lgsize_t flush_lgsize, const char* de
 
 int main() {
   unsigned chunk_size;
-  lace_lgsize_t flush_lgsize;
+  fildesh_lgsize_t flush_lgsize;
   unsigned delim_index;
   static const char* const delims[] = {
     "IAMA delimiter AMA",

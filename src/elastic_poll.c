@@ -15,7 +15,7 @@
 /* #define DEBUGGING */
 
 #ifdef DEBUGGING
-#define StateMsg(msg, i, istat)  lace_log_tracef("%s %u %d", msg, i, istat)
+#define StateMsg(msg, i, istat)  fildesh_log_tracef("%s %u %d", msg, i, istat)
 #else
 #define StateMsg(msg, i, istat)
 #endif
@@ -181,7 +181,7 @@ main_elastic_poll(unsigned argc, char** argv)
 
     if (0 == strcmp(arg, "-x")) {
       if (argi == argc) {
-        lace_log_error("Need input file after -x.");
+        fildesh_log_error("Need input file after -x.");
         exstatus = 64;
         break;
       }
@@ -193,13 +193,13 @@ main_elastic_poll(unsigned argc, char** argv)
       io->filename = arg;
       pfd->fd = lace_arg_open_readonly(io->filename);
       if (pfd->fd < 0) {
-        lace_log_errorf("failed to open -x: %s", io->filename);
+        fildesh_log_errorf("failed to open -x: %s", io->filename);
         exstatus = 66;
       }
     } else {
       if (0 == strcmp(arg, "-o")) {
         if (argi == argc) {
-          lace_log_error("Need output file after -o.");
+          fildesh_log_error("Need output file after -o.");
           exstatus = 64;
           break;
         }
@@ -213,7 +213,7 @@ main_elastic_poll(unsigned argc, char** argv)
       io->filename = arg;
       pfd->fd = lace_arg_open_writeonly(io->filename);
       if (pfd->fd < 0) {
-        lace_log_errorf("failed to -o: %s", io->filename);
+        fildesh_log_errorf("failed to -o: %s", io->filename);
         exstatus = 73;
       }
     }
@@ -242,7 +242,7 @@ main_elastic_poll(unsigned argc, char** argv)
     pfd = &pollfds.s[i];
     istat = setfd_nonblock(pfd->fd);
     if (istat < 0) {
-      lace_log_errorf("failed to set nonblocking: %s\n", io->filename);
+      fildesh_log_errorf("failed to set nonblocking: %s\n", io->filename);
       exstatus = 72;
     }
   }

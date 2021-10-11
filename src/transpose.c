@@ -21,7 +21,7 @@ lace_builtin_transpose_main(unsigned argc, char** argv,
   unsigned ncols = 0;
 
   if (argc != 2 || !delim) {
-    lace_log_error("Need exactly one argument.");
+    fildesh_log_error("Need exactly one argument.");
     return 64;
   }
 

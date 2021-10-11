@@ -1,6 +1,6 @@
-#ifndef LACE_KVE_H_
-#define LACE_KVE_H_
-#include "lace.h"
+#ifndef FILDESH_KVE_H_
+#define FILDESH_KVE_H_
+#include "fildesh.h"
 
 /** Node for linked list, hash map, and red-black tree.
  **/
@@ -27,10 +27,10 @@ struct FildeshKVE {
   uintptr_t kv[2];
 };
 
-#define DEFAULT_LaceKVE  { 0, 0, { 0, 0 }, { 0, 0 } }
+#define DEFAULT_FildeshKVE  { 0, 0, { 0, 0 }, { 0, 0 } }
 
-static inline LaceKVE default_LaceKVE() {
-  LaceKVE e = DEFAULT_LaceKVE;
+static inline FildeshKVE default_FildeshKVE() {
+  FildeshKVE e = DEFAULT_FildeshKVE;
   return e;
 }
 
@@ -46,106 +46,106 @@ shiftmaskhi_size(size_t size, unsigned bigbitpos, unsigned bitcount) {
           & (((size_t)1 << bitcount)-1));
 }
 
-static inline size_t red_bit_LaceKVE_joint() { return high_size_bit(0); }
-static inline size_t vexists_bit_LaceKVE_joint() { return high_size_bit(1); }
-static inline size_t vdirect_bit_LaceKVE_joint() { return high_size_bit(2); }
-static inline size_t splitkexists_bit_LaceKVE_size() { return high_size_bit(0); }
-static inline size_t splitvexists_bit_LaceKVE_size() { return high_size_bit(1); }
-static inline size_t splitvdirect_bit_LaceKVE_size() { return high_size_bit(2); }
+static inline size_t red_bit_FildeshKVE_joint() { return high_size_bit(0); }
+static inline size_t vexists_bit_FildeshKVE_joint() { return high_size_bit(1); }
+static inline size_t vdirect_bit_FildeshKVE_joint() { return high_size_bit(2); }
+static inline size_t splitkexists_bit_FildeshKVE_size() { return high_size_bit(0); }
+static inline size_t splitvexists_bit_FildeshKVE_size() { return high_size_bit(1); }
+static inline size_t splitvdirect_bit_FildeshKVE_size() { return high_size_bit(2); }
 
-static inline size_t get_red_bit_LaceKVE_joint(size_t x) {
-  return x & red_bit_LaceKVE_joint();
+static inline size_t get_red_bit_FildeshKVE_joint(size_t x) {
+  return x & red_bit_FildeshKVE_joint();
 }
-static inline size_t get_vexists_bit_LaceKVE_joint(size_t x) {
-  return x & vexists_bit_LaceKVE_joint();
+static inline size_t get_vexists_bit_FildeshKVE_joint(size_t x) {
+  return x & vexists_bit_FildeshKVE_joint();
 }
-static inline size_t get_vdirect_bit_LaceKVE_joint(size_t x) {
-  return x & vdirect_bit_LaceKVE_joint();
+static inline size_t get_vdirect_bit_FildeshKVE_joint(size_t x) {
+  return x & vdirect_bit_FildeshKVE_joint();
 }
-static inline size_t get_splitkexists_bit_LaceKVE_size(size_t x) {
-  return x & splitkexists_bit_LaceKVE_size();
+static inline size_t get_splitkexists_bit_FildeshKVE_size(size_t x) {
+  return x & splitkexists_bit_FildeshKVE_size();
 }
-static inline size_t get_splitvexists_bit_LaceKVE_size(size_t x) {
-  return x & splitvexists_bit_LaceKVE_size();
+static inline size_t get_splitvexists_bit_FildeshKVE_size(size_t x) {
+  return x & splitvexists_bit_FildeshKVE_size();
 }
-static inline size_t get_splitvdirect_bit_LaceKVE_size(size_t x) {
-  return x & splitvdirect_bit_LaceKVE_size();
-}
-
-static inline size_t red_LaceKVE(const LaceKVE* e) {
-  return 0 != get_red_bit_LaceKVE_joint(e->joint);
+static inline size_t get_splitvdirect_bit_FildeshKVE_size(size_t x) {
+  return x & splitvdirect_bit_FildeshKVE_size();
 }
 
-static inline void set0_red_bit_LaceKVE(LaceKVE* e) {
-  e->joint &= ~red_bit_LaceKVE_joint();
-}
-static inline void set1_red_bit_LaceKVE(LaceKVE* e) {
-  e->joint |= red_bit_LaceKVE_joint();
-}
-static inline void set0_vexists_bit_LaceKVE(LaceKVE* e) {
-  e->joint &= ~vexists_bit_LaceKVE_joint();
-}
-static inline void set1_vexists_bit_LaceKVE(LaceKVE* e) {
-  e->joint |= vexists_bit_LaceKVE_joint();
-}
-static inline void set0_vdirect_bit_LaceKVE(LaceKVE* e) {
-  e->joint &= ~vdirect_bit_LaceKVE_joint();
-}
-static inline void set1_vdirect_bit_LaceKVE(LaceKVE* e) {
-  e->joint |= vdirect_bit_LaceKVE_joint();
-}
-static inline void set0_splitkexists_bit_LaceKVE(LaceKVE* e) {
-  e->size &= ~splitkexists_bit_LaceKVE_size();
-}
-static inline void set1_splitkexists_bit_LaceKVE(LaceKVE* e) {
-  e->size |= splitkexists_bit_LaceKVE_size();
-}
-static inline void set0_splitvexists_bit_LaceKVE(LaceKVE* e) {
-  e->size &= ~splitvexists_bit_LaceKVE_size();
-}
-static inline void set1_splitvexists_bit_LaceKVE(LaceKVE* e) {
-  e->size |= splitvexists_bit_LaceKVE_size();
-}
-static inline void set0_splitvdirect_bit_LaceKVE(LaceKVE* e) {
-  e->size &= ~splitvdirect_bit_LaceKVE_size();
-}
-static inline void set1_splitvdirect_bit_LaceKVE(LaceKVE* e) {
-  e->size |= splitvdirect_bit_LaceKVE_size();
+static inline size_t red_FildeshKVE(const FildeshKVE* e) {
+  return 0 != get_red_bit_FildeshKVE_joint(e->joint);
 }
 
-static inline bool kdirect_LaceKVE_joint(size_t ejoint, size_t actual_ksize) {
-  if (0 != get_vexists_bit_LaceKVE_joint(ejoint)) {
+static inline void set0_red_bit_FildeshKVE(FildeshKVE* e) {
+  e->joint &= ~red_bit_FildeshKVE_joint();
+}
+static inline void set1_red_bit_FildeshKVE(FildeshKVE* e) {
+  e->joint |= red_bit_FildeshKVE_joint();
+}
+static inline void set0_vexists_bit_FildeshKVE(FildeshKVE* e) {
+  e->joint &= ~vexists_bit_FildeshKVE_joint();
+}
+static inline void set1_vexists_bit_FildeshKVE(FildeshKVE* e) {
+  e->joint |= vexists_bit_FildeshKVE_joint();
+}
+static inline void set0_vdirect_bit_FildeshKVE(FildeshKVE* e) {
+  e->joint &= ~vdirect_bit_FildeshKVE_joint();
+}
+static inline void set1_vdirect_bit_FildeshKVE(FildeshKVE* e) {
+  e->joint |= vdirect_bit_FildeshKVE_joint();
+}
+static inline void set0_splitkexists_bit_FildeshKVE(FildeshKVE* e) {
+  e->size &= ~splitkexists_bit_FildeshKVE_size();
+}
+static inline void set1_splitkexists_bit_FildeshKVE(FildeshKVE* e) {
+  e->size |= splitkexists_bit_FildeshKVE_size();
+}
+static inline void set0_splitvexists_bit_FildeshKVE(FildeshKVE* e) {
+  e->size &= ~splitvexists_bit_FildeshKVE_size();
+}
+static inline void set1_splitvexists_bit_FildeshKVE(FildeshKVE* e) {
+  e->size |= splitvexists_bit_FildeshKVE_size();
+}
+static inline void set0_splitvdirect_bit_FildeshKVE(FildeshKVE* e) {
+  e->size &= ~splitvdirect_bit_FildeshKVE_size();
+}
+static inline void set1_splitvdirect_bit_FildeshKVE(FildeshKVE* e) {
+  e->size |= splitvdirect_bit_FildeshKVE_size();
+}
+
+static inline bool kdirect_FildeshKVE_joint(size_t ejoint, size_t actual_ksize) {
+  if (0 != get_vexists_bit_FildeshKVE_joint(ejoint)) {
     return (sizeof(uintptr_t) >= actual_ksize);
   }
   return (2*sizeof(uintptr_t) >= actual_ksize);
 }
-static inline bool splitkdirect_LaceKVE_size(size_t esize, size_t actual_ksize) {
-  if (0 != get_splitvexists_bit_LaceKVE_size(esize)) {
+static inline bool splitkdirect_FildeshKVE_size(size_t esize, size_t actual_ksize) {
+  if (0 != get_splitvexists_bit_FildeshKVE_size(esize)) {
     return (sizeof(uintptr_t) >= actual_ksize);
   }
   return (2*sizeof(uintptr_t) >= actual_ksize);
 }
 
-static inline const void* direct_k_LaceKVE_kv(const uintptr_t* kv) {
+static inline const void* direct_k_FildeshKVE_kv(const uintptr_t* kv) {
   return &kv[0];
 }
-static inline const void* direct_splitk_LaceKVE_split(const uintptr_t* split) {
+static inline const void* direct_splitk_FildeshKVE_split(const uintptr_t* split) {
   return &split[0];
 }
-static inline const void* indirect_k_LaceKVE_kv(const uintptr_t* kv) {
+static inline const void* indirect_k_FildeshKVE_kv(const uintptr_t* kv) {
   return (const void*) kv[0];
 }
-static inline const void* indirect_splitk_LaceKVE_split(const uintptr_t* split) {
+static inline const void* indirect_splitk_FildeshKVE_split(const uintptr_t* split) {
   return (const void*) split[0];
 }
 
 static inline
   const void*
-value_LaceKVE(const LaceKVE* e)
+value_FildeshKVE(const FildeshKVE* e)
 {
   if (0 != e->size) {
-    if (0 != get_vexists_bit_LaceKVE_joint(e->joint)) {
-      if (0 != get_vdirect_bit_LaceKVE_joint(e->joint)) {
+    if (0 != get_vexists_bit_FildeshKVE_joint(e->joint)) {
+      if (0 != get_vdirect_bit_FildeshKVE_joint(e->joint)) {
         return (const void*)&e->kv[1];
       } else {
         return (const void*)e->kv[1];
@@ -157,11 +157,11 @@ value_LaceKVE(const LaceKVE* e)
 
 static inline
   const void*
-splitvalue_LaceKVE(const LaceKVE* e)
+splitvalue_FildeshKVE(const FildeshKVE* e)
 {
-  if (0 != get_splitkexists_bit_LaceKVE_size(e->size)) {
-    if (0 != get_splitvexists_bit_LaceKVE_size(e->size)) {
-      if (0 != get_splitvdirect_bit_LaceKVE_size(e->size)) {
+  if (0 != get_splitkexists_bit_FildeshKVE_size(e->size)) {
+    if (0 != get_splitvexists_bit_FildeshKVE_size(e->size)) {
+      if (0 != get_splitvdirect_bit_FildeshKVE_size(e->size)) {
         return (const void*)&e->split[1];
       } else {
         return (const void*)e->split[1];
@@ -172,22 +172,22 @@ splitvalue_LaceKVE(const LaceKVE* e)
 }
 
 
-size_t ksize_LaceKVE_size(size_t);
-size_t splitksize_LaceKVE_size(size_t);
+size_t ksize_FildeshKVE_size(size_t);
+size_t splitksize_FildeshKVE_size(size_t);
 
 void
-populate_empty_LaceKVE(LaceKVE* e,
-                       size_t ksize, const void* k,
-                       size_t vsize, const void* v);
+populate_empty_FildeshKVE(FildeshKVE* e,
+                          size_t ksize, const void* k,
+                          size_t vsize, const void* v);
 bool
-populate_splitkv_LaceKVE(LaceKVE* e,
-                         size_t ksize, const void* k,
-                         size_t vsize, const void* v);
+populate_splitkv_FildeshKVE(FildeshKVE* e,
+                            size_t ksize, const void* k,
+                            size_t vsize, const void* v);
 int
-cmp_LaceKVE_(size_t keysize, const void* key,
-             size_t ejoint, size_t esize, const uintptr_t ekv[2]);
+cmp_FildeshKVE_(size_t keysize, const void* key,
+                size_t ejoint, size_t esize, const uintptr_t ekv[2]);
 int
-cmp_split_LaceKVE_(size_t keysize, const void* key,
-             size_t esize, const uintptr_t esplit[2]);
+cmp_split_FildeshKVE_(size_t keysize, const void* key,
+                      size_t esize, const uintptr_t esplit[2]);
 
 #endif

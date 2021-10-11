@@ -260,20 +260,20 @@ static char* lace_strdup(const char* s) {
 }
 
 static char* lace_uint_strdup(unsigned x) {
-  char buf[LACE_INT_BASE10_SIZE_MAX];
-  lace_encode_int_base10(buf, x);
+  char buf[FILDESH_INT_BASE10_SIZE_MAX];
+  fildesh_encode_int_base10(buf, x);
   return lace_strdup(buf);
 }
 
 static char* lace_fd_strdup(lace_fd_t fd) {
-  char buf[LACE_INT_BASE10_SIZE_MAX];
-  lace_encode_int_base10(buf, fd);
+  char buf[FILDESH_INT_BASE10_SIZE_MAX];
+  fildesh_encode_int_base10(buf, fd);
   return lace_strdup(buf);
 }
 
 static char* lace_fd_path_strdup(lace_fd_t fd) {
-  char buf[LACE_FD_PATH_SIZE_MAX];
-  lace_encode_fd_path(buf, fd);
+  char buf[FILDESH_FD_PATH_SIZE_MAX];
+  fildesh_encode_fd_path(buf, fd);
   return lace_strdup(buf);
 }
 
@@ -341,11 +341,11 @@ trim_trailing_ws (char* s)
 perror_Command(const Command* cmd, const char* msg, const char* msg2)
 {
   if (msg && msg2) {
-    lace_log_errorf("Problem on line %u. %s: %s", cmd->line_num, msg, msg2);
+    fildesh_log_errorf("Problem on line %u. %s: %s", cmd->line_num, msg, msg2);
   } else if (msg) {
-    lace_log_errorf("Problem on line %u. %s.", cmd->line_num, msg);
+    fildesh_log_errorf("Problem on line %u. %s.", cmd->line_num, msg);
   } else {
-    lace_log_errorf("Problem on line %u.", cmd->line_num);
+    fildesh_log_errorf("Problem on line %u.", cmd->line_num);
   }
 }
 
@@ -380,7 +380,7 @@ parse_here_doc (LaceX* in, const char* term, size_t* text_nlines)
     return s;
   }
 
-  content = open_LaceXA();
+  content = open_FildeshXA();
   for (slice = sliceline_LaceX(in);
        slice.at;
        slice = sliceline_LaceX(in))
@@ -445,7 +445,7 @@ sep_line (TableT(cstr)* args, char* s)
       PushTable( *args, s );
       i = strcspn (s, "'");
       if (s[i] == '\0') {
-        lace_log_warning("Unterminated single quote.");
+        fildesh_log_warning("Unterminated single quote.");
         break;
       }
       s = &s[i];
@@ -474,7 +474,7 @@ sep_line (TableT(cstr)* args, char* s)
       }
 
       if (s[j] == '\0') {
-        lace_log_warning("Unterminated double quote.");
+        fildesh_log_warning("Unterminated double quote.");
         break;
       }
       j += 1;
@@ -487,7 +487,7 @@ sep_line (TableT(cstr)* args, char* s)
       s = &s[2];
       i = strcspn (s, ")");
       if (s[i] == '\0') {
-        lace_log_warning("Unterminated variable.");
+        fildesh_log_warning("Unterminated variable.");
         break;
       }
       s = &s[i+1];
@@ -635,7 +635,7 @@ parse_sym (char* s, bool firstarg)
   i = count_non_ws (s);
   if (s[i] == '\0') {
     unsigned n = i-1;
-    lace_log_warningf("For forward compatibility, please change %s to use the $(XA ...) syntax.", s);
+    fildesh_log_warningf("For forward compatibility, please change %s to use the $(XA ...) syntax.", s);
 
     if (s[n] != ')')
       return NSymValKinds;
@@ -742,8 +742,8 @@ add_extra_arg_Command (Command* cmd, const char* s)
   static char*
 add_fd_arg_Command (Command* cmd, int fd)
 {
-  char buf[LACE_FD_PATH_SIZE_MAX];
-  lace_encode_fd_path(buf, fd);
+  char buf[FILDESH_FD_PATH_SIZE_MAX];
+  fildesh_encode_fd_path(buf, fd);
   return add_extra_arg_Command (cmd, buf);
 }
 
@@ -752,11 +752,11 @@ remove_tmppath(void* temporary_directory)
 {
   if (0 != lace_compat_file_rmdir((char*)temporary_directory)) {
     lace_compat_errno_trace();
-    lace_log_warningf("Temp directory not removed: %s",
+    fildesh_log_warningf("Temp directory not removed: %s",
                       (char*)temporary_directory);
   }
   free(temporary_directory);
-  lace_log_trace("freed temporary_directory");
+  fildesh_log_trace("freed temporary_directory");
 }
 
   static char*
@@ -770,7 +770,7 @@ add_tmp_file_Command(Command* cmd,
     cmd_hookup->temporary_directory = mktmppath_sysCx("fildesh");
     lace_compat_errno_clear();
     if (!cmd_hookup->temporary_directory) {
-      lace_log_error("Unable to create temp directory.");
+      fildesh_log_error("Unable to create temp directory.");
       return NULL;
     }
     push_losefn_sysCx(remove_tmppath, cmd_hookup->temporary_directory);
@@ -792,7 +792,7 @@ write_here_doc_file (const char* name, const char* doc)
 
   out = fopen (name, "wb");
   if (!out) {
-    lace_log_errorf("Cannot open file for writing!: %s", name);
+    fildesh_log_errorf("Cannot open file for writing!: %s", name);
     return;
   }
   n = strlen (doc);
@@ -965,7 +965,8 @@ setup_commands(TableT(Command)* cmds)
               int src_fd = -1;
               assert(0 == memcmp(src_fd_filename, dev_fd_prefix,
                                  dev_fd_prefix_length));
-              lace_parse_int(&src_fd, &src_fd_filename[dev_fd_prefix_length]);
+              fildesh_parse_int(&src_fd,
+                                &src_fd_filename[dev_fd_prefix_length]);
               assert(src_fd >= 0);
 
               PushTable(src_cmd->exit_fds, src_fd);
@@ -1146,7 +1147,7 @@ setup_commands(TableT(Command)* cmds)
   {
     SymVal* x = (SymVal*) val_of_Assoc (map, assoc);
     if (x->kind == ODescVal && istat == 0) {
-      lace_log_errorf("Dangling output stream! Symbol: %s", x->name.s);
+      fildesh_log_errorf("Dangling output stream! Symbol: %s", x->name.s);
       istat = -1;
     }
     lose_SymVal (x);
@@ -1328,7 +1329,7 @@ int lace_builtin_main(const char* name, unsigned argc, char** argv)
   int (*f) (unsigned, char**);
   f = lace_specific_util(name);
   if (!f) {
-    lace_log_errorf("Unknown builtin: %s", name);
+    fildesh_log_errorf("Unknown builtin: %s", name);
     return -1;
   }
   return f(argc, argv);
@@ -1411,7 +1412,7 @@ LACE_POSIX_THREAD_CALLBACK(builtin_command_thread_fn, BuiltinCommandThreadArg*, 
 
   if (false) {
     for (i = 0; i < argc; ++i) {
-      lace_log_tracef("%u argv[%u]: %s", cmd->line_num, i, argv[i]);
+      fildesh_log_tracef("%u argv[%u]: %s", cmd->line_num, i, argv[i]);
     }
   }
 
@@ -1636,7 +1637,7 @@ spawn_commands(const char* lace_exe, TableT(Command) cmds,
       istat = pthread_create(
           &cmd->thread, NULL, builtin_command_thread_fn, arg);
       if (istat < 0) {
-        lace_log_errorf("Could not pthread_create(). File: %s", argv.s[0]);
+        fildesh_log_errorf("Could not pthread_create(). File: %s", argv.s[0]);
       }
     } else {
       lace_compat_fd_t* fds_to_inherit =
@@ -1648,7 +1649,7 @@ spawn_commands(const char* lace_exe, TableT(Command) cmds,
       cmd->stdos = -1;
       close_Command(cmd);
       if (cmd->pid < 0) {
-        lace_log_errorf("Could not spawnvp(). File: %s", argv.s[0]);
+        fildesh_log_errorf("Could not spawnvp(). File: %s", argv.s[0]);
         istat = -1;
       }
       for (argi = 0; argi < argv.sz; ++argi)
@@ -1710,7 +1711,7 @@ lace_builtin_lace_main(unsigned argc, char** argv,
         break;
       }
       if (!script_in) {
-        script_in = open_LaceXA();
+        script_in = open_FildeshXA();
       }
       while (argi < argc) {
         size_t sz;
@@ -1737,7 +1738,7 @@ lace_builtin_lace_main(unsigned argc, char** argv,
        v = &v[1];
        ensure_strmap(alias_map, k, v);
      } else {
-        lace_log_errorf("Failed alias: %s", k);
+        fildesh_log_errorf("Failed alias: %s", k);
         exstatus = 64;
       }
     }
@@ -1750,11 +1751,11 @@ lace_builtin_lace_main(unsigned argc, char** argv,
       if (fd >= 0) {
         istat = lace_compat_fd_move_to(0, fd);
         if (istat != 0) {
-          lace_log_error("Failed to dup2 -stdin.");
+          fildesh_log_error("Failed to dup2 -stdin.");
           exstatus = 72;
         }
       } else {
-        lace_log_errorf("Failed to open stdin: %s", stdin_filepath);
+        fildesh_log_errorf("Failed to open stdin: %s", stdin_filepath);
         exstatus = 66;
       }
     }
@@ -1764,11 +1765,11 @@ lace_builtin_lace_main(unsigned argc, char** argv,
       if (fd >= 0) {
         istat = lace_compat_fd_move_to(1, fd);
         if (istat != 0) {
-          lace_log_error("Failed to dup2 -stdout.");
+          fildesh_log_error("Failed to dup2 -stdout.");
           exstatus = 72;
         }
       } else {
-        lace_log_errorf("Failed to open stdout: %s", stdout_filepath);
+        fildesh_log_errorf("Failed to open stdout: %s", stdout_filepath);
         exstatus = 73;
       }
     }
@@ -1778,11 +1779,11 @@ lace_builtin_lace_main(unsigned argc, char** argv,
       if (fd >= 0) {
         istat = lace_compat_fd_move_to(2, fd);
         if (istat != 0) {
-          lace_log_error("Failed to dup2 -stderr.");
+          fildesh_log_error("Failed to dup2 -stderr.");
           exstatus = 72;
         }
       } else {
-        lace_log_errorf("Failed to open stderr: %s", stderr_filepath);
+        fildesh_log_errorf("Failed to open stderr: %s", stderr_filepath);
         exstatus = 73;
       }
     }
@@ -1801,7 +1802,7 @@ lace_builtin_lace_main(unsigned argc, char** argv,
         PushTable( script_args, cons1_AlphaTab("/dev/fd/something") );
         script_in = open_arg_LaceXF(argi-1, argv, inputv);
         if (!script_in) {
-          lace_log_errorf("Cannot read script from builtin.");
+          fildesh_log_errorf("Cannot read script from builtin.");
           exstatus = 66;
         }
         break;
@@ -1810,7 +1811,7 @@ lace_builtin_lace_main(unsigned argc, char** argv,
       script_in = open_arg_LaceXF(argi-1, argv, inputv);
       if (!script_in) {
         lace_compat_errno_trace();
-        lace_log_errorf("Cannot read script. File: %s", arg);
+        fildesh_log_errorf("Cannot read script. File: %s", arg);
         exstatus = 66;
       }
       break;

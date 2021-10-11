@@ -2,7 +2,7 @@
 #include "kve.h"
 #include <string.h>
 
-size_t ksize_LaceKVE_size(size_t x) {
+size_t ksize_FildeshKVE_size(size_t x) {
   unsigned i;
   if (0 == (x & high_size_bit(0))) {
     return x;
@@ -15,13 +15,13 @@ size_t ksize_LaceKVE_size(size_t x) {
   return x & (((size_t)1 << CHAR_BIT)-1);
 }
 
-size_t splitksize_LaceKVE_size(size_t x) {
+size_t splitksize_FildeshKVE_size(size_t x) {
   unsigned i;
   size_t y;
-  if (0 == get_splitkexists_bit_LaceKVE_size(x)) {
+  if (0 == get_splitkexists_bit_FildeshKVE_size(x)) {
     return 0;
   }
-  if (0 == get_splitvexists_bit_LaceKVE_size(x)) {
+  if (0 == get_splitvexists_bit_FildeshKVE_size(x)) {
     y = shiftmaskhi_size(x, 2, CHAR_BIT-2);
   } else {
     y = shiftmaskhi_size(x, 3, CHAR_BIT-3);
@@ -42,27 +42,27 @@ size_t splitksize_LaceKVE_size(size_t x) {
  * This only overwrites data, leaving the node's connectivity intact.
  **/
   void
-populate_empty_LaceKVE(LaceKVE* e,
-                       size_t ksize, const void* k,
-                       size_t vsize, const void* v)
+populate_empty_FildeshKVE(FildeshKVE* e,
+                          size_t ksize, const void* k,
+                          size_t vsize, const void* v)
 {
   bool kdirect;
   /* Assuming no split data, so we can clear e->size.*/
   e->size = ksize;
 
   if (vsize > 0 && v) {
-    set1_vexists_bit_LaceKVE(e);
+    set1_vexists_bit_FildeshKVE(e);
     if (vsize <= sizeof(e->kv[1])) {
-      set1_vdirect_bit_LaceKVE(e);
+      set1_vdirect_bit_FildeshKVE(e);
       memcpy(&e->kv[1], v, vsize);
     } else {
-      set0_vdirect_bit_LaceKVE(e);
+      set0_vdirect_bit_FildeshKVE(e);
       e->kv[1] = (uintptr_t) v;
     }
     kdirect = (ksize <= sizeof(e->kv[0]));
   } else {
-    set0_vexists_bit_LaceKVE(e);
-    set0_vdirect_bit_LaceKVE(e);
+    set0_vexists_bit_FildeshKVE(e);
+    set0_vdirect_bit_FildeshKVE(e);
     kdirect = (ksize <= sizeof(e->kv[0]) + sizeof(e->kv[1]));
   }
   if (kdirect) {
@@ -74,9 +74,9 @@ populate_empty_LaceKVE(LaceKVE* e,
 
 
   bool
-populate_splitkv_LaceKVE(LaceKVE* e,
-                         size_t ksize, const void* k,
-                         size_t vsize, const void* v)
+populate_splitkv_FildeshKVE(FildeshKVE* e,
+                            size_t ksize, const void* k,
+                            size_t vsize, const void* v)
 {
   const bool vexists = (vsize > 0 && v);
   bool kdirect;
@@ -114,17 +114,17 @@ populate_splitkv_LaceKVE(LaceKVE* e,
   }
 
   if (vexists) {
-    set1_splitvexists_bit_LaceKVE(e);
+    set1_splitvexists_bit_FildeshKVE(e);
     if (vsize <= sizeof(e->split[1])) {
-      set1_splitvdirect_bit_LaceKVE(e);
+      set1_splitvdirect_bit_FildeshKVE(e);
       memcpy(&e->split[1], v, vsize);
     } else {
-      set0_splitvdirect_bit_LaceKVE(e);
+      set0_splitvdirect_bit_FildeshKVE(e);
       e->split[1] = (uintptr_t) v;
     }
     kdirect = (ksize <= sizeof(e->split[0]));
   } else {
-    set0_splitvexists_bit_LaceKVE(e);
+    set0_splitvexists_bit_FildeshKVE(e);
     kdirect = (ksize <= sizeof(e->split[0]) + sizeof(e->split[1]));
   }
   if (kdirect) {
@@ -136,32 +136,32 @@ populate_splitkv_LaceKVE(LaceKVE* e,
 }
 
   int
-cmp_LaceKVE_(size_t keysize, const void* key,
-            size_t ejoint, size_t esize,
-            const uintptr_t ekv[2])
+cmp_FildeshKVE_(size_t keysize, const void* key,
+                size_t ejoint, size_t esize,
+                const uintptr_t ekv[2])
 {
-  const size_t actual_size = ksize_LaceKVE_size(esize);
+  const size_t actual_size = ksize_FildeshKVE_size(esize);
   if (keysize != actual_size) {
     return (keysize < actual_size ? -1 : 1);
   }
-  if (kdirect_LaceKVE_joint(ejoint, actual_size)) {
-    return memcmp(key, direct_k_LaceKVE_kv(ekv), actual_size);
+  if (kdirect_FildeshKVE_joint(ejoint, actual_size)) {
+    return memcmp(key, direct_k_FildeshKVE_kv(ekv), actual_size);
   } else {
-    return memcmp(key, indirect_k_LaceKVE_kv(ekv), actual_size);
+    return memcmp(key, indirect_k_FildeshKVE_kv(ekv), actual_size);
   }
 }
 
   int
-cmp_split_LaceKVE_(size_t keysize, const void* key,
+cmp_split_FildeshKVE_(size_t keysize, const void* key,
                    size_t esize, const uintptr_t esplit[2])
 {
-  const size_t actual_size = splitksize_LaceKVE_size(esize);
+  const size_t actual_size = splitksize_FildeshKVE_size(esize);
   if (keysize != actual_size) {
     return (keysize < actual_size ? -1 : 1);
   }
-  if (splitkdirect_LaceKVE_size(esize, actual_size)) {
-    return memcmp(key, direct_splitk_LaceKVE_split(esplit), actual_size);
+  if (splitkdirect_FildeshKVE_size(esize, actual_size)) {
+    return memcmp(key, direct_splitk_FildeshKVE_split(esplit), actual_size);
   } else {
-    return memcmp(key, indirect_splitk_LaceKVE_split(esplit), actual_size);
+    return memcmp(key, indirect_splitk_FildeshKVE_split(esplit), actual_size);
   }
 }

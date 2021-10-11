@@ -1,4 +1,4 @@
-#include "lace.h"
+#include "fildesh.h"
 #include "lace_compat_fd.h"
 #include "lace_tool.h"
 #include <assert.h>
@@ -7,24 +7,24 @@
 
 typedef struct PipemCallbackArg PipemCallbackArg;
 struct PipemCallbackArg {
-  const char* lace_exe;
+  const char* fildesh_exe;
 };
 
-LACE_TOOL_PIPEM_CALLBACK(run_lace, in_fd, out_fd, PipemCallbackArg*, st) {
+LACE_TOOL_PIPEM_CALLBACK(run_fildesh, in_fd, out_fd, PipemCallbackArg*, st) {
   lace_compat_fd_t fds_to_inherit[] = {-1, -1, -1};
-  char in_fd_arg[LACE_FD_PATH_SIZE_MAX];
-  char out_fd_arg[LACE_FD_PATH_SIZE_MAX];
+  char in_fd_arg[FILDESH_FD_PATH_SIZE_MAX];
+  char out_fd_arg[FILDESH_FD_PATH_SIZE_MAX];
   int istat;
 
   fds_to_inherit[0] = in_fd;
   fds_to_inherit[1] = out_fd;
-  lace_encode_fd_path(in_fd_arg, in_fd);
-  lace_encode_fd_path(out_fd_arg, out_fd);
+  fildesh_encode_fd_path(in_fd_arg, in_fd);
+  fildesh_encode_fd_path(out_fd_arg, out_fd);
 
   istat = lace_compat_fd_spawnlp_wait(
       -1, -1, 2,
       fds_to_inherit,
-      st->lace_exe,
+      st->fildesh_exe,
       "-stdin", in_fd_arg,
       "-stdout", out_fd_arg,
       "--",
@@ -45,11 +45,11 @@ int main(int argc, char** argv) {
 
   assert(argc == 2 && "need lace executable as arg");
 
-  st->lace_exe = argv[1];
+  st->fildesh_exe = argv[1];
 
   output_size = lace_tool_pipem(
       strlen(input_data), input_data,
-      run_lace, st,
+      run_fildesh, st,
       &output_data);
   assert(output_size == expect_size);
   assert(0 == memcmp(output_data, expect_data, expect_size));

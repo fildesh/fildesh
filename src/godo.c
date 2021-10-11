@@ -12,12 +12,12 @@ main_godo(unsigned argc, char** argv)
 {
   const char* directory = argv[1];
   if (argc < 3) {
-    lace_log_warning("Usage: godo PATH COMMAND [ARG...]");
+    fildesh_log_warning("Usage: godo PATH COMMAND [ARG...]");
     return 64;
   }
 
   if (0 != lace_compat_sh_chdir(directory)) {
-    lace_log_errorf("Failed to chdir() to: %s", directory);
+    fildesh_log_errorf("Failed to chdir() to: %s", directory);
     return 66;
   }
 

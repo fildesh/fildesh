@@ -203,7 +203,7 @@ main_ujoin(unsigned argc, char** argv)
     if (0 == strcmp(arg, "-o")) {
       out = open_LaceOF(argv[argi++]);
       if (!out) {
-        lace_log_error("Output (-o) needs an argument.");
+        fildesh_log_error("Output (-o) needs an argument.");
         exstatus = 73;
       }
     }
@@ -219,33 +219,33 @@ main_ujoin(unsigned argc, char** argv)
     else if (0 == strcmp(arg, "-d")) {
       delim = argv[argi++];
       if (!delim || !delim[0]) {
-        lace_log_error("Delimiter (-d) needs an argument.");
+        fildesh_log_error("Delimiter (-d) needs an argument.");
         exstatus = 64;
       }
     }
     else if (0 == strcmp(arg, "-p")) {
       dflt_record = argv[argi++];
       if (!dflt_record) {
-        lace_log_error("Need argument for default record (-p).");
+        fildesh_log_error("Need argument for default record (-p).");
         exstatus = 64;
       }
     }
     else if (0 == strcmp(arg, "-nomatch")) {
       nomatch_out = open_LaceOF(argv[argi++]);
       if (!nomatch_out) {
-        lace_log_error("Need argument for nomatch file (-nomatch).");
+        fildesh_log_error("Need argument for nomatch file (-nomatch).");
         exstatus = 73;
       }
     }
     else if (0 == strcmp(arg, "-dupmatch")) {
       dupmatch_out = open_LaceOF(argv[argi++]);
       if (!dupmatch_out) {
-        lace_log_error("Need argument for dupmatch file (-dupmatch).");
+        fildesh_log_error("Need argument for dupmatch file (-dupmatch).");
         exstatus = 73;
       }
     }
     else {
-      lace_log_errorf("Unknown argument: %s", arg);
+      fildesh_log_errorf("Unknown argument: %s", arg);
         exstatus = 64;
     }
   }
@@ -254,7 +254,7 @@ main_ujoin(unsigned argc, char** argv)
     lookup_in = open_LaceXF(lookup_in_arg);
     if (!lookup_in) {
       lace_compat_errno_trace();
-      lace_log_errorf("ujoin: cannot open %s", lookup_in_arg);
+      fildesh_log_errorf("ujoin: cannot open %s", lookup_in_arg);
       exstatus = 66;
     }
   }
@@ -262,7 +262,7 @@ main_ujoin(unsigned argc, char** argv)
     stream_in = open_LaceXF(stream_in_arg);
     if (!stream_in) {
       lace_compat_errno_trace();
-      lace_log_errorf("ujoin: cannot open %s", stream_in_arg);
+      fildesh_log_errorf("ujoin: cannot open %s", stream_in_arg);
       exstatus = 66;
     }
   }
@@ -293,7 +293,7 @@ main_ujoin(unsigned argc, char** argv)
   if (!out) {
     out = open_LaceOF("-");
     if (!out) {
-      lace_log_error("Cannot open stdout.");
+      fildesh_log_error("Cannot open stdout.");
       return 1;
     }
   }

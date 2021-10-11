@@ -26,7 +26,7 @@ static
   void
 signal_hook_sysCx (int sig)
 {
-  lace_log_errorf("Caught signal: %d", sig);
+  fildesh_log_errorf("Caught signal: %d", sig);
   lose_sysCx();
   exit(1);
 }

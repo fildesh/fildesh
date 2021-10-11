@@ -17,7 +17,7 @@ int main() {
   assert(output_directory && "need a TEST_TMPDIR environment variable");
   initial_filename =
     lace_compat_file_catpath(output_directory, "sibling_file_test_initial.txt");
-  lace_log_tracef("initial file is: %s", initial_filename);
+  fildesh_log_tracef("initial file is: %s", initial_filename);
   assert(0 == memcmp(output_directory, initial_filename,
                      strlen(output_directory)));
 
@@ -42,7 +42,7 @@ int main() {
   close_LaceO(out);
   /* Assertions about sibling filename.*/
   assert(sibling_filename);
-  lace_log_tracef("sibling file is: %s", sibling_filename);
+  fildesh_log_tracef("sibling file is: %s", sibling_filename);
   assert(0 == memcmp(output_directory, sibling_filename,
                      strlen(output_directory)));
   /* Read back sibling file.*/

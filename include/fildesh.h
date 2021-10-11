@@ -193,10 +193,6 @@ struct FildeshKV {
   fildesh_lgsize_t lgcount;
 };
 
-#if !defined(ZEROIZE)
-# define ZEROIZE(x)  memset(&(x), 0, sizeof(x))
-#endif
-
 #if __STDC_VERSION__ < 199901L && !defined(inline)
 #define inline __inline
 #endif

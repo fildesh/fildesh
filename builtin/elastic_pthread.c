@@ -32,7 +32,7 @@ init_WritingThreadState(WritingThreadState* st)
   st->done = false;
   pthread_cond_init(&st->buf_cond, NULL);
   pthread_mutex_init(&st->buf_mutex, NULL);
-  st->buf = default_LaceO();
+  st->buf = default_FildeshO();
   st->outfile = NULL;
   st->filename = NULL;
 }
@@ -200,7 +200,7 @@ lace_builtin_elastic_pthread_main(unsigned argc, char** argv,
       const char* xfilename = argv[++argi];
       in = open_arg_LaceXF(argi, argv, inputv);
       if (!in) {
-        lace_log_errorf("failed to open: %s", xfilename);
+        fildesh_log_errorf("failed to open: %s", xfilename);
         cleanup_wstates(wstates, wstate_count);
         return 66;
       }
@@ -209,7 +209,7 @@ lace_builtin_elastic_pthread_main(unsigned argc, char** argv,
       if (0 == strcmp(arg, "-o")) {
         const char* ofilename = argv[++argi];
         if (!ofilename) {
-          lace_log_error("Need output file after -o.");
+          fildesh_log_error("Need output file after -o.");
           cleanup_wstates(wstates, wstate_count);
           return 64;
         }
@@ -222,7 +222,7 @@ lace_builtin_elastic_pthread_main(unsigned argc, char** argv,
       if (st->outfile) {
         st->filename = filename_LaceOF(st->outfile);
       } else {
-        lace_log_errorf("failed to open: %s", argv[argi]);
+        fildesh_log_errorf("failed to open: %s", argv[argi]);
         cleanup_wstates(wstates, wstate_count);
         return 73;
       }
@@ -233,7 +233,7 @@ lace_builtin_elastic_pthread_main(unsigned argc, char** argv,
   if (!in) {
     in = open_arg_LaceXF(0, argv, inputv);
     if (!in) {
-      lace_log_error("Failed to open: /dev/stdin");
+      fildesh_log_error("Failed to open: /dev/stdin");
       cleanup_wstates(wstates, wstate_count);
       return 1;
     }
@@ -245,7 +245,7 @@ lace_builtin_elastic_pthread_main(unsigned argc, char** argv,
     st->filename = "-";
     st->outfile = open_arg_LaceOF(0, argv, outputv);
     if (!st->outfile) {
-      lace_log_error("Failed to open: /dev/stdout");
+      fildesh_log_error("Failed to open: /dev/stdout");
       return 1;
     }
     st->outfile->flush_lgsize = 0;  /* No automatic flushing.*/

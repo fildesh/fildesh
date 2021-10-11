@@ -57,7 +57,7 @@ int main(int argc, char** argv)
             argv[1]);
     return 1;
   }
-  actual_in = open_LaceXA();
+  actual_in = open_FildeshXA();
   memcpy(grow_LaceX(actual_in, output_size), output_data, output_size);
 
   for (line_id = 1; all_match; ++line_id) {

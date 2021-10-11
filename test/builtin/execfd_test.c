@@ -13,22 +13,22 @@ int lace_builtin_execfd_main(unsigned, char**, LaceX**, LaceO**);
 typedef struct PipemFnArg PipemFnArg;
 struct PipemFnArg {
   unsigned fd_index;
-  char stdout_buf[LACE_FD_PATH_SIZE_MAX];
+  char stdout_buf[FILDESH_FD_PATH_SIZE_MAX];
   const char** argv;
 };
 
 LACE_TOOL_PIPEM_CALLBACK(run_execfd, in_fd, out_fd, PipemFnArg*, st) {
   int istat;
   unsigned fd_index = st->fd_index++;
-  char buf[LACE_INT_BASE10_SIZE_MAX];
+  char buf[FILDESH_INT_BASE10_SIZE_MAX];
 
   if (fd_index == 0) {
-    lace_encode_fd_path(st->stdout_buf, out_fd);
+    fildesh_encode_fd_path(st->stdout_buf, out_fd);
     st->argv[6] = st->stdout_buf;
     fd_index = st->fd_index++;
   }
 
-  lace_encode_int_base10(buf, in_fd);
+  fildesh_encode_int_base10(buf, in_fd);
 
   if (fd_index == 1) {
     st->argv[11] = buf;
@@ -46,7 +46,7 @@ LACE_TOOL_PIPEM_CALLBACK(run_execfd, in_fd, out_fd, PipemFnArg*, st) {
     unsigned i;
     st->argv[15] = buf;
     for (i = 0; st->argv[i]; ++i) {
-      lace_log_tracef("argv[%u] = %s", i, st->argv[i]);
+      fildesh_log_tracef("argv[%u] = %s", i, st->argv[i]);
     }
     istat = lace_builtin_execfd_main(i, (char**)st->argv, NULL, NULL);
     assert(istat == 0);
@@ -101,7 +101,7 @@ int main(int argc, char** argv) {
       &output_data);
 
   assert(output_size > 0);
-  lace_log_trace(output_data);
+  fildesh_log_trace(output_data);
   assert(output_size == expect_size);
   assert(0 == memcmp(output_data, expect_data, expect_size));
 

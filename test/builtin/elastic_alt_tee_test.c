@@ -1,4 +1,4 @@
-#include "lace.h"
+#include "fildesh.h"
 #include "lace_compat_fd.h"
 #include "lace_tool.h"
 #include <assert.h>
@@ -16,13 +16,13 @@ struct PipemFnArg {
 };
 
 LACE_TOOL_PIPEM_CALLBACK(run_expect_elastic, in_fd, out_fd, PipemFnArg*, st) {
-  char tee_arg[LACE_FD_PATH_SIZE_MAX];
+  char tee_arg[FILDESH_FD_PATH_SIZE_MAX];
   if (in_fd >= 0) {
     st->stdin_fd = in_fd;
   }
   if (out_fd >= 0) {
     st->tee_fds[st->tee_index] = out_fd;
-    lace_encode_fd_path(tee_arg, out_fd);
+    fildesh_encode_fd_path(tee_arg, out_fd);
     st->elastic_argv[1+st->tee_index] = tee_arg;
     st->tee_index += 1;
   }
@@ -37,12 +37,12 @@ LACE_TOOL_PIPEM_CALLBACK(run_expect_elastic, in_fd, out_fd, PipemFnArg*, st) {
     size_t output_size;
     char* output_data = NULL;
     const unsigned tee_index = st->tee_index;
-    lace_log_tracef("Piping tee_index %u", tee_index);
+    fildesh_log_tracef("Piping tee_index %u", tee_index);
     output_size = lace_tool_pipem(
         0, NULL,
         run_expect_elastic, st,
         &output_data);
-    lace_log_tracef("Checking tee_index %u", tee_index);
+    fildesh_log_tracef("Checking tee_index %u", tee_index);
     assert(output_size == st->expect_size);
     assert(0 == memcmp(output_data, st->expect_string, st->expect_size));
     free(output_data);

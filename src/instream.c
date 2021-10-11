@@ -10,7 +10,7 @@ static inline bool sliced_LaceX(const LaceX* slice) {
 }
 
 static inline LaceX slice_LaceX(LaceX* in, size_t beg_off, size_t end_off) {
-  LaceX slice = DEFAULT_LaceX;
+  FildeshX slice = DEFAULT_FildeshX;
   assert(beg_off <= end_off);
   slice.at = &in->at[beg_off];
   slice.size = end_off - beg_off;
@@ -119,7 +119,7 @@ wait_close_LaceX(LaceX* in)
   LaceX
 slicechr_LaceX(LaceX* in, const char delim)
 {
-  LaceX slice = DEFAULT_LaceX;
+  FildeshX slice = DEFAULT_FildeshX;
   size_t ret_off;
   char* s = NULL;
 
@@ -173,7 +173,7 @@ sliceline_LaceX(LaceX* in)
   LaceX
 slicechrs_LaceX(LaceX* in, const char* delims)
 {
-  LaceX slice = DEFAULT_LaceX;
+  FildeshX slice = DEFAULT_FildeshX;
   size_t ret_off;
   size_t end;
 
@@ -211,7 +211,7 @@ slicechrs_LaceX(LaceX* in, const char* delims)
   LaceX
 slicespan_LaceX(LaceX* in, const char* span)
 {
-  LaceX slice = DEFAULT_LaceX;
+  FildeshX slice = DEFAULT_FildeshX;
   size_t ret_off;
   size_t end = in->size;
 
@@ -251,7 +251,7 @@ slicespan_LaceX(LaceX* in, const char* span)
   LaceX
 slicestr_LaceX(LaceX* in, const char* delim)
 {
-  LaceX slice = DEFAULT_LaceX;
+  FildeshX slice = DEFAULT_FildeshX;
   size_t delim_length = strlen(delim);
   char* s = NULL;
   size_t ret_off;
@@ -340,12 +340,12 @@ static const char lace_whitespace[] = " \t\v\r\n";
   bool
 parse_int_LaceX(LaceX* in, int* ret)
 {
-  LaceX slice;
+  FildeshX slice;
   char* end = NULL;
   skipchrs_LaceX(in, lace_whitespace);
   slice = slicespan_LaceX(in, "+-0123456789");
   if (slice.size > 0) {
-    end = lace_parse_int(ret, slice.at);
+    end = fildesh_parse_int(ret, slice.at);
   }
   return !!end;
 }
@@ -353,12 +353,12 @@ parse_int_LaceX(LaceX* in, int* ret)
   bool
 parse_double_LaceX(LaceX* in, double* ret)
 {
-  LaceX slice;
+  FildeshX slice;
   char* end = NULL;
   skipchrs_LaceX(in, lace_whitespace);
   slice = slicespan_LaceX(in, "+-.0123456789Ee");
   if (slice.size > 0) {
-    end = lace_parse_double(ret, slice.at);
+    end = fildesh_parse_double(ret, slice.at);
   }
   return !!end;
 }

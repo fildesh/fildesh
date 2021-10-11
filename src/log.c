@@ -1,13 +1,13 @@
-#include "lace.h"
+#include "fildesh.h"
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 
 /* Trace disabled by default.*/
-static const bool lace_log_trace_on = false;
+static const bool fildesh_log_trace_on = false;
 
   void
-lace_log_errorf(const char* fmt, ...)
+fildesh_log_errorf(const char* fmt, ...)
 {
   va_list argp;
   fputs("ERROR: ", stderr);
@@ -18,7 +18,7 @@ lace_log_errorf(const char* fmt, ...)
 }
 
   void
-lace_log_warningf(const char* fmt, ...)
+fildesh_log_warningf(const char* fmt, ...)
 {
   va_list argp;
   fputs("WARNING: ", stderr);
@@ -29,10 +29,10 @@ lace_log_warningf(const char* fmt, ...)
 }
 
   void
-lace_log_tracef(const char* fmt, ...)
+fildesh_log_tracef(const char* fmt, ...)
 {
   va_list argp;
-  if (!lace_log_trace_on) {return;}
+  if (!fildesh_log_trace_on) {return;}
   fputs("TRACE: ", stderr);
   va_start(argp, fmt);
   vfprintf(stderr, fmt, argp);
@@ -50,7 +50,7 @@ static const char* filename_to_print(const char* file) {
 
 
 void
-lace_log_error_(
+fildesh_log_error_(
     const char* file, const char* func, unsigned line, const char* msg)
 {
   fprintf(
@@ -61,7 +61,7 @@ lace_log_error_(
 }
 
 void
-lace_log_warning_(
+fildesh_log_warning_(
     const char* file, const char* func, unsigned line, const char* msg)
 {
   fprintf(
@@ -72,10 +72,10 @@ lace_log_warning_(
 }
 
 void
-lace_log_trace_(
+fildesh_log_trace_(
     const char* file, const char* func, unsigned line, const char* msg)
 {
-  if (!lace_log_trace_on) {return;}
+  if (!fildesh_log_trace_on) {return;}
   fprintf(
       stderr,
       "TRACE %s(%u) in %s: %s\n",

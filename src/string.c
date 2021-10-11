@@ -1,5 +1,5 @@
 
-#include "lace.h"
+#include "fildesh.h"
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
@@ -12,16 +12,16 @@ static void close_FildeshXA(FildeshXA* x) {(void)x;}
 static void free_FildeshXA(FildeshXA* x) {free(x);}
 DEFINE_FildeshX_VTable(FildeshXA, base);
 
-LaceX* open_LaceXA() {
+FildeshX* open_FildeshXA() {
   FildeshXA* x = (FildeshXA*) malloc(sizeof(FildeshXA));
-  x->base = default_LaceX();
+  x->base = default_FildeshX();
   x->base.vt = DEFAULT_FildeshXA_FildeshX_VTable;
   return &x->base;
 }
 
 
   char*
-lace_parse_int(int* ret, const char* in)
+fildesh_parse_int(int* ret, const char* in)
 {
   long v;
   char* out = NULL;
@@ -39,7 +39,7 @@ lace_parse_int(int* ret, const char* in)
 }
 
   char*
-lace_parse_double(double* ret, const char* in)
+fildesh_parse_double(double* ret, const char* in)
 {
   double v;
   char* out = NULL;
@@ -54,7 +54,7 @@ lace_parse_double(double* ret, const char* in)
 }
 
   unsigned
-lace_encode_int_base10(char* buf, int q)
+fildesh_encode_int_base10(char* buf, int q)
 {
   unsigned i, n;
 
@@ -69,7 +69,7 @@ lace_encode_int_base10(char* buf, int q)
     buf[0] = '\0';
   }
 
-  i = LACE_INT_BASE10_SIZE_MAX-1;
+  i = FILDESH_INT_BASE10_SIZE_MAX-1;
   while (q > 0) {
     buf[--i] = '0' + (char)(q % 10);
     q /= 10;
@@ -78,19 +78,19 @@ lace_encode_int_base10(char* buf, int q)
   if (buf[0] == '-') {
     buf[--i] = '-';
   }
-  n = LACE_INT_BASE10_SIZE_MAX-1-i;
+  n = FILDESH_INT_BASE10_SIZE_MAX-1-i;
   memmove(buf, &buf[i], n);
   buf[n] = '\0';
   return n;
 }
 
   unsigned
-lace_encode_fd_path(char* buf, lace_fd_t fd)
+fildesh_encode_fd_path(char* buf, fildesh_fd_t fd)
 {
   static const char prefix[] = "/dev/fd/";
   unsigned n = strlen(prefix);
   assert(buf);
   assert(fd >= 0);
   memcpy(buf, "/dev/fd/", n);
-  return n + lace_encode_int_base10(&buf[n], fd);
+  return n + fildesh_encode_int_base10(&buf[n], fd);
 }

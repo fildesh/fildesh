@@ -49,7 +49,7 @@ free_FildeshXF(FildeshXF* xf)
 
 DEFINE_FildeshX_VTable(FildeshXF, base);
 
-static inline FildeshXF default_LaceXF() {
+static inline FildeshXF default_FildeshXF() {
   FildeshXF tmp = {DEFAULT_FildeshX, -1, NULL};
   tmp.base.vt = DEFAULT_FildeshXF_FildeshX_VTable;
   return tmp;
@@ -71,7 +71,7 @@ static LaceX* open_null_LaceXF() {
   lace_compat_fd_t fd = lace_open_null_readonly();
   if (fd < 0) {return NULL;}
   xf = (FildeshXF*) malloc(sizeof(FildeshXF));
-  *xf = default_LaceXF();
+  *xf = default_FildeshXF();
   xf->fd = fd;
   xf->filename = lace_compat_string_duplicate("/dev/null");
   return &xf->base;
@@ -103,12 +103,12 @@ open_sibling_LaceXF(const char* sibling, const char* filename)
   }
   if (0 == strncmp(dev_fd_prefix, filename, dev_fd_prefix_length)) {
     int fd = -1;
-    char* s = lace_parse_int(&fd, &filename[dev_fd_prefix_length]);
+    char* s = fildesh_parse_int(&fd, &filename[dev_fd_prefix_length]);
     if (!s) {return NULL;}
     return open_fd_LaceX(fd);
   }
 
-  *xf = default_LaceXF();
+  *xf = default_FildeshXF();
   if (filename[0] != '/' && sibling) {
     size_t sibling_dirlen = 0;
     if (sibling) {
@@ -154,7 +154,7 @@ lace_arg_open_readonly(const char* filename)
   }
   if (0 == strncmp(dev_fd_prefix, filename, dev_fd_prefix_length)) {
     int fd = -1;
-    char* s = lace_parse_int(&fd, &filename[dev_fd_prefix_length]);
+    char* s = fildesh_parse_int(&fd, &filename[dev_fd_prefix_length]);
     if (!s) {return -1;}
     return lace_compat_fd_claim(fd);
   }
@@ -165,17 +165,17 @@ lace_arg_open_readonly(const char* filename)
   LaceX*
 open_fd_LaceX(lace_fd_t fd)
 {
-  char filename[LACE_FD_PATH_SIZE_MAX];
+  char filename[FILDESH_FD_PATH_SIZE_MAX];
   unsigned filename_size;
   FildeshXF* xf;
   fd = lace_compat_fd_claim(fd);
   if (fd < 0) {return NULL;}
   xf = (FildeshXF*) malloc(sizeof(FildeshXF));
-  *xf = default_LaceXF();
+  *xf = default_FildeshXF();
   /* File descriptor.*/
   xf->fd = fd;
   /* Filename.*/
-  filename_size = 1 + lace_encode_fd_path(filename, fd);
+  filename_size = 1 + fildesh_encode_fd_path(filename, fd);
   xf->filename = (char*)malloc(filename_size);
   memcpy(xf->filename, filename, filename_size);
   return &xf->base;
@@ -209,5 +209,5 @@ const char* filename_LaceXF(LaceX* in) {
   if (in->vt != DEFAULT_FildeshXF_FildeshX_VTable) {
     return NULL;
   }
-  return lace_castup(FildeshXF, base, in)->filename;
+  return fildesh_castup(FildeshXF, base, in)->filename;
 }
