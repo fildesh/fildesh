@@ -16,7 +16,7 @@ add_test(NAME expectish_hello_test COMMAND expectish "${CMAKE_CURRENT_SOURCE_DIR
 #### pipem_test
 
 add_executable(pipem_test pipem_test.c)
-target_link_libraries(pipem_test lace_tool_lib)
+target_link_libraries(pipem_test fildesh_tool_lib)
 add_test(NAME pipem_test COMMAND pipem_test "$<TARGET_FILE:shout>" "$<TARGET_FILE:expectish>")
 
 

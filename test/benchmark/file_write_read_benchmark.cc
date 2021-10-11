@@ -7,7 +7,7 @@
 
 extern "C" {
 #include "fildesh.h"
-#include "lace_compat_file.h"
+#include "fildesh_compat_file.h"
 }
 
 static std::string temporary_file_name(const std::string& basename, int n) {

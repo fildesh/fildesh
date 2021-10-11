@@ -1,9 +1,9 @@
 
 #include "fildesh.h"
-#include "lace_compat_fd.h"
-#include "lace_compat_file.h"
-#include "lace_compat_sh.h"
-#include "lace_compat_string.h"
+#include "fildesh_compat_fd.h"
+#include "fildesh_compat_file.h"
+#include "fildesh_compat_sh.h"
+#include "fildesh_compat_string.h"
 #include "utilace.h"
 
 #include <assert.h>

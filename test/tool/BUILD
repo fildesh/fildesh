@@ -48,7 +48,7 @@ cc_test(
         "$(location //tool:shout)",
         "$(location //tool:expectish)",
     ],
-    deps = ["//:lace_tool_lib"],
+    deps = ["//:fildesh_tool_lib"],
     data = ["//tool:expectish", "//tool:shout"],
 )
 

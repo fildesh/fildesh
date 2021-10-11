@@ -11,13 +11,13 @@ config_setting(
 cc_benchmark(
     name = "file_write_read_benchmark",
     srcs = ["file_write_read_benchmark.cc"],
-    deps = ["//:lace_lib"],
+    deps = ["//:fildesh_lib"],
 )
 
 cc_benchmark(
     name = "grow_mpop_benchmark",
     srcs = ["grow_mpop_benchmark.cc"],
-    deps = ["//:lace_lib"],
+    deps = ["//:fildesh_lib"],
 )
 
 cc_benchmark(

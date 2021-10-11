@@ -24,8 +24,8 @@ cc_binary(
     name = "comparispawn",
     srcs = ["comparispawn.c"],
     deps = [
-        "//:lace_lib",
-        "//:lace_tool_lib"
+        "//:fildesh_lib",
+        "//:fildesh_tool_lib"
     ],
     visibility = ["//visibility:public"],
 )

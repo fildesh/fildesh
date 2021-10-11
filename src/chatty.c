@@ -10,9 +10,9 @@
 #define LACE_POSIX_SOURCE
 
 #include "fildesh.h"
-#include "lace_compat_errno.h"
-#include "lace_compat_fd.h"
-#include "lace_compat_sh.h"
+#include "fildesh_compat_errno.h"
+#include "fildesh_compat_fd.h"
+#include "fildesh_compat_sh.h"
 
 #include <aio.h>
 #include <errno.h>

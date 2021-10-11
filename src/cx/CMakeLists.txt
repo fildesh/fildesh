@@ -17,8 +17,8 @@ add_library(cx_lib_obj OBJECT
   )
 add_library(cx_lib STATIC
   $<TARGET_OBJECTS:cx_lib_obj>
-  $<TARGET_OBJECTS:lace_lib_obj>
-  $<TARGET_OBJECTS:lace_compat_lib_obj>
+  $<TARGET_OBJECTS:fildesh_lib_obj>
+  $<TARGET_OBJECTS:fildesh_compat_lib_obj>
   )
 
 add_executable(bittable_test

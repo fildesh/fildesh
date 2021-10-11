@@ -1,5 +1,5 @@
 
-add_library(lace_lib_obj OBJECT
+add_library(fildesh_lib_obj OBJECT
   "infile.c"
   "instream.c"
   "kve.c"
@@ -10,9 +10,9 @@ add_library(lace_lib_obj OBJECT
   "string.c"
   "${CMAKE_SOURCE_DIR}/include/fildesh.h"
   )
-add_library(lace_lib STATIC
-  $<TARGET_OBJECTS:lace_lib_obj>
-  $<TARGET_OBJECTS:lace_compat_lib_obj>
+add_library(fildesh_lib STATIC
+  $<TARGET_OBJECTS:fildesh_lib_obj>
+  $<TARGET_OBJECTS:fildesh_compat_lib_obj>
   )
 
 
@@ -31,7 +31,7 @@ if (UNIX)
   endif()
 endif()
 
-add_library(lace_builtin_lib_obj OBJECT
+add_library(fildesh_builtin_lib_obj OBJECT
   "lace.c"
   "utilace.h"
   "best-match.c"
@@ -51,46 +51,46 @@ add_library(lace_builtin_lib_obj OBJECT
   "${CMAKE_SOURCE_DIR}/builtin/time2sec.c"
   "${CMAKE_SOURCE_DIR}/builtin/void.c"
   "${CMAKE_SOURCE_DIR}/builtin/zec.c"
-  "${CMAKE_SOURCE_DIR}/include/lace_builtin.h"
-  "${CMAKE_SOURCE_DIR}/include/lace_posix_thread.h"
+  "${CMAKE_SOURCE_DIR}/include/fildesh_builtin.h"
+  "${CMAKE_SOURCE_DIR}/include/fildesh_posix_thread.h"
   )
-add_library(lace_builtin_lib STATIC
-  $<TARGET_OBJECTS:lace_builtin_lib_obj>
+add_library(fildesh_builtin_lib STATIC
+  $<TARGET_OBJECTS:fildesh_builtin_lib_obj>
   $<TARGET_OBJECTS:cx_lib_obj>
-  $<TARGET_OBJECTS:lace_lib_obj>
-  $<TARGET_OBJECTS:lace_compat_lib_obj>
+  $<TARGET_OBJECTS:fildesh_lib_obj>
+  $<TARGET_OBJECTS:fildesh_compat_lib_obj>
   )
 
-set_property(TARGET lace_builtin_lib_obj APPEND PROPERTY COMPILE_DEFINITIONS
+set_property(TARGET fildesh_builtin_lib_obj APPEND PROPERTY COMPILE_DEFINITIONS
   LACE_BUILTIN_LIBRARY)
 
 if (WIN32)
   # Nothing special.
 elseif (APPLE)
-  set_property(TARGET lace_builtin_lib_obj APPEND PROPERTY COMPILE_DEFINITIONS
+  set_property(TARGET fildesh_builtin_lib_obj APPEND PROPERTY COMPILE_DEFINITIONS
     LACE_BUILTIN_PERMIT_ELASTIC_POLL)
 else()
-  set_property(TARGET lace_builtin_lib_obj
+  set_property(TARGET fildesh_builtin_lib_obj
     APPEND PROPERTY COMPILE_DEFINITIONS
     LACE_BUILTIN_PERMIT_ELASTIC_AIO
     LACE_BUILTIN_PERMIT_ELASTIC_POLL)
 endif()
 
 add_executable(fildesh "main_lace.c")
-target_link_libraries(fildesh lace_builtin_lib ${CMAKE_THREAD_LIBS_INIT} ${LACE_EXTRA_ELASTIC_AIO_LIBS})
+target_link_libraries(fildesh fildesh_builtin_lib ${CMAKE_THREAD_LIBS_INIT} ${LACE_EXTRA_ELASTIC_AIO_LIBS})
 
 
 add_executable(bestmatch "best-match.c")
-target_link_libraries(bestmatch lace_lib)
+target_link_libraries(bestmatch fildesh_lib)
 
 add_executable(execfd "execfd.c" "utilace.h")
-target_link_libraries(execfd lace_lib)
+target_link_libraries(execfd fildesh_lib)
 
 add_executable(godo "godo.c" "utilace.h")
 target_link_libraries(godo cx_lib)
 
 add_executable(sshall "ssh-all.c")
-target_link_libraries(sshall lace_lib)
+target_link_libraries(sshall fildesh_lib)
 
 add_executable(transpose "transpose.c")
 target_link_libraries(transpose cx_lib)
@@ -113,7 +113,7 @@ if (UNIX AND NOT APPLE)
     APPEND PROPERTY COMPILE_DEFINITIONS _POSIX_C_SOURCE=199309L)
 
   add_executable(chatty "chatty.c")
-  target_link_libraries(chatty lace_lib ${LACE_EXTRA_ELASTIC_AIO_LIBS})
+  target_link_libraries(chatty fildesh_lib ${LACE_EXTRA_ELASTIC_AIO_LIBS})
   set_property(TARGET chatty
     APPEND PROPERTY COMPILE_DEFINITIONS _POSIX_C_SOURCE=201112L)
 endif ()

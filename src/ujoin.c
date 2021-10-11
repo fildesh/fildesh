@@ -1,7 +1,7 @@
 
 #include "fildesh.h"
-#include "lace_compat_errno.h"
-#include "lace_compat_string.h"
+#include "fildesh_compat_errno.h"
+#include "fildesh_compat_string.h"
 #include "cx/alphatab.h"
 #include "cx/associa.h"
 

@@ -6,8 +6,8 @@
  **/
 
 #include "fildesh.h"
-#include "lace_compat_fd.h"
-#include "lace_tool.h"
+#include "fildesh_compat_fd.h"
+#include "fildesh_tool.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

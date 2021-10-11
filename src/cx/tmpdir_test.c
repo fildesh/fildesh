@@ -1,6 +1,6 @@
 #include "syscx.h"
 #include "alphatab.h"
-#include "lace_compat_file.h"
+#include "fildesh_compat_file.h"
 
 int main() {
   AlphaTab tmppath;

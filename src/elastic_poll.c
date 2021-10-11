@@ -3,7 +3,7 @@
  * Echo stdin to stdout with an arbitrary sized buffer.
  **/
 #include "fildesh.h"
-#include "lace_compat_fd.h"
+#include "fildesh_compat_fd.h"
 #include "cx/table.h"
 
 #include <errno.h>

@@ -1,8 +1,8 @@
 
 #include "fildesh.h"
-#include "lace_compat_fd.h"
-#include "lace_compat_file.h"
-#include "lace_tool.h"
+#include "fildesh_compat_fd.h"
+#include "fildesh_compat_file.h"
+#include "fildesh_tool.h"
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>

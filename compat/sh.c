@@ -1,6 +1,6 @@
-#include "lace_compat_sh.h"
-#include "lace_compat_errno.h"
-#include "lace_compat_string.h"
+#include "fildesh_compat_sh.h"
+#include "fildesh_compat_errno.h"
+#include "fildesh_compat_string.h"
 
 #ifdef _MSC_VER
 /* For _chdir().*/

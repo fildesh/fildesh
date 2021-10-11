@@ -1,5 +1,5 @@
 
-# For //:lace_lib.
+# For //:fildesh_lib.
 exports_files([
     "infile.c",
     "instream.c",
@@ -27,7 +27,7 @@ exports_files([
 ])
 
 cc_library(
-    name = "lace_builtin_lib",
+    name = "fildesh_builtin_lib",
     srcs = [
         "lace.c",
         "utilace.h",
@@ -47,8 +47,8 @@ cc_library(
         "//builtin:time2sec.c",
         "//builtin:void.c",
         "//builtin:zec.c",
-        "//include:lace_builtin.h",
-        "//include:lace_posix_thread.h",
+        "//include:fildesh_builtin.h",
+        "//include:fildesh_posix_thread.h",
     ],
     defines = [
         "LACE_BUILTIN_LIBRARY",
@@ -61,21 +61,21 @@ cc_library(
 cc_binary(
     name = "fildesh",
     srcs = ["main_lace.c"],
-    deps = [":lace_builtin_lib"],
+    deps = [":fildesh_builtin_lib"],
     visibility = ["//:__pkg__"],
 )
 
 cc_binary(
     name = "bestmatch",
     srcs = ["best-match.c"],
-    deps = ["//:lace_lib"],
+    deps = ["//:fildesh_lib"],
     visibility = ["//test/builtin:__pkg__"],
 )
 
 cc_binary(
     name = "chatty",
     srcs = ["chatty.c"],
-    deps = ["//:lace_lib"],
+    deps = ["//:fildesh_lib"],
     linkopts = select({
         "@platforms//os:linux": ["-lrt"],
         "//conditions:default": [],
@@ -114,14 +114,14 @@ cc_binary(
 cc_binary(
     name = "execfd",
     srcs = ["execfd.c", "utilace.h"],
-    deps = ["//:lace_lib"],
+    deps = ["//:fildesh_lib"],
     visibility = ["//test/builtin:__pkg__"],
 )
 
 cc_binary(
     name = "sshall",
     srcs = ["ssh-all.c"],
-    deps = ["//:lace_lib"],
+    deps = ["//:fildesh_lib"],
     visibility = ["//test/builtin:__pkg__"],
 )
 

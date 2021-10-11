@@ -6,7 +6,7 @@ load("//tool:spawn.bzl", "fildesh_test", "spawn_test")
 cc_test(
     name = "add_float_test",
     srcs = ["add_float_test.c", "//builtin:add.c"],
-    deps = ["//:lace_lib", "//:lace_tool_lib"],
+    deps = ["//:fildesh_lib", "//:fildesh_tool_lib"],
     defines = ["LACE_BUILTIN_LIBRARY"],
 )
 
@@ -15,7 +15,7 @@ cc_test(
 cc_test(
     name = "bestmatch_test",
     srcs = ["bestmatch_test.c"],
-    deps = ["//:lace_lib", "//:lace_tool_lib"],
+    deps = ["//:fildesh_lib", "//:fildesh_tool_lib"],
     data = ["//src:bestmatch"],
     args = ["$(location //src:bestmatch)"],
 )
@@ -68,21 +68,21 @@ fildesh_expect_test(
 cc_test(
     name = "elastic_aio_tee_test",
     srcs = ["elastic_alt_tee_test.c"],
-    deps = ["//:lace_lib", "//:lace_tool_lib"],
+    deps = ["//:fildesh_lib", "//:fildesh_tool_lib"],
     data = ["//src:elastic_aio"],
     args = ["$(location //src:elastic_aio)"],
 )
 cc_test(
     name = "elastic_poll_tee_test",
     srcs = ["elastic_alt_tee_test.c"],
-    deps = ["//:lace_lib", "//:lace_tool_lib"],
+    deps = ["//:fildesh_lib", "//:fildesh_tool_lib"],
     data = ["//src:elastic_poll"],
     args = ["$(location //src:elastic_poll)"],
 )
 cc_test(
     name = "elastic_pthread_tee_test",
     srcs = ["elastic_alt_tee_test.c"],
-    deps = ["//:lace_lib", "//:lace_tool_lib"],
+    deps = ["//:fildesh_lib", "//:fildesh_tool_lib"],
     data = ["//builtin:elastic_pthread"],
     args = ["$(location //builtin:elastic_pthread)"],
 )
@@ -97,7 +97,7 @@ cc_test(
         "//src:utilace.h",
     ],
     defines = ["UNIT_TESTING"],
-    deps = ["//:lace_lib", "//:lace_tool_lib"],
+    deps = ["//:fildesh_lib", "//:fildesh_tool_lib"],
     data = ["//builtin:zec"],
     args = ["$(location //builtin:zec)"],
 )
@@ -133,7 +133,7 @@ spawn_test(
 cc_test(
     name = "fildesh_cli_hello_test",
     srcs = ["fildesh_cli_hello_test.c"],
-    deps = ["//:lace_lib", "//:lace_tool_lib"],
+    deps = ["//:fildesh_lib", "//:fildesh_tool_lib"],
     data = ["//:fildesh"],
     args = ["$(location //:fildesh)"],
 )
@@ -141,7 +141,7 @@ cc_test(
 cc_test(
     name = "fildesh_usage_test",
     srcs = ["fildesh_usage_test.c"],
-    deps = ["//:lace_compat_lib"],
+    deps = ["//:fildesh_compat_lib"],
     data = ["//:fildesh"],
     args = ["$(location //:fildesh)"],
 )
@@ -156,7 +156,7 @@ cc_test(
     ],
     defines = ["LACE_BUILTIN_LIBRARY"],
     deps = [
-        "//:lace_lib",
+        "//:fildesh_lib",
     ],
     data = [
         "//tool:expectish",
@@ -176,7 +176,7 @@ cc_binary(
         "echocat.c",
         "//builtin:zec.c",
     ],
-    deps = ["//:lace_lib"],
+    deps = ["//:fildesh_lib"],
     defines = ["LACE_BUILTIN_LIBRARY"],
     testonly = True,
 )
@@ -190,7 +190,7 @@ fildesh_test(
 cc_test(
     name = "sshall_test",
     srcs = ["sshall_test.c"],
-    deps = ["//:lace_lib", "//:lace_tool_lib"],
+    deps = ["//:fildesh_lib", "//:fildesh_tool_lib"],
     data = [
         ":echocat",
         "//src:sshall",
@@ -211,8 +211,8 @@ cc_test(
     ],
     defines = ["LACE_BUILTIN_LIBRARY"],
     deps = [
-        "//:lace_lib",
-        "//:lace_tool_lib",
+        "//:fildesh_lib",
+        "//:fildesh_tool_lib",
     ],
 )
 
@@ -226,7 +226,7 @@ cc_test(
     ],
     defines = ["LACE_BUILTIN_LIBRARY"],
     deps = [
-        "//:lace_tool_lib",
+        "//:fildesh_tool_lib",
         "//src/cx:cx_lib",
     ],
 )
@@ -236,7 +236,7 @@ cc_test(
 cc_test(
     name = "ujoin_test",
     srcs = ["ujoin_test.c"],
-    deps = ["//:lace_lib", "//:lace_tool_lib"],
+    deps = ["//:fildesh_lib", "//:fildesh_tool_lib"],
     data = ["//src:ujoin"],
     args = ["$(location //src:ujoin)"],
 )
@@ -248,7 +248,7 @@ cc_test(
     args = ["$(location //builtin:void)"],
     srcs = ["void_test.c"],
     deps = [
-        "//:lace_tool_lib",
+        "//:fildesh_tool_lib",
         "//builtin:void",
     ],
 )
@@ -260,8 +260,8 @@ cc_test(
     args = ["$(location //src:waitdo)", "$(location //tool:shout)"],
     srcs = ["waitdo_test.c"],
     deps = [
-        "//:lace_lib",
-        "//:lace_tool_lib",
+        "//:fildesh_lib",
+        "//:fildesh_tool_lib",
     ],
     data = [
         "//src:waitdo",

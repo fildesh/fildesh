@@ -3,7 +3,7 @@
  **/
 
 #include "fildesh.h"
-#include "lace_compat_errno.h"
+#include "fildesh_compat_errno.h"
 
 #include <assert.h>
 #include <stdio.h>

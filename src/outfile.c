@@ -1,7 +1,7 @@
 
 #include "fildesh.h"
-#include "lace_compat_fd.h"
-#include "lace_compat_string.h"
+#include "fildesh_compat_fd.h"
+#include "fildesh_compat_string.h"
 
 #include <assert.h>
 #include <stdlib.h>

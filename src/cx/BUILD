@@ -18,7 +18,7 @@ cc_library(
         "table.h",
     ],
     deps = [
-        "//:lace_lib",
+        "//:fildesh_lib",
     ],
     visibility = ["//visibility:public"],
 )
@@ -38,7 +38,7 @@ cc_library(
         "synhax.h",
         "table.h",
     ],
-    deps = ["//:lace_lib"],
+    deps = ["//:fildesh_lib"],
     visibility = ["//test/benchmark:__pkg__"],
 )
 

@@ -16,14 +16,14 @@ exports_files([
 cc_binary(
     name = "add",
     srcs = ["add.c"],
-    deps = ["//:lace_lib"],
+    deps = ["//:fildesh_lib"],
     visibility = ["//visibility:public"],
 )
 
 cc_binary(
     name = "cmp",
     srcs = ["cmp.c"],
-    deps = ["//:lace_lib"],
+    deps = ["//:fildesh_lib"],
     visibility = ["//visibility:public"],
 )
 
@@ -31,9 +31,9 @@ cc_binary(
     name = "elastic_pthread",
     srcs = [
         "elastic_pthread.c",
-        "//include:lace_posix_thread.h",
+        "//include:fildesh_posix_thread.h",
     ],
-    deps = ["//:lace_lib"],
+    deps = ["//:fildesh_lib"],
     linkopts = select({
         "@platforms//os:windows": [],
         "//conditions:default": ["-pthread"],
@@ -44,35 +44,35 @@ cc_binary(
 cc_binary(
     name = "seq",
     srcs = ["seq.c"],
-    deps = ["//:lace_lib"],
+    deps = ["//:fildesh_lib"],
     visibility = ["//visibility:public"],
 )
 
 cc_binary(
     name = "sponge",
     srcs = ["sponge.c"],
-    deps = ["//:lace_lib"],
+    deps = ["//:fildesh_lib"],
     visibility = ["//visibility:public"],
 )
 
 cc_binary(
     name = "time2sec",
     srcs = ["time2sec.c"],
-    deps = ["//:lace_lib"],
+    deps = ["//:fildesh_lib"],
     visibility = ["//visibility:public"],
 )
 
 cc_binary(
     name = "void",
     srcs = ["void.c"],
-    deps = ["//:lace_lib"],
+    deps = ["//:fildesh_lib"],
     visibility = ["//visibility:public"],
 )
 
 cc_binary(
     name = "zec",
     srcs = ["zec.c"],
-    deps = ["//:lace_lib"],
+    deps = ["//:fildesh_lib"],
     visibility = ["//visibility:public"],
 )
 

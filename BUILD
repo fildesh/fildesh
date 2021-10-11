@@ -6,7 +6,7 @@ alias(
 )
 
 cc_library(
-    name = "lace_compat_lib",
+    name = "fildesh_compat_lib",
     srcs = [
         "//compat:errno.c",
         "//compat:fd.c",
@@ -15,12 +15,12 @@ cc_library(
         "//compat:random.c",
         "//compat:sh.c",
         "//compat:string.c",
-        "//include:lace_compat_errno.h",
-        "//include:lace_compat_fd.h",
-        "//include:lace_compat_file.h",
-        "//include:lace_compat_random.h",
-        "//include:lace_compat_sh.h",
-        "//include:lace_compat_string.h",
+        "//include:fildesh_compat_errno.h",
+        "//include:fildesh_compat_fd.h",
+        "//include:fildesh_compat_file.h",
+        "//include:fildesh_compat_random.h",
+        "//include:fildesh_compat_sh.h",
+        "//include:fildesh_compat_string.h",
     ],
     includes = ["include"],
     linkopts = select({
@@ -33,7 +33,7 @@ cc_library(
 )
 
 cc_library(
-    name = "lace_lib",
+    name = "fildesh_lib",
     srcs = [
         "//include:fildesh.h",
         "//src:infile.c",
@@ -46,20 +46,20 @@ cc_library(
         "//src:string.c",
     ],
     includes = ["include"],
-    deps = [":lace_compat_lib"],
+    deps = [":fildesh_compat_lib"],
     visibility = ["//visibility:public"],
 )
 
 
 cc_library(
-    name = "lace_tool_lib",
+    name = "fildesh_tool_lib",
     srcs = [
-        "//include:lace_posix_thread.h",
-        "//include:lace_tool.h",
+        "//include:fildesh_posix_thread.h",
+        "//include:fildesh_tool.h",
         "//tool:pipem.c",
     ],
     defines = ["LACE_TOOL_LIBRARY"],
     includes = ["include"],
-    deps = [":lace_compat_lib"],
+    deps = [":fildesh_compat_lib"],
     visibility = ["//visibility:public"],
 )

@@ -1,5 +1,5 @@
 #include "fildesh.h"
-#include "lace_compat_file.h"
+#include "fildesh_compat_file.h"
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
