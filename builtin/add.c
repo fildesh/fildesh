@@ -1,16 +1,16 @@
 
-#include "lace.h"
+#include "fildesh.h"
 
 #include <stdio.h>
 #include <string.h>
 
 static int
-sum_int_line (LaceX* in)
+sum_int_line (FildeshX* in)
 {
   int x = 0, y = 0;
-  while (parse_int_LaceX(in, &y))
+  while (parse_int_FildeshX(in, &y))
     x += y;
-  skipchrs_LaceX(in, " \t");
+  skipchrs_FildeshX(in, " \t");
   if (in->off < in->size) {
     fputs ("Line is no good!\n", stderr);
   }
@@ -18,12 +18,12 @@ sum_int_line (LaceX* in)
 }
 
 static double
-sum_real_line(LaceX* in)
+sum_real_line(FildeshX* in)
 {
   double x = 0, y = 0;
-  while (parse_double_LaceX(in, &y))
+  while (parse_double_FildeshX(in, &y))
     x += y;
-  skipchrs_LaceX(in, " \t");
+  skipchrs_FildeshX(in, " \t");
   if (in->off < in->size) {
     fputs ("Line is no good!\n", stderr);
   }
@@ -32,11 +32,11 @@ sum_real_line(LaceX* in)
 
   int
 lace_builtin_add_main(unsigned argc, char** argv,
-                      LaceX** inputv, LaceO** outputv)
+                      FildeshX** inputv, FildeshO** outputv)
 {
-  LaceX* in = NULL;
-  LaceO* out = NULL;
-  LaceX slice;
+  FildeshX* in = NULL;
+  FildeshO* out = NULL;
+  FildeshX slice;
 
   (void) argv;
   if (argc > 1)
@@ -46,33 +46,33 @@ lace_builtin_add_main(unsigned argc, char** argv,
     return 64;
   }
 
-  in = open_arg_LaceXF(0, argv, inputv);
-  out = open_arg_LaceOF(0, argv, outputv);
+  in = open_arg_FildeshXF(0, argv, inputv);
+  out = open_arg_FildeshOF(0, argv, outputv);
   if (!in || !out) {
-    close_LaceX(in);
-    close_LaceO(out);
+    close_FildeshX(in);
+    close_FildeshO(out);
     fputs("Cannot open stdio!\n", stderr);
     return 1;
   }
 
-  for (slice = sliceline_LaceX(in);
+  for (slice = sliceline_FildeshX(in);
        slice.size > 0;
-       slice = sliceline_LaceX(in)) {
+       slice = sliceline_FildeshX(in)) {
     if (slice.size == strcspn(slice.at, ".Ee")) {
       int x = sum_int_line(&slice);
-      print_int_LaceO(out, x);
-      putc_LaceO(out, '\n');
+      print_int_FildeshO(out, x);
+      putc_FildeshO(out, '\n');
     }
     else {
       double x = sum_real_line(&slice);
-      print_double_LaceO(out, x);
-      putc_LaceO(out, '\n');
+      print_double_FildeshO(out, x);
+      putc_FildeshO(out, '\n');
     }
-    flush_LaceO(out);
+    flush_FildeshO(out);
   }
 
-  close_LaceX(in);
-  close_LaceO(out);
+  close_FildeshX(in);
+  close_FildeshO(out);
   return 0;
 }
 

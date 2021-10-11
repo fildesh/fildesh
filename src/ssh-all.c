@@ -1,5 +1,5 @@
 
-#include "lace.h"
+#include "fildesh.h"
 #include "lace_compat_errno.h"
 #include "lace_compat_fd.h"
 #include "lace_compat_sh.h"
@@ -37,12 +37,12 @@ spawn_ssh(const char* ssh_exe, const char* cmd, const char* host)
   int istat;
   lace_compat_fd_t source_fd = -1;
   lace_compat_fd_t fd_to_remote = -1;
-  LaceO* to_remote = NULL;
+  FildeshO* to_remote = NULL;
   lace_compat_pid_t pid;
 
   istat = lace_compat_fd_pipe(&fd_to_remote, &source_fd);
   assert(istat == 0);
-  to_remote = open_fd_LaceO(fd_to_remote);
+  to_remote = open_fd_FildeshO(fd_to_remote);
 
   pid = lace_compat_fd_spawnlp(
       source_fd, 1, 2, NULL,
@@ -54,9 +54,9 @@ spawn_ssh(const char* ssh_exe, const char* cmd, const char* host)
       NULL);
 
   if (pid >= 0) {
-    puts_LaceO(to_remote, cmd);
+    puts_FildeshO(to_remote, cmd);
   }
-  close_LaceO(to_remote);
+  close_FildeshO(to_remote);
   if (pid >= 0) {
     istat = lace_compat_sh_wait(pid);
     if (istat < 0) {lace_compat_errno_trace();}
@@ -67,7 +67,7 @@ spawn_ssh(const char* ssh_exe, const char* cmd, const char* host)
 main_ssh_all(unsigned argc, char** argv)
 {
   unsigned argi = 1;
-  LaceX* in = NULL;
+  FildeshX* in = NULL;
   const char* ssh_exe = "ssh";
   char* line;
 
@@ -78,7 +78,7 @@ main_ssh_all(unsigned argc, char** argv)
   }
   if (argi >= argc)  show_usage_and_exit ();
 
-  in = open_LaceXF(argv[argi]);
+  in = open_FildeshXF(argv[argi]);
   if (!in) {
     fildesh_log_errorf("Cannot open file: %s", argv[argi]);
     return 1;
@@ -87,9 +87,9 @@ main_ssh_all(unsigned argc, char** argv)
   argi += 1;
   if (argi + 1 != argc)  show_usage_and_exit ();
 
-  for (line = getline_LaceX(in);
+  for (line = getline_FildeshX(in);
        line;
-       line = getline_LaceX(in))
+       line = getline_FildeshX(in))
   {
     int q = 0;
     int r = strlen (line);
@@ -103,7 +103,7 @@ main_ssh_all(unsigned argc, char** argv)
     spawn_ssh(ssh_exe, argv[argi], line);
   }
 
-  close_LaceX(in);
+  close_FildeshX(in);
   return 0;
 }
 

@@ -1,5 +1,5 @@
 
-#include "lace.h"
+#include "fildesh.h"
 
 #include <assert.h>
 #include <stdlib.h>
@@ -27,7 +27,7 @@ DEFINE_FildeshX_VTable(MockFildeshXF, x);
 
   void
 read_MockFildeshXF(MockFildeshXF* xf) {
-  LaceX* x = &xf->x;
+  FildeshX* x = &xf->x;
   char c;
   unsigned i;
 
@@ -47,7 +47,7 @@ read_MockFildeshXF(MockFildeshXF* xf) {
       c = xf->lines[xf->row][xf->col];
       xf->col += 1;
     }
-    *grow_LaceX(x, 1) = c;
+    *grow_FildeshX(x, 1) = c;
   }
 }
 
@@ -67,25 +67,25 @@ param2_test_getline(unsigned chunk_size, fildesh_lgsize_t flush_lgsize) {
   xf->x.flush_lgsize = flush_lgsize;
   xf->lines = lines;
 
-  line = getline_LaceX(&xf->x);
+  line = getline_FildeshX(&xf->x);
   assert(0 == strcmp(lines[0], line));
 
-  line = getline_LaceX(&xf->x);
+  line = getline_FildeshX(&xf->x);
   assert(0 == strcmp(lines[1], line));
 
-  line = getline_LaceX(&xf->x);
+  line = getline_FildeshX(&xf->x);
   assert(0 == strcmp(lines[2], line));
 
-  line = getline_LaceX(&xf->x);
+  line = getline_FildeshX(&xf->x);
   assert(0 == strcmp(lines[3], line));
 
-  line = getline_LaceX(&xf->x);
+  line = getline_FildeshX(&xf->x);
   assert(0 == strcmp(lines[4], line));
 
-  line = getline_LaceX(&xf->x);
+  line = getline_FildeshX(&xf->x);
   assert(!line);
 
-  close_LaceX(&xf->x);
+  close_FildeshX(&xf->x);
 }
 
 int main() {

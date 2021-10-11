@@ -1,5 +1,5 @@
 
-#include "lace.h"
+#include "fildesh.h"
 #include "lace_compat_fd.h"
 #include "lace_compat_string.h"
 
@@ -52,14 +52,14 @@ static inline FildeshOF default_FildeshOF() {
   return tmp;
 }
 
-  LaceO*
-open_LaceOF(const char* filename)
+  FildeshO*
+open_FildeshOF(const char* filename)
 {
-  return open_sibling_LaceOF(NULL, filename);
+  return open_sibling_FildeshOF(NULL, filename);
 }
 
-  LaceO*
-open_sibling_LaceOF(const char* sibling, const char* filename)
+  FildeshO*
+open_sibling_FildeshOF(const char* sibling, const char* filename)
 {
   static const char dev_stdout[] = "/dev/stdout";
   static const char dev_fd_prefix[] = "/dev/fd/";
@@ -70,13 +70,13 @@ open_sibling_LaceOF(const char* sibling, const char* filename)
   if (!filename) {return NULL;}
 
   if (0 == strcmp("-", filename) || 0 == strcmp(dev_stdout, filename)) {
-    return open_fd_LaceO(1);
+    return open_fd_FildeshO(1);
   }
   if (0 == strncmp(dev_fd_prefix, filename, dev_fd_prefix_length)) {
     int fd = -1;
     char* s = fildesh_parse_int(&fd, &filename[dev_fd_prefix_length]);
     if (!s) {return NULL;}
-    return open_fd_LaceO(fd);
+    return open_fd_FildeshO(fd);
   }
 
   *of = default_FildeshOF();
@@ -107,8 +107,8 @@ open_sibling_LaceOF(const char* sibling, const char* filename)
   return NULL;
 }
 
-  lace_fd_t
-lace_arg_open_writeonly(const char* filename)
+  fildesh_fd_t
+fildesh_arg_open_writeonly(const char* filename)
 {
   static const char dev_stdout[] = "/dev/stdout";
   static const char dev_fd_prefix[] = "/dev/fd/";
@@ -129,8 +129,8 @@ lace_arg_open_writeonly(const char* filename)
   return lace_compat_file_open_writeonly(filename);
 }
 
-  LaceO*
-open_fd_LaceO(lace_fd_t fd)
+  FildeshO*
+open_fd_FildeshO(fildesh_fd_t fd)
 {
   char filename[FILDESH_FD_PATH_SIZE_MAX];
   unsigned filename_size;
@@ -148,11 +148,11 @@ open_fd_LaceO(lace_fd_t fd)
   return &of->base;
 }
 
-  LaceO*
-open_arg_LaceOF(unsigned argi, char** argv, LaceO** outputv)
+  FildeshO*
+open_arg_FildeshOF(unsigned argi, char** argv, FildeshO** outputv)
 {
   if (outputv && outputv[argi]) {
-    LaceO* ret = outputv[argi];
+    FildeshO* ret = outputv[argi];
     outputv[argi] = NULL;  /* Claim it.*/
     return ret;
   }
@@ -160,19 +160,19 @@ open_arg_LaceOF(unsigned argi, char** argv, LaceO** outputv)
   if (argi == 0 || (argv[argi][0] == '-' && argv[argi][1] == '\0')) {
     if (outputv) {
       if (outputv[0]) {
-        LaceO* ret = outputv[0];
+        FildeshO* ret = outputv[0];
         outputv[0] = NULL;  /* Claim it.*/
         return ret;
       } else {
         return NULL; /* Better not steal the real stdout.*/
       }
     }
-    return open_fd_LaceO(1);
+    return open_fd_FildeshO(1);
   }
-  return open_LaceOF(argv[argi]);
+  return open_FildeshOF(argv[argi]);
 }
 
-const char* filename_LaceOF(LaceO* out) {
+const char* filename_FildeshOF(FildeshO* out) {
   if (out->vt != DEFAULT_FildeshOF_FildeshO_VTable) {
     return NULL;
   }

@@ -6,7 +6,7 @@
 #include <vector>
 
 extern "C" {
-#include "lace.h"
+#include "fildesh.h"
 #include "lace_compat_file.h"
 }
 
@@ -20,24 +20,24 @@ static std::string temporary_file_name(const std::string& basename, int n) {
 
 
 static void write_seq_file(const std::string& filename, int n) {
-  LaceO* out = open_LaceOF(filename.c_str());
+  FildeshO* out = open_FildeshOF(filename.c_str());
   for (int i = 0; i < n; ++i) {
-    print_int_LaceO(out, i);
-    putc_LaceO(out, '\n');
+    print_int_FildeshO(out, i);
+    putc_FildeshO(out, '\n');
   }
-  close_LaceO(out);
+  close_FildeshO(out);
 }
 
 
-static void BM_FileWriteIntegers_LaceOF(benchmark::State& state) {
-  const std::string& filename = temporary_file_name("WriteIntegers_LaceOF", state.range(0));
+static void BM_FileWriteIntegers_FildeshOF(benchmark::State& state) {
+  const std::string& filename = temporary_file_name("WriteIntegers_FildeshOF", state.range(0));
   for (auto _ : state) {
     write_seq_file(filename, state.range(0));
   }
   lace_compat_file_rm(filename.c_str());
 }
 // Register the function as a benchmark
-BENCHMARK(BM_FileWriteIntegers_LaceOF)
+BENCHMARK(BM_FileWriteIntegers_FildeshOF)
   /* 1.7 MiB file */
   ->Args({1<<18});
 
@@ -77,22 +77,22 @@ BENCHMARK(BM_FileWriteIntegers_fprintf)
   ->Args({1<<18});
 
 
-static void BM_FileReadIntegers_LaceXF(benchmark::State& state) {
-  const std::string& filename = temporary_file_name("ReadIntegers_LaceXF", state.range(0));
+static void BM_FileReadIntegers_FildeshXF(benchmark::State& state) {
+  const std::string& filename = temporary_file_name("ReadIntegers_FildeshXF", state.range(0));
   write_seq_file(filename, state.range(0));
   for (auto _ : state) {
-    LaceX* in = open_LaceXF(filename.c_str());
+    FildeshX* in = open_FildeshXF(filename.c_str());
 		for (int i = 0; i < state.range(0); ++i) {
       int x = -1;
-      parse_int_LaceX(in, &x);
+      parse_int_FildeshX(in, &x);
       assert(x == i);
       benchmark::DoNotOptimize(x);
 		}
-    close_LaceX(in);
+    close_FildeshX(in);
   }
   lace_compat_file_rm(filename.c_str());
 }
-BENCHMARK(BM_FileReadIntegers_LaceXF)
+BENCHMARK(BM_FileReadIntegers_FildeshXF)
   /* 1.7 MiB file */
   ->Args({1<<18});
 
@@ -136,20 +136,20 @@ BENCHMARK(BM_FileReadIntegers_fscanf)
   ->Args({1<<18});
 
 
-static void BM_FileReadLines_LaceXF(benchmark::State& state) {
-  const std::string& filename = temporary_file_name("ReadLines_LaceXF", state.range(0));
+static void BM_FileReadLines_FildeshXF(benchmark::State& state) {
+  const std::string& filename = temporary_file_name("ReadLines_FildeshXF", state.range(0));
   write_seq_file(filename, state.range(0));
   for (auto _ : state) {
-    LaceX* in = open_LaceXF(filename.c_str());
+    FildeshX* in = open_FildeshXF(filename.c_str());
 		for (int i = 0; i < state.range(0); ++i) {
-      const char* line = getline_LaceX(in);
+      const char* line = getline_FildeshX(in);
       assert(line);
 		}
-    close_LaceX(in);
+    close_FildeshX(in);
   }
   lace_compat_file_rm(filename.c_str());
 }
-BENCHMARK(BM_FileReadLines_LaceXF)
+BENCHMARK(BM_FileReadLines_FildeshXF)
   /* 1.7 MiB file */
   ->Args({1<<18});
 

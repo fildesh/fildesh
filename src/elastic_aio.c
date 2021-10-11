@@ -94,7 +94,7 @@ main_elastic_aio(unsigned argc, char** argv)
         return 1;
       }
       arg = argv[argi++];
-      fd = lace_arg_open_readonly(arg);
+      fd = fildesh_arg_open_readonly(arg);
       io = &ios.s[0];
     } else if (eq_cstr (arg, "-o")) {
       if (argi == argc) {
@@ -102,10 +102,10 @@ main_elastic_aio(unsigned argc, char** argv)
         return 1;
       }
       arg = argv[argi++];
-      fd = lace_arg_open_writeonly(arg);
+      fd = fildesh_arg_open_writeonly(arg);
       io = Grow1Table( ios );
     } else {
-      fd = lace_arg_open_writeonly(arg);
+      fd = fildesh_arg_open_writeonly(arg);
       io = Grow1Table( ios );
     }
     Zeroize( *io );
@@ -123,7 +123,7 @@ main_elastic_aio(unsigned argc, char** argv)
 
   /* Default input is stdin.*/
   if (ios.s[0].aio.aio_fildes == -1) {
-    fd_t fd = lace_arg_open_readonly("-");
+    fd_t fd = fildesh_arg_open_readonly("-");
     IOState* io = &ios.s[0];
     io->aio.aio_fildes = fd;
     if (0 > setfd_async(fd)) {
@@ -134,7 +134,7 @@ main_elastic_aio(unsigned argc, char** argv)
   }
   /* Default output is stdout.*/
   if (ios.sz == 1) {
-    fd_t fd = lace_arg_open_writeonly("-");
+    fd_t fd = fildesh_arg_open_writeonly("-");
     IOState* io = Grow1Table( ios );
     Zeroize( *io );
     io->aio.aio_fildes = fd;

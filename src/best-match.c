@@ -1,5 +1,5 @@
 
-#include "lace.h"
+#include "fildesh.h"
 #include "lace_compat_errno.h"
 
 #include <assert.h>
@@ -120,11 +120,11 @@ main_best_match(unsigned argc, char** argv)
   int exstatus = 0;
   unsigned argi = 1;
   unsigned* lcs_array;
-  LaceX* lookup_in = NULL;
-  LaceX* stream_in = NULL;
+  FildeshX* lookup_in = NULL;
+  FildeshX* stream_in = NULL;
   const char* lookup_in_arg = NULL;
   const char* stream_in_arg = NULL;
-  LaceO* out = NULL;
+  FildeshO* out = NULL;
   char* buf;
   char* s;
   char** lines;
@@ -151,7 +151,7 @@ main_best_match(unsigned argc, char** argv)
   }
 
   if (exstatus == 0) {
-    lookup_in = open_LaceXF(lookup_in_arg);
+    lookup_in = open_FildeshXF(lookup_in_arg);
     if (!lookup_in) {
       lace_compat_errno_trace();
       fildesh_log_errorf("bestmatch: cannot open %s", lookup_in_arg);
@@ -159,7 +159,7 @@ main_best_match(unsigned argc, char** argv)
     }
   }
   if (exstatus == 0) {
-    stream_in = open_LaceXF(stream_in_arg);
+    stream_in = open_FildeshXF(stream_in_arg);
     if (!stream_in) {
       lace_compat_errno_trace();
       fildesh_log_errorf("bestmatch: cannot open %s", stream_in_arg);
@@ -168,37 +168,37 @@ main_best_match(unsigned argc, char** argv)
   }
 
   if (exstatus != 0) {
-    close_LaceX(lookup_in);
-    close_LaceX(stream_in);
+    close_FildeshX(lookup_in);
+    close_FildeshX(stream_in);
     print_usage();
     return exstatus;
   }
 
-  buf = slurp_LaceX(lookup_in);
+  buf = slurp_FildeshX(lookup_in);
   lines = split_lines(buf, &width);
   lcs_array = (unsigned*)malloc(sizeof(unsigned)*width);
 
-  out = open_LaceOF("-");
+  out = open_FildeshOF("-");
   if (!out) {
     fildesh_log_error("Cannot open stdout.");
     return 1;
   }
 
-  for (s = getline_LaceX(stream_in);
+  for (s = getline_FildeshX(stream_in);
        s;
-       s = getline_LaceX(stream_in))
+       s = getline_FildeshX(stream_in))
   {
     unsigned i;
     i = matching_line (lcs_array, width, s, lines);
-    puts_LaceO(out, lines[i]);
-    putc_LaceO(out, '\n');
+    puts_FildeshO(out, lines[i]);
+    putc_FildeshO(out, '\n');
   }
 
   free (lcs_array);
   free (lines);
-  close_LaceX(lookup_in);
-  close_LaceX(stream_in);
-  close_LaceO(out);
+  close_FildeshX(lookup_in);
+  close_FildeshX(stream_in);
+  close_FildeshO(out);
   return 0;
 }
 

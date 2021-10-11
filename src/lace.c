@@ -4,7 +4,7 @@
  * It uses the ISC license (see the LICENSE file in the top-level directory).
  **/
 
-#include "lace.h"
+#include "fildesh.h"
 #include "lace_builtin.h"
 #include "lace_compat_errno.h"
 #include "lace_compat_fd.h"
@@ -66,16 +66,16 @@ struct Command
   pthread_t thread;
   pid_t pid;
   int status;
-  lace_fd_t stdis; /**< Standard input stream.**/
+  fildesh_fd_t stdis; /**< Standard input stream.**/
   TableT( int ) is; /**< Input streams.**/
-  lace_fd_t stdos; /**< Standard output stream.**/
+  fildesh_fd_t stdos; /**< Standard output stream.**/
   TableT( int ) os; /** Output streams.**/
   /** File descriptor to close upon exit.**/
   TableT( int ) exit_fds;
   /** If >= 0, this is a file descriptor that will
    * close when the program command is safe to run.
    **/
-  lace_fd_t exec_fd;
+  fildesh_fd_t exec_fd;
   /** Whether exec_fd actually has bytes, rather than just used for signaling.*/
   bool exec_fd_has_bytes;
   /** If != NULL, this is the contents of a file to execute.**/
@@ -265,13 +265,13 @@ static char* lace_uint_strdup(unsigned x) {
   return lace_strdup(buf);
 }
 
-static char* lace_fd_strdup(lace_fd_t fd) {
+static char* lace_fd_strdup(fildesh_fd_t fd) {
   char buf[FILDESH_INT_BASE10_SIZE_MAX];
   fildesh_encode_int_base10(buf, fd);
   return lace_strdup(buf);
 }
 
-static char* lace_fd_path_strdup(lace_fd_t fd) {
+static char* lace_fd_path_strdup(fildesh_fd_t fd) {
   char buf[FILDESH_FD_PATH_SIZE_MAX];
   fildesh_encode_fd_path(buf, fd);
   return lace_strdup(buf);
@@ -361,12 +361,12 @@ perror_Command(const Command* cmd, const char* msg, const char* msg2)
  * $(H: var_name) value
  **/
   static char*
-parse_here_doc (LaceX* in, const char* term, size_t* text_nlines)
+parse_here_doc (FildeshX* in, const char* term, size_t* text_nlines)
 {
   char* s;
   const size_t term_length = strlen(term);
-  LaceX slice;
-  LaceX* content;
+  FildeshX slice;
+  FildeshX* content;
 
   /* Check for the single-line case.*/
   if (term[3] == ':')
@@ -381,9 +381,9 @@ parse_here_doc (LaceX* in, const char* term, size_t* text_nlines)
   }
 
   content = open_FildeshXA();
-  for (slice = sliceline_LaceX(in);
+  for (slice = sliceline_FildeshX(in);
        slice.at;
-       slice = sliceline_LaceX(in))
+       slice = sliceline_FildeshX(in))
   {
     *text_nlines += 1;
     if (slice.size >= term_length) {
@@ -391,25 +391,25 @@ parse_here_doc (LaceX* in, const char* term, size_t* text_nlines)
         break;
       }
     }
-    memcpy(grow_LaceX(content, slice.size), slice.at, slice.size);
-    *grow_LaceX(content, 1) = '\n';
+    memcpy(grow_FildeshX(content, slice.size), slice.at, slice.size);
+    *grow_FildeshX(content, 1) = '\n';
   }
   if (content->size > 0) {content->size -= 1;}
-  *grow_LaceX(content, 1) = '\0';
+  *grow_FildeshX(content, 1) = '\0';
 
   s = content->at;
   content->at = NULL;
-  close_LaceX(content);
+  close_FildeshX(content);
   return s;
 }
 
   static char*
-parse_line (LaceX* xf, size_t* text_nlines)
+parse_line (FildeshX* xf, size_t* text_nlines)
 {
   AlphaTab line = DEFAULT_AlphaTab;
   char* s;
 
-  while ((s = getline_LaceX(xf)))
+  while ((s = getline_FildeshX(xf)))
   {
     unsigned n;
     bool multiline = false;
@@ -505,7 +505,7 @@ sep_line (TableT(cstr)* args, char* s)
 
 static
   int
-parse_file(TableT(Command)* cmds, LaceX* in, const char* this_filename)
+parse_file(TableT(Command)* cmds, FildeshX* in, const char* this_filename)
 {
   int istat = 0;
   size_t text_nlines = 0;
@@ -534,12 +534,12 @@ parse_file(TableT(Command)* cmds, LaceX* in, const char* this_filename)
     else if (pfxeq_cstr ("$(<<", line))
     {
       char* filename = &line[4];
-      LaceX* src = NULL;
+      FildeshX* src = NULL;
 
       filename = &filename[count_ws (filename)];
       filename[strcspn (filename, ")")] = '\0';
 
-      src = open_sibling_LaceXF(this_filename, filename);
+      src = open_sibling_FildeshXF(this_filename, filename);
       if (!src) {
         perror_Command(cmd, "Failed to include file", filename);
         istat = -1;
@@ -548,8 +548,8 @@ parse_file(TableT(Command)* cmds, LaceX* in, const char* this_filename)
       lose_Command (TopTable( *cmds ));
       MPopTable( *cmds, 1 );
 
-      istat = parse_file(cmds, src, filename_LaceXF(src));
-      close_LaceX(src);
+      istat = parse_file(cmds, src, filename_FildeshXF(src));
+      close_FildeshX(src);
     }
     else if (pfxeq_cstr ("$(>", line) ||
         pfxeq_cstr ("$(set", line))
@@ -878,13 +878,13 @@ setup_commands(TableT(Command)* cmds)
           cmd->args.s[arg_q] = sym->as.here_doc;
         }
         else if (sym->kind == ODescVal) {
-          lace_fd_t fd = sym->as.file_desc;
+          fildesh_fd_t fd = sym->as.file_desc;
           sym->kind = NSymValKinds;
           add_iarg_Command (cmd, fd, true);
           cmd->args.s[arg_q] = NULL;
         }
         else if (sym->kind == DefVal) {
-          lace_fd_t fd[2];
+          fildesh_fd_t fd[2];
           Command* xcmd = &cmds->s[sym->cmd_idx];
 
           if (0 != lace_compat_fd_pipe(&fd[1], &fd[0])) {
@@ -1053,7 +1053,7 @@ setup_commands(TableT(Command)* cmds)
       else if (kind == ODescVal || kind == ODescFileVal ||
           kind == IODescVal)
       {
-        lace_fd_t fd[2];
+        fildesh_fd_t fd[2];
         SymVal* sym = getf_SymVal (add_map, arg);
         sym->kind = ODescVal;
         sym->cmd_idx = i;
@@ -1079,7 +1079,7 @@ setup_commands(TableT(Command)* cmds)
       }
       else if (kind == IFutureDescVal || kind == IFutureDescFileVal)
       {
-        lace_fd_t fd[2];
+        fildesh_fd_t fd[2];
         SymVal* sym = getf_SymVal (add_map, arg);
         sym->kind = IFutureDescVal;
         sym->cmd_idx = i;
@@ -1340,7 +1340,7 @@ LACE_POSIX_THREAD_CALLBACK(builtin_command_thread_fn, BuiltinCommandThreadArg*, 
   typedef struct LaceBuiltinMainMap LaceBuiltinMainMap;
   struct LaceBuiltinMainMap {
     const char* name;
-    int (*main_fn)(unsigned, char**, LaceX**, LaceO**);
+    int (*main_fn)(unsigned, char**, FildeshX**, FildeshO**);
   };
   static const LaceBuiltinMainMap builtins[] = {
     {"add", lace_builtin_add_main},
@@ -1361,9 +1361,9 @@ LACE_POSIX_THREAD_CALLBACK(builtin_command_thread_fn, BuiltinCommandThreadArg*, 
   unsigned offset = 0;
   unsigned argc;
   char** argv;
-  LaceX** inputs = NULL;
-  LaceO** outputs = NULL;
-  int (*main_fn)(unsigned, char**, LaceX**, LaceO**) = NULL;
+  FildeshX** inputs = NULL;
+  FildeshO** outputs = NULL;
+  int (*main_fn)(unsigned, char**, FildeshX**, FildeshO**) = NULL;
   unsigned i;
   char* name = NULL;
   bool only_argv = false;
@@ -1395,18 +1395,18 @@ LACE_POSIX_THREAD_CALLBACK(builtin_command_thread_fn, BuiltinCommandThreadArg*, 
   argc -= offset;
   argv = &st->argv[offset];
   only_argv = (0 == strcmp("execfd", name));
-  inputs = (LaceX**) malloc(sizeof(LaceX*) * (argc+1));
-  outputs = (LaceO**) malloc(sizeof(LaceO*) * (argc+1));
+  inputs = (FildeshX**) malloc(sizeof(FildeshX*) * (argc+1));
+  outputs = (FildeshO**) malloc(sizeof(FildeshO*) * (argc+1));
   for (i = 0; i <= argc; ++i) {
     inputs[i] = NULL;
     outputs[i] = NULL;
   }
   if (cmd->stdis >= 0) {
-    inputs[0] = open_fd_LaceX(cmd->stdis);
+    inputs[0] = open_fd_FildeshX(cmd->stdis);
     cmd->stdis = -1;
   }
   if (cmd->stdos >= 0) {
-    outputs[0] = open_fd_LaceO(cmd->stdos);
+    outputs[0] = open_fd_FildeshO(cmd->stdos);
     cmd->stdos = -1;
   }
 
@@ -1478,7 +1478,7 @@ add_inheritfd_flags_Command(TableT(cstr)* argv, Command* cmd, bool inprocess) {
      * - The fds providing input arguments. See inprocess else clause.
      */
     for (i = 0; i < cmd->is.sz; ++i) {
-      const lace_fd_t fd = cmd->is.s[i];
+      const fildesh_fd_t fd = cmd->is.s[i];
       if (fd != cmd->exec_fd) {
         PushTable( *argv, lace_strdup("-inheritfd") );
         PushTable( *argv, lace_fd_strdup(fd) );
@@ -1488,7 +1488,7 @@ add_inheritfd_flags_Command(TableT(cstr)* argv, Command* cmd, bool inprocess) {
      * - The fds that must be closed on exit.
      */
     for (i = 0; i < cmd->os.sz; ++i) {
-      const lace_fd_t fd = cmd->os.s[i];
+      const fildesh_fd_t fd = cmd->os.s[i];
       bool inherit = true;
       unsigned j;
       for (j = 0; j < cmd->exit_fds.sz && inherit; ++j) {
@@ -1666,12 +1666,12 @@ spawn_commands(const char* lace_exe, TableT(Command) cmds,
 
   int
 lace_builtin_lace_main(unsigned argc, char** argv,
-                       LaceX** inputv, LaceO** outputv)
+                       FildeshX** inputv, FildeshO** outputv)
 {
   DeclTable( AlphaTab, script_args );
   TableT(Command)* cmds = NULL;
   bool use_stdin = true;
-  LaceX* script_in = NULL;
+  FildeshX* script_in = NULL;
   unsigned argi = 1;
   unsigned i;
   Associa alias_map[1];
@@ -1717,8 +1717,8 @@ lace_builtin_lace_main(unsigned argc, char** argv,
         size_t sz;
         arg = argv[argi++];
         sz = strlen(arg);
-        memcpy(grow_LaceX(script_in, sz), arg, sz);
-        *grow_LaceX(script_in, 1) = '\n';
+        memcpy(grow_FildeshX(script_in, sz), arg, sz);
+        *grow_FildeshX(script_in, 1) = '\n';
       }
     }
     else if (eq_cstr (arg, "-as")) {
@@ -1747,7 +1747,7 @@ lace_builtin_lace_main(unsigned argc, char** argv,
     }
     else if (eq_cstr (arg, "-stdin")) {
       const char* stdin_filepath = argv[argi++];
-      lace_fd_t fd = lace_arg_open_readonly(stdin_filepath);
+      fildesh_fd_t fd = fildesh_arg_open_readonly(stdin_filepath);
       if (fd >= 0) {
         istat = lace_compat_fd_move_to(0, fd);
         if (istat != 0) {
@@ -1761,7 +1761,7 @@ lace_builtin_lace_main(unsigned argc, char** argv,
     }
     else if (eq_cstr (arg, "-stdout")) {
       const char* stdout_filepath = argv[argi++];
-      lace_fd_t fd = lace_arg_open_writeonly(stdout_filepath);
+      fildesh_fd_t fd = fildesh_arg_open_writeonly(stdout_filepath);
       if (fd >= 0) {
         istat = lace_compat_fd_move_to(1, fd);
         if (istat != 0) {
@@ -1775,7 +1775,7 @@ lace_builtin_lace_main(unsigned argc, char** argv,
     }
     else if (eq_cstr (arg, "-stderr")) {
       const char* stderr_filepath = argv[argi++];
-      lace_fd_t fd = lace_arg_open_writeonly(stderr_filepath);
+      fildesh_fd_t fd = fildesh_arg_open_writeonly(stderr_filepath);
       if (fd >= 0) {
         istat = lace_compat_fd_move_to(2, fd);
         if (istat != 0) {
@@ -1800,7 +1800,7 @@ lace_builtin_lace_main(unsigned argc, char** argv,
       use_stdin = false;
       if (!arg) {
         PushTable( script_args, cons1_AlphaTab("/dev/fd/something") );
-        script_in = open_arg_LaceXF(argi-1, argv, inputv);
+        script_in = open_arg_FildeshXF(argi-1, argv, inputv);
         if (!script_in) {
           fildesh_log_errorf("Cannot read script from builtin.");
           exstatus = 66;
@@ -1808,7 +1808,7 @@ lace_builtin_lace_main(unsigned argc, char** argv,
         break;
       }
       PushTable( script_args, cons1_AlphaTab(arg) );
-      script_in = open_arg_LaceXF(argi-1, argv, inputv);
+      script_in = open_arg_FildeshXF(argi-1, argv, inputv);
       if (!script_in) {
         lace_compat_errno_trace();
         fildesh_log_errorf("Cannot read script. File: %s", arg);
@@ -1829,7 +1829,7 @@ lace_builtin_lace_main(unsigned argc, char** argv,
   push_losefn_sysCx(lose_Commands, cmds);
 
   if (use_stdin) {
-    script_in = open_arg_LaceXF(0, argv, inputv);
+    script_in = open_arg_FildeshXF(0, argv, inputv);
     PushTable( script_args, cons1_AlphaTab("/dev/stdin") );
   }
 
@@ -1873,8 +1873,8 @@ lace_builtin_lace_main(unsigned argc, char** argv,
   LoseTable( script_args );
 
   lace_compat_errno_trace();
-  istat = parse_file(cmds, script_in, filename_LaceXF(script_in));
-  close_LaceX(script_in);
+  istat = parse_file(cmds, script_in, filename_FildeshXF(script_in));
+  close_FildeshX(script_in);
   lace_compat_errno_trace();
 
   PackTable( *cmds );

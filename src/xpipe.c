@@ -4,7 +4,7 @@
  * to the spawned process' stdin.
  **/
 
-#include "lace.h"
+#include "fildesh.h"
 #include "lace_compat_errno.h"
 #include "lace_compat_fd.h"
 #include "lace_compat_sh.h"
@@ -25,14 +25,14 @@ run_with_line(const char* lace_exe, unsigned argc, const char** argv,
   int istat;
   unsigned offset = 0;
   unsigned argi = 0;
-  LaceO* to_spawned = NULL;
+  FildeshO* to_spawned = NULL;
   lace_compat_pid_t pid;
 
   {
     lace_compat_fd_t to_spawned_fd = -1;
     istat = lace_compat_fd_pipe(&to_spawned_fd, &source_fd);
     if (istat != 0) {lace_compat_errno_trace(); return;}
-    to_spawned = open_fd_LaceO(to_spawned_fd);
+    to_spawned = open_fd_FildeshO(to_spawned_fd);
     if (!to_spawned) {return;}
   }
 
@@ -49,12 +49,12 @@ run_with_line(const char* lace_exe, unsigned argc, const char** argv,
   pid = lace_compat_fd_spawnvp(source_fd, 1, 2, NULL, actual_argv);
   free(actual_argv);
   if (pid >= 0) {
-    puts_LaceO(to_spawned, line);
-    putc_LaceO(to_spawned, '\n');
+    puts_FildeshO(to_spawned, line);
+    putc_FildeshO(to_spawned, '\n');
   } else {
     fildesh_log_error("Spawn failed.");
   }
-  close_LaceO(to_spawned);
+  close_FildeshO(to_spawned);
   if (pid >= 0) {
     istat = lace_compat_sh_wait(pid);
     if (istat != 0) {
@@ -67,7 +67,7 @@ run_with_line(const char* lace_exe, unsigned argc, const char** argv,
   int
 main_xpipe(unsigned argc, char** argv)
 {
-  LaceX* in = NULL;
+  FildeshX* in = NULL;
   const char* s;
   unsigned argi = 1;
 
@@ -76,16 +76,16 @@ main_xpipe(unsigned argc, char** argv)
     return 64;
   }
 
-  in = open_LaceXF("-");
+  in = open_FildeshXF("-");
   if (!in) {
     fildesh_log_error("Cannot open stdin.");
     return 1;
   }
 
-  for (s = getline_LaceX(in); s; s = getline_LaceX(in)) {
+  for (s = getline_FildeshX(in); s; s = getline_FildeshX(in)) {
     run_with_line(argv[0], argc - argi, (const char**)&argv[argi], s);
   }
 
-  close_LaceX(in);
+  close_FildeshX(in);
   return 0;
 }

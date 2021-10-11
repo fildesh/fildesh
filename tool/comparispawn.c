@@ -5,7 +5,7 @@
  *   comparispawn expected-output.txt ./bin/myprog arg1 arg2
  **/
 
-#include "lace.h"
+#include "fildesh.h"
 #include "lace_compat_fd.h"
 #include "lace_tool.h"
 #include <stdio.h>
@@ -25,8 +25,8 @@ LACE_TOOL_PIPEM_CALLBACK(run_fn, in_fd, out_fd, ComparispawnFnArg*, st) {
 
 int main(int argc, char** argv)
 {
-  LaceX* expect_in = NULL;
-  LaceX* actual_in = NULL;
+  FildeshX* expect_in = NULL;
+  FildeshX* actual_in = NULL;
   char* output_data = NULL;
   size_t output_size;
   ComparispawnFnArg st[1];
@@ -49,7 +49,7 @@ int main(int argc, char** argv)
     return 1;
   }
 
-  expect_in = open_LaceXF(argv[1]);
+  expect_in = open_FildeshXF(argv[1]);
   if (!expect_in) {
     if (output_data) {free(output_data);}
     fprintf(stderr,
@@ -58,11 +58,11 @@ int main(int argc, char** argv)
     return 1;
   }
   actual_in = open_FildeshXA();
-  memcpy(grow_LaceX(actual_in, output_size), output_data, output_size);
+  memcpy(grow_FildeshX(actual_in, output_size), output_data, output_size);
 
   for (line_id = 1; all_match; ++line_id) {
-    const char* expect_s = getline_LaceX(expect_in);
-    const char* actual_s = getline_LaceX(actual_in);
+    const char* expect_s = getline_FildeshX(expect_in);
+    const char* actual_s = getline_FildeshX(actual_in);
 
     if (!expect_s || !actual_s) {
       if (expect_s) {
@@ -90,8 +90,8 @@ int main(int argc, char** argv)
     }
   }
   free(output_data);
-  close_LaceX(actual_in);
-  close_LaceX(expect_in);
+  close_FildeshX(actual_in);
+  close_FildeshX(expect_in);
   return (all_match ? 0 : 1);
 }
 

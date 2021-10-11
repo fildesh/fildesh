@@ -2,7 +2,7 @@
  * \file elastic_pthread.c
  * Echo stdin to stdout with an arbitrary sized buffer.
  **/
-#include "lace.h"
+#include "fildesh.h"
 #include "lace_posix_thread.h"
 
 #include <assert.h>
@@ -20,8 +20,8 @@ struct WritingThreadState
   pthread_t thread;
   pthread_cond_t buf_cond;
   pthread_mutex_t buf_mutex;
-  LaceO buf;
-  LaceO* outfile;
+  FildeshO buf;
+  FildeshO* outfile;
   const char* filename;
 };
 
@@ -44,8 +44,8 @@ lose_WritingThreadState(WritingThreadState* st)
 {
   pthread_cond_destroy(&st->buf_cond);
   pthread_mutex_destroy(&st->buf_mutex);
-  close_LaceO(&st->buf);
-  close_LaceO(st->outfile);
+  close_FildeshO(&st->buf);
+  close_FildeshO(st->outfile);
 }
 
 static
@@ -81,12 +81,12 @@ LACE_POSIX_THREAD_CALLBACK(writing_thread_fn, WritingThreadState*, st)
     }
     StateMsg("done waiting", st->filename);
     done = st->done;
-    memcpy(grow_LaceO(st->outfile, st->buf.size),
+    memcpy(grow_FildeshO(st->outfile, st->buf.size),
            &st->buf.at[0], st->buf.size);
     st->buf.size = 0;
     pthread_mutex_unlock(&st->buf_mutex);
 
-    flush_LaceO(st->outfile);
+    flush_FildeshO(st->outfile);
     if (st->outfile->size > 0) {
       break;
     }
@@ -102,15 +102,15 @@ LACE_POSIX_THREAD_CALLBACK(writing_thread_fn, WritingThreadState*, st)
   }
 
   StateMsg("end of", st->filename);
-  close_LaceO(&st->buf);
-  close_LaceO(st->outfile);
+  close_FildeshO(&st->buf);
+  close_FildeshO(st->outfile);
   st->outfile = NULL;
 }
 
 /** Reading is actually done on the main thread.**/
 static
   void
-reading_routine(LaceX* in, WritingThreadState* wstates, size_t wstate_count)
+reading_routine(FildeshX* in, WritingThreadState* wstates, size_t wstate_count)
 {
   int istat;
   unsigned i;
@@ -128,7 +128,7 @@ reading_routine(LaceX* in, WritingThreadState* wstates, size_t wstate_count)
 
   if (nspawned == wstate_count) {
     while (true) {
-      const size_t nbytes = read_LaceX(in);
+      const size_t nbytes = read_FildeshX(in);
       if (nbytes == 0) {
         break;
       }
@@ -138,7 +138,7 @@ reading_routine(LaceX* in, WritingThreadState* wstates, size_t wstate_count)
         pthread_mutex_lock(&st->buf_mutex);
         if (!st->done) {
           StateMsg("catting", st->filename);
-          memcpy(grow_LaceO(&st->buf, nbytes),
+          memcpy(grow_FildeshO(&st->buf, nbytes),
                  &in->at[in->off],
                  nbytes);
           pthread_cond_signal(&st->buf_cond);
@@ -147,10 +147,10 @@ reading_routine(LaceX* in, WritingThreadState* wstates, size_t wstate_count)
       }
       in->off += nbytes;
       assert(in->off == in->size);
-      maybe_flush_LaceX(in);
+      maybe_flush_FildeshX(in);
     }
   }
-  close_LaceX(in);
+  close_FildeshX(in);
   StateMsg("done reading", "input");
 
   for (i = 0; i < nspawned; ++i) {
@@ -181,11 +181,11 @@ static void cleanup_wstates(WritingThreadState* wstates, unsigned wstate_count) 
 
   int
 lace_builtin_elastic_pthread_main(unsigned argc, char** argv,
-                                  LaceX** inputv, LaceO** outputv)
+                                  FildeshX** inputv, FildeshO** outputv)
 {
   WritingThreadState* wstates = NULL;
   unsigned wstate_count = 0;
-  LaceX* in = NULL;
+  FildeshX* in = NULL;
   unsigned argi;
 
   StateMsg("begin", "main_elastic()");
@@ -198,7 +198,7 @@ lace_builtin_elastic_pthread_main(unsigned argc, char** argv,
     const char* arg = argv[argi];
     if (0 == strcmp(arg, "-x")) {
       const char* xfilename = argv[++argi];
-      in = open_arg_LaceXF(argi, argv, inputv);
+      in = open_arg_FildeshXF(argi, argv, inputv);
       if (!in) {
         fildesh_log_errorf("failed to open: %s", xfilename);
         cleanup_wstates(wstates, wstate_count);
@@ -218,9 +218,9 @@ lace_builtin_elastic_pthread_main(unsigned argc, char** argv,
       st = &wstates[wstate_count++];
       init_WritingThreadState(st);
 
-      st->outfile = open_arg_LaceOF(argi, argv, outputv);
+      st->outfile = open_arg_FildeshOF(argi, argv, outputv);
       if (st->outfile) {
-        st->filename = filename_LaceOF(st->outfile);
+        st->filename = filename_FildeshOF(st->outfile);
       } else {
         fildesh_log_errorf("failed to open: %s", argv[argi]);
         cleanup_wstates(wstates, wstate_count);
@@ -231,7 +231,7 @@ lace_builtin_elastic_pthread_main(unsigned argc, char** argv,
   }
 
   if (!in) {
-    in = open_arg_LaceXF(0, argv, inputv);
+    in = open_arg_FildeshXF(0, argv, inputv);
     if (!in) {
       fildesh_log_error("Failed to open: /dev/stdin");
       cleanup_wstates(wstates, wstate_count);
@@ -243,7 +243,7 @@ lace_builtin_elastic_pthread_main(unsigned argc, char** argv,
     WritingThreadState* st = &wstates[wstate_count++];
     init_WritingThreadState(st);
     st->filename = "-";
-    st->outfile = open_arg_LaceOF(0, argv, outputv);
+    st->outfile = open_arg_FildeshOF(0, argv, outputv);
     if (!st->outfile) {
       fildesh_log_error("Failed to open: /dev/stdout");
       return 1;

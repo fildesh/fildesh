@@ -1,22 +1,22 @@
 /** Simple utility to gobble a stream.**/
-#include "lace.h"
+#include "fildesh.h"
 
   int
 lace_builtin_void_main(unsigned argc, char** argv,
-                       LaceX** inputs, LaceO** outputs)
+                       FildeshX** inputs, FildeshO** outputs)
 {
-  LaceX* in = open_arg_LaceXF(0, argv, inputs);
+  FildeshX* in = open_arg_FildeshXF(0, argv, inputs);
   (void) argc;
   if (!in) {return 1;}
 
-  while (0 < read_LaceX(in)) {
+  while (0 < read_FildeshX(in)) {
     in->size = 0;
-    flush_LaceX(in);
+    flush_FildeshX(in);
   }
-  close_LaceX(in);
+  close_FildeshX(in);
 
   if (outputs && outputs[0]) {
-    close_LaceO(open_arg_LaceOF(0, argv, outputs));
+    close_FildeshO(open_arg_FildeshOF(0, argv, outputs));
   }
   return 0;
 }

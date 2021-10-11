@@ -1,4 +1,4 @@
-#include "lace.h"
+#include "fildesh.h"
 #include "lace_compat_fd.h"
 #include "lace_tool.h"
 #include <assert.h>
@@ -11,7 +11,7 @@ struct PipemFnArg {
   const char* shout_exe;
 };
 
-int lace_builtin_time2sec_main(int, char**, LaceX**, LaceO**);
+int lace_builtin_time2sec_main(int, char**, FildeshX**, FildeshO**);
 
 LACE_TOOL_PIPEM_CALLBACK(run_waitdo, in_fd, out_fd, const PipemFnArg*, st) {
   int istat = lace_compat_fd_spawnlp_wait(

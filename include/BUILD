@@ -1,6 +1,5 @@
 exports_files([
     "fildesh.h",
-    "lace.h",
     "lace_builtin.h",
     "lace_compat_errno.h",
     "lace_compat_fd.h",

@@ -3,12 +3,12 @@
  * The longer time intervals like days or hours need not be present
  * for this to work properly. Field widths are not fixed either.
  */
-#include "lace.h"
+#include "fildesh.h"
 
 #include <stdio.h>
 #include <string.h>
 
-static unsigned conv_line(LaceX* in)
+static unsigned conv_line(FildeshX* in)
 {
   unsigned i = 0;
   unsigned m;
@@ -16,9 +16,9 @@ static unsigned conv_line(LaceX* in)
   unsigned x = 0;
 
   for (i = 0; i < 4; ++i) {
-    LaceX slice = slicechr_LaceX(in, ':');
+    FildeshX slice = slicechr_FildeshX(in, ':');
     int tmp_int = -1;
-    if (parse_int_LaceX(&slice, &tmp_int) && tmp_int >= 0) {
+    if (parse_int_FildeshX(&slice, &tmp_int) && tmp_int >= 0) {
       a[i] = (unsigned) tmp_int;
     } else {
       break;
@@ -41,12 +41,12 @@ static unsigned conv_line(LaceX* in)
 
   int
 lace_builtin_time2sec_main(unsigned argc, char** argv,
-                           LaceX** inputs, LaceO** outputs)
+                           FildeshX** inputs, FildeshO** outputs)
 {
   unsigned argi = 1;
-  LaceX* in = NULL;
-  LaceO* out = NULL;
-  LaceX slice;
+  FildeshX* in = NULL;
+  FildeshO* out = NULL;
+  FildeshX slice;
   unsigned width = 0;
 
   if (argi < argc && 0 == strcmp("-w", argv[argi])) {
@@ -65,31 +65,31 @@ lace_builtin_time2sec_main(unsigned argc, char** argv,
     return 64;
   }
 
-  in = open_arg_LaceXF(0, argv, inputs);
-  out = open_arg_LaceOF(0, argv, outputs);
+  in = open_arg_FildeshXF(0, argv, inputs);
+  out = open_arg_FildeshOF(0, argv, outputs);
   if (!in || !out) {
-    close_LaceX(in);
-    close_LaceO(out);
+    close_FildeshX(in);
+    close_FildeshO(out);
     fildesh_log_error("Cannot open stdio!");
     return 1;
   }
 
-  for (slice = sliceline_LaceX(in);
+  for (slice = sliceline_FildeshX(in);
        slice.size > 0;
-       slice = sliceline_LaceX(in))
+       slice = sliceline_FildeshX(in))
   {
     char buf[20];
     unsigned x = conv_line(&slice);
     unsigned n;
     sprintf(buf, "%u", x);
     for (n = strlen(buf); n < width; ++n) {
-      putc_LaceO(out, ' ');
+      putc_FildeshO(out, ' ');
     }
-    print_int_LaceO(out, x);
-    putc_LaceO(out, '\n');
+    print_int_FildeshO(out, x);
+    putc_FildeshO(out, '\n');
   }
-  close_LaceX(in);
-  close_LaceO(out);
+  close_FildeshX(in);
+  close_FildeshO(out);
   return 0;
 }
 

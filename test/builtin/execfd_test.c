@@ -1,5 +1,5 @@
 
-#include "lace.h"
+#include "fildesh.h"
 #include "lace_compat_fd.h"
 #include "lace_compat_file.h"
 #include "lace_tool.h"
@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-int lace_builtin_execfd_main(unsigned, char**, LaceX**, LaceO**);
+int lace_builtin_execfd_main(unsigned, char**, FildeshX**, FildeshO**);
 
 typedef struct PipemFnArg PipemFnArg;
 struct PipemFnArg {
@@ -56,7 +56,7 @@ LACE_TOOL_PIPEM_CALLBACK(run_execfd, in_fd, out_fd, PipemFnArg*, st) {
 int main(int argc, char** argv) {
   char* zec_exe;
   char* tmp_exe;
-  LaceX* zec_exe_in;
+  FildeshX* zec_exe_in;
   const char* spawn_argv[] = {
     "execfd",
     "-exe", "replace_with_tmp_exe",
@@ -91,8 +91,8 @@ int main(int argc, char** argv) {
   st->argv = spawn_argv;
 
   st->argv[2] = tmp_exe;
-  zec_exe_in = open_LaceXF(zec_exe);
-  input_data = slurp_LaceX(zec_exe_in);
+  zec_exe_in = open_FildeshXF(zec_exe);
+  input_data = slurp_FildeshX(zec_exe_in);
   input_size = zec_exe_in->size;
 
   output_size = lace_tool_pipem(
@@ -105,7 +105,7 @@ int main(int argc, char** argv) {
   assert(output_size == expect_size);
   assert(0 == memcmp(output_data, expect_data, expect_size));
 
-  close_LaceX(zec_exe_in);
+  close_FildeshX(zec_exe_in);
   free(output_data);
   free(tmp_exe);
   return 0;

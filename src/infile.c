@@ -1,5 +1,5 @@
 
-#include "lace.h"
+#include "fildesh.h"
 #include "lace_compat_fd.h"
 #include "lace_compat_string.h"
 
@@ -9,8 +9,8 @@
 
 typedef struct FildeshXF FildeshXF;
 struct FildeshXF {
-  LaceX base;
-  lace_fd_t fd;
+  FildeshX base;
+  fildesh_fd_t fd;
   /* unsigned basename_offset; */
   char* filename;
 };
@@ -22,7 +22,7 @@ read_FildeshXF(FildeshXF* xf)
 {
   static const size_t chunksize = 4096;
   const size_t orig_size = xf->base.size;
-  char* buf = grow_LaceX(&xf->base, chunksize);
+  char* buf = grow_FildeshX(&xf->base, chunksize);
   xf->base.size = orig_size + lace_compat_fd_read(xf->fd, buf, chunksize);
 }
 
@@ -55,7 +55,7 @@ static inline FildeshXF default_FildeshXF() {
   return tmp;
 }
 
-static lace_fd_t lace_open_null_readonly() {
+static fildesh_fd_t lace_open_null_readonly() {
   lace_compat_fd_t fd = -1;
   lace_compat_fd_t tmp_fd = -1;
   int istat;
@@ -66,7 +66,7 @@ static lace_fd_t lace_open_null_readonly() {
   return fd;
 }
 
-static LaceX* open_null_LaceXF() {
+static FildeshX* open_null_FildeshXF() {
   FildeshXF* xf;
   lace_compat_fd_t fd = lace_open_null_readonly();
   if (fd < 0) {return NULL;}
@@ -77,14 +77,14 @@ static LaceX* open_null_LaceXF() {
   return &xf->base;
 }
 
-  LaceX*
-open_LaceXF(const char* filename)
+  FildeshX*
+open_FildeshXF(const char* filename)
 {
-  return open_sibling_LaceXF(NULL, filename);
+  return open_sibling_FildeshXF(NULL, filename);
 }
 
-  LaceX*
-open_sibling_LaceXF(const char* sibling, const char* filename)
+  FildeshX*
+open_sibling_FildeshXF(const char* sibling, const char* filename)
 {
   static const char dev_stdin[] = "/dev/stdin";
   static const char dev_null[] = "/dev/null";
@@ -96,16 +96,16 @@ open_sibling_LaceXF(const char* sibling, const char* filename)
   if (!filename) {return NULL;}
 
   if (0 == strcmp("-", filename) || 0 == strcmp(dev_stdin, filename)) {
-    return open_fd_LaceX(0);
+    return open_fd_FildeshX(0);
   }
   if (0 == strcmp(dev_null, filename)) {
-    return open_null_LaceXF();
+    return open_null_FildeshXF();
   }
   if (0 == strncmp(dev_fd_prefix, filename, dev_fd_prefix_length)) {
     int fd = -1;
     char* s = fildesh_parse_int(&fd, &filename[dev_fd_prefix_length]);
     if (!s) {return NULL;}
-    return open_fd_LaceX(fd);
+    return open_fd_FildeshX(fd);
   }
 
   *xf = default_FildeshXF();
@@ -136,8 +136,8 @@ open_sibling_LaceXF(const char* sibling, const char* filename)
   return NULL;
 }
 
-  lace_fd_t
-lace_arg_open_readonly(const char* filename)
+  fildesh_fd_t
+fildesh_arg_open_readonly(const char* filename)
 {
   static const char dev_stdin[] = "/dev/stdin";
   static const char dev_null[] = "/dev/null";
@@ -162,8 +162,8 @@ lace_arg_open_readonly(const char* filename)
   return lace_compat_file_open_readonly(filename);
 }
 
-  LaceX*
-open_fd_LaceX(lace_fd_t fd)
+  FildeshX*
+open_fd_FildeshX(fildesh_fd_t fd)
 {
   char filename[FILDESH_FD_PATH_SIZE_MAX];
   unsigned filename_size;
@@ -181,11 +181,11 @@ open_fd_LaceX(lace_fd_t fd)
   return &xf->base;
 }
 
-  LaceX*
-open_arg_LaceXF(unsigned argi, char** argv, LaceX** inputv)
+  FildeshX*
+open_arg_FildeshXF(unsigned argi, char** argv, FildeshX** inputv)
 {
   if (inputv && inputv[argi]) {
-    LaceX* ret = inputv[argi];
+    FildeshX* ret = inputv[argi];
     inputv[argi] = NULL;  /* Claim it.*/
     return ret;
   }
@@ -193,19 +193,19 @@ open_arg_LaceXF(unsigned argi, char** argv, LaceX** inputv)
   if (argi == 0 || (argv[argi][0] == '-' && argv[argi][1] == '\0')) {
     if (inputv) {
       if (inputv[0]) {
-        LaceX* ret = inputv[0];
+        FildeshX* ret = inputv[0];
         inputv[0] = NULL;  /* Claim it.*/
         return ret;
       } else {
         return NULL; /* Better not steal the real stdin.*/
       }
     }
-    return open_fd_LaceX(0);
+    return open_fd_FildeshX(0);
   }
-  return open_LaceXF(argv[argi]);
+  return open_FildeshXF(argv[argi]);
 }
 
-const char* filename_LaceXF(LaceX* in) {
+const char* filename_FildeshXF(FildeshX* in) {
   if (in->vt != DEFAULT_FildeshXF_FildeshX_VTable) {
     return NULL;
   }

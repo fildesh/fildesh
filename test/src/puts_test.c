@@ -1,5 +1,5 @@
 
-#include "lace.h"
+#include "fildesh.h"
 
 #include <assert.h>
 #include <stdlib.h>
@@ -25,7 +25,7 @@ DEFINE_FildeshO_VTable(MockFildeshOF, o);
 
   void
 write_MockFildeshOF(MockFildeshOF* of) {
-  LaceO* o = &of->o;
+  FildeshO* o = &of->o;
   unsigned i;
 
   for (i = 0; i < of->chunk_size && o->off < o->size; ++i) {
@@ -46,7 +46,7 @@ param3_test_puts(unsigned chunk_size, fildesh_lgsize_t flush_lgsize, const char*
     "this is the fifth line",
   };
   MockFildeshOF of[1] = { DEFAULT_MockFildeshOF };
-  LaceO* o = &of->o;
+  FildeshO* o = &of->o;
   of->chunk_size = chunk_size;
   of->o.flush_lgsize = flush_lgsize;
   of->content = (char*)malloc((30+strlen(delim))*5+1);
@@ -57,31 +57,31 @@ param3_test_puts(unsigned chunk_size, fildesh_lgsize_t flush_lgsize, const char*
           lines[3], delim,
           lines[4]);
 
-  puts_LaceO(o, lines[0]);
-  puts_LaceO(o, delim);
+  puts_FildeshO(o, lines[0]);
+  puts_FildeshO(o, delim);
   assert(flush_lgsize == 0 || (o->size >> flush_lgsize) == 0);
 
-  puts_LaceO(o, lines[1]);
-  puts_LaceO(o, delim);
+  puts_FildeshO(o, lines[1]);
+  puts_FildeshO(o, delim);
   assert(flush_lgsize == 0 || (o->size >> flush_lgsize) == 0);
 
-  puts_LaceO(o, lines[2]);
-  puts_LaceO(o, delim);
+  puts_FildeshO(o, lines[2]);
+  puts_FildeshO(o, delim);
   assert(flush_lgsize == 0 || (o->size >> flush_lgsize) == 0);
 
-  puts_LaceO(o, lines[3]);
-  puts_LaceO(o, delim);
+  puts_FildeshO(o, lines[3]);
+  puts_FildeshO(o, delim);
   assert(flush_lgsize == 0 || (o->size >> flush_lgsize) == 0);
 
-  puts_LaceO(o, lines[4]);
+  puts_FildeshO(o, lines[4]);
   assert(flush_lgsize == 0 || (o->size >> flush_lgsize) == 0);
 
-  flush_LaceO(o);
+  flush_FildeshO(o);
   assert(o->off == 0);
   assert(o->size == 0);
   assert(of->content[of->index] == '\0');
 
-  close_LaceO(&of->o);
+  close_FildeshO(&of->o);
   free(of->content);
 }
 

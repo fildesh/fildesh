@@ -1,12 +1,12 @@
 /** Simple version of `seq`.**/
-#include "lace.h"
+#include "fildesh.h"
 #include <limits.h>
 
   int
 lace_builtin_seq_main(unsigned argc, char** argv,
-                      LaceX** inputs, LaceO** outputs)
+                      FildeshX** inputs, FildeshO** outputs)
 {
-  LaceO* out = open_arg_LaceOF(0, argv, outputs);
+  FildeshO* out = open_arg_FildeshOF(0, argv, outputs);
   int beg_int = 0;
   int end_int = 0;
   int i;
@@ -18,15 +18,15 @@ lace_builtin_seq_main(unsigned argc, char** argv,
   if (!fildesh_parse_int(&end_int, argv[2])) {return 64;}
 
   for (i = beg_int; i < end_int; ++i) {
-    print_int_LaceO(out, i);
-    putc_LaceO(out, '\n');
-    flush_LaceO(out);
+    print_int_FildeshO(out, i);
+    putc_FildeshO(out, '\n');
+    flush_FildeshO(out);
   }
   if (i == end_int) {
-    print_int_LaceO(out, i);
-    putc_LaceO(out, '\n');
+    print_int_FildeshO(out, i);
+    putc_FildeshO(out, '\n');
   }
-  close_LaceO(out);
+  close_FildeshO(out);
   return 0;
 }
 

@@ -1,8 +1,8 @@
-#include "lace.h"
+#include "fildesh.h"
 #include <stdlib.h>
 
 int lace_builtin_zec_main(
-    unsigned argc, char** argv, LaceX** inputv, LaceO** outputv);
+    unsigned argc, char** argv, FildeshX** inputv, FildeshO** outputv);
 
 int main(int argc, char** argv) {
   unsigned zec_argc = 4 + 2*(argc-1) + 3;

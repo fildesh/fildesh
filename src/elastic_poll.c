@@ -2,7 +2,7 @@
  * \file elastic_poll.c
  * Echo stdin to stdout with an arbitrary sized buffer.
  **/
-#include "lace.h"
+#include "fildesh.h"
 #include "lace_compat_fd.h"
 #include "cx/table.h"
 
@@ -146,7 +146,7 @@ handle_read_write(TableT(IOState) ios, TableT(pollfd) pollfds) {
 
 static
   int
-setfd_nonblock(lace_fd_t fd)
+setfd_nonblock(fildesh_fd_t fd)
 {
   int istat;
   istat = fcntl(fd, F_GETFD);
@@ -191,7 +191,7 @@ main_elastic_poll(unsigned argc, char** argv)
       pfd = &pollfds.s[0];
 
       io->filename = arg;
-      pfd->fd = lace_arg_open_readonly(io->filename);
+      pfd->fd = fildesh_arg_open_readonly(io->filename);
       if (pfd->fd < 0) {
         fildesh_log_errorf("failed to open -x: %s", io->filename);
         exstatus = 66;
@@ -211,7 +211,7 @@ main_elastic_poll(unsigned argc, char** argv)
 
       Zeroize( *io );
       io->filename = arg;
-      pfd->fd = lace_arg_open_writeonly(io->filename);
+      pfd->fd = fildesh_arg_open_writeonly(io->filename);
       if (pfd->fd < 0) {
         fildesh_log_errorf("failed to -o: %s", io->filename);
         exstatus = 73;
@@ -223,7 +223,7 @@ main_elastic_poll(unsigned argc, char** argv)
     io = &ios.s[0];
     pfd = &pollfds.s[0];
     io->filename = "/dev/stdin";
-    pfd->fd = lace_arg_open_readonly("-");
+    pfd->fd = fildesh_arg_open_readonly("-");
     if (pfd->fd < 0) {exstatus = 66;}
   }
 
@@ -232,7 +232,7 @@ main_elastic_poll(unsigned argc, char** argv)
     pfd = Grow1Table(pollfds);
     Zeroize( *io );
     io->filename = "/dev/stdout";
-    pfd->fd = lace_arg_open_writeonly("-");
+    pfd->fd = fildesh_arg_open_writeonly("-");
     if (pfd->fd < 0) {exstatus = 73;}
   }
   /**** END ARGUMENT_PARSING ****/

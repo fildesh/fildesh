@@ -1,5 +1,5 @@
 
-#include "lace.h"
+#include "fildesh.h"
 #include "lace_compat_errno.h"
 #include "lace_compat_string.h"
 #include "cx/alphatab.h"
@@ -52,15 +52,15 @@ static void print_usage()
 }
 
   static TableT(LineJoin)
-setup_lookup_table(LaceX* in, const char* delim)
+setup_lookup_table(FildeshX* in, const char* delim)
 {
   DeclTable( LineJoin, table );
   const uint delim_sz = delim ? strlen (delim) : 0;
   char* s;
 
-  for (s = getline_LaceX(in);
+  for (s = getline_FildeshX(in);
        s;
-       s = getline_LaceX(in))
+       s = getline_FildeshX(in))
   {
     LineJoin* join;
 
@@ -94,16 +94,16 @@ setup_lookup_table(LaceX* in, const char* delim)
 }
 
   static void
-compare_lines(LaceX* in, Associa* map, const char* delim,
-              LaceO* nomatch_out, LaceO* dupmatch_out)
+compare_lines(FildeshX* in, Associa* map, const char* delim,
+              FildeshO* nomatch_out, FildeshO* dupmatch_out)
 {
   const uint delim_sz = delim ? strlen (delim) : 0;
   uint line_no = 0;
   char* line;
 
-  for (line = getline_LaceX(in);
+  for (line = getline_FildeshX(in);
        line;
-       line = getline_LaceX(in))
+       line = getline_FildeshX(in))
   {
     char* field = line;
     char* payload;
@@ -135,8 +135,8 @@ compare_lines(LaceX* in, Associa* map, const char* delim,
       if (nomatch_out)
       {
         if (payload)  payload[0] = nixed_char;
-        puts_LaceO(nomatch_out, line);
-        putc_LaceO(nomatch_out, '\n');
+        puts_FildeshO(nomatch_out, line);
+        putc_FildeshO(nomatch_out, '\n');
       }
     }
     else if (join->stream_line)
@@ -144,8 +144,8 @@ compare_lines(LaceX* in, Associa* map, const char* delim,
       if (payload)  payload[0] = nixed_char;
       if (dupmatch_out)
       {
-        puts_LaceO(dupmatch_out, line);
-        putc_LaceO(dupmatch_out, '\n');
+        puts_FildeshO(dupmatch_out, line);
+        putc_FildeshO(dupmatch_out, '\n');
       }
       else
       {
@@ -179,11 +179,11 @@ main_ujoin(unsigned argc, char** argv)
   bool stream_on_left = false;
   const char* lookup_in_arg = NULL;
   const char* stream_in_arg = NULL;
-  LaceX* lookup_in = NULL;
-  LaceX* stream_in = NULL;
-  LaceO* nomatch_out = NULL;
-  LaceO* dupmatch_out = NULL;
-  LaceO* out = NULL;
+  FildeshX* lookup_in = NULL;
+  FildeshX* stream_in = NULL;
+  FildeshO* nomatch_out = NULL;
+  FildeshO* dupmatch_out = NULL;
+  FildeshO* out = NULL;
   unsigned argi = 1;
   TableT(LineJoin) table;
   Associa map[1];
@@ -201,7 +201,7 @@ main_ujoin(unsigned argc, char** argv)
     const char* arg = argv[argi];
     ++ argi;
     if (0 == strcmp(arg, "-o")) {
-      out = open_LaceOF(argv[argi++]);
+      out = open_FildeshOF(argv[argi++]);
       if (!out) {
         fildesh_log_error("Output (-o) needs an argument.");
         exstatus = 73;
@@ -231,14 +231,14 @@ main_ujoin(unsigned argc, char** argv)
       }
     }
     else if (0 == strcmp(arg, "-nomatch")) {
-      nomatch_out = open_LaceOF(argv[argi++]);
+      nomatch_out = open_FildeshOF(argv[argi++]);
       if (!nomatch_out) {
         fildesh_log_error("Need argument for nomatch file (-nomatch).");
         exstatus = 73;
       }
     }
     else if (0 == strcmp(arg, "-dupmatch")) {
-      dupmatch_out = open_LaceOF(argv[argi++]);
+      dupmatch_out = open_FildeshOF(argv[argi++]);
       if (!dupmatch_out) {
         fildesh_log_error("Need argument for dupmatch file (-dupmatch).");
         exstatus = 73;
@@ -251,7 +251,7 @@ main_ujoin(unsigned argc, char** argv)
   }
 
   if (exstatus == 0) {
-    lookup_in = open_LaceXF(lookup_in_arg);
+    lookup_in = open_FildeshXF(lookup_in_arg);
     if (!lookup_in) {
       lace_compat_errno_trace();
       fildesh_log_errorf("ujoin: cannot open %s", lookup_in_arg);
@@ -259,7 +259,7 @@ main_ujoin(unsigned argc, char** argv)
     }
   }
   if (exstatus == 0) {
-    stream_in = open_LaceXF(stream_in_arg);
+    stream_in = open_FildeshXF(stream_in_arg);
     if (!stream_in) {
       lace_compat_errno_trace();
       fildesh_log_errorf("ujoin: cannot open %s", stream_in_arg);
@@ -268,16 +268,16 @@ main_ujoin(unsigned argc, char** argv)
   }
 
   if (exstatus != 0) {
-    close_LaceX(lookup_in);
-    close_LaceX(stream_in);
-    close_LaceO(nomatch_out);
-    close_LaceO(dupmatch_out);
+    close_FildeshX(lookup_in);
+    close_FildeshX(stream_in);
+    close_FildeshO(nomatch_out);
+    close_FildeshO(dupmatch_out);
     print_usage();
     return exstatus;
   }
 
   table = setup_lookup_table(lookup_in, delim);
-  close_LaceX(lookup_in);
+  close_FildeshX(lookup_in);
 
   InitAssocia( AlphaTab, LineJoin*, *map, cmp_AlphaTab );
   UFor( i, table.sz ) {
@@ -286,12 +286,12 @@ main_ujoin(unsigned argc, char** argv)
   }
 
   compare_lines(stream_in, map, delim, nomatch_out, dupmatch_out);
-  close_LaceX(stream_in);
-  if (nomatch_out) {close_LaceO(nomatch_out);}
-  if (dupmatch_out) {close_LaceO(dupmatch_out);}
+  close_FildeshX(stream_in);
+  if (nomatch_out) {close_FildeshO(nomatch_out);}
+  if (dupmatch_out) {close_FildeshO(dupmatch_out);}
 
   if (!out) {
-    out = open_LaceOF("-");
+    out = open_FildeshOF("-");
     if (!out) {
       fildesh_log_error("Cannot open stdout.");
       return 1;
@@ -309,35 +309,35 @@ main_ujoin(unsigned argc, char** argv)
       bool tab = false;
       if (keep_join_field)
       {
-        puts_LaceO(out, join->field.s);
+        puts_FildeshO(out, join->field.s);
         tab = true;
       }
 
       if (stream_on_left && stream_line != join->field.s)
       {
-        if (tab) {puts_LaceO(out, delim);}
+        if (tab) {puts_FildeshO(out, delim);}
         tab = true;
-        puts_LaceO(out, stream_line);
+        puts_FildeshO(out, stream_line);
       }
 
       if (join->lookup_line)
       {
-        if (tab) {puts_LaceO(out, delim);}
+        if (tab) {puts_FildeshO(out, delim);}
         tab = true;
-        puts_LaceO(out, join->lookup_line);
+        puts_FildeshO(out, join->lookup_line);
       }
 
       if (!stream_on_left && stream_line != join->field.s)
       {
-        if (tab) {puts_LaceO(out, delim);}
+        if (tab) {puts_FildeshO(out, delim);}
         tab = true;
-        puts_LaceO(out, stream_line);
+        puts_FildeshO(out, stream_line);
       }
-      putc_LaceO(out, '\n');
+      putc_FildeshO(out, '\n');
     }
     lose_LineJoin (join);
   }
-  close_LaceO(out);
+  close_FildeshO(out);
 
   LoseTable( table );
   lose_Associa (map);

@@ -1,20 +1,20 @@
 
 /** Simple utility to transpose based on a delimiter.**/
 
-#include "lace.h"
+#include "fildesh.h"
 #include "lace_compat_string.h"
 #include "cx/alphatab.h"
 #include "cx/table.h"
 
   int
 lace_builtin_transpose_main(unsigned argc, char** argv,
-                            LaceX** inputs, LaceO** outputs)
+                            FildeshX** inputs, FildeshO** outputs)
 {
   DeclTableT( cstr_row, TableT(cstr) );
   DeclTable( cstr_row, mat );
-  LaceX* in;
-  LaceO* out;
-  LaceX slice;
+  FildeshX* in;
+  FildeshO* out;
+  FildeshX slice;
   const char* const delim = argv[1];
   DeclTable( uint, row_widths );
   unsigned i;
@@ -25,20 +25,20 @@ lace_builtin_transpose_main(unsigned argc, char** argv,
     return 64;
   }
 
-  in = open_arg_LaceXF(0, argv, inputs);
-  for (slice = sliceline_LaceX(in);
+  in = open_arg_FildeshXF(0, argv, inputs);
+  for (slice = sliceline_FildeshX(in);
        slice.at;
-       slice = sliceline_LaceX(in))
+       slice = sliceline_FildeshX(in))
   {
     const char* field;
     size_t max_width = 0;
     TableT(cstr)* row = Grow1Table( mat );
     InitTable(*row);
 
-    skipchrs_LaceX(&slice, " ");
-    for (field = gets_LaceX(&slice, delim);
+    skipchrs_FildeshX(&slice, " ");
+    for (field = gets_FildeshX(&slice, delim);
          field;
-         field = gets_LaceX(&slice, delim))
+         field = gets_FildeshX(&slice, delim))
     {
       size_t width = strlen(field);
       if (width > max_width) {
@@ -48,16 +48,16 @@ lace_builtin_transpose_main(unsigned argc, char** argv,
       if (row->sz > ncols) {
         ncols = row->sz;
       }
-      skipchrs_LaceX(&slice, " ");
+      skipchrs_FildeshX(&slice, " ");
     }
     if (row_widths.sz > 0) {
       max_width += 1;  /* 1 extra space after delim in the output.*/
     }
     PushTable( row_widths, max_width );
   }
-  close_LaceX(in);
+  close_FildeshX(in);
 
-  out = open_arg_LaceOF(0, argv, outputs);
+  out = open_arg_FildeshOF(0, argv, outputs);
   for (i = 0; i < ncols; ++i) {
     unsigned j;
     for (j = 0; j < mat.sz; ++j) {
@@ -70,21 +70,21 @@ lace_builtin_transpose_main(unsigned argc, char** argv,
              width_needed > 0;
              width_needed -= 1)
         {
-          putc_LaceO(out, ' ');
+          putc_FildeshO(out, ' ');
         }
       }
 
       if (field) {
-        puts_LaceO(out, field);
+        puts_FildeshO(out, field);
         free(field);
       }
       if (j + 1 < mat.sz) {
-        puts_LaceO(out, delim);
+        puts_FildeshO(out, delim);
       }
     }
-    putc_LaceO(out, '\n');
+    putc_FildeshO(out, '\n');
   }
-  close_LaceO(out);
+  close_FildeshO(out);
 
   LoseTable( row_widths );
   for (i = 0; i < mat.sz; ++i) {

@@ -1,15 +1,15 @@
 
-#include "lace.h"
+#include "fildesh.h"
 
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 
-static inline bool sliced_LaceX(const LaceX* slice) {
+static inline bool sliced_FildeshX(const FildeshX* slice) {
   return (slice->at && (slice->alloc_lgsize == 0));
 }
 
-static inline LaceX slice_LaceX(LaceX* in, size_t beg_off, size_t end_off) {
+static inline FildeshX slice_FildeshX(FildeshX* in, size_t beg_off, size_t end_off) {
   FildeshX slice = DEFAULT_FildeshX;
   assert(beg_off <= end_off);
   slice.at = &in->at[beg_off];
@@ -19,7 +19,7 @@ static inline LaceX slice_LaceX(LaceX* in, size_t beg_off, size_t end_off) {
 }
 
   size_t
-read_LaceX(LaceX* in)
+read_FildeshX(FildeshX* in)
 {
   if (in->vt && in->vt->read_fn) {
     size_t old_size = in->size;
@@ -30,13 +30,13 @@ read_LaceX(LaceX* in)
 }
 
   void
-close_LaceX(LaceX* in)
+close_FildeshX(FildeshX* in)
 {
   if (!in) {return;}
   if (in->vt && in->vt->close_fn) {
     in->vt->close_fn(in);
   }
-  if (in->at && !sliced_LaceX(in)) {
+  if (in->at && !sliced_FildeshX(in)) {
     free(in->at);
     in->at = NULL;
     in->size = 0;
@@ -49,7 +49,7 @@ close_LaceX(LaceX* in)
 }
 
   char*
-grow_LaceX(LaceX* in, size_t capac)
+grow_FildeshX(FildeshX* in, size_t capac)
 {
   return (char*) grow_FildeshA_(
       (void**)&in->at, &in->size, &in->alloc_lgsize,
@@ -57,7 +57,7 @@ grow_LaceX(LaceX* in, size_t capac)
 }
 
   void
-flush_LaceX(LaceX* x)
+flush_FildeshX(FildeshX* x)
 {
   assert(x->off <= x->size);
   if (x->off == 0)  return;
@@ -66,13 +66,13 @@ flush_LaceX(LaceX* x)
     memmove(x->at, &x->at[x->off], x->size);
   }
   x->off = 0;
-  if (sliced_LaceX(x)) {
+  if (sliced_FildeshX(x)) {
     x->at[x->size] = '\0';
   }
 }
 
   void
-maybe_flush_LaceX(LaceX* x)
+maybe_flush_FildeshX(FildeshX* x)
 {
   if (x->flush_lgsize == 0) {
     return;
@@ -81,15 +81,15 @@ maybe_flush_LaceX(LaceX* x)
       (x->off >> x->flush_lgsize) == 0) {
     return;
   }
-  flush_LaceX(x);
+  flush_FildeshX(x);
 }
 
 static
   char*
-cstr_of_LaceX(LaceX* in)
+cstr_of_FildeshX(FildeshX* in)
 {
-  if (!sliced_LaceX(in)) {
-    *grow_LaceX(in, 1) = '\0';
+  if (!sliced_FildeshX(in)) {
+    *grow_FildeshX(in, 1) = '\0';
     in->size -= 1;
   }
   assert(in->at[in->size] == '\0');
@@ -97,44 +97,44 @@ cstr_of_LaceX(LaceX* in)
 }
 
   char*
-slurp_LaceX(LaceX* in)
+slurp_FildeshX(FildeshX* in)
 {
-  maybe_flush_LaceX(in);
-  while (read_LaceX(in) > 0) {/* Yummy.*/}
-  return cstr_of_LaceX(in);
+  maybe_flush_FildeshX(in);
+  while (read_FildeshX(in) > 0) {/* Yummy.*/}
+  return cstr_of_FildeshX(in);
 }
 
   void
-wait_close_LaceX(LaceX* in)
+wait_close_FildeshX(FildeshX* in)
 {
   if (!in) {return;}
   do {
     in->off = 0;
     in->size = 0;
-  } while (read_LaceX(in) > 0);
-  close_LaceX(in);
+  } while (read_FildeshX(in) > 0);
+  close_FildeshX(in);
 }
 
 /** Like strcspn or strtok but returns a slice.**/
-  LaceX
-slicechr_LaceX(LaceX* in, const char delim)
+  FildeshX
+slicechr_FildeshX(FildeshX* in, const char delim)
 {
   FildeshX slice = DEFAULT_FildeshX;
   size_t ret_off;
   char* s = NULL;
 
-  maybe_flush_LaceX(in);
+  maybe_flush_FildeshX(in);
   ret_off = in->off;
   if (in->size > 0) {
-    s = strchr(cstr_of_LaceX(in), delim);
+    s = strchr(cstr_of_FildeshX(in), delim);
   }
 
   while (!s) {
     in->off = in->size;
-    if (0 == read_LaceX(in)) {
+    if (0 == read_FildeshX(in)) {
       break;
     }
-    s = strchr(cstr_of_LaceX(in), delim);
+    s = strchr(cstr_of_FildeshX(in), delim);
   }
 
   if (ret_off == in->size) {
@@ -145,21 +145,21 @@ slicechr_LaceX(LaceX* in, const char delim)
 
   if (s) {
     in->off = 1 + (s - in->at);
-    slice = slice_LaceX(in, ret_off, in->off-1);
+    slice = slice_FildeshX(in, ret_off, in->off-1);
     slice.at[slice.size] = '\0';
   } else {
     assert(in->off == in->size);
-    slice = slice_LaceX(in, ret_off, in->size);
+    slice = slice_FildeshX(in, ret_off, in->size);
   }
   assert(slice.at[slice.size] == '\0');
   return slice;
 }
 
 /** Get line, return slice.**/
-  LaceX
-sliceline_LaceX(LaceX* in)
+  FildeshX
+sliceline_FildeshX(FildeshX* in)
 {
-  LaceX slice = slicechr_LaceX(in, '\n');
+  FildeshX slice = slicechr_FildeshX(in, '\n');
   /* Ignore carriage returns.*/
   if (slice.size > 0 && slice.at[slice.size-1] == '\r') {
     slice.size -= 1;
@@ -170,23 +170,23 @@ sliceline_LaceX(LaceX* in)
 
 
 /** Like strcspn or strtok but returns a slice.**/
-  LaceX
-slicechrs_LaceX(LaceX* in, const char* delims)
+  FildeshX
+slicechrs_FildeshX(FildeshX* in, const char* delims)
 {
   FildeshX slice = DEFAULT_FildeshX;
   size_t ret_off;
   size_t end;
 
-  maybe_flush_LaceX(in);
+  maybe_flush_FildeshX(in);
   ret_off = in->off;
-  end = in->off + strcspn(cstr_of_LaceX(in), delims);
+  end = in->off + strcspn(cstr_of_FildeshX(in), delims);
 
   while (end == in->size) {
     in->off = in->size;
-    if (0 == read_LaceX(in)) {
+    if (0 == read_FildeshX(in)) {
       break;
     }
-    end = in->off + strcspn(cstr_of_LaceX(in), delims);
+    end = in->off + strcspn(cstr_of_FildeshX(in), delims);
   }
 
   if (ret_off == in->size) {
@@ -197,36 +197,36 @@ slicechrs_LaceX(LaceX* in, const char* delims)
 
   if (end < in->size) {
     in->off = end + 1;
-    slice = slice_LaceX(in, ret_off, in->off-1);
+    slice = slice_FildeshX(in, ret_off, in->off-1);
     slice.at[slice.size] = '\0';
   } else {
     assert(in->off == in->size);
-    slice = slice_LaceX(in, ret_off, in->size);
+    slice = slice_FildeshX(in, ret_off, in->size);
   }
   assert(slice.at[slice.size] == '\0');
   return slice;
 }
 
 /** Like strspn but skips.**/
-  LaceX
-slicespan_LaceX(LaceX* in, const char* span)
+  FildeshX
+slicespan_FildeshX(FildeshX* in, const char* span)
 {
   FildeshX slice = DEFAULT_FildeshX;
   size_t ret_off;
   size_t end = in->size;
 
-  maybe_flush_LaceX(in);
+  maybe_flush_FildeshX(in);
   ret_off = in->off;
   if (in->size > 0) {
-    end = in->off + strspn(cstr_of_LaceX(in), span);
+    end = in->off + strspn(cstr_of_FildeshX(in), span);
   }
 
   while (end == in->size) {
     in->off = in->size;
-    if (0 == read_LaceX(in)) {
+    if (0 == read_FildeshX(in)) {
       break;
     }
-    end = in->off + strspn(cstr_of_LaceX(in), span);
+    end = in->off + strspn(cstr_of_FildeshX(in), span);
   }
 
   if (ret_off == in->size) {
@@ -237,19 +237,19 @@ slicespan_LaceX(LaceX* in, const char* span)
 
   if (end < in->size) {
     in->off = end;
-    slice = slice_LaceX(in, ret_off, in->off);
+    slice = slice_FildeshX(in, ret_off, in->off);
     assert(slice.at[slice.size] != '\0');
   } else {
     assert(in->off == in->size);
-    slice = slice_LaceX(in, ret_off, in->size);
+    slice = slice_FildeshX(in, ret_off, in->size);
     assert(slice.at[slice.size] == '\0');
   }
   return slice;
 }
 
 /** Like strstr but returns a slice.**/
-  LaceX
-slicestr_LaceX(LaceX* in, const char* delim)
+  FildeshX
+slicestr_FildeshX(FildeshX* in, const char* delim)
 {
   FildeshX slice = DEFAULT_FildeshX;
   size_t delim_length = strlen(delim);
@@ -258,22 +258,22 @@ slicestr_LaceX(LaceX* in, const char* delim)
 
   assert(delim_length > 0);
 
-  maybe_flush_LaceX(in);
+  maybe_flush_FildeshX(in);
   ret_off = in->off;
 
   while (in->off + delim_length > in->size) {
-    if (0 == read_LaceX(in)) {
+    if (0 == read_FildeshX(in)) {
       break;
     }
   }
   if (in->off + delim_length <= in->size) {
-    s = strstr(cstr_of_LaceX(in), delim);
+    s = strstr(cstr_of_FildeshX(in), delim);
     while (!s) {
       in->off = in->size + 1 - delim_length;
-      if (0 == read_LaceX(in)) {
+      if (0 == read_FildeshX(in)) {
         break;
       }
-      s = strstr(cstr_of_LaceX(in), delim);
+      s = strstr(cstr_of_FildeshX(in), delim);
     }
   }
 
@@ -284,11 +284,11 @@ slicestr_LaceX(LaceX* in, const char* delim)
 
   if (s) {
     in->off = delim_length + (s - in->at);
-    slice = slice_LaceX(in, ret_off, in->off-delim_length);
+    slice = slice_FildeshX(in, ret_off, in->off-delim_length);
     slice.at[slice.size] = '\0';
   } else {
     in->off = in->size;
-    slice = slice_LaceX(in, ret_off, in->size);
+    slice = slice_FildeshX(in, ret_off, in->size);
   }
   assert(slice.at[slice.size] == '\0');
   return slice;
@@ -296,40 +296,40 @@ slicestr_LaceX(LaceX* in, const char* delim)
 
 /** Get line, return string.**/
   char*
-getline_LaceX(LaceX* in)
+getline_FildeshX(FildeshX* in)
 {
-  LaceX slice = sliceline_LaceX(in);
+  FildeshX slice = sliceline_FildeshX(in);
   return slice.at;
 }
 
 /** Get string up to a delimiter. Push offset past delimiter.**/
   char*
-gets_LaceX(LaceX* in, const char* delim)
+gets_FildeshX(FildeshX* in, const char* delim)
 {
-  LaceX slice = slicestr_LaceX(in, delim);
+  FildeshX slice = slicestr_FildeshX(in, delim);
   return slice.at;
 }
 
   bool
-skipchrs_LaceX(LaceX* in, const char* span)
+skipchrs_FildeshX(FildeshX* in, const char* span)
 {
-  LaceX slice = slicespan_LaceX(in, span);
-  maybe_flush_LaceX(in);
+  FildeshX slice = slicespan_FildeshX(in, span);
+  maybe_flush_FildeshX(in);
   return (slice.size > 0);
 }
 
   bool
-skipstr_LaceX(LaceX* in, const char* s)
+skipstr_FildeshX(FildeshX* in, const char* s)
 {
   const size_t n = strlen(s);
   while (in->size - in->off < n) {
-    if (0 == read_LaceX(in)) {
+    if (0 == read_FildeshX(in)) {
       return false;
     }
   }
   if (0 == memcmp(&in->at[in->off], s, n)) {
     in->off += n;
-    maybe_flush_LaceX(in);
+    maybe_flush_FildeshX(in);
     return true;
   }
   return false;
@@ -338,12 +338,12 @@ skipstr_LaceX(LaceX* in, const char* s)
 static const char lace_whitespace[] = " \t\v\r\n";
 
   bool
-parse_int_LaceX(LaceX* in, int* ret)
+parse_int_FildeshX(FildeshX* in, int* ret)
 {
   FildeshX slice;
   char* end = NULL;
-  skipchrs_LaceX(in, lace_whitespace);
-  slice = slicespan_LaceX(in, "+-0123456789");
+  skipchrs_FildeshX(in, lace_whitespace);
+  slice = slicespan_FildeshX(in, "+-0123456789");
   if (slice.size > 0) {
     end = fildesh_parse_int(ret, slice.at);
   }
@@ -351,12 +351,12 @@ parse_int_LaceX(LaceX* in, int* ret)
 }
 
   bool
-parse_double_LaceX(LaceX* in, double* ret)
+parse_double_FildeshX(FildeshX* in, double* ret)
 {
   FildeshX slice;
   char* end = NULL;
-  skipchrs_LaceX(in, lace_whitespace);
-  slice = slicespan_LaceX(in, "+-.0123456789Ee");
+  skipchrs_FildeshX(in, lace_whitespace);
+  slice = slicespan_FildeshX(in, "+-.0123456789Ee");
   if (slice.size > 0) {
     end = fildesh_parse_double(ret, slice.at);
   }

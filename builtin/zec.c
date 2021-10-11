@@ -2,7 +2,7 @@
  * Paste is also supported!
  **/
 
-#include "lace.h"
+#include "fildesh.h"
 #include "lace_compat_errno.h"
 
 #include <assert.h>
@@ -12,10 +12,10 @@
 
 static
   bool
-write_all(LaceO* out, const char* buf, size_t sz)
+write_all(FildeshO* out, const char* buf, size_t sz)
 {
-  memcpy(grow_LaceO(out, sz), buf, sz);
-  flush_LaceO(out);
+  memcpy(grow_FildeshO(out, sz), buf, sz);
+  flush_FildeshO(out);
   return (0 == out->size);
 }
 
@@ -37,29 +37,29 @@ show_usage()
 
 static
   void
-cat_the_file(LaceO* out, LaceX* in)
+cat_the_file(FildeshO* out, FildeshX* in)
 {
   size_t nread;
   do {
-    nread = read_LaceX(in);
+    nread = read_FildeshX(in);
     if (!write_all(out, in->at, nread))
       break;
     in->off += nread;
-    maybe_flush_LaceX(in);
+    maybe_flush_FildeshX(in);
     assert(in->off == 0);
     assert(in->size == 0);
   } while (nread > 0);
-  close_LaceX(in);
+  close_FildeshX(in);
 }
 
 static
   bool
-all_have_data(LaceX** inputs, unsigned n) {
+all_have_data(FildeshX** inputs, unsigned n) {
   unsigned i;
   for (i = 0; i < n; ++i) {
-    LaceX* in = inputs[i];
+    FildeshX* in = inputs[i];
     if (in->off >= in->size) {
-      if (0 == read_LaceX(in)) {
+      if (0 == read_FildeshX(in)) {
         return false;
       }
     }
@@ -69,29 +69,29 @@ all_have_data(LaceX** inputs, unsigned n) {
 
 static
   bool
-cat_next_line(LaceO* out, LaceX* in)
+cat_next_line(FildeshO* out, FildeshX* in)
 {
-  char* s = getline_LaceX(in);
+  char* s = getline_FildeshX(in);
   if (!s) {
     return true;
   }
-  puts_LaceO(out, s);
-  flush_LaceO(out);
+  puts_FildeshO(out, s);
+  flush_FildeshO(out);
   return (0 == out->size);
 }
 
   int
 lace_builtin_zec_main(unsigned argc, char** argv,
-                      LaceX** inputv, LaceO** outputv)
+                      FildeshX** inputv, FildeshO** outputv)
 {
   unsigned i;
   unsigned argi = 1;
   unsigned beg_slash = argc;
   unsigned end_slash = argc;
-  LaceO* out = NULL;
+  FildeshO* out = NULL;
   bool paste_mode = false;
   const char* unless_arg = 0;
-  LaceX** inputs;
+  FildeshX** inputs;
   size_t mid_sz;
   char* mid_buf;
   unsigned nbegs;
@@ -109,7 +109,7 @@ lace_builtin_zec_main(unsigned argc, char** argv,
     }
     else if (0 == strcmp(arg, "-o")) {
       arg = argv[++argi];
-      out = open_arg_LaceOF(argi, argv, outputv);
+      out = open_arg_FildeshOF(argi, argv, outputv);
       if (!out) {
         fildesh_log_errorf("Cannot open file for writing! %s\n", arg);
         return 1;
@@ -132,7 +132,7 @@ lace_builtin_zec_main(unsigned argc, char** argv,
   }
 
   if (!out) {
-    out = open_arg_LaceOF(0, argv, outputv);
+    out = open_arg_FildeshOF(0, argv, outputv);
     if (!out) {
       fildesh_log_error("Cannot open /dev/stdout for writing!\n");
       return 1;
@@ -140,19 +140,19 @@ lace_builtin_zec_main(unsigned argc, char** argv,
   }
 
   if (unless_arg && unless_arg[0]) {
-    puts_LaceO(out, unless_arg);
-    close_LaceO(out);
+    puts_FildeshO(out, unless_arg);
+    close_FildeshO(out);
     return 0;
   }
 
   if (argi == argc) {
-    LaceX* in = open_arg_LaceXF(0, argv, inputv);
+    FildeshX* in = open_arg_FildeshXF(0, argv, inputv);
     if (in) {
       cat_the_file(out, in);
-      close_LaceO(out);
+      close_FildeshO(out);
       return 0;
     }
-    close_LaceO(out);
+    close_FildeshO(out);
     return 1;
   }
 
@@ -181,17 +181,17 @@ lace_builtin_zec_main(unsigned argc, char** argv,
   nbegs = beg_slash - argi;
   nends = argc - end_slash - (argc != end_slash ? 1 : 0);
 
-  inputs = (LaceX**) malloc((nbegs + nends) * sizeof(LaceX*));
+  inputs = (FildeshX**) malloc((nbegs + nends) * sizeof(FildeshX*));
 
   for (i = 0; i < nbegs; ++i) {
-    inputs[i] = open_arg_LaceXF(argi+i, argv, inputv);
+    inputs[i] = open_arg_FildeshXF(argi+i, argv, inputv);
     if (!inputs[i]) {
       return 1;
     }
   }
 
   for (i = 0; i < nends; ++i) {
-    inputs[nbegs+i] = open_arg_LaceXF(end_slash+1+i, argv, inputv);
+    inputs[nbegs+i] = open_arg_FildeshXF(end_slash+1+i, argv, inputv);
     if (!inputs[nbegs + i]) {
       return 1;
     }
@@ -216,7 +216,7 @@ lace_builtin_zec_main(unsigned argc, char** argv,
     }
 
     for (i = 0; i < nbegs + nends; ++i) {
-      close_LaceX(inputs[i]);
+      close_FildeshX(inputs[i]);
     }
   }
   else {
@@ -233,7 +233,7 @@ lace_builtin_zec_main(unsigned argc, char** argv,
   }
 
   lace_compat_errno_trace();
-  close_LaceO(out);
+  close_FildeshO(out);
   free (inputs);
   free (mid_buf);
   return 0;

@@ -1,4 +1,4 @@
-#include "lace.h"
+#include "fildesh.h"
 #include "lace_tool.h"
 #include <assert.h>
 #include <stdio.h>
@@ -7,15 +7,15 @@
 
 int
 lace_builtin_transpose_main(unsigned argc, char** argv,
-                            LaceX** inputs, LaceO** outputs);
+                            FildeshX** inputs, FildeshO** outputs);
 
 int
 main_transpose(unsigned argc, char** argv);
 
 LACE_TOOL_PIPEM_NULLARY_CALLBACK(run_transpose, in_fd, out_fd) {
   const char* argv[] = {"transpose", ",", NULL};
-  LaceX* in = open_fd_LaceX(in_fd);
-  LaceO* out = open_fd_LaceO(out_fd);
+  FildeshX* in = open_fd_FildeshX(in_fd);
+  FildeshO* out = open_fd_FildeshO(out_fd);
   int istat = lace_builtin_transpose_main(2, (char**)argv, &in, &out);
   assert(istat == 0);
 }

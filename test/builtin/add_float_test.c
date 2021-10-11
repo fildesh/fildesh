@@ -1,4 +1,4 @@
-#include "lace.h"
+#include "fildesh.h"
 #include "lace_compat_fd.h"
 #include "lace_tool.h"
 #include <assert.h>
@@ -6,12 +6,12 @@
 #include <string.h>
 #include <stdio.h>
 
-int lace_builtin_add_main(int, char**, LaceX**, LaceO**);
+int lace_builtin_add_main(int, char**, FildeshX**, FildeshO**);
 
 LACE_TOOL_PIPEM_NULLARY_CALLBACK(run_add, in_fd, out_fd) {
   const char* const argv[] = {"add", NULL};
-  LaceX* in = open_fd_LaceX(in_fd);
-  LaceO* out = open_fd_LaceO(out_fd);
+  FildeshX* in = open_fd_FildeshX(in_fd);
+  FildeshO* out = open_fd_FildeshO(out_fd);
   int istat;
   istat = lace_builtin_add_main(1, (char**)argv, &in, &out);
   assert(istat == 0);

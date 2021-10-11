@@ -1,5 +1,5 @@
 
-#include "lace.h"
+#include "fildesh.h"
 #include "lace_compat_fd.h"
 #include "lace_compat_file.h"
 #include "lace_compat_sh.h"
@@ -36,10 +36,10 @@ show_usage()
  **/
 static
   int
-pipe_to_file(lace_fd_t fd, const char* name)
+pipe_to_file(fildesh_fd_t fd, const char* name)
 {
-  LaceX* in = open_fd_LaceX(fd);
-  LaceO* out = NULL;
+  FildeshX* in = open_fd_FildeshX(fd);
+  FildeshO* out = NULL;
   int exstatus = 0;
 
   if (!in) {
@@ -47,14 +47,14 @@ pipe_to_file(lace_fd_t fd, const char* name)
     fildesh_log_errorf("Cannot open input fd: %d", fd);
   }
   if (exstatus == 0) {
-    read_LaceX(in);
+    read_FildeshX(in);
     if (in->size == 0) {
       exstatus = 66;
       fildesh_log_errorf("Empty input fd: %d", fd);
     }
   }
   if (exstatus == 0) {
-    out = open_LaceOF(name);
+    out = open_FildeshOF(name);
     if (!out) {
       exstatus = 73;
       fildesh_log_errorf("Cannot open output file: %s", name);
@@ -62,24 +62,24 @@ pipe_to_file(lace_fd_t fd, const char* name)
   }
 
   if (exstatus == 0) {
-    for (; in->size > 0; read_LaceX(in)) {
-      memcpy(grow_LaceO(out, in->size), in->at, in->size);
-      maybe_flush_LaceO(out);
+    for (; in->size > 0; read_FildeshX(in)) {
+      memcpy(grow_FildeshO(out, in->size), in->at, in->size);
+      maybe_flush_FildeshO(out);
       in->size = 0;
     }
   }
-  close_LaceX(in);
-  close_LaceO(out);
+  close_FildeshX(in);
+  close_FildeshO(out);
   return exstatus;
 }
 
 
 static
   char*
-readin_fd(lace_fd_t fd, bool scrap_newline)
+readin_fd(fildesh_fd_t fd, bool scrap_newline)
 {
-  LaceX* in = open_fd_LaceX(fd);
-  char* s = slurp_LaceX(in);
+  FildeshX* in = open_fd_FildeshX(fd);
+  char* s = slurp_FildeshX(in);
   if (scrap_newline && in->size >= 1 && s[in->size-1] == '\n') {
     s[in->size-1] = '\0';
     if (in->size >= 2 && s[in->size-2] == '\r') {
@@ -88,24 +88,24 @@ readin_fd(lace_fd_t fd, bool scrap_newline)
   }
   in->at = NULL;
   in->alloc_lgsize = 0;
-  close_LaceX(in);
+  close_FildeshX(in);
   return s;
 }
 
   int
 lace_builtin_execfd_main(unsigned argc, char** argv,
-                         LaceX** inputv, LaceO** outputv)
+                         FildeshX** inputv, FildeshO** outputv)
 {
   int exstatus = 0;
   unsigned argi;
   unsigned off = 0;
   unsigned i;
-  lace_fd_t stdin_fd = 0;
-  lace_fd_t stdout_fd = 1;
+  fildesh_fd_t stdin_fd = 0;
+  fildesh_fd_t stdout_fd = 1;
   unsigned inherit_count;
-  lace_fd_t* fds_to_inherit;
+  fildesh_fd_t* fds_to_inherit;
   unsigned exitfd_count;
-  lace_fd_t* exitfds;
+  fildesh_fd_t* exitfds;
   unsigned char* bt;
   char* exe = NULL;
   char** spawn_argv;
@@ -115,11 +115,11 @@ lace_builtin_execfd_main(unsigned argc, char** argv,
 
   if (argc < 3) {show_usage(); return 64;}
 
-  fds_to_inherit = (lace_fd_t*) malloc(sizeof(lace_fd_t) * (argc-2));
+  fds_to_inherit = (fildesh_fd_t*) malloc(sizeof(fildesh_fd_t) * (argc-2));
   inherit_count = 0;
   fds_to_inherit[inherit_count] = -1;
 
-  exitfds = (lace_fd_t*) malloc(sizeof(lace_fd_t) * (argc / 2));
+  exitfds = (fildesh_fd_t*) malloc(sizeof(fildesh_fd_t) * (argc / 2));
   exitfd_count = 0;
 
   bt = (unsigned char*) malloc(argc);
@@ -135,19 +135,19 @@ lace_builtin_execfd_main(unsigned argc, char** argv,
     if (0 == strcmp(argv[argi], "-exe")) {
       exe = argv[++argi];
     } else if (0 == strcmp(argv[argi], "-stdin")) {
-      stdin_fd = lace_arg_open_readonly(argv[++argi]);
+      stdin_fd = fildesh_arg_open_readonly(argv[++argi]);
       if (stdin_fd < 0) {
         fildesh_log_errorf("Cannot open -stdin: %s", argv[argi]);
         exstatus = 66;
       }
     } else if (0 == strcmp(argv[argi], "-stdout")) {
-      stdout_fd = lace_arg_open_writeonly(argv[++argi]);
+      stdout_fd = fildesh_arg_open_writeonly(argv[++argi]);
       if (stdout_fd < 0) {
         fildesh_log_errorf("Cannot open -stdout: %s", argv[argi]);
         exstatus = 73;
       }
     } else if (0 == strcmp(argv[argi], "-inheritfd")) {
-      lace_fd_t fd = -1;
+      fildesh_fd_t fd = -1;
       if (fildesh_parse_int(&fd, argv[++argi]) && fd >= 0) {
         fds_to_inherit[inherit_count++] = fd;
         fds_to_inherit[inherit_count] = -1;
@@ -156,15 +156,15 @@ lace_builtin_execfd_main(unsigned argc, char** argv,
         exstatus = 64;
       }
     } else if (0 == strcmp(argv[argi], "-waitfd")) {
-      lace_fd_t fd = -1;
+      fildesh_fd_t fd = -1;
       if (fildesh_parse_int(&fd, argv[++argi]) && fd >= 0) {
-        wait_close_LaceX(open_fd_LaceX(fd));
+        wait_close_FildeshX(open_fd_FildeshX(fd));
       } else {
         fildesh_log_errorf("Cannot parse -waitfd: %s", argv[argi]);
         exstatus = 64;
       }
     } else if (0 == strcmp(argv[argi], "-exitfd")) {
-      lace_fd_t fd = -1;
+      fildesh_fd_t fd = -1;
       if (fildesh_parse_int(&fd, argv[++argi]) && fd >= 0) {
         exitfds[exitfd_count++] = lace_compat_fd_claim(fd);
       } else {

@@ -2,37 +2,37 @@
  * Compare two files.
  **/
 
-#include "lace.h"
+#include "fildesh.h"
 #include <assert.h>
 #include <string.h>
 
   int
 lace_builtin_cmp_main(unsigned argc, char** argv,
-                      LaceX** inputs, LaceO** outputs)
+                      FildeshX** inputs, FildeshO** outputs)
 {
   unsigned argi;
   size_t byte_count;
-  LaceX* lhs = NULL;
-  LaceX* rhs = NULL;
-  LaceO* out = NULL;
+  FildeshX* lhs = NULL;
+  FildeshX* rhs = NULL;
+  FildeshO* out = NULL;
   bool equal = true;
   int exstatus = 0;
 
   for (argi = 1; argi < argc && exstatus == 0; ++argi) {
     if (0 == strcmp(argv[argi], "-o")) {
-      out = open_arg_LaceOF(++argi, argv, outputs);
+      out = open_arg_FildeshOF(++argi, argv, outputs);
       if (!out) {
         fildesh_log_errorf("Cannot open -o: %s", argv[argi]);
         exstatus = 73;
       }
     } else if (!lhs) {
-      lhs = open_arg_LaceXF(argi, argv, inputs);
+      lhs = open_arg_FildeshXF(argi, argv, inputs);
       if (!lhs) {
         fildesh_log_errorf("Cannot open LHS: %s", argv[argi]);
         exstatus = 66;
       }
     } else if (!rhs) {
-      rhs = open_arg_LaceXF(argi, argv, inputs);
+      rhs = open_arg_FildeshXF(argi, argv, inputs);
       if (!rhs) {
         fildesh_log_errorf("Cannot open RHS: %s", argv[argi]);
         exstatus = 66;
@@ -44,13 +44,13 @@ lace_builtin_cmp_main(unsigned argc, char** argv,
   }
 
   if (!out && outputs && outputs[0]) {
-    out = open_arg_LaceOF(0, argv, outputs);
+    out = open_arg_FildeshOF(0, argv, outputs);
     assert(out);
     if (!out) {exstatus = 70;}
   }
 
   if (lhs && !rhs) {
-    rhs = open_arg_LaceXF(0, argv, inputs);
+    rhs = open_arg_FildeshXF(0, argv, inputs);
   }
 
   if (exstatus == 0 && (!lhs || !rhs)) {
@@ -58,15 +58,15 @@ lace_builtin_cmp_main(unsigned argc, char** argv,
   }
 
   if (exstatus != 0) {
-    close_LaceX(lhs);
-    close_LaceX(rhs);
-    close_LaceO(out);
+    close_FildeshX(lhs);
+    close_FildeshX(rhs);
+    close_FildeshO(out);
     return exstatus;
   }
 
   byte_count = 0;
-  read_LaceX(lhs);
-  read_LaceX(rhs);
+  read_FildeshX(lhs);
+  read_FildeshX(rhs);
   while (lhs->off < lhs->size && rhs->off < rhs->size) {
     if (lhs->at[lhs->off] != rhs->at[rhs->off]) {
       equal = false;
@@ -76,37 +76,37 @@ lace_builtin_cmp_main(unsigned argc, char** argv,
     lhs->off += 1;
     rhs->off += 1;
     if (lhs->off == lhs->size) {
-      flush_LaceX(lhs);
-      read_LaceX(lhs);
+      flush_FildeshX(lhs);
+      read_FildeshX(lhs);
     }
     if (rhs->off == rhs->size) {
-      flush_LaceX(rhs);
-      read_LaceX(rhs);
+      flush_FildeshX(rhs);
+      read_FildeshX(rhs);
     }
   }
 
   equal = equal && (lhs->off == lhs->size && rhs->off == rhs->size);
   if (!equal && out) {
-    puts_LaceO(out, "Difference after ");
-    print_int_LaceO(out, (int)byte_count);
-    puts_LaceO(out, " bytes (");
+    puts_FildeshO(out, "Difference after ");
+    print_int_FildeshO(out, (int)byte_count);
+    puts_FildeshO(out, " bytes (");
     if (lhs->off < lhs->size) {
-      print_int_LaceO(out, (int)(unsigned)lhs->at[lhs->off]);
+      print_int_FildeshO(out, (int)(unsigned)lhs->at[lhs->off]);
     } else {
-      puts_LaceO(out, "EOF");
+      puts_FildeshO(out, "EOF");
     }
-    puts_LaceO(out, " != ");
+    puts_FildeshO(out, " != ");
     if (rhs->off < rhs->size) {
-      print_int_LaceO(out, (int)(unsigned)rhs->at[rhs->off]);
+      print_int_FildeshO(out, (int)(unsigned)rhs->at[rhs->off]);
     } else {
-      puts_LaceO(out, "EOF");
+      puts_FildeshO(out, "EOF");
     }
-    puts_LaceO(out, ").\n");
+    puts_FildeshO(out, ").\n");
   }
 
-  close_LaceX(lhs);
-  close_LaceX(rhs);
-  close_LaceO(out);
+  close_FildeshX(lhs);
+  close_FildeshX(rhs);
+  close_FildeshO(out);
   return (equal ? 0 : 1);
 }
 

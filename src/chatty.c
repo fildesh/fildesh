@@ -9,7 +9,7 @@
  **/
 #define LACE_POSIX_SOURCE
 
-#include "lace.h"
+#include "fildesh.h"
 #include "lace_compat_errno.h"
 #include "lace_compat_fd.h"
 #include "lace_compat_sh.h"
@@ -76,11 +76,11 @@ int main (int argc, char** argv)
   if (connecting) {
     char buf[1024];
     int sock = -1;
-    LaceX* in = open_fd_LaceX(0);
+    FildeshX* in = open_fd_FildeshX(0);
 
     /* Wait for parent proc to be ready.*/
-    slurp_LaceX(in);
-    close_LaceX(in);
+    slurp_FildeshX(in);
+    close_FildeshX(in);
 
     sock = socket(addr->ai_family,
                   addr->ai_socktype,
