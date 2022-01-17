@@ -3,7 +3,7 @@
 #include <stdlib.h>
 
   char*
-lace_compat_string_byte_translate(
+fildesh_compat_string_byte_translate(
     const char* haystack,
     const char* needles,
     const char* const* replacements,
@@ -76,7 +76,7 @@ lace_compat_string_byte_translate(
 }
 
   char*
-lace_compat_string_duplicate(const char* s)
+fildesh_compat_string_duplicate(const char* s)
 {
   char* p;
   size_t size;

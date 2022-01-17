@@ -4,7 +4,7 @@
 #include <stdio.h>
 
   int
-lace_compat_errno_clear()
+fildesh_compat_errno_clear()
 {
   int e = errno;
   errno = 0;
@@ -12,11 +12,11 @@ lace_compat_errno_clear()
 }
 
   int
-lace_compat_errno_trace_(const char* file, const char* func, unsigned line)
+fildesh_compat_errno_trace_(const char* file, const char* func, unsigned line)
 {
   int e = errno;
   if (e != 0) {
-    file = lace_compat_file_basename(file);
+    file = fildesh_compat_file_basename(file);
     fprintf(stderr, "TRACE %s(%u): Errno %d in %s.\n", file, line, e, func);
     errno = e;
     perror("TRACE perror");

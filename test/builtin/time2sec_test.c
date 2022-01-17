@@ -29,13 +29,13 @@ static const char expected_output[] =
 static const size_t expected_output_size = sizeof(expected_output)-1;
 
 
-int lace_builtin_time2sec_main(int, char**, FildeshX**, FildeshO**);
+int fildesh_builtin_time2sec_main(int, char**, FildeshX**, FildeshO**);
 
-LACE_TOOL_PIPEM_NULLARY_CALLBACK(run_time2sec, in_fd, out_fd) {
+FILDESH_TOOL_PIPEM_NULLARY_CALLBACK(run_time2sec, in_fd, out_fd) {
   const char* const argv[2] = { "time2sec", NULL };
   FildeshX* in = open_fd_FildeshX(in_fd);
   FildeshO* out = open_fd_FildeshO(out_fd);
-  int istat = lace_builtin_time2sec_main(1, (char**)argv, &in, &out);
+  int istat = fildesh_builtin_time2sec_main(1, (char**)argv, &in, &out);
   assert(istat == 0);
 }
 
@@ -43,7 +43,7 @@ int main() {
   size_t output_size;
   char* output_data = NULL;
 
-  output_size = lace_tool_pipem(
+  output_size = fildesh_tool_pipem(
       input_data_size, input_data,
       run_time2sec, NULL,
       &output_data);

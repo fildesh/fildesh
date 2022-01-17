@@ -7,7 +7,7 @@
 #include "cx/table.h"
 
   int
-lace_builtin_transpose_main(unsigned argc, char** argv,
+fildesh_builtin_transpose_main(unsigned argc, char** argv,
                             FildeshX** inputs, FildeshO** outputs)
 {
   DeclTableT( cstr_row, TableT(cstr) );
@@ -44,7 +44,7 @@ lace_builtin_transpose_main(unsigned argc, char** argv,
       if (width > max_width) {
         max_width = width;
       }
-      PushTable( *row, lace_compat_string_duplicate(field) );
+      PushTable( *row, fildesh_compat_string_duplicate(field) );
       if (row->sz > ncols) {
         ncols = row->sz;
       }
@@ -95,10 +95,10 @@ lace_builtin_transpose_main(unsigned argc, char** argv,
 }
 
 int main_transpose(unsigned argc, char** argv) {
-  return lace_builtin_transpose_main(argc, argv, NULL, NULL);
+  return fildesh_builtin_transpose_main(argc, argv, NULL, NULL);
 }
 
-#ifndef LACE_BUILTIN_LIBRARY
+#ifndef FILDESH_BUILTIN_LIBRARY
   int
 main(int argc, char** argv)
 {

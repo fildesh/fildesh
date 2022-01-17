@@ -15,7 +15,7 @@
 #include <stdlib.h>
 
   char**
-lace_compat_sh_escape_argv_for_windows(const char* const* argv)
+fildesh_compat_sh_escape_argv_for_windows(const char* const* argv)
 {
   char** escaped_argv;
   unsigned i, argc;
@@ -26,7 +26,7 @@ lace_compat_sh_escape_argv_for_windows(const char* const* argv)
     static const char* const replacements[] = {
       "\"\"",
     };
-    escaped_argv[i] = lace_compat_string_byte_translate(
+    escaped_argv[i] = fildesh_compat_string_byte_translate(
         argv[i], "\"", replacements, "\"", "\"");
   }
   escaped_argv[argc] = NULL;
@@ -34,7 +34,7 @@ lace_compat_sh_escape_argv_for_windows(const char* const* argv)
 }
 
   void
-lace_compat_sh_free_escaped_argv(char** argv)
+fildesh_compat_sh_free_escaped_argv(char** argv)
 {
   unsigned i;
   if (!argv || !argv[0]) {return;}
@@ -44,33 +44,33 @@ lace_compat_sh_free_escaped_argv(char** argv)
   free(argv);
 }
 
-  lace_compat_pid_t
-lace_compat_sh_spawn(const char* const* argv)
+  fildesh_compat_pid_t
+fildesh_compat_sh_spawn(const char* const* argv)
 {
-  lace_compat_pid_t pid;
+  fildesh_compat_pid_t pid;
 #ifdef _MSC_VER
-  char** escaped_argv = lace_compat_sh_escape_argv_for_windows(argv);
+  char** escaped_argv = fildesh_compat_sh_escape_argv_for_windows(argv);
   pid = _spawnvp(_P_NOWAIT, argv[0], escaped_argv);
-  lace_compat_sh_free_escaped_argv(escaped_argv);
+  fildesh_compat_sh_free_escaped_argv(escaped_argv);
 #else
   pid = fork();
   if (pid == 0) {
     execvp(argv[0], (char**)argv);
-    lace_compat_errno_trace();
+    fildesh_compat_errno_trace();
     exit(126);
   }
 #endif
-  if (pid < 0) {lace_compat_errno_trace();}
+  if (pid < 0) {fildesh_compat_errno_trace();}
   return pid;
 }
 
   void
-lace_compat_sh_exec(const char* const* argv)
+fildesh_compat_sh_exec(const char* const* argv)
 {
 #ifdef _MSC_VER
-  char** escaped_argv = lace_compat_sh_escape_argv_for_windows(argv);
+  char** escaped_argv = fildesh_compat_sh_escape_argv_for_windows(argv);
   intptr_t istat = _spawnvp(_P_WAIT, argv[0], escaped_argv);
-  lace_compat_sh_free_escaped_argv(escaped_argv);
+  fildesh_compat_sh_free_escaped_argv(escaped_argv);
   if (istat >= 0) {
     exit(istat & 0xFF);
   }
@@ -80,7 +80,7 @@ lace_compat_sh_exec(const char* const* argv)
 }
 
   int
-lace_compat_sh_wait(lace_compat_pid_t pid)
+fildesh_compat_sh_wait(fildesh_compat_pid_t pid)
 {
   int istat = -1;
 #ifdef _MSC_VER
@@ -100,7 +100,7 @@ lace_compat_sh_wait(lace_compat_pid_t pid)
 
 
   int
-lace_compat_sh_chdir(const char* directory)
+fildesh_compat_sh_chdir(const char* directory)
 {
   int istat = -1;
 #ifdef _MSC_VER

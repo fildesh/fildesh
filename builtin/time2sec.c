@@ -40,7 +40,7 @@ static unsigned conv_line(FildeshX* in)
 }
 
   int
-lace_builtin_time2sec_main(unsigned argc, char** argv,
+fildesh_builtin_time2sec_main(unsigned argc, char** argv,
                            FildeshX** inputs, FildeshO** outputs)
 {
   unsigned argi = 1;
@@ -93,8 +93,8 @@ lace_builtin_time2sec_main(unsigned argc, char** argv,
   return 0;
 }
 
-#ifndef LACE_BUILTIN_LIBRARY
+#ifndef FILDESH_BUILTIN_LIBRARY
 int main(int argc, char** argv) {
-  return lace_builtin_time2sec_main(argc, argv, NULL, NULL);
+  return fildesh_builtin_time2sec_main(argc, argv, NULL, NULL);
 }
 #endif

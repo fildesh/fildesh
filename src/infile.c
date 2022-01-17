@@ -23,7 +23,7 @@ read_FildeshXF(FildeshXF* xf)
   static const size_t chunksize = 4096;
   const size_t orig_size = xf->base.size;
   char* buf = grow_FildeshX(&xf->base, chunksize);
-  xf->base.size = orig_size + lace_compat_fd_read(xf->fd, buf, chunksize);
+  xf->base.size = orig_size + fildesh_compat_fd_read(xf->fd, buf, chunksize);
 }
 
 static
@@ -31,7 +31,7 @@ static
 close_FildeshXF(FildeshXF* xf)
 {
   if (xf->fd >= 0) {
-    lace_compat_fd_close(xf->fd);
+    fildesh_compat_fd_close(xf->fd);
     xf->fd = -1;
   }
   if (xf->filename) {
@@ -56,24 +56,24 @@ static inline FildeshXF default_FildeshXF() {
 }
 
 static fildesh_fd_t lace_open_null_readonly() {
-  lace_compat_fd_t fd = -1;
-  lace_compat_fd_t tmp_fd = -1;
+  fildesh_compat_fd_t fd = -1;
+  fildesh_compat_fd_t tmp_fd = -1;
   int istat;
-  istat = lace_compat_fd_pipe(&tmp_fd, &fd);
+  istat = fildesh_compat_fd_pipe(&tmp_fd, &fd);
   if (istat != 0) {return -1;}
-  istat = lace_compat_fd_close(tmp_fd);
-  if (istat != 0) {lace_compat_fd_close(fd); return -1;}
+  istat = fildesh_compat_fd_close(tmp_fd);
+  if (istat != 0) {fildesh_compat_fd_close(fd); return -1;}
   return fd;
 }
 
 static FildeshX* open_null_FildeshXF() {
   FildeshXF* xf;
-  lace_compat_fd_t fd = lace_open_null_readonly();
+  fildesh_compat_fd_t fd = lace_open_null_readonly();
   if (fd < 0) {return NULL;}
   xf = (FildeshXF*) malloc(sizeof(FildeshXF));
   *xf = default_FildeshXF();
   xf->fd = fd;
-  xf->filename = lace_compat_string_duplicate("/dev/null");
+  xf->filename = fildesh_compat_string_duplicate("/dev/null");
   return &xf->base;
 }
 
@@ -122,10 +122,10 @@ open_sibling_FildeshXF(const char* sibling, const char* filename)
     memcpy(&xf->filename[sibling_dirlen], filename, filename_length+1);
   }
   else {
-    xf->filename = lace_compat_string_duplicate(filename);
+    xf->filename = fildesh_compat_string_duplicate(filename);
   }
 
-  xf->fd = lace_compat_file_open_readonly(xf->filename);
+  xf->fd = fildesh_compat_file_open_readonly(xf->filename);
   if (xf->fd >= 0) {
     FildeshXF* p = malloc(sizeof(FildeshXF));
     *p = *xf;
@@ -147,7 +147,7 @@ fildesh_arg_open_readonly(const char* filename)
   if (!filename) {return -1;}
 
   if (0 == strcmp("-", filename) || 0 == strcmp(dev_stdin, filename)) {
-    return lace_compat_fd_claim(0);
+    return fildesh_compat_fd_claim(0);
   }
   if (0 == strcmp(dev_null, filename)) {
     return lace_open_null_readonly();
@@ -156,10 +156,10 @@ fildesh_arg_open_readonly(const char* filename)
     int fd = -1;
     char* s = fildesh_parse_int(&fd, &filename[dev_fd_prefix_length]);
     if (!s) {return -1;}
-    return lace_compat_fd_claim(fd);
+    return fildesh_compat_fd_claim(fd);
   }
 
-  return lace_compat_file_open_readonly(filename);
+  return fildesh_compat_file_open_readonly(filename);
 }
 
   FildeshX*
@@ -168,7 +168,7 @@ open_fd_FildeshX(fildesh_fd_t fd)
   char filename[FILDESH_FD_PATH_SIZE_MAX];
   unsigned filename_size;
   FildeshXF* xf;
-  fd = lace_compat_fd_claim(fd);
+  fd = fildesh_compat_fd_claim(fd);
   if (fd < 0) {return NULL;}
   xf = (FildeshXF*) malloc(sizeof(FildeshXF));
   *xf = default_FildeshXF();

@@ -81,7 +81,7 @@ cat_next_line(FildeshO* out, FildeshX* in)
 }
 
   int
-lace_builtin_zec_main(unsigned argc, char** argv,
+fildesh_builtin_zec_main(unsigned argc, char** argv,
                       FildeshX** inputv, FildeshO** outputv)
 {
   unsigned i;
@@ -232,15 +232,15 @@ lace_builtin_zec_main(unsigned argc, char** argv,
       cat_the_file(out, inputs[nbegs+i]);
   }
 
-  lace_compat_errno_trace();
+  fildesh_compat_errno_trace();
   close_FildeshO(out);
   free (inputs);
   free (mid_buf);
   return 0;
 }
 
-#ifndef LACE_BUILTIN_LIBRARY
+#ifndef FILDESH_BUILTIN_LIBRARY
 int main(int argc, char** argv) {
-  return lace_builtin_zec_main(argc, argv, NULL, NULL);
+  return fildesh_builtin_zec_main(argc, argv, NULL, NULL);
 }
 #endif

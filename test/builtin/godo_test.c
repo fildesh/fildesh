@@ -10,7 +10,7 @@ main_godo(unsigned argc, char** argv);
 static void run_godo(const char* expectish_exe, char* filepath) {
   int istat;
   char* exe = NULL;
-  char* base = (char*)lace_compat_file_basename(filepath);
+  char* base = (char*)fildesh_compat_file_basename(filepath);
   const char* directory = ".";
   const char* argv[6] = {
     "godo", /* Dummy exe name.*/
@@ -21,7 +21,7 @@ static void run_godo(const char* expectish_exe, char* filepath) {
     NULL,
   };
 
-  exe = lace_compat_file_abspath(expectish_exe);
+  exe = fildesh_compat_file_abspath(expectish_exe);
   assert(exe);
 
   if (base != filepath) {

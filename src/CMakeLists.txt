@@ -62,18 +62,18 @@ add_library(fildesh_builtin_lib STATIC
   )
 
 set_property(TARGET fildesh_builtin_lib_obj APPEND PROPERTY COMPILE_DEFINITIONS
-  LACE_BUILTIN_LIBRARY)
+  FILDESH_BUILTIN_LIBRARY)
 
 if (WIN32)
   # Nothing special.
 elseif (APPLE)
   set_property(TARGET fildesh_builtin_lib_obj APPEND PROPERTY COMPILE_DEFINITIONS
-    LACE_BUILTIN_PERMIT_ELASTIC_POLL)
+    FILDESH_BUILTIN_PERMIT_ELASTIC_POLL)
 else()
   set_property(TARGET fildesh_builtin_lib_obj
     APPEND PROPERTY COMPILE_DEFINITIONS
-    LACE_BUILTIN_PERMIT_ELASTIC_AIO
-    LACE_BUILTIN_PERMIT_ELASTIC_POLL)
+    FILDESH_BUILTIN_PERMIT_ELASTIC_AIO
+    FILDESH_BUILTIN_PERMIT_ELASTIC_POLL)
 endif()
 
 add_executable(fildesh "main_lace.c")

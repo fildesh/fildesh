@@ -7,7 +7,7 @@ int main(int argc, char** argv)
 {
   int exstatus;
   init_sysCx();
-  exstatus = lace_builtin_lace_main((unsigned)argc, argv, NULL, NULL);
+  exstatus = fildesh_builtin_lace_main((unsigned)argc, argv, NULL, NULL);
   lose_sysCx();
   return exstatus;
 }

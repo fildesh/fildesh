@@ -1,7 +1,7 @@
 #include "fildesh.h"
 #include <stdlib.h>
 
-int lace_builtin_zec_main(
+int fildesh_builtin_zec_main(
     unsigned argc, char** argv, FildeshX** inputv, FildeshO** outputv);
 
 int main(int argc, char** argv) {
@@ -24,7 +24,7 @@ int main(int argc, char** argv) {
   zec_argv[4+2*(argc-1)+1] = "/";
   zec_argv[4+2*(argc-1)+2] = "-";
   zec_argv[4+2*(argc-1)+3] = NULL;
-  istat = lace_builtin_zec_main(zec_argc, (char**)zec_argv, NULL, NULL);
+  istat = fildesh_builtin_zec_main(zec_argc, (char**)zec_argv, NULL, NULL);
   free(zec_argv);
   return istat;
 }

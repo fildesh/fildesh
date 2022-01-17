@@ -7,7 +7,7 @@ cc_test(
     name = "add_float_test",
     srcs = ["add_float_test.c", "//builtin:add.c"],
     deps = ["//:fildesh_lib", "//:fildesh_tool_lib"],
-    defines = ["LACE_BUILTIN_LIBRARY"],
+    defines = ["FILDESH_BUILTIN_LIBRARY"],
 )
 
 #### bestmatch
@@ -154,7 +154,7 @@ cc_test(
         "godo_test.c",
         "//src:godo.c",
     ],
-    defines = ["LACE_BUILTIN_LIBRARY"],
+    defines = ["FILDESH_BUILTIN_LIBRARY"],
     deps = [
         "//:fildesh_lib",
     ],
@@ -177,7 +177,7 @@ cc_binary(
         "//builtin:zec.c",
     ],
     deps = ["//:fildesh_lib"],
-    defines = ["LACE_BUILTIN_LIBRARY"],
+    defines = ["FILDESH_BUILTIN_LIBRARY"],
     testonly = True,
 )
 fildesh_test(
@@ -209,7 +209,7 @@ cc_test(
         "time2sec_test.c",
         "//builtin:time2sec.c",
     ],
-    defines = ["LACE_BUILTIN_LIBRARY"],
+    defines = ["FILDESH_BUILTIN_LIBRARY"],
     deps = [
         "//:fildesh_lib",
         "//:fildesh_tool_lib",
@@ -224,7 +224,7 @@ cc_test(
         "transpose_test.c",
         "//src:transpose.c",
     ],
-    defines = ["LACE_BUILTIN_LIBRARY"],
+    defines = ["FILDESH_BUILTIN_LIBRARY"],
     deps = [
         "//:fildesh_tool_lib",
         "//src/cx:cx_lib",

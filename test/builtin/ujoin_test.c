@@ -7,19 +7,19 @@
 
 typedef struct PipemFnArg PipemFnArg;
 struct PipemFnArg {
-  lace_compat_fd_t stdin_fd;
-  lace_compat_fd_t stdout_fd;
+  fildesh_compat_fd_t stdin_fd;
+  fildesh_compat_fd_t stdout_fd;
   const char* input_large;
   char* argv[10];
 };
 
-LACE_TOOL_PIPEM_CALLBACK(run_query_ujoin, in_fd, out_fd, PipemFnArg*, st) {
+FILDESH_TOOL_PIPEM_CALLBACK(run_query_ujoin, in_fd, out_fd, PipemFnArg*, st) {
   if (!st->input_large) {
-    lace_compat_fd_t extra_fds[] = {-1, -1};
+    fildesh_compat_fd_t extra_fds[] = {-1, -1};
     int istat;
     extra_fds[0] = in_fd;
     fildesh_encode_fd_path(st->argv[2], in_fd);
-    istat = lace_compat_fd_spawnvp_wait(
+    istat = fildesh_compat_fd_spawnvp_wait(
         st->stdin_fd, st->stdout_fd, 2, extra_fds,
         (const char**)st->argv);
     assert(istat == 0);
@@ -28,7 +28,7 @@ LACE_TOOL_PIPEM_CALLBACK(run_query_ujoin, in_fd, out_fd, PipemFnArg*, st) {
     st->input_large = NULL;
     st->stdin_fd = in_fd;
     st->stdout_fd = out_fd;
-    lace_tool_pipem(
+    fildesh_tool_pipem(
         strlen(input_large), input_large,
         run_query_ujoin, st,
         NULL);
@@ -82,7 +82,7 @@ int main(int argc, char** argv) {
   st->argv[5] = "x";
   st->argv[6] = NULL;
 
-  output_size = lace_tool_pipem(
+  output_size = fildesh_tool_pipem(
       strlen(input_small), input_small,
       run_query_ujoin, st,
       &output_data);

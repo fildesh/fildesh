@@ -121,7 +121,7 @@ init2_URandom (URandom* urandom, uint pcidx, uint npcs)
     urandom->state[i] = uint32_hash(x);
   }
 
-  i = lace_compat_random_bytes(urandom->state, sizeof(urandom->state));
+  i = fildesh_compat_random_bytes(urandom->state, sizeof(urandom->state));
   assert(i == sizeof(urandom->state));
   init2_seeded_URandom (urandom, pcidx, npcs);
 }

@@ -7,7 +7,7 @@
  * The aio_suspend() will return when some amount
  * of data has been read.
  **/
-#define LACE_POSIX_SOURCE
+#define FILDESH_POSIX_SOURCE
 
 #include "fildesh.h"
 #include "fildesh_compat_errno.h"
@@ -85,25 +85,25 @@ int main (int argc, char** argv)
     sock = socket(addr->ai_family,
                   addr->ai_socktype,
                   addr->ai_protocol);
-    if (sock < 0) {lace_compat_errno_trace(); return 1;}
+    if (sock < 0) {fildesh_compat_errno_trace(); return 1;}
     istat = connect(sock, addr->ai_addr, addr->ai_addrlen);
-    if (istat != 0) {lace_compat_errno_trace(); return 1;}
+    if (istat != 0) {fildesh_compat_errno_trace(); return 1;}
 
     memcpy(buf, message_text_data, message_text_size);
     aio->aio_fildes = sock;
     aio->aio_buf = buf;
     aio->aio_nbytes = message_text_size;
     istat = aio_write(aio);
-    if (istat != 0) {lace_compat_errno_trace(); return 1;}
+    if (istat != 0) {fildesh_compat_errno_trace(); return 1;}
 
     do {
       const struct aiocb* tmp = aio;
       istat = aio_suspend (&tmp, 1, 0);
     } while (istat != 0 && errno == EINTR);
-    if (istat != 0) {lace_compat_errno_trace(); return 1;}
+    if (istat != 0) {fildesh_compat_errno_trace(); return 1;}
 
     istat = (int)aio_return(aio);
-    if (istat < 0) {lace_compat_errno_trace(); return 1;}
+    if (istat < 0) {fildesh_compat_errno_trace(); return 1;}
     if (istat != (int)aio->aio_nbytes) {fildesh_log_warning("nbytes differs");}
 
     close(sock);
@@ -114,50 +114,50 @@ int main (int argc, char** argv)
     struct sockaddr_storage client_addr;
     socklen_t client_addr_nbytes = sizeof(client_addr);
     ssize_t nbytes = 0;
-    lace_compat_fd_t source_fd = -1;
-    lace_compat_fd_t fd_to_child = -1;
-    lace_compat_pid_t pid;
+    fildesh_compat_fd_t source_fd = -1;
+    fildesh_compat_fd_t fd_to_child = -1;
+    fildesh_compat_pid_t pid;
 
-    istat = lace_compat_fd_pipe(&fd_to_child, &source_fd);
-    if (istat != 0) {lace_compat_errno_trace(); return 1;}
+    istat = fildesh_compat_fd_pipe(&fd_to_child, &source_fd);
+    if (istat != 0) {fildesh_compat_errno_trace(); return 1;}
 
-    pid = lace_compat_fd_spawnlp(
+    pid = fildesh_compat_fd_spawnlp(
         source_fd, 1, 2, NULL, argv[0], "-connect", NULL);
-    if (pid < 0) {lace_compat_errno_trace(); return 126;}
+    if (pid < 0) {fildesh_compat_errno_trace(); return 126;}
 
     listen_sock = socket(addr->ai_family,
                          addr->ai_socktype,
                          addr->ai_protocol);
-    if (listen_sock < 0) {lace_compat_errno_trace(); return 1;}
+    if (listen_sock < 0) {fildesh_compat_errno_trace(); return 1;}
     istat = bind (listen_sock, addr->ai_addr, addr->ai_addrlen);
-    if (istat != 0) {lace_compat_errno_trace(); close(listen_sock); return 1;}
+    if (istat != 0) {fildesh_compat_errno_trace(); close(listen_sock); return 1;}
 
     istat = listen(listen_sock, SOMAXCONN);
-    if (istat != 0) {lace_compat_errno_trace(); close(listen_sock); return 1;}
+    if (istat != 0) {fildesh_compat_errno_trace(); close(listen_sock); return 1;}
 
-    lace_compat_fd_close(fd_to_child);
+    fildesh_compat_fd_close(fd_to_child);
 
     sock = accept(listen_sock,
                    (struct sockaddr*) &client_addr,
                    &client_addr_nbytes);
-    if (istat != 0) {lace_compat_errno_trace(); close(listen_sock); return 1;}
+    if (istat != 0) {fildesh_compat_errno_trace(); close(listen_sock); return 1;}
 
     aio->aio_fildes = sock;
     aio->aio_buf = buf;
     aio->aio_nbytes = sizeof(buf);
 
     istat = aio_read(aio);
-    if (istat != 0) {lace_compat_errno_trace();}
+    if (istat != 0) {fildesh_compat_errno_trace();}
 
     if (istat == 0) do {
       const struct aiocb* tmp = aio;
       istat = aio_suspend (&tmp, 1, 0);
     } while (istat < 0 && errno == EINTR);
-    if (istat != 0) {lace_compat_errno_trace();}
+    if (istat != 0) {fildesh_compat_errno_trace();}
 
     if (istat == 0) {
       nbytes = aio_return(aio);
-      if (nbytes <= 0) {lace_compat_errno_trace();}
+      if (nbytes <= 0) {fildesh_compat_errno_trace();}
     }
     if (nbytes > 0) {
       fputs("got:", stdout);
@@ -167,7 +167,7 @@ int main (int argc, char** argv)
 
     if (sock >= 0) {close(sock);}
     close(listen_sock);
-    lace_compat_sh_wait(pid);
+    fildesh_compat_sh_wait(pid);
   }
 
   if (list) {

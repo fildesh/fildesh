@@ -18,8 +18,8 @@ struct ComparispawnFnArg {
   int status;
 };
 
-LACE_TOOL_PIPEM_CALLBACK(run_fn, in_fd, out_fd, ComparispawnFnArg*, st) {
-  st->status = lace_compat_fd_spawnvp_wait(
+FILDESH_TOOL_PIPEM_CALLBACK(run_fn, in_fd, out_fd, ComparispawnFnArg*, st) {
+  st->status = fildesh_compat_fd_spawnvp_wait(
       in_fd, out_fd, 2, NULL, (const char**)st->argv);
 }
 
@@ -37,7 +37,7 @@ int main(int argc, char** argv)
 
   st->argv = (const char**) &argv[2];
   st->status = -1;
-  output_size = lace_tool_pipem(
+  output_size = fildesh_tool_pipem(
       0, NULL,
       run_fn, st,
       &output_data);

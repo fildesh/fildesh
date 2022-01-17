@@ -7,7 +7,7 @@
 #include <string.h>
 
   int
-lace_builtin_sponge_main(unsigned argc, char** argv,
+fildesh_builtin_sponge_main(unsigned argc, char** argv,
                          FildeshX** inputv, FildeshO** outputv)
 {
   FildeshX* in = NULL;
@@ -56,8 +56,8 @@ lace_builtin_sponge_main(unsigned argc, char** argv,
   return exstatus;
 }
 
-#ifndef LACE_BUILTIN_LIBRARY
+#ifndef FILDESH_BUILTIN_LIBRARY
 int main(int argc, char** argv) {
-  return lace_builtin_sponge_main((unsigned)argc, argv, NULL, NULL);
+  return fildesh_builtin_sponge_main((unsigned)argc, argv, NULL, NULL);
 }
 #endif

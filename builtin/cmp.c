@@ -7,7 +7,7 @@
 #include <string.h>
 
   int
-lace_builtin_cmp_main(unsigned argc, char** argv,
+fildesh_builtin_cmp_main(unsigned argc, char** argv,
                       FildeshX** inputs, FildeshO** outputs)
 {
   unsigned argi;
@@ -110,8 +110,8 @@ lace_builtin_cmp_main(unsigned argc, char** argv,
   return (equal ? 0 : 1);
 }
 
-#ifndef LACE_BUILTIN_LIBRARY
+#ifndef FILDESH_BUILTIN_LIBRARY
 int main(int argc, char** argv) {
-  return lace_builtin_cmp_main((unsigned)argc, argv, NULL, NULL);
+  return fildesh_builtin_cmp_main((unsigned)argc, argv, NULL, NULL);
 }
 #endif

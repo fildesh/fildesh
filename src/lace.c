@@ -154,21 +154,21 @@ close_Command (Command* cmd)
 {
   unsigned i;
   if (cmd->stdis >= 0) {
-    lace_compat_fd_close(cmd->stdis);
+    fildesh_compat_fd_close(cmd->stdis);
     cmd->stdis = -1;
   }
   if (cmd->stdos >= 0) {
-    lace_compat_fd_close(cmd->stdos);
+    fildesh_compat_fd_close(cmd->stdos);
     cmd->stdos = -1;
   }
   for (i = 0; i < cmd->is.sz; ++i) {
-    lace_compat_fd_close(cmd->is.s[i]);
+    fildesh_compat_fd_close(cmd->is.s[i]);
   }
   LoseTable( cmd->is );
   InitTable( cmd->is );
 
   for (i = 0; i < cmd->os.sz; ++i) {
-    lace_compat_fd_close(cmd->os.s[i]);
+    fildesh_compat_fd_close(cmd->os.s[i]);
   }
   LoseTable( cmd->os );
   InitTable( cmd->os );
@@ -185,12 +185,12 @@ close_Command (Command* cmd)
 }
 
 static
-  lace_compat_fd_t*
+  fildesh_compat_fd_t*
 build_fds_to_inherit_Command(Command* cmd)
 {
   size_t i, off;
-  lace_compat_fd_t* fds = (lace_compat_fd_t*)
-    malloc(sizeof(lace_compat_fd_t) *
+  fildesh_compat_fd_t* fds = (fildesh_compat_fd_t*)
+    malloc(sizeof(fildesh_compat_fd_t) *
            (cmd->is.sz + cmd->os.sz + 1));
 
   off = 0;
@@ -233,7 +233,7 @@ lose_Command (Command* cmd)
   LoseTable( cmd->extra_args );
 
   UFor( i, cmd->tmp_files.sz ) {
-    lace_compat_file_rm(cmd->tmp_files.s[i]);
+    fildesh_compat_file_rm(cmd->tmp_files.s[i]);
     free (cmd->tmp_files.s[i]);
   }
   LoseTable( cmd->tmp_files );
@@ -256,7 +256,7 @@ lose_Commands (void* arg)
 }
 
 static char* lace_strdup(const char* s) {
-  return lace_compat_string_duplicate(s);
+  return fildesh_compat_string_duplicate(s);
 }
 
 static char* lace_uint_strdup(unsigned x) {
@@ -321,18 +321,18 @@ getf_SymVal (Associa* map, const char* s)
   static unsigned
 count_ws (const char* s)
 {
-  return strspn (s, lace_compat_string_blank_bytes);
+  return strspn (s, fildesh_compat_string_blank_bytes);
 }
   static unsigned
 count_non_ws (const char* s)
 {
-  return strcspn (s, lace_compat_string_blank_bytes);
+  return strcspn (s, fildesh_compat_string_blank_bytes);
 }
   static unsigned
 trim_trailing_ws (char* s)
 {
   unsigned n = strlen (s);
-  while (0 < n && strchr (lace_compat_string_blank_bytes, s[n-1]))  --n;
+  while (0 < n && strchr (fildesh_compat_string_blank_bytes, s[n-1]))  --n;
   s[n] = '\0';
   return n;
 }
@@ -750,8 +750,8 @@ add_fd_arg_Command (Command* cmd, int fd)
   static void
 remove_tmppath(void* temporary_directory)
 {
-  if (0 != lace_compat_file_rmdir((char*)temporary_directory)) {
-    lace_compat_errno_trace();
+  if (0 != fildesh_compat_file_rmdir((char*)temporary_directory)) {
+    fildesh_compat_errno_trace();
     fildesh_log_warningf("Temp directory not removed: %s",
                       (char*)temporary_directory);
   }
@@ -768,7 +768,7 @@ add_tmp_file_Command(Command* cmd,
   assert(extension);
   if (!cmd_hookup->temporary_directory) {
     cmd_hookup->temporary_directory = mktmppath_sysCx("fildesh");
-    lace_compat_errno_clear();
+    fildesh_compat_errno_clear();
     if (!cmd_hookup->temporary_directory) {
       fildesh_log_error("Unable to create temp directory.");
       return NULL;
@@ -848,12 +848,12 @@ setup_commands(TableT(Command)* cmds)
       char* arg = cmd->args.s[arg_r];
       if (arg_q == 0 && eq_cstr("stdin", arg)) {
         cmd->kind = StdinCommand;
-        cmd->stdis = lace_compat_fd_claim(0);
+        cmd->stdis = fildesh_compat_fd_claim(0);
         break;
       }
       else if (arg_q == 0 && eq_cstr("stdout", arg)) {
         cmd->kind = StdoutCommand;
-        cmd->stdos = lace_compat_fd_claim(1);
+        cmd->stdos = fildesh_compat_fd_claim(1);
         break;
       }
     }
@@ -887,7 +887,7 @@ setup_commands(TableT(Command)* cmds)
           fildesh_fd_t fd[2];
           Command* xcmd = &cmds->s[sym->cmd_idx];
 
-          if (0 != lace_compat_fd_pipe(&fd[1], &fd[0])) {
+          if (0 != fildesh_compat_fd_pipe(&fd[1], &fd[0])) {
             FailBreak(cmd, "Failed to create pipe for variable", arg);
           }
 
@@ -911,13 +911,13 @@ setup_commands(TableT(Command)* cmds)
           FailBreak(cmd, "Stdout stream not coming from a command?", arg);
         }
 
-        lace_compat_fd_close(sym->as.file_desc);
+        fildesh_compat_fd_close(sym->as.file_desc);
 
         if (sym->ios_idx < last->os.sz) {
-          lace_compat_fd_move_to(last->os.s[sym->ios_idx], cmd->stdos);
+          fildesh_compat_fd_move_to(last->os.s[sym->ios_idx], cmd->stdos);
         }
         else {
-          lace_compat_fd_move_to(last->stdos, cmd->stdos);
+          fildesh_compat_fd_move_to(last->stdos, cmd->stdos);
         }
         sym->kind = NSymValKinds;
         cmd->stdos = -1;
@@ -1060,7 +1060,7 @@ setup_commands(TableT(Command)* cmds)
         InitDomMax( sym->arg_idx );
         InitDomMax( sym->ios_idx );
 
-        if (0 != lace_compat_fd_pipe(&fd[1], &fd[0])) {
+        if (0 != fildesh_compat_fd_pipe(&fd[1], &fd[0])) {
           FailBreak(cmd, "Failed to create pipe for variable", arg);
         }
         assert(fd[0] >= 0);
@@ -1086,7 +1086,7 @@ setup_commands(TableT(Command)* cmds)
         InitDomMax( sym->arg_idx );
         InitDomMax( sym->ios_idx );
 
-        if (0 != lace_compat_fd_pipe(&fd[1], &fd[0])) {
+        if (0 != fildesh_compat_fd_pipe(&fd[1], &fd[0])) {
           FailBreak(cmd, "Failed to create pipe for variable", arg);
         }
 
@@ -1198,10 +1198,10 @@ show_usage()
 
 
 int main_best_match(unsigned argc, char** argv);
-#ifdef LACE_BUILTIN_PERMIT_ELASTIC_AIO
+#ifdef FILDESH_BUILTIN_PERMIT_ELASTIC_AIO
 int main_elastic_aio(unsigned argc, char** argv);
 #endif
-#ifdef LACE_BUILTIN_PERMIT_ELASTIC_POLL
+#ifdef FILDESH_BUILTIN_PERMIT_ELASTIC_POLL
 int main_elastic_poll(unsigned argc, char** argv);
 #endif
 int main_godo(unsigned argc, char** argv);
@@ -1212,52 +1212,52 @@ int main_waitdo(unsigned argc, char** argv);
 int main_xpipe(unsigned argc, char** argv);
 
 static int lace_main_add(unsigned argc, char** argv) {
-  return lace_builtin_add_main(argc, argv, NULL, NULL);
+  return fildesh_builtin_add_main(argc, argv, NULL, NULL);
 }
 static int lace_main_cmp(unsigned argc, char** argv) {
-  return lace_builtin_cmp_main(argc, argv, NULL, NULL);
+  return fildesh_builtin_cmp_main(argc, argv, NULL, NULL);
 }
 static int lace_main_elastic_pthread(unsigned argc, char** argv) {
-  return lace_builtin_elastic_pthread_main(argc, argv, NULL, NULL);
+  return fildesh_builtin_elastic_pthread_main(argc, argv, NULL, NULL);
 }
 static int main_execfd(unsigned argc, char** argv) {
-  return lace_builtin_execfd_main(argc, argv, NULL, NULL);
+  return fildesh_builtin_execfd_main(argc, argv, NULL, NULL);
 }
 static int main_lace(unsigned argc, char** argv) {
-  return lace_builtin_lace_main(argc, argv, NULL, NULL);
+  return fildesh_builtin_lace_main(argc, argv, NULL, NULL);
 }
 static int lace_main_seq(unsigned argc, char** argv) {
-  return lace_builtin_seq_main(argc, argv, NULL, NULL);
+  return fildesh_builtin_seq_main(argc, argv, NULL, NULL);
 }
 static int lace_main_sponge(unsigned argc, char** argv) {
-  return lace_builtin_sponge_main(argc, argv, NULL, NULL);
+  return fildesh_builtin_sponge_main(argc, argv, NULL, NULL);
 }
 static int lace_main_time2sec(unsigned argc, char** argv) {
-  return lace_builtin_time2sec_main(argc, argv, NULL, NULL);
+  return fildesh_builtin_time2sec_main(argc, argv, NULL, NULL);
 }
 static int lace_main_void(unsigned argc, char** argv) {
-  return lace_builtin_void_main(argc, argv, NULL, NULL);
+  return fildesh_builtin_void_main(argc, argv, NULL, NULL);
 }
 static int lace_main_zec(unsigned argc, char** argv) {
-  return lace_builtin_zec_main(argc, argv, NULL, NULL);
+  return fildesh_builtin_zec_main(argc, argv, NULL, NULL);
 }
 
 static int lace_main_elastic(unsigned argc, char** argv) {
-#if defined(LACE_BUILTIN_PERMIT_ELASTIC_AIO)
+#if defined(FILDESH_BUILTIN_PERMIT_ELASTIC_AIO)
   return main_elastic_aio(argc, argv);
-#elif defined(LACE_BUILTIN_PERMIT_ELASTIC_POLL)
+#elif defined(FILDESH_BUILTIN_PERMIT_ELASTIC_POLL)
   return main_elastic_poll(argc, argv);
 #else
   return lace_main_elastic_pthread(argc, argv);
 #endif
 }
 
-bool lace_builtin_is_threadsafe(const char* name)
+bool fildesh_builtin_is_threadsafe(const char* name)
 {
   static const char* const all[] = {
     "add",
     "cmp",
-#if !defined(LACE_BUILTIN_PERMIT_ELASTIC_AIO) && !defined(LACE_BUILTIN_PERMIT_ELASTIC_POLL)
+#if !defined(FILDESH_BUILTIN_PERMIT_ELASTIC_AIO) && !defined(FILDESH_BUILTIN_PERMIT_ELASTIC_POLL)
     "elastic",
 #endif
     "elastic_pthread",
@@ -1292,10 +1292,10 @@ int (*lace_specific_util (const char* arg)) (unsigned, char**)
     {"cmp", lace_main_cmp},
     {"elastic", lace_main_elastic},
     {"elastic_pthread", lace_main_elastic_pthread},
-#ifdef LACE_BUILTIN_PERMIT_ELASTIC_AIO
+#ifdef FILDESH_BUILTIN_PERMIT_ELASTIC_AIO
     {"elastic_aio", main_elastic_aio},
 #endif
-#ifdef LACE_BUILTIN_PERMIT_ELASTIC_POLL
+#ifdef FILDESH_BUILTIN_PERMIT_ELASTIC_POLL
     {"elastic_poll", main_elastic_poll},
 #endif
     {"execfd", main_execfd},
@@ -1324,7 +1324,7 @@ int (*lace_specific_util (const char* arg)) (unsigned, char**)
   return NULL;
 }
 
-int lace_builtin_main(const char* name, unsigned argc, char** argv)
+int fildesh_builtin_main(const char* name, unsigned argc, char** argv)
 {
   int (*f) (unsigned, char**);
   f = lace_specific_util(name);
@@ -1335,7 +1335,7 @@ int lace_builtin_main(const char* name, unsigned argc, char** argv)
   return f(argc, argv);
 }
 
-LACE_POSIX_THREAD_CALLBACK(builtin_command_thread_fn, BuiltinCommandThreadArg*, st)
+FILDESH_POSIX_THREAD_CALLBACK(builtin_command_thread_fn, BuiltinCommandThreadArg*, st)
 {
   typedef struct LaceBuiltinMainMap LaceBuiltinMainMap;
   struct LaceBuiltinMainMap {
@@ -1343,18 +1343,18 @@ LACE_POSIX_THREAD_CALLBACK(builtin_command_thread_fn, BuiltinCommandThreadArg*, 
     int (*main_fn)(unsigned, char**, FildeshX**, FildeshO**);
   };
   static const LaceBuiltinMainMap builtins[] = {
-    {"add", lace_builtin_add_main},
-    {"cmp", lace_builtin_cmp_main},
-#if !defined(LACE_BUILTIN_PERMIT_ELASTIC_AIO) && !defined(LACE_BUILTIN_PERMIT_ELASTIC_POLL)
-    {"elastic", lace_builtin_elastic_pthread_main},
+    {"add", fildesh_builtin_add_main},
+    {"cmp", fildesh_builtin_cmp_main},
+#if !defined(FILDESH_BUILTIN_PERMIT_ELASTIC_AIO) && !defined(FILDESH_BUILTIN_PERMIT_ELASTIC_POLL)
+    {"elastic", fildesh_builtin_elastic_pthread_main},
 #endif
-    {"elastic_pthread", lace_builtin_elastic_pthread_main},
-    {"execfd", lace_builtin_execfd_main},
-    {"seq", lace_builtin_seq_main},
-    {"sponge", lace_builtin_sponge_main},
-    {"time2sec", lace_builtin_time2sec_main},
-    {"void", lace_builtin_void_main},
-    {"zec", lace_builtin_zec_main},
+    {"elastic_pthread", fildesh_builtin_elastic_pthread_main},
+    {"execfd", fildesh_builtin_execfd_main},
+    {"seq", fildesh_builtin_seq_main},
+    {"sponge", fildesh_builtin_sponge_main},
+    {"time2sec", fildesh_builtin_time2sec_main},
+    {"void", fildesh_builtin_void_main},
+    {"zec", fildesh_builtin_zec_main},
     {NULL, NULL},
   };
   Command* cmd = st->command;
@@ -1383,7 +1383,7 @@ LACE_POSIX_THREAD_CALLBACK(builtin_command_thread_fn, BuiltinCommandThreadArg*, 
   st->argv[offset] = st->argv[offset-2];
   st->argv[offset-2] = name;
 
-  assert(lace_builtin_is_threadsafe(name));
+  assert(fildesh_builtin_is_threadsafe(name));
   for (i = 0; builtins[i].name; ++i) {
     if (0 == strcmp(name, builtins[i].name)) {
       main_fn = builtins[i].main_fn;
@@ -1608,7 +1608,7 @@ spawn_commands(const char* lace_exe, TableT(Command) cmds,
     }
     else if (lace_specific_util (cmd->args.s[0])) {
       if (!forkonly) {
-        use_thread = lace_builtin_is_threadsafe(cmd->args.s[0]);
+        use_thread = fildesh_builtin_is_threadsafe(cmd->args.s[0]);
       }
       PushTable( argv, lace_strdup(lace_exe) );
       PushTable( argv, lace_strdup("-as") );
@@ -1626,7 +1626,7 @@ spawn_commands(const char* lace_exe, TableT(Command) cmds,
     if (cmd->exec_doc)
     {
       cmd->exec_doc = 0;
-      lace_compat_file_chmod_u_rwx(cmd->args.s[0], 1, 1, 1);
+      fildesh_compat_file_chmod_u_rwx(cmd->args.s[0], 1, 1, 1);
     }
 
     if (use_thread) {
@@ -1640,9 +1640,9 @@ spawn_commands(const char* lace_exe, TableT(Command) cmds,
         fildesh_log_errorf("Could not pthread_create(). File: %s", argv.s[0]);
       }
     } else {
-      lace_compat_fd_t* fds_to_inherit =
+      fildesh_compat_fd_t* fds_to_inherit =
         build_fds_to_inherit_Command(cmd);
-      cmd->pid = lace_compat_fd_spawnvp(
+      cmd->pid = fildesh_compat_fd_spawnvp(
           cmd->stdis, cmd->stdos, 2, fds_to_inherit, (const char**)argv.s);
       free(fds_to_inherit);
       cmd->stdis = -1;
@@ -1665,7 +1665,7 @@ spawn_commands(const char* lace_exe, TableT(Command) cmds,
 
 
   int
-lace_builtin_lace_main(unsigned argc, char** argv,
+fildesh_builtin_lace_main(unsigned argc, char** argv,
                        FildeshX** inputv, FildeshO** outputv)
 {
   DeclTable( AlphaTab, script_args );
@@ -1694,7 +1694,7 @@ lace_builtin_lace_main(unsigned argc, char** argv,
 
   signal(SIGINT, lose_sysCx);
   signal(SIGSEGV, lose_sysCx);
-#ifdef LACE_POSIX_SOURCE
+#ifdef FILDESH_POSIX_SOURCE
   signal(SIGQUIT, lose_sysCx);
   /* We already detect closed pipes when write() returns <= 0.*/
   signal(SIGPIPE, SIG_IGN);
@@ -1724,7 +1724,7 @@ lace_builtin_lace_main(unsigned argc, char** argv,
     else if (eq_cstr (arg, "-as")) {
       const char* builtin_name = argv[argi];
       argv[argi] = argv[0];
-      exstatus = lace_builtin_main(builtin_name, argc-argi, &argv[argi]);
+      exstatus = fildesh_builtin_main(builtin_name, argc-argi, &argv[argi]);
       exiting = true;
     }
     else if (eq_cstr(arg, "-alias")) {
@@ -1749,7 +1749,7 @@ lace_builtin_lace_main(unsigned argc, char** argv,
       const char* stdin_filepath = argv[argi++];
       fildesh_fd_t fd = fildesh_arg_open_readonly(stdin_filepath);
       if (fd >= 0) {
-        istat = lace_compat_fd_move_to(0, fd);
+        istat = fildesh_compat_fd_move_to(0, fd);
         if (istat != 0) {
           fildesh_log_error("Failed to dup2 -stdin.");
           exstatus = 72;
@@ -1763,7 +1763,7 @@ lace_builtin_lace_main(unsigned argc, char** argv,
       const char* stdout_filepath = argv[argi++];
       fildesh_fd_t fd = fildesh_arg_open_writeonly(stdout_filepath);
       if (fd >= 0) {
-        istat = lace_compat_fd_move_to(1, fd);
+        istat = fildesh_compat_fd_move_to(1, fd);
         if (istat != 0) {
           fildesh_log_error("Failed to dup2 -stdout.");
           exstatus = 72;
@@ -1777,7 +1777,7 @@ lace_builtin_lace_main(unsigned argc, char** argv,
       const char* stderr_filepath = argv[argi++];
       fildesh_fd_t fd = fildesh_arg_open_writeonly(stderr_filepath);
       if (fd >= 0) {
-        istat = lace_compat_fd_move_to(2, fd);
+        istat = fildesh_compat_fd_move_to(2, fd);
         if (istat != 0) {
           fildesh_log_error("Failed to dup2 -stderr.");
           exstatus = 72;
@@ -1810,7 +1810,7 @@ lace_builtin_lace_main(unsigned argc, char** argv,
       PushTable( script_args, cons1_AlphaTab(arg) );
       script_in = open_arg_FildeshXF(argi-1, argv, inputv);
       if (!script_in) {
-        lace_compat_errno_trace();
+        fildesh_compat_errno_trace();
         fildesh_log_errorf("Cannot read script. File: %s", arg);
         exstatus = 66;
       }
@@ -1872,17 +1872,17 @@ lace_builtin_lace_main(unsigned argc, char** argv,
   }
   LoseTable( script_args );
 
-  lace_compat_errno_trace();
+  fildesh_compat_errno_trace();
   istat = parse_file(cmds, script_in, filename_FildeshXF(script_in));
   close_FildeshX(script_in);
-  lace_compat_errno_trace();
+  fildesh_compat_errno_trace();
 
   PackTable( *cmds );
 
   if (istat == 0) {
-    lace_compat_errno_trace();
+    fildesh_compat_errno_trace();
     istat = setup_commands(cmds);
-    lace_compat_errno_trace();
+    fildesh_compat_errno_trace();
   }
 
   if (exstatus == 0 && istat != 0) {
@@ -1896,9 +1896,9 @@ lace_builtin_lace_main(unsigned argc, char** argv,
   }
 
   if (exstatus == 0) {
-    lace_compat_errno_trace();
+    fildesh_compat_errno_trace();
     istat = spawn_commands(argv[0], *cmds, alias_map, forkonly);
-    lace_compat_errno_trace();
+    fildesh_compat_errno_trace();
   }
   lose_strmap(alias_map);
   if (exstatus == 0 && istat != 0) {
@@ -1915,7 +1915,7 @@ lace_builtin_lace_main(unsigned argc, char** argv,
       if (cmd->pid == 0) {
         pthread_join(cmd->thread, NULL);
       } else {
-        cmd->status = lace_compat_sh_wait(cmd->pid);
+        cmd->status = fildesh_compat_sh_wait(cmd->pid);
       }
       cmd->pid = -1;
       if (cmd->status != 0) {
@@ -1930,7 +1930,7 @@ lace_builtin_lace_main(unsigned argc, char** argv,
 
     lose_Command(cmd);
   }
-  lace_compat_errno_trace();
+  fildesh_compat_errno_trace();
   if (exstatus == 0) {
     exstatus = istat;
   }

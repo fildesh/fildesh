@@ -34,7 +34,7 @@ static void BM_FileWriteIntegers_FildeshOF(benchmark::State& state) {
   for (auto _ : state) {
     write_seq_file(filename, state.range(0));
   }
-  lace_compat_file_rm(filename.c_str());
+  fildesh_compat_file_rm(filename.c_str());
 }
 // Register the function as a benchmark
 BENCHMARK(BM_FileWriteIntegers_FildeshOF)
@@ -52,7 +52,7 @@ static void BM_FileWriteIntegers_ofstream(benchmark::State& state) {
       out << i << '\n';
 		}
   }
-  lace_compat_file_rm(filename.c_str());
+  fildesh_compat_file_rm(filename.c_str());
 }
 // Register the function as a benchmark
 BENCHMARK(BM_FileWriteIntegers_ofstream)
@@ -69,7 +69,7 @@ static void BM_FileWriteIntegers_fprintf(benchmark::State& state) {
 		}
     fclose(out);
   }
-  lace_compat_file_rm(filename.c_str());
+  fildesh_compat_file_rm(filename.c_str());
 }
 // Register the function as a benchmark
 BENCHMARK(BM_FileWriteIntegers_fprintf)
@@ -90,7 +90,7 @@ static void BM_FileReadIntegers_FildeshXF(benchmark::State& state) {
 		}
     close_FildeshX(in);
   }
-  lace_compat_file_rm(filename.c_str());
+  fildesh_compat_file_rm(filename.c_str());
 }
 BENCHMARK(BM_FileReadIntegers_FildeshXF)
   /* 1.7 MiB file */
@@ -109,7 +109,7 @@ static void BM_FileReadIntegers_ifstream(benchmark::State& state) {
       benchmark::DoNotOptimize(x);
 		}
   }
-  lace_compat_file_rm(filename.c_str());
+  fildesh_compat_file_rm(filename.c_str());
 }
 BENCHMARK(BM_FileReadIntegers_ifstream)
   /* 1.7 MiB file */
@@ -129,7 +129,7 @@ static void BM_FileReadIntegers_fscanf(benchmark::State& state) {
 		}
     fclose(in);
   }
-  lace_compat_file_rm(filename.c_str());
+  fildesh_compat_file_rm(filename.c_str());
 }
 BENCHMARK(BM_FileReadIntegers_fscanf)
   /* 1.7 MiB file */
@@ -147,7 +147,7 @@ static void BM_FileReadLines_FildeshXF(benchmark::State& state) {
 		}
     close_FildeshX(in);
   }
-  lace_compat_file_rm(filename.c_str());
+  fildesh_compat_file_rm(filename.c_str());
 }
 BENCHMARK(BM_FileReadLines_FildeshXF)
   /* 1.7 MiB file */
@@ -165,7 +165,7 @@ static void BM_FileReadLines_ifstream(benchmark::State& state) {
       assert(!line.empty());
 		}
   }
-  lace_compat_file_rm(filename.c_str());
+  fildesh_compat_file_rm(filename.c_str());
 }
 BENCHMARK(BM_FileReadLines_ifstream)
   /* 1.7 MiB file */
@@ -185,7 +185,7 @@ static void BM_FileReadLines_fgets(benchmark::State& state) {
 		}
     fclose(in);
   }
-  lace_compat_file_rm(filename.c_str());
+  fildesh_compat_file_rm(filename.c_str());
 }
 BENCHMARK(BM_FileReadLines_fgets)
   /* 1.7 MiB file */

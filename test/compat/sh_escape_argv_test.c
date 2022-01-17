@@ -21,7 +21,7 @@ int main() {
   char** escaped_argv;
   unsigned i;
 
-  escaped_argv = lace_compat_sh_escape_argv_for_windows(orig_argv);
+  escaped_argv = fildesh_compat_sh_escape_argv_for_windows(orig_argv);
   assert(escaped_argv);
   for (i = 0; expect_argv[i]; ++i) {
     assert(escaped_argv[i]);
@@ -30,6 +30,6 @@ int main() {
   }
   assert(!escaped_argv[i]);
 
-  lace_compat_sh_free_escaped_argv(escaped_argv);
+  fildesh_compat_sh_free_escaped_argv(escaped_argv);
   return 0;
 }

@@ -3,7 +3,7 @@
 #include <stdarg.h>
 #include <stddef.h>
 
-int lace_tool_spawn_main(int argc, char** argv);
+int fildesh_tool_spawn_main(int argc, char** argv);
 
 static int spawnit(const char* arg1, ...) {
   va_list argp;
@@ -24,7 +24,7 @@ static int spawnit(const char* arg1, ...) {
     argc = i-1;
   }
   assert(!argv[argc]);
-  return lace_tool_spawn_main(argc, (char**)argv);
+  return fildesh_tool_spawn_main(argc, (char**)argv);
 }
 
 int main(int argc, const char** argv) {

@@ -35,16 +35,16 @@ static
 spawn_ssh(const char* ssh_exe, const char* cmd, const char* host)
 {
   int istat;
-  lace_compat_fd_t source_fd = -1;
-  lace_compat_fd_t fd_to_remote = -1;
+  fildesh_compat_fd_t source_fd = -1;
+  fildesh_compat_fd_t fd_to_remote = -1;
   FildeshO* to_remote = NULL;
-  lace_compat_pid_t pid;
+  fildesh_compat_pid_t pid;
 
-  istat = lace_compat_fd_pipe(&fd_to_remote, &source_fd);
+  istat = fildesh_compat_fd_pipe(&fd_to_remote, &source_fd);
   assert(istat == 0);
   to_remote = open_fd_FildeshO(fd_to_remote);
 
-  pid = lace_compat_fd_spawnlp(
+  pid = fildesh_compat_fd_spawnlp(
       source_fd, 1, 2, NULL,
       ssh_exe,
       "-o", "StrictHostKeyChecking=no",
@@ -58,8 +58,8 @@ spawn_ssh(const char* ssh_exe, const char* cmd, const char* host)
   }
   close_FildeshO(to_remote);
   if (pid >= 0) {
-    istat = lace_compat_sh_wait(pid);
-    if (istat < 0) {lace_compat_errno_trace();}
+    istat = fildesh_compat_sh_wait(pid);
+    if (istat < 0) {fildesh_compat_errno_trace();}
   }
 }
 
@@ -93,8 +93,8 @@ main_ssh_all(unsigned argc, char** argv)
   {
     int q = 0;
     int r = strlen (line);
-    while (q < r && strchr(lace_compat_string_blank_bytes, line[q]  )) {++q;}
-    while (r > q && strchr(lace_compat_string_blank_bytes, line[r-1])) {--r;}
+    while (q < r && strchr(fildesh_compat_string_blank_bytes, line[q]  )) {++q;}
+    while (r > q && strchr(fildesh_compat_string_blank_bytes, line[r-1])) {--r;}
 
     if (r == q)  continue;
     line[r] = '\0';
@@ -107,7 +107,7 @@ main_ssh_all(unsigned argc, char** argv)
   return 0;
 }
 
-#ifndef LACE_BUILTIN_LIBRARY
+#ifndef FILDESH_BUILTIN_LIBRARY
   int
 main(int argc, char** argv)
 {

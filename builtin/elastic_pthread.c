@@ -68,7 +68,7 @@ StateMsg(const char* msg, const char* name) {
 #endif
 }
 
-LACE_POSIX_THREAD_CALLBACK(writing_thread_fn, WritingThreadState*, st)
+FILDESH_POSIX_THREAD_CALLBACK(writing_thread_fn, WritingThreadState*, st)
 {
   bool done = false;
 
@@ -180,7 +180,7 @@ static void cleanup_wstates(WritingThreadState* wstates, unsigned wstate_count) 
 }
 
   int
-lace_builtin_elastic_pthread_main(unsigned argc, char** argv,
+fildesh_builtin_elastic_pthread_main(unsigned argc, char** argv,
                                   FildeshX** inputv, FildeshO** outputv)
 {
   WritingThreadState* wstates = NULL;
@@ -259,9 +259,9 @@ lace_builtin_elastic_pthread_main(unsigned argc, char** argv,
   return 0;
 }
 
-#ifndef LACE_BUILTIN_LIBRARY
+#ifndef FILDESH_BUILTIN_LIBRARY
 int main(int argc, char** argv) {
-  return lace_builtin_elastic_pthread_main(argc, argv, NULL, NULL);
+  return fildesh_builtin_elastic_pthread_main(argc, argv, NULL, NULL);
 }
 #endif
 

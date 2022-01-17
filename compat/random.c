@@ -14,7 +14,7 @@
 
 
   size_t
-lace_compat_random_bytes(void* buf, size_t capacity)
+fildesh_compat_random_bytes(void* buf, size_t capacity)
 {
 #if defined(__linux__)
   ssize_t n = getrandom(buf, capacity, 0);

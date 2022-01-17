@@ -2,7 +2,7 @@
  * \file elastic_aio.c
  * Echo stdin to stdout with an arbitrary sized buffer.
  **/
-#define LACE_POSIX_SOURCE
+#define FILDESH_POSIX_SOURCE
 
 #include <aio.h>
 #include "cx/syscx.h"
@@ -303,7 +303,7 @@ main_elastic_aio(unsigned argc, char** argv)
   return 0;
 }
 
-#ifndef LACE_BUILTIN_LIBRARY
+#ifndef FILDESH_BUILTIN_LIBRARY
   int
 main(int argc, char** argv)
 {

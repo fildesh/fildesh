@@ -8,14 +8,14 @@
 typedef struct PipemFnArg PipemFnArg;
 struct PipemFnArg {
   unsigned tee_index;
-  lace_compat_fd_t stdin_fd;
-  lace_compat_fd_t* tee_fds;
+  fildesh_compat_fd_t stdin_fd;
+  fildesh_compat_fd_t* tee_fds;
   char* elastic_argv[10];
   size_t expect_size;
   const char* expect_string;
 };
 
-LACE_TOOL_PIPEM_CALLBACK(run_expect_elastic, in_fd, out_fd, PipemFnArg*, st) {
+FILDESH_TOOL_PIPEM_CALLBACK(run_expect_elastic, in_fd, out_fd, PipemFnArg*, st) {
   char tee_arg[FILDESH_FD_PATH_SIZE_MAX];
   if (in_fd >= 0) {
     st->stdin_fd = in_fd;
@@ -30,7 +30,7 @@ LACE_TOOL_PIPEM_CALLBACK(run_expect_elastic, in_fd, out_fd, PipemFnArg*, st) {
   if (st->tee_fds[st->tee_index] < 0) {
     int istat;
     st->elastic_argv[st->tee_index+1] = NULL;
-    istat = lace_compat_fd_spawnvp_wait(
+    istat = fildesh_compat_fd_spawnvp_wait(
         st->stdin_fd, -1, 2, st->tee_fds, (const char**)st->elastic_argv);
     assert(istat == 0);
   } else {
@@ -38,7 +38,7 @@ LACE_TOOL_PIPEM_CALLBACK(run_expect_elastic, in_fd, out_fd, PipemFnArg*, st) {
     char* output_data = NULL;
     const unsigned tee_index = st->tee_index;
     fildesh_log_tracef("Piping tee_index %u", tee_index);
-    output_size = lace_tool_pipem(
+    output_size = fildesh_tool_pipem(
         0, NULL,
         run_expect_elastic, st,
         &output_data);
@@ -51,7 +51,7 @@ LACE_TOOL_PIPEM_CALLBACK(run_expect_elastic, in_fd, out_fd, PipemFnArg*, st) {
 
 int main(int argc, char** argv) {
   PipemFnArg st[1];
-  lace_compat_fd_t tee_fds[] = {1, 1, 1, -1};
+  fildesh_compat_fd_t tee_fds[] = {1, 1, 1, -1};
 
   assert(argc == 2);
 
@@ -65,7 +65,7 @@ int main(int argc, char** argv) {
     ;
   st->expect_size = strlen(st->expect_string);
 
-  lace_tool_pipem(
+  fildesh_tool_pipem(
       st->expect_size, st->expect_string,
       run_expect_elastic, st,
       NULL);

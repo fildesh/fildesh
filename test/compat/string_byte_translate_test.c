@@ -11,7 +11,7 @@ int main() {
   const char* const xml_replacements[] = {
     "&amp;", "&lt;", "&gt;", "&quot;", "&apos;",
   };
-  s = lace_compat_string_byte_translate(
+  s = fildesh_compat_string_byte_translate(
       "Student's code: \"x > z && x < y\"", 
       xml_needles, xml_replacements,
       "<example>", "</example>");

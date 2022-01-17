@@ -20,7 +20,7 @@ static
 write_FildeshOF(FildeshOF* of)
 {
   FildeshO* o = &of->base;
-  o->off += lace_compat_fd_write(of->fd, &o->at[o->off], o->size - o->off);
+  o->off += fildesh_compat_fd_write(of->fd, &o->at[o->off], o->size - o->off);
 }
 
 static
@@ -28,7 +28,7 @@ static
 close_FildeshOF(FildeshOF* of)
 {
   if (of->fd >= 0) {
-    lace_compat_fd_close(of->fd);
+    fildesh_compat_fd_close(of->fd);
     of->fd = -1;
   }
   if (of->filename) {
@@ -93,10 +93,10 @@ open_sibling_FildeshOF(const char* sibling, const char* filename)
     memcpy(&of->filename[sibling_dirlen], filename, filename_length+1);
   }
   else {
-    of->filename = lace_compat_string_duplicate(filename);
+    of->filename = fildesh_compat_string_duplicate(filename);
   }
 
-  of->fd = lace_compat_file_open_writeonly(of->filename);
+  of->fd = fildesh_compat_file_open_writeonly(of->filename);
   if (of->fd >= 0) {
     FildeshOF* p = malloc(sizeof(FildeshOF));
     *p = *of;
@@ -117,16 +117,16 @@ fildesh_arg_open_writeonly(const char* filename)
   if (!filename) {return -1;}
 
   if (0 == strcmp("-", filename) || 0 == strcmp(dev_stdout, filename)) {
-    return lace_compat_fd_claim(1);
+    return fildesh_compat_fd_claim(1);
   }
   if (0 == strncmp(dev_fd_prefix, filename, dev_fd_prefix_length)) {
     int fd = -1;
     char* s = fildesh_parse_int(&fd, &filename[dev_fd_prefix_length]);
     if (!s) {return -1;}
-    return lace_compat_fd_claim(fd);
+    return fildesh_compat_fd_claim(fd);
   }
 
-  return lace_compat_file_open_writeonly(filename);
+  return fildesh_compat_file_open_writeonly(filename);
 }
 
   FildeshO*
@@ -135,7 +135,7 @@ open_fd_FildeshO(fildesh_fd_t fd)
   char filename[FILDESH_FD_PATH_SIZE_MAX];
   unsigned filename_size;
   FildeshOF* of;
-  fd = lace_compat_fd_claim(fd);
+  fd = fildesh_compat_fd_claim(fd);
   if (fd < 0) {return NULL;}
   of = (FildeshOF*) malloc(sizeof(FildeshOF));
   *of = default_FildeshOF();

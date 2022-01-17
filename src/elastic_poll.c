@@ -39,7 +39,7 @@ close_IOState(IOState* io, struct pollfd* pfd) {
     return;
   }
   io->done = 1;
-  lace_compat_fd_close(pfd->fd);
+  fildesh_compat_fd_close(pfd->fd);
   ClearTable( io->buf );
 }
 
@@ -269,7 +269,7 @@ main_elastic_poll(unsigned argc, char** argv)
   return 0;
 }
 
-#ifndef LACE_BUILTIN_LIBRARY
+#ifndef FILDESH_BUILTIN_LIBRARY
   int
 main(int argc, char** argv)
 {

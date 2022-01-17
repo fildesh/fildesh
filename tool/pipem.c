@@ -21,28 +21,28 @@ struct LaceToolPipemOutput {
   int consume_fd;
 };
 
-LACE_POSIX_THREAD_CALLBACK(produce_thread_fn, LaceToolPipemInput*, arg)
+FILDESH_POSIX_THREAD_CALLBACK(produce_thread_fn, LaceToolPipemInput*, arg)
 {
   size_t i = 0;
   while (i < arg->input_size) {
-    size_t n = lace_compat_fd_write(
+    size_t n = fildesh_compat_fd_write(
         arg->produce_fd, &arg->input_data[i], arg->input_size - i);
     if (n == 0) {
       break;
     }
     i += n;
   }
-  lace_compat_fd_close(arg->produce_fd);
+  fildesh_compat_fd_close(arg->produce_fd);
 }
 
-LACE_POSIX_THREAD_CALLBACK(consume_thread_fn, LaceToolPipemOutput*, arg)
+FILDESH_POSIX_THREAD_CALLBACK(consume_thread_fn, LaceToolPipemOutput*, arg)
 {
   size_t capacity = 0;
   arg->output_size = 0;
   while (1) {
     size_t total;
     char buf[1024];
-    size_t n = lace_compat_fd_read(arg->consume_fd, buf, sizeof(buf));
+    size_t n = fildesh_compat_fd_read(arg->consume_fd, buf, sizeof(buf));
     if (n == 0) {
       break;
     }
@@ -65,22 +65,22 @@ LACE_POSIX_THREAD_CALLBACK(consume_thread_fn, LaceToolPipemOutput*, arg)
     /* Add a NUL just in case someone wants to print it.*/
     (*arg->output_storage)[arg->output_size] = '\0';
   }
-  lace_compat_fd_close(arg->consume_fd);
+  fildesh_compat_fd_close(arg->consume_fd);
 }
 
   size_t
-lace_tool_pipem(
+fildesh_tool_pipem(
     size_t input_size, const char* input_data,
-    void (*fn)(lace_compat_fd_t,lace_compat_fd_t,void*), void* arg,
+    void (*fn)(fildesh_compat_fd_t,fildesh_compat_fd_t,void*), void* arg,
     char** output_storage)
 {
   int istat;
-  lace_compat_fd_t source_fd = -1;
-  lace_compat_fd_t produce_fd = -1;
+  fildesh_compat_fd_t source_fd = -1;
+  fildesh_compat_fd_t produce_fd = -1;
   pthread_t produce_thread;
   LaceToolPipemInput produce_thread_arg;
-  lace_compat_fd_t sink_fd = -1;
-  lace_compat_fd_t consume_fd = -1;
+  fildesh_compat_fd_t sink_fd = -1;
+  fildesh_compat_fd_t consume_fd = -1;
   pthread_t consume_thread;
   LaceToolPipemOutput consume_thread_arg;
 #ifndef _MSC_VER
@@ -91,11 +91,11 @@ lace_tool_pipem(
   assert(fn);
 
   if (input_size > 0) {
-    istat = lace_compat_fd_pipe(&produce_fd, &source_fd);
+    istat = fildesh_compat_fd_pipe(&produce_fd, &source_fd);
     assert(istat == 0);
   }
   if (output_storage) {
-    istat = lace_compat_fd_pipe(&sink_fd, &consume_fd);
+    istat = fildesh_compat_fd_pipe(&sink_fd, &consume_fd);
     assert(istat == 0);
   }
 

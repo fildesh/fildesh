@@ -5,9 +5,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-LACE_TOOL_PIPEM_CALLBACK(run_void, in_fd, out_fd, const char*, void_exe) {
+FILDESH_TOOL_PIPEM_CALLBACK(run_void, in_fd, out_fd, const char*, void_exe) {
   int istat;
-  istat = lace_compat_fd_spawnlp_wait(in_fd, out_fd, 2, NULL, void_exe, NULL);
+  istat = fildesh_compat_fd_spawnlp_wait(
+      in_fd, out_fd, 2, NULL, void_exe, NULL);
   assert(istat == 0);
 }
 
@@ -26,7 +27,7 @@ int main(int argc, char** argv) {
     input_data[i] = (char)((i % (127 - 20)) + 20);
   }
 
-  output_size = lace_tool_pipem(
+  output_size = fildesh_tool_pipem(
       input_size, input_data,
       run_void, void_exe,
       &output_data);

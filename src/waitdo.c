@@ -46,9 +46,9 @@ main_waitdo(unsigned argc, char** argv)
 
     if (lace_specific_util(argv[argi]))
     {
-      return lace_builtin_main(argv[argi], argc-argi, &argv[argi]);
+      return fildesh_builtin_main(argv[argi], argc-argi, &argv[argi]);
     }
-    lace_compat_sh_exec((const char**)&argv[argi]);
+    fildesh_compat_sh_exec((const char**)&argv[argi]);
 
     fprintf (ErrOut, "%s - Failed to execute:%s\n", ExeName, argv[2]);
   }
@@ -57,7 +57,7 @@ main_waitdo(unsigned argc, char** argv)
   return 1;
 }
 
-#ifndef LACE_BUILTIN_LIBRARY
+#ifndef FILDESH_BUILTIN_LIBRARY
   int
 main(int argc, char** argv)
 {

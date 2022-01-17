@@ -74,7 +74,7 @@ setup_lookup_table(FildeshX* in, const char* delim)
     if (delim)
       s = strstr (s, delim);
     else
-      s = &s[strcspn (s, lace_compat_string_blank_bytes)];
+      s = &s[strcspn (s, fildesh_compat_string_blank_bytes)];
 
     if (!s || s[0] == '\0')
       s = 0;
@@ -84,7 +84,7 @@ setup_lookup_table(FildeshX* in, const char* delim)
       join->field.sz = IdxEltTable( join->field, s );
       s[0] = 0;
       if (delim)  s = &s[delim_sz];
-      else        s = &s[1 + strspn (&s[1], lace_compat_string_blank_bytes)];
+      else        s = &s[1 + strspn (&s[1], fildesh_compat_string_blank_bytes)];
     }
     join->lookup_line = s;
   }
@@ -112,8 +112,12 @@ compare_lines(FildeshX* in, Associa* map, const char* delim,
 
     ++ line_no;
 
-    if (delim)  payload = strstr (line, delim);
-    else        payload = &line[strcspn (line, lace_compat_string_blank_bytes)];
+    if (delim) {
+      payload = strstr(line, delim);
+    }
+    else {
+      payload = &line[strcspn(line, fildesh_compat_string_blank_bytes)];
+    }
 
     if (!payload || payload[0] == '\0')
       payload = 0;
@@ -158,13 +162,15 @@ compare_lines(FildeshX* in, Associa* map, const char* delim,
     }
     else
     {
-      if (delim)
+      if (delim) {
         payload = &payload[delim_sz];
-      else
+      }
+      else {
         payload = &payload[1 + strspn(&payload[1],
-                                      lace_compat_string_blank_bytes)];
+                                      fildesh_compat_string_blank_bytes)];
+      }
 
-      join->stream_line = lace_compat_string_duplicate(payload);
+      join->stream_line = fildesh_compat_string_duplicate(payload);
     }
   }
 }
@@ -253,7 +259,7 @@ main_ujoin(unsigned argc, char** argv)
   if (exstatus == 0) {
     lookup_in = open_FildeshXF(lookup_in_arg);
     if (!lookup_in) {
-      lace_compat_errno_trace();
+      fildesh_compat_errno_trace();
       fildesh_log_errorf("ujoin: cannot open %s", lookup_in_arg);
       exstatus = 66;
     }
@@ -261,7 +267,7 @@ main_ujoin(unsigned argc, char** argv)
   if (exstatus == 0) {
     stream_in = open_FildeshXF(stream_in_arg);
     if (!stream_in) {
-      lace_compat_errno_trace();
+      fildesh_compat_errno_trace();
       fildesh_log_errorf("ujoin: cannot open %s", stream_in_arg);
       exstatus = 66;
     }
@@ -344,7 +350,7 @@ main_ujoin(unsigned argc, char** argv)
   return 0;
 }
 
-#ifndef LACE_BUILTIN_LIBRARY
+#ifndef FILDESH_BUILTIN_LIBRARY
   int
 main(int argc, char** argv)
 {

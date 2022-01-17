@@ -93,7 +93,7 @@ readin_fd(fildesh_fd_t fd, bool scrap_newline)
 }
 
   int
-lace_builtin_execfd_main(unsigned argc, char** argv,
+fildesh_builtin_execfd_main(unsigned argc, char** argv,
                          FildeshX** inputv, FildeshO** outputv)
 {
   int exstatus = 0;
@@ -166,7 +166,7 @@ lace_builtin_execfd_main(unsigned argc, char** argv,
     } else if (0 == strcmp(argv[argi], "-exitfd")) {
       fildesh_fd_t fd = -1;
       if (fildesh_parse_int(&fd, argv[++argi]) && fd >= 0) {
-        exitfds[exitfd_count++] = lace_compat_fd_claim(fd);
+        exitfds[exitfd_count++] = fildesh_compat_fd_claim(fd);
       } else {
         fildesh_log_errorf("Cannot parse -exitfd: %s", argv[argi]);
         exstatus = 64;
@@ -212,7 +212,7 @@ lace_builtin_execfd_main(unsigned argc, char** argv,
       if (exe) {
         exstatus = pipe_to_file(fd, exe);
         if (exstatus == 0) {
-          spawn_argv[off+i] = lace_compat_string_duplicate(exe);
+          spawn_argv[off+i] = fildesh_compat_string_duplicate(exe);
         }
       } else {
         fildesh_log_error("Need to provide -exe argument.");
@@ -225,39 +225,39 @@ lace_builtin_execfd_main(unsigned argc, char** argv,
   free(bt);
 
   if (exstatus == 0 && exe) {
-    lace_compat_file_chmod_u_rwx(exe, 1, 1, 1);
+    fildesh_compat_file_chmod_u_rwx(exe, 1, 1, 1);
   }
 
   if (exstatus != 0) {
     show_usage();
   }
-#if defined(LACE_BUILTIN_LIBRARY) || defined(UNIT_TESTING)
+#if defined(FILDESH_BUILTIN_LIBRARY) || defined(UNIT_TESTING)
   else if (lace_specific_util(argv[off])) {
     spawn_argv[off-2] = argv[0];
     spawn_argv[off-1] = (char*)"-as";
-    exstatus = lace_compat_fd_spawnvp_wait(
+    exstatus = fildesh_compat_fd_spawnvp_wait(
         stdin_fd, stdout_fd, 2, fds_to_inherit,
         (const char**)&spawn_argv[off-2]);
   } else {
-    exstatus = lace_compat_fd_spawnvp_wait(
+    exstatus = fildesh_compat_fd_spawnvp_wait(
         stdin_fd, stdout_fd, 2, fds_to_inherit,
         (const char**)&spawn_argv[off]);
   }
 #else
   else {
-    lace_compat_fd_move_to(0, stdin_fd);
-    lace_compat_fd_move_to(1, stdout_fd);
+    fildesh_compat_fd_move_to(0, stdin_fd);
+    fildesh_compat_fd_move_to(1, stdout_fd);
     if (exitfd_count == 0) {
       exstatus = -1;
-      lace_compat_sh_exec((const char**)&spawn_argv[off]);
+      fildesh_compat_sh_exec((const char**)&spawn_argv[off]);
     } else {
-      exstatus = lace_compat_sh_spawn((const char**)&spawn_argv[off]);
+      exstatus = fildesh_compat_sh_spawn((const char**)&spawn_argv[off]);
     }
   }
 #endif
 
   for (i = 0; i < exitfd_count; ++i) {
-    lace_compat_fd_close(exitfds[i]);
+    fildesh_compat_fd_close(exitfds[i]);
   }
   free(exitfds);
 
@@ -273,10 +273,10 @@ lace_builtin_execfd_main(unsigned argc, char** argv,
   return exstatus;
 }
 
-#if !defined(LACE_BUILTIN_LIBRARY) && !defined(UNIT_TESTING)
+#if !defined(FILDESH_BUILTIN_LIBRARY) && !defined(UNIT_TESTING)
   int
 main(int argc, char** argv)
 {
-  return lace_builtin_execfd_main((unsigned)argc, argv, NULL, NULL);
+  return fildesh_builtin_execfd_main((unsigned)argc, argv, NULL, NULL);
 }
 #endif

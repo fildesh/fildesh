@@ -3,7 +3,7 @@
 #include <limits.h>
 
   int
-lace_builtin_seq_main(unsigned argc, char** argv,
+fildesh_builtin_seq_main(unsigned argc, char** argv,
                       FildeshX** inputs, FildeshO** outputs)
 {
   FildeshO* out = open_arg_FildeshOF(0, argv, outputs);
@@ -30,8 +30,8 @@ lace_builtin_seq_main(unsigned argc, char** argv,
   return 0;
 }
 
-#ifndef LACE_BUILTIN_LIBRARY
+#ifndef FILDESH_BUILTIN_LIBRARY
 int main(int argc, char** argv) {
-  return lace_builtin_seq_main(argc, argv, NULL, NULL);
+  return fildesh_builtin_seq_main(argc, argv, NULL, NULL);
 }
 #endif

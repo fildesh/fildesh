@@ -106,7 +106,7 @@ cc_test(
         "spawn_status_test.c",
         "//tool:spawn.c",
     ],
-    defines = ["LACE_TOOL_LIBRARY"],
+    defines = ["FILDESH_TOOL_LIBRARY"],
     args = ["$(location :success)", "$(location :failure)"],
     data = [
         ":failure",

@@ -9,10 +9,10 @@
 #include <io.h>
 #endif
 
-#ifndef LACE_TOOL_LIBRARY
-#define lace_tool_shout_main main
+#ifndef FILDESH_TOOL_LIBRARY
+#define fildesh_tool_shout_main main
 #endif
-int lace_tool_shout_main(int argc, char** argv) {
+int fildesh_tool_shout_main(int argc, char** argv) {
   FILE* f = stdout;
   int argi;
 #ifdef _MSC_VER

@@ -15,7 +15,7 @@
 
 static
   int
-lace_tool_spawn_expect(char** argv, int expect) {
+fildesh_tool_spawn_expect(char** argv, int expect) {
   int istat = 70;
 #ifdef _MSC_VER
   intptr_t pid = _spawnvp(_P_NOWAIT, argv[0], argv);
@@ -32,7 +32,7 @@ lace_tool_spawn_expect(char** argv, int expect) {
   }
 #endif
 
-#ifndef LACE_TOOL_LIBRARY
+#ifndef FILDESH_TOOL_LIBRARY
   fclose(stdin);
   fclose(stdout);
   fclose(stderr);
@@ -58,18 +58,18 @@ lace_tool_spawn_expect(char** argv, int expect) {
   return istat;
 }
 
-#ifndef LACE_TOOL_LIBRARY
-#define lace_tool_spawn_main main
+#ifndef FILDESH_TOOL_LIBRARY
+#define fildesh_tool_spawn_main main
 #endif
-int lace_tool_spawn_main(int argc, char** argv) {
+int fildesh_tool_spawn_main(int argc, char** argv) {
   if (argc < 2 || !argv[1]) {
     return 64;  /* EX_USAGE: Command line usage error.*/
   }
   if (argv[1][0] != '!' || argv[1][1] != '\0') {
     /* Just run the command.*/
-#if defined(LACE_TOOL_LIBRARY) || defined(_MSC_VER)
+#if defined(FILDESH_TOOL_LIBRARY) || defined(_MSC_VER)
     /* Exec does not seem to propagate exit status on Windows, so use Spawn.*/
-    return lace_tool_spawn_expect(&argv[1], 0);
+    return fildesh_tool_spawn_expect(&argv[1], 0);
 #else
     execvp(argv[1], &argv[1]);
 #endif
@@ -80,5 +80,5 @@ int lace_tool_spawn_main(int argc, char** argv) {
   if (argc == 3 && argv[2][0] == '!' && argv[2][1] == '\0') {
     return 0;  /* `spawn ! !` can serve as `true`, much like `bash -c "! !"`.*/
   }
-  return lace_tool_spawn_expect(&argv[2], -1);
+  return fildesh_tool_spawn_expect(&argv[2], -1);
 }

@@ -6,17 +6,17 @@
 #include <string.h>
 
 int
-lace_builtin_transpose_main(unsigned argc, char** argv,
+fildesh_builtin_transpose_main(unsigned argc, char** argv,
                             FildeshX** inputs, FildeshO** outputs);
 
 int
 main_transpose(unsigned argc, char** argv);
 
-LACE_TOOL_PIPEM_NULLARY_CALLBACK(run_transpose, in_fd, out_fd) {
+FILDESH_TOOL_PIPEM_NULLARY_CALLBACK(run_transpose, in_fd, out_fd) {
   const char* argv[] = {"transpose", ",", NULL};
   FildeshX* in = open_fd_FildeshX(in_fd);
   FildeshO* out = open_fd_FildeshO(out_fd);
-  int istat = lace_builtin_transpose_main(2, (char**)argv, &in, &out);
+  int istat = fildesh_builtin_transpose_main(2, (char**)argv, &in, &out);
   assert(istat == 0);
 }
 
@@ -41,7 +41,7 @@ int main() {
   size_t output_size;
   char* output_data = NULL;
 
-  output_size = lace_tool_pipem(
+  output_size = fildesh_tool_pipem(
       input_size, input_data,
       run_transpose, NULL,
       &output_data);

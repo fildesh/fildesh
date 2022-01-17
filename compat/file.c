@@ -12,7 +12,7 @@
 #endif
 
   const char*
-lace_compat_file_basename(const char* filepath)
+fildesh_compat_file_basename(const char* filepath)
 {
   const char* s;
   if (!filepath) {return NULL;}
@@ -28,7 +28,7 @@ lace_compat_file_basename(const char* filepath)
 }
 
   char*
-lace_compat_file_abspath(const char* filepath)
+fildesh_compat_file_abspath(const char* filepath)
 {
 #ifndef _MSC_VER
   /* This also resolves symlinks. Whatever.*/
@@ -39,7 +39,7 @@ lace_compat_file_abspath(const char* filepath)
 }
 
   char*
-lace_compat_file_catpath(const char* dir, const char* filename)
+fildesh_compat_file_catpath(const char* dir, const char* filename)
 {
   const size_t dir_length = (dir ? strlen(dir) : 0);
   const size_t add_length = (filename ? strlen(filename) : 0);
@@ -61,7 +61,7 @@ lace_compat_file_catpath(const char* dir, const char* filename)
 }
 
   int
-lace_compat_file_chmod_u_rwx(const char* filename, int r, int w, int x)
+fildesh_compat_file_chmod_u_rwx(const char* filename, int r, int w, int x)
 {
   int istat, mode;
 #ifndef _MSC_VER
@@ -76,7 +76,7 @@ lace_compat_file_chmod_u_rwx(const char* filename, int r, int w, int x)
 }
 
   int
-lace_compat_file_rm(const char* filepath)
+fildesh_compat_file_rm(const char* filepath)
 {
 #ifndef _MSC_VER
   return unlink(filepath);
@@ -86,7 +86,7 @@ lace_compat_file_rm(const char* filepath)
 }
 
   int
-lace_compat_file_rmdir(const char* dirpath)
+fildesh_compat_file_rmdir(const char* dirpath)
 {
 #ifndef _MSC_VER
   return rmdir(dirpath);

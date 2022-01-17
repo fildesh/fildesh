@@ -15,9 +15,9 @@ lose_sysCx ();
 
 #if defined(_MSC_VER)
 #elif defined(__APPLE__)
-#define LACE_POSIX_SOURCE
+#define FILDESH_POSIX_SOURCE
 #else
-#define LACE_POSIX_SOURCE
+#define FILDESH_POSIX_SOURCE
 /* TODO: Figure out the correct POSIX_SOURCE to use!*/
 #ifndef POSIX_SOURCE
 #define POSIX_SOURCE
@@ -31,7 +31,7 @@ lose_sysCx ();
 #endif
 #endif
 
-#ifdef LACE_POSIX_SOURCE
+#ifdef FILDESH_POSIX_SOURCE
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/wait.h>

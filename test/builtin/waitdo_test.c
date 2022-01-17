@@ -11,10 +11,10 @@ struct PipemFnArg {
   const char* shout_exe;
 };
 
-int lace_builtin_time2sec_main(int, char**, FildeshX**, FildeshO**);
+int fildesh_builtin_time2sec_main(int, char**, FildeshX**, FildeshO**);
 
-LACE_TOOL_PIPEM_CALLBACK(run_waitdo, in_fd, out_fd, const PipemFnArg*, st) {
-  int istat = lace_compat_fd_spawnlp_wait(
+FILDESH_TOOL_PIPEM_CALLBACK(run_waitdo, in_fd, out_fd, const PipemFnArg*, st) {
+  int istat = fildesh_compat_fd_spawnlp_wait(
       in_fd, out_fd, 2, NULL,
       st->waitdo_exe, "--",
       st->shout_exe, "-", "hello", "there", NULL);
@@ -35,7 +35,7 @@ int main(int argc, char** argv) {
   st->waitdo_exe = argv[1];
   st->shout_exe = argv[2];
 
-  output_size = lace_tool_pipem(
+  output_size = fildesh_tool_pipem(
       input_data_size, input_data,
       run_waitdo, st,
       &output_data);

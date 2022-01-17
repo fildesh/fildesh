@@ -10,8 +10,8 @@ struct PipemCallbackArg {
   const char* fildesh_exe;
 };
 
-LACE_TOOL_PIPEM_CALLBACK(run_fildesh, in_fd, out_fd, PipemCallbackArg*, st) {
-  lace_compat_fd_t fds_to_inherit[] = {-1, -1, -1};
+FILDESH_TOOL_PIPEM_CALLBACK(run_fildesh, in_fd, out_fd, PipemCallbackArg*, st) {
+  fildesh_compat_fd_t fds_to_inherit[] = {-1, -1, -1};
   char in_fd_arg[FILDESH_FD_PATH_SIZE_MAX];
   char out_fd_arg[FILDESH_FD_PATH_SIZE_MAX];
   int istat;
@@ -21,7 +21,7 @@ LACE_TOOL_PIPEM_CALLBACK(run_fildesh, in_fd, out_fd, PipemCallbackArg*, st) {
   fildesh_encode_fd_path(in_fd_arg, in_fd);
   fildesh_encode_fd_path(out_fd_arg, out_fd);
 
-  istat = lace_compat_fd_spawnlp_wait(
+  istat = fildesh_compat_fd_spawnlp_wait(
       -1, -1, 2,
       fds_to_inherit,
       st->fildesh_exe,
@@ -47,7 +47,7 @@ int main(int argc, char** argv) {
 
   st->fildesh_exe = argv[1];
 
-  output_size = lace_tool_pipem(
+  output_size = fildesh_tool_pipem(
       strlen(input_data), input_data,
       run_fildesh, st,
       &output_data);

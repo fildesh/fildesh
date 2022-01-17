@@ -36,6 +36,6 @@ add_test(NAME spawn_not_spawn_not_absent_test COMMAND spawn ! "$<TARGET_FILE:spa
 
 add_executable(spawn_status_test "spawn_status_test.c" "${CMAKE_SOURCE_DIR}/tool/spawn.c")
 set_property(TARGET spawn_status_test
-  APPEND PROPERTY COMPILE_DEFINITIONS LACE_TOOL_LIBRARY)
+  APPEND PROPERTY COMPILE_DEFINITIONS FILDESH_TOOL_LIBRARY)
 add_test(NAME spawn_status_test COMMAND spawn_status_test "$<TARGET_FILE:success>" "$<TARGET_FILE:failure>")
 

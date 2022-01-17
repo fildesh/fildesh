@@ -14,7 +14,7 @@
 add_executable(add_float_test "add_float_test.c" "${CMAKE_SOURCE_DIR}/builtin/add.c")
 target_link_libraries(add_float_test fildesh_lib fildesh_tool_lib)
 set_property(TARGET add_float_test
-  APPEND PROPERTY COMPILE_DEFINITIONS LACE_BUILTIN_LIBRARY)
+  APPEND PROPERTY COMPILE_DEFINITIONS FILDESH_BUILTIN_LIBRARY)
 add_test(NAME add_float_test COMMAND add_float_test)
 
 #### bestmatch
@@ -95,7 +95,7 @@ add_test(NAME fildesh_usage_test COMMAND fildesh_usage_test "${fildesh_exe}")
 add_executable(godo_test "godo_test.c" "${CMAKE_SOURCE_DIR}/src/godo.c")
 target_link_libraries(godo_test fildesh_lib)
 set_property(TARGET godo_test
-  APPEND PROPERTY COMPILE_DEFINITIONS LACE_BUILTIN_LIBRARY)
+  APPEND PROPERTY COMPILE_DEFINITIONS FILDESH_BUILTIN_LIBRARY)
 add_test(NAME godo_test COMMAND
   godo_test "$<TARGET_FILE:expectish>" "${CMAKE_SOURCE_DIR}/test/expect/hello.txt")
 
@@ -103,7 +103,7 @@ add_test(NAME godo_test COMMAND
 
 add_executable(echocat "echocat.c" "${CMAKE_SOURCE_DIR}/builtin/zec.c")
 set_property(TARGET echocat
-  APPEND PROPERTY COMPILE_DEFINITIONS LACE_BUILTIN_LIBRARY)
+  APPEND PROPERTY COMPILE_DEFINITIONS FILDESH_BUILTIN_LIBRARY)
 target_link_libraries(echocat fildesh_lib)
 
 add_test(NAME echocat_test COMMAND
@@ -118,7 +118,7 @@ add_test(NAME sshall_test COMMAND sshall_test "$<TARGET_FILE:sshall>" "$<TARGET_
 add_executable(time2sec_test "time2sec_test.c" "${CMAKE_SOURCE_DIR}/builtin/time2sec.c")
 target_link_libraries(time2sec_test fildesh_lib fildesh_tool_lib)
 set_property(TARGET time2sec_test
-  APPEND PROPERTY COMPILE_DEFINITIONS LACE_BUILTIN_LIBRARY)
+  APPEND PROPERTY COMPILE_DEFINITIONS FILDESH_BUILTIN_LIBRARY)
 add_test(NAME time2sec_test COMMAND time2sec_test)
 
 #### transpone
@@ -126,7 +126,7 @@ add_test(NAME time2sec_test COMMAND time2sec_test)
 add_executable(transpose_test "transpose_test.c" "${CMAKE_SOURCE_DIR}/src/transpose.c")
 target_link_libraries(transpose_test cx_lib fildesh_tool_lib)
 set_property(TARGET transpose_test
-  APPEND PROPERTY COMPILE_DEFINITIONS LACE_BUILTIN_LIBRARY)
+  APPEND PROPERTY COMPILE_DEFINITIONS FILDESH_BUILTIN_LIBRARY)
 add_test(NAME transpose_test COMMAND transpose_test)
 
 #### ujoin

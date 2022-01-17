@@ -39,7 +39,7 @@ signal_hook_sysCx (int sig)
 void init_sysCx()
 {
   signal (SIGSEGV, signal_hook_sysCx);
-#ifndef LACE_POSIX_SOURCE
+#ifndef FILDESH_POSIX_SOURCE
   _setmode(_fileno(stdin), _O_BINARY);
   _setmode(_fileno(stdout), _O_BINARY);
   _setmode(_fileno(stderr), _O_BINARY);
@@ -73,7 +73,7 @@ lose_sysCx ()
   bool
 kill_please_sysCx(pid_t pid)
 {
-#ifdef LACE_POSIX_SOURCE
+#ifdef FILDESH_POSIX_SOURCE
   return (0 == kill(pid, SIGINT));
 #else
   bool success = false;
@@ -93,7 +93,7 @@ kill_please_sysCx(pid_t pid)
 mktmppath_sysCx(const char* hint)
 {
   const char* v = 0;
-#ifdef LACE_POSIX_SOURCE
+#ifdef FILDESH_POSIX_SOURCE
   pid_t pid = getpid ();
 #else
   pid_t pid = _getpid ();
@@ -103,7 +103,7 @@ mktmppath_sysCx(const char* hint)
   size_t offset;
   unsigned long i;
 
-#ifdef LACE_POSIX_SOURCE
+#ifdef FILDESH_POSIX_SOURCE
   v = getenv ("TMPDIR");
   if (!v)  v = "/tmp";
 #else
@@ -134,7 +134,7 @@ mktmppath_sysCx(const char* hint)
   void
 setenv_sysCx (const char* key, const char* val)
 {
-#ifdef LACE_POSIX_SOURCE
+#ifdef FILDESH_POSIX_SOURCE
   setenv (key, val, 1);
 #else
   SetEnvironmentVariable (key, val);
@@ -145,7 +145,7 @@ setenv_sysCx (const char* key, const char* val)
   void
 tacenv_sysCx (const char* key, const char* val)
 {
-#ifdef LACE_POSIX_SOURCE
+#ifdef FILDESH_POSIX_SOURCE
   const char* sep = ":";
 #else
   const char* sep = ";";
@@ -168,7 +168,7 @@ tacenv_sysCx (const char* key, const char* val)
 mkdir_sysCx (const char* pathname)
 {
   int ret = -1;
-#ifdef LACE_POSIX_SOURCE
+#ifdef FILDESH_POSIX_SOURCE
   ret = mkdir (pathname, 0700);
 #else
   ret = _mkdir (pathname);

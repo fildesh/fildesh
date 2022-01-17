@@ -20,18 +20,18 @@ run_with_line(const char* lace_exe, unsigned argc, const char** argv,
   /* We create a new stdin for the spawned process.
    * It inherits stdout too, but we want to reuse it.
    */
-  lace_compat_fd_t source_fd = -1;
+  fildesh_compat_fd_t source_fd = -1;
   const char** actual_argv;
   int istat;
   unsigned offset = 0;
   unsigned argi = 0;
   FildeshO* to_spawned = NULL;
-  lace_compat_pid_t pid;
+  fildesh_compat_pid_t pid;
 
   {
-    lace_compat_fd_t to_spawned_fd = -1;
-    istat = lace_compat_fd_pipe(&to_spawned_fd, &source_fd);
-    if (istat != 0) {lace_compat_errno_trace(); return;}
+    fildesh_compat_fd_t to_spawned_fd = -1;
+    istat = fildesh_compat_fd_pipe(&to_spawned_fd, &source_fd);
+    if (istat != 0) {fildesh_compat_errno_trace(); return;}
     to_spawned = open_fd_FildeshO(to_spawned_fd);
     if (!to_spawned) {return;}
   }
@@ -46,7 +46,7 @@ run_with_line(const char* lace_exe, unsigned argc, const char** argv,
   }
   actual_argv[offset] = NULL;
 
-  pid = lace_compat_fd_spawnvp(source_fd, 1, 2, NULL, actual_argv);
+  pid = fildesh_compat_fd_spawnvp(source_fd, 1, 2, NULL, actual_argv);
   free(actual_argv);
   if (pid >= 0) {
     puts_FildeshO(to_spawned, line);
@@ -56,9 +56,9 @@ run_with_line(const char* lace_exe, unsigned argc, const char** argv,
   }
   close_FildeshO(to_spawned);
   if (pid >= 0) {
-    istat = lace_compat_sh_wait(pid);
+    istat = fildesh_compat_sh_wait(pid);
     if (istat != 0) {
-      lace_compat_errno_trace();
+      fildesh_compat_errno_trace();
       fildesh_log_errorf("Child (%s) exited with status: %d", actual_argv[0], istat);
     }
   }

@@ -2,7 +2,7 @@
 #include "fildesh.h"
 
   int
-lace_builtin_void_main(unsigned argc, char** argv,
+fildesh_builtin_void_main(unsigned argc, char** argv,
                        FildeshX** inputs, FildeshO** outputs)
 {
   FildeshX* in = open_arg_FildeshXF(0, argv, inputs);
@@ -21,8 +21,8 @@ lace_builtin_void_main(unsigned argc, char** argv,
   return 0;
 }
 
-#ifndef LACE_BUILTIN_LIBRARY
+#ifndef FILDESH_BUILTIN_LIBRARY
 int main(int argc, char** argv) {
-  return lace_builtin_void_main(argc, argv, NULL, NULL);
+  return fildesh_builtin_void_main(argc, argv, NULL, NULL);
 }
 #endif

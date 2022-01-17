@@ -51,7 +51,7 @@ cc_library(
         "//include:fildesh_posix_thread.h",
     ],
     defines = [
-        "LACE_BUILTIN_LIBRARY",
+        "FILDESH_BUILTIN_LIBRARY",
     ],
     deps = [
         "//src/cx:cx_lib",

@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-int lace_builtin_execfd_main(unsigned, char**, FildeshX**, FildeshO**);
+int fildesh_builtin_execfd_main(unsigned, char**, FildeshX**, FildeshO**);
 
 typedef struct PipemFnArg PipemFnArg;
 struct PipemFnArg {
@@ -17,7 +17,7 @@ struct PipemFnArg {
   const char** argv;
 };
 
-LACE_TOOL_PIPEM_CALLBACK(run_execfd, in_fd, out_fd, PipemFnArg*, st) {
+FILDESH_TOOL_PIPEM_CALLBACK(run_execfd, in_fd, out_fd, PipemFnArg*, st) {
   int istat;
   unsigned fd_index = st->fd_index++;
   char buf[FILDESH_INT_BASE10_SIZE_MAX];
@@ -32,13 +32,13 @@ LACE_TOOL_PIPEM_CALLBACK(run_execfd, in_fd, out_fd, PipemFnArg*, st) {
 
   if (fd_index == 1) {
     st->argv[11] = buf;
-    lace_tool_pipem(
+    fildesh_tool_pipem(
         strlen("hello"), "hello",
         run_execfd, st,
         NULL);
   } else if (fd_index == 2) {
     st->argv[13] = buf;
-    lace_tool_pipem(
+    fildesh_tool_pipem(
         strlen("world"), "world",
         run_execfd, st,
         NULL);
@@ -48,7 +48,7 @@ LACE_TOOL_PIPEM_CALLBACK(run_execfd, in_fd, out_fd, PipemFnArg*, st) {
     for (i = 0; st->argv[i]; ++i) {
       fildesh_log_tracef("argv[%u] = %s", i, st->argv[i]);
     }
-    istat = lace_builtin_execfd_main(i, (char**)st->argv, NULL, NULL);
+    istat = fildesh_builtin_execfd_main(i, (char**)st->argv, NULL, NULL);
     assert(istat == 0);
   }
 }
@@ -84,7 +84,7 @@ int main(int argc, char** argv) {
   assert(argc == 2);
   zec_exe = argv[1];
 
-  tmp_exe = lace_compat_file_catpath(output_directory, "mylittle.exe");
+  tmp_exe = fildesh_compat_file_catpath(output_directory, "mylittle.exe");
   assert(tmp_exe);
 
   st->fd_index = 0;
@@ -95,7 +95,7 @@ int main(int argc, char** argv) {
   input_data = slurp_FildeshX(zec_exe_in);
   input_size = zec_exe_in->size;
 
-  output_size = lace_tool_pipem(
+  output_size = fildesh_tool_pipem(
       input_size, input_data,
       run_execfd, st,
       &output_data);

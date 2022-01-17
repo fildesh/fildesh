@@ -18,9 +18,9 @@ struct PipemFnArg {
   const char* echocat_exe;
 };
 
-LACE_TOOL_PIPEM_CALLBACK(run_waitdo, in_fd, out_fd, const PipemFnArg*, st) {
+FILDESH_TOOL_PIPEM_CALLBACK(run_waitdo, in_fd, out_fd, const PipemFnArg*, st) {
   int istat;
-  istat = lace_compat_fd_spawnlp_wait(
+  istat = fildesh_compat_fd_spawnlp_wait(
       in_fd, out_fd, 2, NULL,
       st->sshall_exe, "-ssh", st->echocat_exe, "-",
       ExpectHostCommand, NULL);
@@ -48,7 +48,7 @@ int main(int argc, char** argv) {
   st->sshall_exe = argv[1];
   st->echocat_exe = argv[2];
 
-  output_size = lace_tool_pipem(
+  output_size = fildesh_tool_pipem(
       input_data_size, input_data,
       run_waitdo, st,
       &output_data);

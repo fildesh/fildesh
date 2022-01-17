@@ -153,7 +153,7 @@ main_best_match(unsigned argc, char** argv)
   if (exstatus == 0) {
     lookup_in = open_FildeshXF(lookup_in_arg);
     if (!lookup_in) {
-      lace_compat_errno_trace();
+      fildesh_compat_errno_trace();
       fildesh_log_errorf("bestmatch: cannot open %s", lookup_in_arg);
       exstatus = 66;
     }
@@ -161,7 +161,7 @@ main_best_match(unsigned argc, char** argv)
   if (exstatus == 0) {
     stream_in = open_FildeshXF(stream_in_arg);
     if (!stream_in) {
-      lace_compat_errno_trace();
+      fildesh_compat_errno_trace();
       fildesh_log_errorf("bestmatch: cannot open %s", stream_in_arg);
       exstatus = 66;
     }
@@ -202,7 +202,7 @@ main_best_match(unsigned argc, char** argv)
   return 0;
 }
 
-#ifndef LACE_BUILTIN_LIBRARY
+#ifndef FILDESH_BUILTIN_LIBRARY
   int
 main(int argc, char** argv)
 {

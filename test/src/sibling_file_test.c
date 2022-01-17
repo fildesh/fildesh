@@ -16,7 +16,8 @@ int main() {
 
   assert(output_directory && "need a TEST_TMPDIR environment variable");
   initial_filename =
-    lace_compat_file_catpath(output_directory, "sibling_file_test_initial.txt");
+    fildesh_compat_file_catpath(
+        output_directory, "sibling_file_test_initial.txt");
   fildesh_log_tracef("initial file is: %s", initial_filename);
   assert(0 == memcmp(output_directory, initial_filename,
                      strlen(output_directory)));
@@ -37,7 +38,7 @@ int main() {
   /* Write out sibling file.*/
   out = open_sibling_FildeshOF(initial_filename, "sibling_file_test_sibling.txt");
   assert(out);
-  sibling_filename = lace_compat_string_duplicate(filename_FildeshOF(out));
+  sibling_filename = fildesh_compat_string_duplicate(filename_FildeshOF(out));
   puts_FildeshO(out, "i am the sibling file\n");
   close_FildeshO(out);
   /* Assertions about sibling filename.*/

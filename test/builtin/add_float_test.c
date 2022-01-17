@@ -6,14 +6,14 @@
 #include <string.h>
 #include <stdio.h>
 
-int lace_builtin_add_main(int, char**, FildeshX**, FildeshO**);
+int fildesh_builtin_add_main(int, char**, FildeshX**, FildeshO**);
 
-LACE_TOOL_PIPEM_NULLARY_CALLBACK(run_add, in_fd, out_fd) {
+FILDESH_TOOL_PIPEM_NULLARY_CALLBACK(run_add, in_fd, out_fd) {
   const char* const argv[] = {"add", NULL};
   FildeshX* in = open_fd_FildeshX(in_fd);
   FildeshO* out = open_fd_FildeshO(out_fd);
   int istat;
-  istat = lace_builtin_add_main(1, (char**)argv, &in, &out);
+  istat = fildesh_builtin_add_main(1, (char**)argv, &in, &out);
   assert(istat == 0);
 }
 
@@ -35,7 +35,7 @@ static void add_ints_test() {
   size_t output_size;
   char* output_data = NULL;
 
-  output_size = lace_tool_pipem(
+  output_size = fildesh_tool_pipem(
       input_data_size, input_data,
       run_add, NULL,
       &output_data);
@@ -61,7 +61,7 @@ static void add_floats_test() {
   size_t output_size;
   char* output_data = NULL;
 
-  output_size = lace_tool_pipem(
+  output_size = fildesh_tool_pipem(
       input_data_size, input_data,
       run_add, NULL,
       &output_data);
