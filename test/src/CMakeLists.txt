@@ -42,7 +42,7 @@ add_test(NAME read_file_lines_test
   WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
 
 add_executable(sibling_file_test
-  "size_test.c")
+  "sibling_file_test.c")
 target_link_libraries(sibling_file_test fildesh_lib)
 add_test(NAME sibling_file_test COMMAND
   "${CMAKE_COMMAND}" -E env "TEST_TMPDIR=${CMAKE_CURRENT_BINARY_DIR}" "$<TARGET_FILE:sibling_file_test>")

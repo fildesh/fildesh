@@ -13,5 +13,8 @@ int main()
   assert(FILDESH_LGSIZE_MAX > 8*sizeof(size_t));
   /* Pointers are at least as big as the sizes of things.*/
   assert(sizeof(size_t) <= sizeof(uintptr_t));
+
+  /* Alignment should be accurate.*/
+  assert(sizeof(int) == fildesh_alignof(int));
   return 0;
 }
