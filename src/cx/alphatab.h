@@ -87,15 +87,19 @@ qual_inline
   void
 cat_AlphaTab (AlphaTab* a, const AlphaTab* b)
 {
-  zuint n = b->sz;
+  size_t n = b->sz;
   if (n == 0)  return;
-  if (!b->s[n-1])  -- n;
-
-  if (a->sz > 0)  -- a->sz;
+  if (!b->s[n-1]) {
+    n -= 1;
+  }
+  if (a->sz > 0 && !a->s[a->sz-1]) {
+    a->sz -= 1;
+  }
   GrowTable( *a, n+1 );
+  assert(a->s);
 
-  memcpy (&a->s[a->sz-(n+1)], b->s, n);
-  a->s[a->sz-1] = 0;
+  memcpy(&a->s[a->sz-(n+1)], b->s, n);
+  a->s[a->sz-1] = '\0';
 }
 
 qual_inline
