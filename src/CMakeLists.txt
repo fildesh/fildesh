@@ -32,7 +32,7 @@ if (UNIX)
 endif()
 
 add_library(fildesh_builtin_lib_obj OBJECT
-  "lace.c"
+  "fildesh.c"
   "utilace.h"
   "best-match.c"
   ${FILDESH_EXTRA_ELASTIC_SOURCES}
@@ -76,7 +76,7 @@ else()
     FILDESH_BUILTIN_PERMIT_ELASTIC_POLL)
 endif()
 
-add_executable(fildesh "main_lace.c")
+add_executable(fildesh "main_fildesh.c")
 target_link_libraries(fildesh
   fildesh_builtin_lib ${CMAKE_THREAD_LIBS_INIT} ${FILDESH_EXTRA_ELASTIC_AIO_LIBS})
 

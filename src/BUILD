@@ -29,7 +29,7 @@ exports_files([
 cc_library(
     name = "fildesh_builtin_lib",
     srcs = [
-        "lace.c",
+        "fildesh.c",
         "utilace.h",
         "best-match.c",
         "execfd.c",
@@ -60,7 +60,7 @@ cc_library(
 
 cc_binary(
     name = "fildesh",
-    srcs = ["main_lace.c"],
+    srcs = ["main_fildesh.c"],
     deps = [":fildesh_builtin_lib"],
     visibility = ["//:__pkg__"],
 )
