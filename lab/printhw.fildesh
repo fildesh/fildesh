@@ -2,9 +2,9 @@
 
 # Usage:
 #   cd /pathto/homework/section
-#   printhw.lace
+#   printhw.fildesh
 # Specify files_to_print, names_file, and printer
-# as HERE docs in labconf.lace.
+# as HERE docs in labconf.fildesh.
 # Printing is disabled for safe testing, search for "enscript" to enable.
 
 # This code prints students' program outputs and java source codes without
@@ -19,11 +19,11 @@
 #   D.<username>/Problem<X>.java
 #              |/output
 
-$(<< labconf.lace)
+$(<< labconf.fildesh)
 
 ## Begin sub-fildesh program.
 $(H perstudent)
-$(<< labconf.lace)
+$(<< labconf.fildesh)
 
 $(H find_args_script)
 BEGIN {

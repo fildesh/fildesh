@@ -1,6 +1,6 @@
 #!/usr/bin/env fildesh
 
-$(<< labconf.lace)
+$(<< labconf.fildesh)
 
  $(O a) printf '%s\n' $(H section)
  $(O b) printf './Accept.lab%d' $(H lab)

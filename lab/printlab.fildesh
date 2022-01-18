@@ -14,7 +14,7 @@
 #   User 6 worked alone (maybe... doesn't matter).
 
 # Use /printer/ variable in config file.
-$(<< labconf.lace)
+$(<< labconf.fildesh)
 
  $(O a) grep '^\*'
 $(XO a) sed \

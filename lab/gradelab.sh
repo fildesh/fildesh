@@ -3,10 +3,10 @@
 bin=$(readlink -f $(dirname "$0"))
 dir=$PWD
 
-configf="labconf.lace"
+configf="labconf.fildesh"
 if [ ! -f "$configf" ]
 then
-    echo "Get into a directory with labconf.lace!" >&1
+    echo "Get into a directory with labconf.fildesh!" >&1
     exit 1
 fi
 

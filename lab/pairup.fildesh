@@ -7,14 +7,14 @@
 # not vice-versa).
 
 # To see it in action, run
-#   ./pair-up.lace
-# Specify the following as HERE docs in labconf.lace:
+#   ./pair-up.fildesh
+# Specify the following as HERE docs in labconf.fildesh:
 #   names_file
 #   pairs_file
 #   allnames_file
 #   wrong_section_file
 
-$(<< labconf.lace)
+$(<< labconf.fildesh)
 
 # Output file to verify matches are good.
 $(H: pairup_matches_file) pairup-matches
