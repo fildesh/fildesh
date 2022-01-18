@@ -1301,7 +1301,7 @@ int (*fildesh_specific_util (const char* arg)) (unsigned, char**)
     {"fildesh", main_fildesh},
     {"godo", main_godo},
     {"seq", fildesh_main_seq},
-    {"ponge", fildesh_main_sponge},
+    {"sponge", fildesh_main_sponge},
     {"ssh-all", main_ssh_all},
     {"time2sec", fildesh_main_time2sec},
     {"transpose", main_transpose},

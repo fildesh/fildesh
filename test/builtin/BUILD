@@ -168,6 +168,19 @@ cc_test(
     ],
 )
 
+#### sponge
+
+sh_test(
+    name = "sponge_sh_test",
+    srcs = ["sponge_test.sh"],
+    args = ["$(location //builtin:sponge)"],
+    data = ["//builtin:sponge"],
+    target_compatible_with = select({
+        "@platforms//os:windows": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }),
+)
+
 #### sshall
 
 cc_binary(
