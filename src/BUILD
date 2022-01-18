@@ -20,7 +20,6 @@ exports_files([
     "godo.c",
     "time2sec.c",
     "transpose.c",
-    "utilace.h",
     "void.c",
 ], visibility = [
     "//test/builtin:__pkg__",
@@ -30,7 +29,6 @@ cc_library(
     name = "fildesh_builtin_lib",
     srcs = [
         "fildesh.c",
-        "utilace.h",
         "best-match.c",
         "execfd.c",
         "godo.c",
@@ -113,7 +111,10 @@ cc_binary(
 
 cc_binary(
     name = "execfd",
-    srcs = ["execfd.c", "utilace.h"],
+    srcs = [
+        "execfd.c",
+        "//include:fildesh_builtin.h",
+    ],
     deps = ["//:fildesh_lib"],
     visibility = ["//test/builtin:__pkg__"],
 )
@@ -134,7 +135,10 @@ cc_binary(
 
 cc_binary(
     name = "waitdo",
-    srcs = ["waitdo.c", "utilace.h"],
+    srcs = [
+        "waitdo.c",
+        "//include:fildesh_builtin.h",
+    ],
     deps = ["//src/cx:cx_lib"],
     visibility = ["//test/builtin:__pkg__"],
 )

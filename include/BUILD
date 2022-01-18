@@ -1,6 +1,5 @@
 exports_files([
     "fildesh.h",
-    "fildesh_builtin.h",
     "fildesh_compat_errno.h",
     "fildesh_compat_fd.h",
     "fildesh_compat_file.h",
@@ -9,4 +8,10 @@ exports_files([
     "fildesh_compat_string.h",
     "fildesh_posix_thread.h",
     "fildesh_tool.h",
+])
+exports_files([
+    "fildesh_builtin.h",
+], visibility = [
+    "//src:__subpackages__",
+    "//test:__subpackages__",
 ])

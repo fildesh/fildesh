@@ -1,4 +1,4 @@
-/** \file lace.c
+/** \file fildesh.c
  *
  * This code is written by Alex Klinkhamer.
  * It uses the ISC license (see the LICENSE file in the top-level directory).
@@ -12,7 +12,6 @@
 #include "fildesh_compat_sh.h"
 #include "fildesh_compat_string.h"
 #include "fildesh_posix_thread.h"
-#include "utilace.h"
 
 #include "cx/syscx.h"
 #include "cx/alphatab.h"

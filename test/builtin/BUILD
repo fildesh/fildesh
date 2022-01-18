@@ -93,8 +93,8 @@ cc_test(
     name = "execfd_test",
     srcs = [
         "execfd_test.c",
+        "//include:fildesh_builtin.h",
         "//src:execfd.c",
-        "//src:utilace.h",
     ],
     defines = ["UNIT_TESTING"],
     deps = ["//:fildesh_lib", "//:fildesh_tool_lib"],

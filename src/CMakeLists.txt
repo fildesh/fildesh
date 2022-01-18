@@ -33,7 +33,6 @@ endif()
 
 add_library(fildesh_builtin_lib_obj OBJECT
   "fildesh.c"
-  "utilace.h"
   "best-match.c"
   ${FILDESH_EXTRA_ELASTIC_SOURCES}
   "execfd.c"
@@ -84,10 +83,12 @@ target_link_libraries(fildesh
 add_executable(bestmatch "best-match.c")
 target_link_libraries(bestmatch fildesh_lib)
 
-add_executable(execfd "execfd.c" "utilace.h")
+add_executable(execfd "execfd.c"
+  "${CMAKE_SOURCE_DIR}/include/fildesh_builtin.h")
 target_link_libraries(execfd fildesh_lib)
 
-add_executable(godo "godo.c" "utilace.h")
+add_executable(godo "godo.c"
+  "${CMAKE_SOURCE_DIR}/include/fildesh_builtin.h")
 target_link_libraries(godo cx_lib)
 
 add_executable(sshall "ssh-all.c")
@@ -99,7 +100,8 @@ target_link_libraries(transpose cx_lib)
 add_executable(ujoin "ujoin.c")
 target_link_libraries(ujoin cx_lib)
 
-add_executable(waitdo "waitdo.c" "utilace.h")
+add_executable(waitdo "waitdo.c"
+  "${CMAKE_SOURCE_DIR}/include/fildesh_builtin.h")
 target_link_libraries(waitdo cx_lib)
 
 if (UNIX)
