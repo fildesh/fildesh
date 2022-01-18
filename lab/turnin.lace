@@ -1,4 +1,4 @@
-#!/usr/bin/env lace
+#!/usr/bin/env fildesh
 
 ## This finds out who turned in an assignment.
 

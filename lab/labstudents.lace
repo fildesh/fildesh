@@ -1,4 +1,4 @@
-#!/usr/bin/env lace
+#!/usr/bin/env fildesh
 
 $(H lab-file)
 lab112.txt
@@ -18,10 +18,10 @@ $(X a) grep -v -e '^!' -e '^$'
 $(H parse-lab)
 
  $(O lookup) cat $(H lab-file)
-$(XO lookup) lace -- $(H parse-lab)
+$(XO lookup) fildesh -- $(H parse-lab)
 
  $(O present) cat $(H attend-file)
-$(XO present) lace -- $(H parse-lab)
+$(XO present) fildesh -- $(H parse-lab)
 
  $(O b) ujoin $(XF lookup) $(XF present) -nomatch $(OF a)
 $(X b) void

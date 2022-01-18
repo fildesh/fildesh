@@ -1,4 +1,4 @@
-#!/usr/bin/env lace
+#!/usr/bin/env fildesh
 
 # Run this from ~/cs1121.grading/Lab2/sec3/ or w/e is appropriate.
 # The users' files will be printed in the specified order.

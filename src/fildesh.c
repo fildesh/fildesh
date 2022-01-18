@@ -1300,7 +1300,6 @@ int (*fildesh_specific_util (const char* arg)) (unsigned, char**)
     {"execfd", main_execfd},
     {"fildesh", main_fildesh},
     {"godo", main_godo},
-    {"lace", main_fildesh},
     {"seq", fildesh_main_seq},
     {"ponge", fildesh_main_sponge},
     {"ssh-all", main_ssh_all},

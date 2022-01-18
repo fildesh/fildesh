@@ -1,4 +1,4 @@
-#!/usr/bin/env lace
+#!/usr/bin/env fildesh
 
 # Usage:
 #   cd /pathto/homework/section
@@ -21,7 +21,7 @@
 
 $(<< labconf.lace)
 
-## Begin sub-lace program.
+## Begin sub-fildesh program.
 $(H perstudent)
 $(<< labconf.lace)
 
@@ -80,7 +80,7 @@ $(X a) cat -
 # it can't be cleaned up too quickly.
 # Ideally, the temp file would be passed down as an argument to xpipe,
 # which would be cleaned up when xpipe finished...
-# but lace scripts don't have a concept of arguments yet.
+# but fildesh scripts don't have a concept of arguments yet.
 $(H page_break)
 
 $(H page_break)
@@ -88,7 +88,7 @@ $(X to_tmp) $(O^ up_a) \
     xargs -ifile echo $(HF page_break) file
 
 $(H perstudent)
-## End sub-lace program.
+## End sub-fildesh program.
 
 
  $(O a) ls
@@ -98,5 +98,5 @@ $(XO a) ujoin $(H names_file) -
 
 #$(X a) cat -
 #$(XO a) head -n1
-$(X a) xpipe lace -- $(H perstudent)
+$(X a) xpipe fildesh -- $(H perstudent)
 
