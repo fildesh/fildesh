@@ -14,16 +14,16 @@ sec=`grep '$(H: \+section)' "$configf" | grep -o '[[:digit:]]\+'`
 lab=`grep '$(H: \+lab)' "$configf" | grep -o '[[:digit:]]\+'`
 
 # Accept lab.
-"$bin/accept.lace"
+"$bin/accept.fildesh"
 # Generate pairs file and some other stuff.
-"$bin/pairgen.lace"
+"$bin/pairgen.fildesh"
 # Go to the appropriate directory.
-"$bin/pairgen.lace"
+"$bin/pairgen.fildesh"
 
 cd "$HOME/cs1121.grading/Lab$lab/sec$sec"
 
 # Find out who was paired up.
-"$bin/pairup.lace" > "$dir/lab$lab"
+"$bin/pairup.fildesh" > "$dir/lab$lab"
 if [ ! -e "lab$lab" ]
 then
     ln -s "$dir/lab$lab" ./
