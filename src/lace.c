@@ -1211,44 +1211,44 @@ int main_ujoin(unsigned argc, char** argv);
 int main_waitdo(unsigned argc, char** argv);
 int main_xpipe(unsigned argc, char** argv);
 
-static int lace_main_add(unsigned argc, char** argv) {
+static int fildesh_main_add(unsigned argc, char** argv) {
   return fildesh_builtin_add_main(argc, argv, NULL, NULL);
 }
-static int lace_main_cmp(unsigned argc, char** argv) {
+static int fildesh_main_cmp(unsigned argc, char** argv) {
   return fildesh_builtin_cmp_main(argc, argv, NULL, NULL);
 }
-static int lace_main_elastic_pthread(unsigned argc, char** argv) {
+static int fildesh_main_elastic_pthread(unsigned argc, char** argv) {
   return fildesh_builtin_elastic_pthread_main(argc, argv, NULL, NULL);
 }
 static int main_execfd(unsigned argc, char** argv) {
   return fildesh_builtin_execfd_main(argc, argv, NULL, NULL);
 }
-static int main_lace(unsigned argc, char** argv) {
-  return fildesh_builtin_lace_main(argc, argv, NULL, NULL);
+static int main_fildesh(unsigned argc, char** argv) {
+  return fildesh_builtin_fildesh_main(argc, argv, NULL, NULL);
 }
-static int lace_main_seq(unsigned argc, char** argv) {
+static int fildesh_main_seq(unsigned argc, char** argv) {
   return fildesh_builtin_seq_main(argc, argv, NULL, NULL);
 }
-static int lace_main_sponge(unsigned argc, char** argv) {
+static int fildesh_main_sponge(unsigned argc, char** argv) {
   return fildesh_builtin_sponge_main(argc, argv, NULL, NULL);
 }
-static int lace_main_time2sec(unsigned argc, char** argv) {
+static int fildesh_main_time2sec(unsigned argc, char** argv) {
   return fildesh_builtin_time2sec_main(argc, argv, NULL, NULL);
 }
-static int lace_main_void(unsigned argc, char** argv) {
+static int fildesh_main_void(unsigned argc, char** argv) {
   return fildesh_builtin_void_main(argc, argv, NULL, NULL);
 }
-static int lace_main_zec(unsigned argc, char** argv) {
+static int fildesh_main_zec(unsigned argc, char** argv) {
   return fildesh_builtin_zec_main(argc, argv, NULL, NULL);
 }
 
-static int lace_main_elastic(unsigned argc, char** argv) {
+static int fildesh_main_elastic(unsigned argc, char** argv) {
 #if defined(FILDESH_BUILTIN_PERMIT_ELASTIC_AIO)
   return main_elastic_aio(argc, argv);
 #elif defined(FILDESH_BUILTIN_PERMIT_ELASTIC_POLL)
   return main_elastic_poll(argc, argv);
 #else
-  return lace_main_elastic_pthread(argc, argv);
+  return fildesh_main_elastic_pthread(argc, argv);
 #endif
 }
 
@@ -1278,20 +1278,20 @@ bool fildesh_builtin_is_threadsafe(const char* name)
   return false;
 }
 
-int (*lace_specific_util (const char* arg)) (unsigned, char**)
+int (*fildesh_specific_util (const char* arg)) (unsigned, char**)
 {
-  typedef struct LaceBuiltinMap LaceBuiltinMap;
-  struct LaceBuiltinMap {
+  typedef struct FildeshBuiltinMap FildeshBuiltinMap;
+  struct FildeshBuiltinMap {
     const char* name;
     int (*main_fn)(unsigned,char**);
   };
-  static const LaceBuiltinMap builtins[] = {
-    {"add", lace_main_add},
+  static const FildeshBuiltinMap builtins[] = {
+    {"add", fildesh_main_add},
     {"best-match", main_best_match},
     {"bestmatch", main_best_match},
-    {"cmp", lace_main_cmp},
-    {"elastic", lace_main_elastic},
-    {"elastic_pthread", lace_main_elastic_pthread},
+    {"cmp", fildesh_main_cmp},
+    {"elastic", fildesh_main_elastic},
+    {"elastic_pthread", fildesh_main_elastic_pthread},
 #ifdef FILDESH_BUILTIN_PERMIT_ELASTIC_AIO
     {"elastic_aio", main_elastic_aio},
 #endif
@@ -1299,19 +1299,19 @@ int (*lace_specific_util (const char* arg)) (unsigned, char**)
     {"elastic_poll", main_elastic_poll},
 #endif
     {"execfd", main_execfd},
-    {"fildesh", main_lace},
+    {"fildesh", main_fildesh},
     {"godo", main_godo},
-    {"lace", main_lace},
-    {"seq", lace_main_seq},
-    {"ponge", lace_main_sponge},
+    {"lace", main_fildesh},
+    {"seq", fildesh_main_seq},
+    {"ponge", fildesh_main_sponge},
     {"ssh-all", main_ssh_all},
-    {"time2sec", lace_main_time2sec},
+    {"time2sec", fildesh_main_time2sec},
     {"transpose", main_transpose},
     {"ujoin", main_ujoin},
-    {"void", lace_main_void},
+    {"void", fildesh_main_void},
     {"waitdo", main_waitdo},
     {"xpipe", main_xpipe},
-    {"zec", lace_main_zec},
+    {"zec", fildesh_main_zec},
     {NULL, NULL},
   };
   unsigned i;
@@ -1327,7 +1327,7 @@ int (*lace_specific_util (const char* arg)) (unsigned, char**)
 int fildesh_builtin_main(const char* name, unsigned argc, char** argv)
 {
   int (*f) (unsigned, char**);
-  f = lace_specific_util(name);
+  f = fildesh_specific_util(name);
   if (!f) {
     fildesh_log_errorf("Unknown builtin: %s", name);
     return -1;
@@ -1337,12 +1337,12 @@ int fildesh_builtin_main(const char* name, unsigned argc, char** argv)
 
 FILDESH_POSIX_THREAD_CALLBACK(builtin_command_thread_fn, BuiltinCommandThreadArg*, st)
 {
-  typedef struct LaceBuiltinMainMap LaceBuiltinMainMap;
-  struct LaceBuiltinMainMap {
+  typedef struct FildeshBuiltinMainMap FildeshBuiltinMainMap;
+  struct FildeshBuiltinMainMap {
     const char* name;
     int (*main_fn)(unsigned, char**, FildeshX**, FildeshO**);
   };
-  static const LaceBuiltinMainMap builtins[] = {
+  static const FildeshBuiltinMainMap builtins[] = {
     {"add", fildesh_builtin_add_main},
     {"cmp", fildesh_builtin_cmp_main},
 #if !defined(FILDESH_BUILTIN_PERMIT_ELASTIC_AIO) && !defined(FILDESH_BUILTIN_PERMIT_ELASTIC_POLL)
@@ -1539,7 +1539,7 @@ add_inheritfd_flags_Command(TableT(cstr)* argv, Command* cmd, bool inprocess) {
 }
 
   static int
-spawn_commands(const char* lace_exe, TableT(Command) cmds,
+spawn_commands(const char* fildesh_exe, TableT(Command) cmds,
                Associa* alias_map, bool forkonly)
 {
   DeclTable( cstr, argv );
@@ -1578,7 +1578,7 @@ spawn_commands(const char* lace_exe, TableT(Command) cmds,
         if (!forkonly) {
           use_thread = true;
         }
-        PushTable( argv, lace_strdup(lace_exe) );
+        PushTable( argv, lace_strdup(fildesh_exe) );
         PushTable( argv, lace_strdup("-as") );
         PushTable( argv, lace_strdup("execfd") );
       }
@@ -1606,11 +1606,11 @@ spawn_commands(const char* lace_exe, TableT(Command) cmds,
       PushTable( argv, lace_strdup("--") );
       PushTable( argv, lace_strdup(cmd->args.s[0]) );
     }
-    else if (lace_specific_util (cmd->args.s[0])) {
+    else if (fildesh_specific_util (cmd->args.s[0])) {
       if (!forkonly) {
         use_thread = fildesh_builtin_is_threadsafe(cmd->args.s[0]);
       }
-      PushTable( argv, lace_strdup(lace_exe) );
+      PushTable( argv, lace_strdup(fildesh_exe) );
       PushTable( argv, lace_strdup("-as") );
       PushTable( argv, lace_strdup(cmd->args.s[0]));
     }
@@ -1665,7 +1665,7 @@ spawn_commands(const char* lace_exe, TableT(Command) cmds,
 
 
   int
-fildesh_builtin_lace_main(unsigned argc, char** argv,
+fildesh_builtin_fildesh_main(unsigned argc, char** argv,
                        FildeshX** inputv, FildeshO** outputv)
 {
   DeclTable( AlphaTab, script_args );

@@ -1,4 +1,4 @@
-#!/usr/bin/env lace
+#!/usr/bin/env fildesh
 
 # Compute the sum from 1 to N  by essentially implementing
 # the {seq} tool and calling {add} on all the numbers.

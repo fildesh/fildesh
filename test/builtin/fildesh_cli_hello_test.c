@@ -43,7 +43,7 @@ int main(int argc, char** argv) {
   size_t output_size;
   PipemCallbackArg st[1];
 
-  assert(argc == 2 && "need lace executable as arg");
+  assert(argc == 2 && "need fildesh executable as arg");
 
   st->fildesh_exe = argv[1];
 

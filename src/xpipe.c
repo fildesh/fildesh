@@ -14,7 +14,7 @@
 
 static
   void
-run_with_line(const char* lace_exe, unsigned argc, const char** argv,
+run_with_line(const char* fildesh_exe, unsigned argc, const char** argv,
               const char* line)
 {
   /* We create a new stdin for the spawned process.
@@ -37,8 +37,8 @@ run_with_line(const char* lace_exe, unsigned argc, const char** argv,
   }
 
   actual_argv = (const char**)malloc(sizeof(char*) * (2+argc+1));
-  if (lace_specific_util(argv[0])) {
-    actual_argv[offset++] = lace_exe;
+  if (fildesh_specific_util(argv[0])) {
+    actual_argv[offset++] = fildesh_exe;
     actual_argv[offset++] = "-as";
   }
   while (argi < argc) {

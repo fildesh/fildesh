@@ -4,11 +4,11 @@
 #include "fildesh.h"
 
 extern "C" {
-  void* make_LaceLegacyIntIntMap();
-  void set_LaceLegacyIntIntMap(void*, int, int);
-  int* get_LaceLegacyIntIntMap(void*, int);
-  void remove_LaceLegacyIntIntMap(void*, int);
-  void free_LaceLegacyIntIntMap(void*);
+  void* make_FildeshLegacyIntIntMap();
+  void set_FildeshLegacyIntIntMap(void*, int, int);
+  int* get_FildeshLegacyIntIntMap(void*, int);
+  void remove_FildeshLegacyIntIntMap(void*, int);
+  void free_FildeshLegacyIntIntMap(void*);
 }
 
 
@@ -21,7 +21,7 @@ static inline int calculate_value(int i, int mul, int off, int count) {
 }
 
 
-static void BM_MapAddIntegers_LaceLegacy(benchmark::State& state) {
+static void BM_MapAddIntegers_FildeshLegacy(benchmark::State& state) {
   const int mul = state.range(0);
   const int off = state.range(1);
   const int count = state.range(2);
@@ -29,22 +29,22 @@ static void BM_MapAddIntegers_LaceLegacy(benchmark::State& state) {
   assert(off < count);
 
   for (auto _ : state) {
-    void* map = make_LaceLegacyIntIntMap();
+    void* map = make_FildeshLegacyIntIntMap();
 		for (int i = 0; i < count; ++i) {
       const int k = calculate_key(i, mul, off, count);
       const int v = calculate_value(i, mul, off, count);
-      set_LaceLegacyIntIntMap(map, k, v);
+      set_FildeshLegacyIntIntMap(map, k, v);
     }
 		for (int i = 0; i < count; ++i) {
       const int k = calculate_key(i, mul, off, count);
-      const int* v = get_LaceLegacyIntIntMap(map, k);
+      const int* v = get_FildeshLegacyIntIntMap(map, k);
       assert(v);
       benchmark::DoNotOptimize(v);
     }
-    free_LaceLegacyIntIntMap(map);
+    free_FildeshLegacyIntIntMap(map);
   }
 }
-BENCHMARK(BM_MapAddIntegers_LaceLegacy)
+BENCHMARK(BM_MapAddIntegers_FildeshLegacy)
   ->Args({100, 3, 200})
   ->Args({0, 7, 5000})
   ->Args({0, 27273, 50000})

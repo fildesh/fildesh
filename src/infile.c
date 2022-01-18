@@ -55,7 +55,7 @@ static inline FildeshXF default_FildeshXF() {
   return tmp;
 }
 
-static fildesh_fd_t lace_open_null_readonly() {
+static fildesh_fd_t fildesh_open_null_readonly() {
   fildesh_compat_fd_t fd = -1;
   fildesh_compat_fd_t tmp_fd = -1;
   int istat;
@@ -68,7 +68,7 @@ static fildesh_fd_t lace_open_null_readonly() {
 
 static FildeshX* open_null_FildeshXF() {
   FildeshXF* xf;
-  fildesh_compat_fd_t fd = lace_open_null_readonly();
+  fildesh_compat_fd_t fd = fildesh_open_null_readonly();
   if (fd < 0) {return NULL;}
   xf = (FildeshXF*) malloc(sizeof(FildeshXF));
   *xf = default_FildeshXF();
@@ -150,7 +150,7 @@ fildesh_arg_open_readonly(const char* filename)
     return fildesh_compat_fd_claim(0);
   }
   if (0 == strcmp(dev_null, filename)) {
-    return lace_open_null_readonly();
+    return fildesh_open_null_readonly();
   }
   if (0 == strncmp(dev_fd_prefix, filename, dev_fd_prefix_length)) {
     int fd = -1;

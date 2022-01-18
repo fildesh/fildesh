@@ -4,8 +4,8 @@
 
 int main() {
   AlphaTab tmppath;
-  tmppath = cons1_AlphaTab("lace");
-  tmppath = dflt1_AlphaTab(mktmppath_sysCx("lace"));
+  tmppath = cons1_AlphaTab("fildesh");
+  tmppath = dflt1_AlphaTab(mktmppath_sysCx("fildesh"));
   if (0 != fildesh_compat_file_rmdir(ccstr_of_AlphaTab(&tmppath))) {
     assert(0 && "failed to create temporary directory");
   }

@@ -1,4 +1,4 @@
-# Like executable_bytes_oxf_test.lace
+# Like executable_bytes_oxf_test.fildesh
 # but with an output file providing the executable bytes.
 
 zec -o $(OF exe) $(XA 1) / /

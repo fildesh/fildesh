@@ -232,7 +232,7 @@ fildesh_builtin_execfd_main(unsigned argc, char** argv,
     show_usage();
   }
 #if defined(FILDESH_BUILTIN_LIBRARY) || defined(UNIT_TESTING)
-  else if (lace_specific_util(argv[off])) {
+  else if (fildesh_specific_util(argv[off])) {
     spawn_argv[off-2] = argv[0];
     spawn_argv[off-1] = (char*)"-as";
     exstatus = fildesh_compat_fd_spawnvp_wait(

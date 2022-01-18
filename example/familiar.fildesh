@@ -1,4 +1,4 @@
-#!/usr/bin/env lace
+#!/usr/bin/env fildesh
 
 # This shows how to use a familiar pipeline notation when it is convenient.
 # Take a look at the pseudocode and then relate it to the rest of the file.

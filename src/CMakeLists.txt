@@ -19,15 +19,15 @@ add_library(fildesh_lib STATIC
 add_subdirectory(cx)
 
 
-set(LACE_EXTRA_ELASTIC_AIO_LIBS)
-set(LACE_EXTRA_ELASTIC_SOURCES)
+set(FILDESH_EXTRA_ELASTIC_AIO_LIBS)
+set(FILDESH_EXTRA_ELASTIC_SOURCES)
 if (UNIX)
   if (APPLE)
-    list(APPEND LACE_EXTRA_ELASTIC_SOURCES "elastic_poll.c")
-    list(APPEND LACE_EXTRA_ELASTIC_AIO_LIBS "c")
+    list(APPEND FILDESH_EXTRA_ELASTIC_SOURCES "elastic_poll.c")
+    list(APPEND FILDESH_EXTRA_ELASTIC_AIO_LIBS "c")
   else()
-    list(APPEND LACE_EXTRA_ELASTIC_SOURCES "elastic_aio.c" "elastic_poll.c")
-    list(APPEND LACE_EXTRA_ELASTIC_AIO_LIBS "rt")
+    list(APPEND FILDESH_EXTRA_ELASTIC_SOURCES "elastic_aio.c" "elastic_poll.c")
+    list(APPEND FILDESH_EXTRA_ELASTIC_AIO_LIBS "rt")
   endif()
 endif()
 
@@ -35,7 +35,7 @@ add_library(fildesh_builtin_lib_obj OBJECT
   "lace.c"
   "utilace.h"
   "best-match.c"
-  ${LACE_EXTRA_ELASTIC_SOURCES}
+  ${FILDESH_EXTRA_ELASTIC_SOURCES}
   "execfd.c"
   "godo.c"
   "ssh-all.c"
@@ -77,7 +77,8 @@ else()
 endif()
 
 add_executable(fildesh "main_lace.c")
-target_link_libraries(fildesh fildesh_builtin_lib ${CMAKE_THREAD_LIBS_INIT} ${LACE_EXTRA_ELASTIC_AIO_LIBS})
+target_link_libraries(fildesh
+  fildesh_builtin_lib ${CMAKE_THREAD_LIBS_INIT} ${FILDESH_EXTRA_ELASTIC_AIO_LIBS})
 
 
 add_executable(bestmatch "best-match.c")
@@ -108,12 +109,12 @@ endif ()
 
 if (UNIX AND NOT APPLE)
   add_executable(elastic_aio "elastic_aio.c")
-  target_link_libraries (elastic_aio cx_lib ${LACE_EXTRA_ELASTIC_AIO_LIBS})
+  target_link_libraries (elastic_aio cx_lib ${FILDESH_EXTRA_ELASTIC_AIO_LIBS})
   set_property (TARGET elastic_aio
     APPEND PROPERTY COMPILE_DEFINITIONS _POSIX_C_SOURCE=199309L)
 
   add_executable(chatty "chatty.c")
-  target_link_libraries(chatty fildesh_lib ${LACE_EXTRA_ELASTIC_AIO_LIBS})
+  target_link_libraries(chatty fildesh_lib ${FILDESH_EXTRA_ELASTIC_AIO_LIBS})
   set_property(TARGET chatty
     APPEND PROPERTY COMPILE_DEFINITIONS _POSIX_C_SOURCE=201112L)
 endif ()

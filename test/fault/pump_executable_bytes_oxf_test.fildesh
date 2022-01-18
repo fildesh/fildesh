@@ -1,4 +1,4 @@
-# Like //test/syntax:executable_bytes_test.lace
+# Like //test/syntax:executable_bytes_test.fildesh
 # but with the executable bytes piped from below.
 
 $(O expect) zec / "hello there world" /

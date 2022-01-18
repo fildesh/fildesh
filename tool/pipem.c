@@ -8,20 +8,20 @@
 #include <string.h>
 
 
-typedef struct LaceToolPipemInput LaceToolPipemInput;
-typedef struct LaceToolPipemOutput LaceToolPipemOutput;
-struct LaceToolPipemInput {
+typedef struct FildeshToolPipemInput FildeshToolPipemInput;
+typedef struct FildeshToolPipemOutput FildeshToolPipemOutput;
+struct FildeshToolPipemInput {
   const char* input_data;
   size_t input_size;
   int produce_fd;
 };
-struct LaceToolPipemOutput {
+struct FildeshToolPipemOutput {
   char** output_storage;
   size_t output_size;
   int consume_fd;
 };
 
-FILDESH_POSIX_THREAD_CALLBACK(produce_thread_fn, LaceToolPipemInput*, arg)
+FILDESH_POSIX_THREAD_CALLBACK(produce_thread_fn, FildeshToolPipemInput*, arg)
 {
   size_t i = 0;
   while (i < arg->input_size) {
@@ -35,7 +35,7 @@ FILDESH_POSIX_THREAD_CALLBACK(produce_thread_fn, LaceToolPipemInput*, arg)
   fildesh_compat_fd_close(arg->produce_fd);
 }
 
-FILDESH_POSIX_THREAD_CALLBACK(consume_thread_fn, LaceToolPipemOutput*, arg)
+FILDESH_POSIX_THREAD_CALLBACK(consume_thread_fn, FildeshToolPipemOutput*, arg)
 {
   size_t capacity = 0;
   arg->output_size = 0;
@@ -78,11 +78,11 @@ fildesh_tool_pipem(
   fildesh_compat_fd_t source_fd = -1;
   fildesh_compat_fd_t produce_fd = -1;
   pthread_t produce_thread;
-  LaceToolPipemInput produce_thread_arg;
+  FildeshToolPipemInput produce_thread_arg;
   fildesh_compat_fd_t sink_fd = -1;
   fildesh_compat_fd_t consume_fd = -1;
   pthread_t consume_thread;
-  LaceToolPipemOutput consume_thread_arg;
+  FildeshToolPipemOutput consume_thread_arg;
 #ifndef _MSC_VER
   void (*sigpipe_fn)(int) = signal(SIGPIPE, SIG_IGN);
 #endif

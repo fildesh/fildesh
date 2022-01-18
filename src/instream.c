@@ -1,5 +1,6 @@
 
 #include "fildesh.h"
+#include "fildesh_compat_string.h"
 
 #include <assert.h>
 #include <stdlib.h>
@@ -335,14 +336,12 @@ skipstr_FildeshX(FildeshX* in, const char* s)
   return false;
 }
 
-static const char lace_whitespace[] = " \t\v\r\n";
-
   bool
 parse_int_FildeshX(FildeshX* in, int* ret)
 {
   FildeshX slice;
   char* end = NULL;
-  skipchrs_FildeshX(in, lace_whitespace);
+  skipchrs_FildeshX(in, fildesh_compat_string_blank_bytes);
   slice = slicespan_FildeshX(in, "+-0123456789");
   if (slice.size > 0) {
     end = fildesh_parse_int(ret, slice.at);
@@ -355,7 +354,7 @@ parse_double_FildeshX(FildeshX* in, double* ret)
 {
   FildeshX slice;
   char* end = NULL;
-  skipchrs_FildeshX(in, lace_whitespace);
+  skipchrs_FildeshX(in, fildesh_compat_string_blank_bytes);
   slice = slicespan_FildeshX(in, "+-.0123456789Ee");
   if (slice.size > 0) {
     end = fildesh_parse_double(ret, slice.at);

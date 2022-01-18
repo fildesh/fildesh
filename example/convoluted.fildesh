@@ -1,4 +1,4 @@
-#!/usr/bin/env lace
+#!/usr/bin/env fildesh
 
 # Compute the sum from 1 to N
 # by generating lines containing 1 to N, 1 to N-1, ..., 1 to 3, 1 to 2, 1

@@ -44,7 +44,7 @@ main_waitdo(unsigned argc, char** argv)
     while (! feof (in) && ! ferror (in))  fgetc (in);
     fclose (in);
 
-    if (lace_specific_util(argv[argi]))
+    if (fildesh_specific_util(argv[argi]))
     {
       return fildesh_builtin_main(argv[argi], argc-argi, &argv[argi]);
     }
