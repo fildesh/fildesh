@@ -1,5 +1,9 @@
 #include "fildesh_compat_file.h"
 
+#ifndef _MSC_VER
+/* For stdlib.h to provide realpath() on Debian.*/
+#define _DEFAULT_SOURCE
+#endif
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
