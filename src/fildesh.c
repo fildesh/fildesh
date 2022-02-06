@@ -258,12 +258,6 @@ static char* lace_strdup(const char* s) {
   return fildesh_compat_string_duplicate(s);
 }
 
-static char* lace_uint_strdup(unsigned x) {
-  char buf[FILDESH_INT_BASE10_SIZE_MAX];
-  fildesh_encode_int_base10(buf, x);
-  return lace_strdup(buf);
-}
-
 static char* lace_fd_strdup(fildesh_fd_t fd) {
   char buf[FILDESH_INT_BASE10_SIZE_MAX];
   fildesh_encode_int_base10(buf, fd);
@@ -1570,6 +1564,7 @@ spawn_commands(const char* fildesh_exe, TableT(Command) cmds,
 
     if (cmd->exec_fd >= 0 || fdargs.sz > 0 || cmd->exit_fds.sz > 0) {
       const char* execfd_exe = lookup_strmap(alias_map, "execfd");
+      char* execfd_fmt = NULL;
       if (execfd_exe) {
         PushTable( argv, lace_strdup(execfd_exe) );
       } else {
@@ -1593,14 +1588,21 @@ spawn_commands(const char* fildesh_exe, TableT(Command) cmds,
 
       add_inheritfd_flags_Command(&argv, cmd, use_thread);
 
-      for (j = 0; j < fdargs.sz; ++j)
-      {
+      execfd_fmt = (char*)malloc(2*cmd->args.sz);
+      for (j = 0; j < cmd->args.sz; ++j) {
+        execfd_fmt[2*j] = 'a';
+        execfd_fmt[2*j+1] = '_';
+      }
+      execfd_fmt[2*cmd->args.sz-1] = '\0';
+
+      for (j = 0; j < fdargs.sz; ++j) {
         uint2 p = fdargs.s[j];
         PushTable( cmd->extra_args, lace_fd_strdup(p.s[1]) );
         cmd->args.s[p.s[0]] = *TopTable( cmd->extra_args );
-        PushTable( argv, lace_uint_strdup(p.s[0]) );
+        execfd_fmt[2*p.s[0]] = 'x';
       }
 
+      PushTable( argv, execfd_fmt );
       PushTable( argv, lace_strdup("--") );
       PushTable( argv, lace_strdup(cmd->args.s[0]) );
     }

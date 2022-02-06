@@ -31,20 +31,20 @@ FILDESH_TOOL_PIPEM_CALLBACK(run_execfd, in_fd, out_fd, PipemFnArg*, st) {
   fildesh_encode_int_base10(buf, in_fd);
 
   if (fd_index == 1) {
-    st->argv[11] = buf;
+    st->argv[9] = buf;
     fildesh_tool_pipem(
         strlen("hello"), "hello",
         run_execfd, st,
         NULL);
   } else if (fd_index == 2) {
-    st->argv[13] = buf;
+    st->argv[11] = buf;
     fildesh_tool_pipem(
         strlen("world"), "world",
         run_execfd, st,
-        NULL);
+        NULL);                                                                                                                                                                         
   } else {
     unsigned i;
-    st->argv[15] = buf;
+    st->argv[13] = buf;
     for (i = 0; st->argv[i]; ++i) {
       fildesh_log_tracef("argv[%u] = %s", i, st->argv[i]);
     }
@@ -62,7 +62,7 @@ int main(int argc, char** argv) {
     "-exe", "replace_with_tmp_exe",
     "-stdin", "/dev/null",
     "-stdout", "replace_with_stdout_file",
-    "0", "2", "4",
+    "x_a_x_a_x_a",
     "--",
     "replace_with_fd",
     "/",

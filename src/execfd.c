@@ -16,9 +16,11 @@ static
 show_usage()
 {
 #define f(s)  fputs(s, stderr); fputc('\n', stderr);
-  f("Usage: execfd [OPTIONS] [argi]* -- [arg|fd]*");
-  f("  Each argi is an index that has a file descriptor in it.");
-  f("  Index zero is the executable name." );
+  f("Usage: execfd [OPTIONS] FORMAT -- [arg|fd]*");
+  f(" FORMAT uses 2 bytes to represent the type of each argument and whether to concatenate them.");
+  f("   a -- Literal string argument.");
+  f("   _ -- Readable file descriptor (integer).");
+  /* f("   + -- Concatenate args."); */
   f(" OPTIONS:");
   f("  -exe filename -- Name of executable to write. Only used when index 0 is present.");
   f("  -stdin filename -- Standard input for the spawned process.");
@@ -94,7 +96,7 @@ readin_fd(fildesh_fd_t fd, bool scrap_newline)
 
   int
 fildesh_builtin_execfd_main(unsigned argc, char** argv,
-                         FildeshX** inputv, FildeshO** outputv)
+                            FildeshX** inputv, FildeshO** outputv)
 {
   int exstatus = 0;
   unsigned argi;
@@ -109,6 +111,7 @@ fildesh_builtin_execfd_main(unsigned argc, char** argv,
   unsigned char* bt;
   char* exe = NULL;
   char** spawn_argv;
+  const char* arg_fmt = NULL;
 
   assert(!inputv);
   assert(!outputv);
@@ -172,23 +175,40 @@ fildesh_builtin_execfd_main(unsigned argc, char** argv,
         exstatus = 64;
       }
     } else {
-      int idx = 0;
-      if (fildesh_parse_int(&idx, argv[argi]) &&
-          idx >= 0 && (unsigned)idx < argc)
-      {
-        bt[idx] = 1;
-      } else {
-        fildesh_log_errorf("Cannot parse index from arg: %s", argv[argi]);
-        exstatus = 64;
-      }
+      arg_fmt = argv[argi];
     }
     ++ argi;
   }
   off = argi+1;
 
   if (exstatus == 0) {
-    if (!argv[off-1] || !argv[off]) {
+    if (!argv[off-1] || !argv[off] || !arg_fmt) {
       exstatus = 64;
+    }
+    else if (strlen(arg_fmt) != 2*(argc-off)-1) {
+      fildesh_log_errorf("Format string %s length is off by %d.",
+                         arg_fmt,
+                         (int)strlen(arg_fmt) - (int)(2*(argc-off)-1));
+      fildesh_log_errorf("argc:%u off:%u", argc, off);
+      exstatus = 64;
+    }
+  }
+
+  if (exstatus == 0) {
+    for (i = 0; i < argc-off; ++i) {
+      if (arg_fmt[2*i] == 'x') {
+        bt[i] = 1;
+      }
+      else {
+        if (arg_fmt[2*i] != 'a') {
+          fildesh_log_errorf("Unrecognized format character %c.", arg_fmt[2*i]);
+          exstatus = 64;
+        }
+      }
+      if (arg_fmt[2*i+1] != '_' && arg_fmt[2*i+1] != '\0') {
+        fildesh_log_errorf("Unrecognized format delimiter %c.", arg_fmt[2*i+1]);
+        exstatus = 64;
+      }
     }
   }
 
