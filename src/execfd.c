@@ -20,7 +20,7 @@ show_usage()
   f(" FORMAT uses 2 bytes to represent the type of each argument and whether to concatenate them.");
   f("   a -- Literal string argument.");
   f("   _ -- Readable file descriptor (integer).");
-  /* f("   + -- Concatenate args."); */
+  f("   + -- Concatenate args.");
   f(" OPTIONS:");
   f("  -exe filename -- Name of executable to write. Only used when index 0 is present.");
   f("  -stdin filename -- Standard input for the spawned process.");
@@ -78,7 +78,7 @@ pipe_to_file(fildesh_fd_t fd, const char* name)
 
 static
   char*
-readin_fd(fildesh_fd_t fd, bool scrap_newline)
+readin_fd(FildeshO* buf, fildesh_fd_t fd, bool scrap_newline)
 {
   FildeshX* in = open_fd_FildeshX(fd);
   char* s = slurp_FildeshX(in);
@@ -88,10 +88,20 @@ readin_fd(fildesh_fd_t fd, bool scrap_newline)
       s[in->size-2] = '\0';
     }
   }
-  in->at = NULL;
-  in->alloc_lgsize = 0;
+  puts_FildeshO(buf, s);
   close_FildeshX(in);
   return s;
+}
+
+static
+  void
+next_spawn_arg(size_t* spawn_offsets,
+               unsigned* spawn_argc,
+               FildeshO* spawn_buf)
+{
+  putc_FildeshO(spawn_buf, '\0');
+  *spawn_argc += 1;
+  spawn_offsets[*spawn_argc] = spawn_buf->size;
 }
 
   int
@@ -108,9 +118,11 @@ fildesh_builtin_execfd_main(unsigned argc, char** argv,
   fildesh_fd_t* fds_to_inherit;
   unsigned exitfd_count;
   fildesh_fd_t* exitfds;
-  unsigned char* bt;
   char* exe = NULL;
-  char** spawn_argv;
+  char** spawn_argv = NULL;
+  unsigned spawn_argc = 0;
+  size_t* spawn_offsets;
+  FildeshO spawn_buf = DEFAULT_FildeshO;
   const char* arg_fmt = NULL;
 
   assert(!inputv);
@@ -124,14 +136,6 @@ fildesh_builtin_execfd_main(unsigned argc, char** argv,
 
   exitfds = (fildesh_fd_t*) malloc(sizeof(fildesh_fd_t) * (argc / 2));
   exitfd_count = 0;
-
-  bt = (unsigned char*) malloc(argc);
-  memset(bt, 0, argc);
-
-  spawn_argv = (char**)malloc(sizeof(char*) * (argc+1));
-  for (i = 0; i < argc+1; ++i) {
-    spawn_argv[i] = NULL;
-  }
 
   argi = 1;
   while (argv[argi] && 0 != strcmp(argv[argi], "--") && exstatus == 0) {
@@ -196,35 +200,42 @@ fildesh_builtin_execfd_main(unsigned argc, char** argv,
 
   if (exstatus == 0) {
     for (i = 0; i < argc-off; ++i) {
-      if (arg_fmt[2*i] == 'x') {
-        bt[i] = 1;
+      if (!memchr("ax", arg_fmt[2*i], 2)) {
+        fildesh_log_errorf("Unrecognized format character %c.", arg_fmt[2*i]);
+        exstatus = 64;
       }
-      else {
-        if (arg_fmt[2*i] != 'a') {
-          fildesh_log_errorf("Unrecognized format character %c.", arg_fmt[2*i]);
-          exstatus = 64;
-        }
-      }
-      if (arg_fmt[2*i+1] != '_' && arg_fmt[2*i+1] != '\0') {
+      if (!memchr("_+\0", arg_fmt[2*i+1], 3)) {
         fildesh_log_errorf("Unrecognized format delimiter %c.", arg_fmt[2*i+1]);
         exstatus = 64;
       }
     }
   }
 
-  if (exstatus == 0) {
-    for (i = argc-off; i < argc; ++i) {
-      if (bt[i] != 0) {
-        fildesh_log_errorf("Index %u is out of range.", i);
-        exstatus = 64;
-      }
-    }
+  spawn_offsets = (size_t*)malloc(sizeof(size_t) * argc);
+
+  if (exstatus == 0 && fildesh_specific_util(argv[off])) {
+    puts_FildeshO(&spawn_buf, argv[0]);
+    next_spawn_arg(spawn_offsets, &spawn_argc, &spawn_buf);
+    puts_FildeshO(&spawn_buf, "-as");
+    next_spawn_arg(spawn_offsets, &spawn_argc, &spawn_buf);
   }
 
   for (i = 0; i < argc-off && exstatus == 0; ++i) {
     int fd = -1;
-    spawn_argv[off+i] = argv[off+i];
-    if (bt[i] == 0) {continue;}
+
+    if (i == 0) {
+      spawn_offsets[0] = 0;
+    } else {
+      if (arg_fmt[2*i-1] == '_') {
+        next_spawn_arg(spawn_offsets, &spawn_argc, &spawn_buf);
+      }
+    }
+
+    if (arg_fmt[2*i] == 'a') {
+      puts_FildeshO(&spawn_buf, argv[off+i]);
+      continue;
+    }
+
     if (!fildesh_parse_int(&fd, argv[off+i]) || fd < 0) {
       fildesh_log_errorf("Cannot parse fd from arg: %s", argv[off+i]);
       exstatus = 64;
@@ -232,18 +243,28 @@ fildesh_builtin_execfd_main(unsigned argc, char** argv,
       if (exe) {
         exstatus = pipe_to_file(fd, exe);
         if (exstatus == 0) {
-          spawn_argv[off+i] = fildesh_compat_string_duplicate(exe);
+          puts_FildeshO(&spawn_buf, exe);
         }
       } else {
         fildesh_log_error("Need to provide -exe argument.");
         exstatus = 64;
       }
     } else {
-      spawn_argv[off+i] = readin_fd(fd, true);
+      readin_fd(&spawn_buf, fd, true);
     }
   }
-  free(bt);
 
+  if (exstatus == 0) {
+    putc_FildeshO(&spawn_buf, '\0');
+    spawn_argc += 1;
+    spawn_argv = (char**)malloc(sizeof(char*) * (spawn_argc+1));
+    for (i = 0; i < spawn_argc; ++i) {
+      spawn_argv[i] = &spawn_buf.at[spawn_offsets[i]];
+    }
+    spawn_argv[spawn_argc] = NULL;
+    free(spawn_offsets);
+    spawn_offsets = NULL;
+  }
   if (exstatus == 0 && exe) {
     fildesh_compat_file_chmod_u_rwx(exe, 1, 1, 1);
   }
@@ -252,16 +273,10 @@ fildesh_builtin_execfd_main(unsigned argc, char** argv,
     show_usage();
   }
 #if defined(FILDESH_BUILTIN_LIBRARY) || defined(UNIT_TESTING)
-  else if (fildesh_specific_util(argv[off])) {
-    spawn_argv[off-2] = argv[0];
-    spawn_argv[off-1] = (char*)"-as";
+  else {
     exstatus = fildesh_compat_fd_spawnvp_wait(
         stdin_fd, stdout_fd, 2, fds_to_inherit,
-        (const char**)&spawn_argv[off-2]);
-  } else {
-    exstatus = fildesh_compat_fd_spawnvp_wait(
-        stdin_fd, stdout_fd, 2, fds_to_inherit,
-        (const char**)&spawn_argv[off]);
+        (const char**)spawn_argv);
   }
 #else
   else {
@@ -276,18 +291,20 @@ fildesh_builtin_execfd_main(unsigned argc, char** argv,
   }
 #endif
 
+  if (spawn_offsets) {
+    free(spawn_offsets);
+  }
+  if (spawn_argv) {
+    free(spawn_argv);
+  }
+  close_FildeshO(&spawn_buf);
+
   for (i = 0; i < exitfd_count; ++i) {
     fildesh_compat_fd_close(exitfds[i]);
   }
   free(exitfds);
 
   free(fds_to_inherit);
-  for (argi = off; argi < argc; ++argi) {
-    if (spawn_argv[argi] && spawn_argv[argi] != argv[argi]) {
-      free(spawn_argv[argi]);
-    }
-  }
-  free(spawn_argv);
 
   if (exstatus < 0) {exstatus = 126;}
   return exstatus;

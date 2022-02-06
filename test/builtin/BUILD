@@ -102,6 +102,19 @@ cc_test(
     args = ["$(location //builtin:zec)"],
 )
 
+cc_test(
+    name = "execfd_cat_test",
+    srcs = [
+        "execfd_cat_test.c",
+        "//include:fildesh_builtin.h",
+        "//src:execfd.c",
+    ],
+    defines = ["UNIT_TESTING"],
+    deps = ["//:fildesh_lib", "//:fildesh_tool_lib"],
+    data = ["//tool:shout"],
+    args = ["$(location //tool:shout)"],
+)
+
 fildesh_test(
     name = "execfd_script_test",
     srcs = ["execfd_script_test.fildesh"],

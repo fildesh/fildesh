@@ -71,6 +71,13 @@ add_test(NAME execfd_test COMMAND
   "${CMAKE_COMMAND}" -E env "TEST_TMPDIR=${CMAKE_CURRENT_BINARY_DIR}"
   "$<TARGET_FILE:execfd_test>" "$<TARGET_FILE:zec>")
 
+add_executable(execfd_cat_test "execfd_cat_test.c" "${CMAKE_SOURCE_DIR}/src/execfd.c")
+target_link_libraries(execfd_cat_test fildesh_lib fildesh_tool_lib)
+set_property(TARGET execfd_cat_test
+  APPEND PROPERTY COMPILE_DEFINITIONS UNIT_TESTING)
+add_test(NAME execfd_cat_test COMMAND
+  execfd_cat_test "$<TARGET_FILE:shout>")
+
 add_test(NAME execfd_script_test COMMAND
   fildesh -x "${CMAKE_CURRENT_SOURCE_DIR}/execfd_script_test.fildesh" "$<TARGET_FILE:zec>")
 
