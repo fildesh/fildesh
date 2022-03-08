@@ -1,4 +1,21 @@
+load("//:defs.bzl", "fildespawn_test")
 load("//tool:spawn.bzl", "spawn_test")
+
+cc_binary(
+    name = "success",
+    srcs = ["success.c"],
+    testonly = True,
+)
+cc_binary(
+    name = "failure",
+    srcs = ["failure.c"],
+    testonly = True,
+)
+
+cc_test(
+    name = "success_test",
+    srcs = ["success.c"],
+)
 
 #### comparispawn
 
@@ -37,6 +54,29 @@ cc_test(
     srcs = ["//tool:expectish.c"],
     args = ["$(location //test/expect:hello.txt)", "hello"],
     data = ["//test/expect:hello.txt"],
+)
+
+#### fildespawn
+
+fildespawn_test(
+    name = "fildespawn_success_test",
+    args = [
+        "--",
+        "$(location :success)",
+    ],
+    data = [":success"],
+)
+fildespawn_test(
+    name = "fildespawn_stdin_test",
+    args = [
+        "stdin=open_readonly:$(location //test/expect:hello.txt)",
+        "--",
+        "$(location //tool:expectish)", "-", "hello",
+    ],
+    data = [
+        "//tool:expectish",
+        "//test/expect:hello.txt",
+    ],
 )
 
 #### pipem_test
@@ -85,21 +125,6 @@ spawn_test(
     data = ["//tool:spawn"],
 )
 
-cc_binary(
-    name = "success",
-    srcs = ["success.c"],
-    testonly = True,
-)
-cc_binary(
-    name = "failure",
-    srcs = ["failure.c"],
-    testonly = True,
-)
-
-cc_test(
-    name = "success_test",
-    srcs = ["success.c"],
-)
 cc_test(
     name = "spawn_status_test",
     srcs = [

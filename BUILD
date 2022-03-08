@@ -5,6 +5,12 @@ alias(
     visibility = ["//visibility:public"],
 )
 
+alias(
+    name = "fildespawn",
+    actual = "//tool:fildespawn",
+    visibility = ["//visibility:public"],
+)
+
 cc_library(
     name = "fildesh_compat_lib",
     srcs = [

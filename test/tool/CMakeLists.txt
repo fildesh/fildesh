@@ -1,4 +1,9 @@
 
+add_executable(success success.c)
+add_executable(failure failure.c)
+
+add_test(NAME success_test COMMAND success)
+
 #### comparispawn
 
 add_test(NAME comparispawn_diff_test COMMAND spawn !
@@ -13,6 +18,13 @@ add_test(NAME comparispawn_shout_hello_test COMMAND comparispawn
 
 add_test(NAME expectish_hello_test COMMAND expectish "${CMAKE_CURRENT_SOURCE_DIR}/../expect/hello.txt" "hello")
 
+#### fildespawn
+
+add_test(NAME fildespawn_success_test COMMAND fildespawn -- "$<TARGET_FILE:success>")
+add_test(NAME fildespawn_stdin_test COMMAND fildespawn
+  "stdin=open_readonly:${CMAKE_CURRENT_SOURCE_DIR}/../expect/hello.txt"
+  -- "$<TARGET_FILE:expectish>" - "hello")
+
 #### pipem_test
 
 add_executable(pipem_test pipem_test.c)
@@ -21,11 +33,6 @@ add_test(NAME pipem_test COMMAND pipem_test "$<TARGET_FILE:shout>" "$<TARGET_FIL
 
 
 #### spawn
-
-add_executable(success success.c)
-add_executable(failure failure.c)
-
-add_test(NAME success_test COMMAND success)
 
 add_test(NAME spawn_not_not_test COMMAND spawn ! !)
 add_test(NAME spawn_spawn_not_not_test COMMAND spawn "$<TARGET_FILE:spawn>" ! !)

@@ -16,3 +16,6 @@ target_link_libraries(fildesh_tool_lib fildesh_compat_lib ${CMAKE_THREAD_LIBS_IN
 
 add_executable(comparispawn comparispawn.c)
 target_link_libraries(comparispawn fildesh_lib fildesh_tool_lib)
+
+add_executable(fildespawn fildespawn.c)
+target_link_libraries(fildespawn fildesh_compat_lib)

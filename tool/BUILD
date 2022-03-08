@@ -45,6 +45,17 @@ cc_binary(
 )
 
 cc_binary(
+    name = "fildespawn",
+    srcs = [
+        "fildespawn.c",
+    ],
+    deps = [
+        "//:fildesh_compat_lib",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+cc_binary(
     name = "shout",
     srcs = ["shout.c"],
     visibility = ["//visibility:public"],
