@@ -1,4 +1,4 @@
-load("//:defs.bzl", "fildespawn_test")
+load("//:def.bzl", "fildespawn_test")
 load("//tool:spawn.bzl", "spawn_test")
 
 cc_binary(

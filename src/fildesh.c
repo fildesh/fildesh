@@ -1666,8 +1666,9 @@ spawn_commands(const char* fildesh_exe, TableT(Command) cmds,
 
   int
 fildesh_builtin_fildesh_main(unsigned argc, char** argv,
-                       FildeshX** inputv, FildeshO** outputv)
+                             FildeshX** inputv, FildeshO** outputv)
 {
+  char* fildesh_exe = argv[0];
   DeclTable( AlphaTab, script_args );
   TableT(Command)* cmds = NULL;
   bool use_stdin = true;
@@ -1723,7 +1724,7 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
     }
     else if (eq_cstr (arg, "-as")) {
       const char* builtin_name = argv[argi];
-      argv[argi] = argv[0];
+      argv[argi] = fildesh_exe;
       exstatus = fildesh_builtin_main(builtin_name, argc-argi, &argv[argi]);
       exiting = true;
     }
@@ -1737,6 +1738,9 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
        v[0] = '\0';
        v = &v[1];
        ensure_strmap(alias_map, k, v);
+       if (eq_cstr(k, "fildesh")) {
+         fildesh_exe = v;
+       }
      } else {
         fildesh_log_errorf("Failed alias: %s", k);
         exstatus = 64;
@@ -1897,7 +1901,7 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
 
   if (exstatus == 0) {
     fildesh_compat_errno_trace();
-    istat = spawn_commands(argv[0], *cmds, alias_map, forkonly);
+    istat = spawn_commands(fildesh_exe, *cmds, alias_map, forkonly);
     fildesh_compat_errno_trace();
   }
   lose_strmap(alias_map);

@@ -16,11 +16,10 @@ def spawn_test(name, data=[], args=[],
       **kwargs,
   )
 
-def fildesh_test(name, srcs, aliases=[], data=[], args=[],
-                 expect_failure=False,
-                 forkonly=False,
-                 size="small",
-                 **kwargs):
+def fildesh_failure_test(name, srcs, aliases=[], data=[], args=[],
+                         forkonly=False,
+                         size="small",
+                         **kwargs):
   fildesh_options = []
   for a in aliases:
     fildesh_options += ["-alias", a]
@@ -36,7 +35,7 @@ def fildesh_test(name, srcs, aliases=[], data=[], args=[],
       ] + fildesh_options + [
           "-f", "$(location " + srcs[0] + ")",
       ] + args,
-      expect_failure = expect_failure,
+      expect_failure = True,
       size = size,
       **kwargs,
   )

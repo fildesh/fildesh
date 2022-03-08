@@ -1,4 +1,4 @@
-load("//tool:spawn.bzl", "fildesh_test")
+load("//:def.bzl", "fildesh_test")
 
 fildesh_test(
     name = "concatenate_oooxfxax_test",

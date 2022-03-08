@@ -1,5 +1,6 @@
+load("//:def.bzl", "fildesh_test")
 load("//tool:comparispawn.bzl", "fildesh_expect_test")
-load("//tool:spawn.bzl", "fildesh_test", "spawn_test")
+load("//tool:spawn.bzl", "spawn_test")
 
 #### add
 
