@@ -1,9 +1,9 @@
 
-common --experimental_enable_bzlmod
-common --registry=https://raw.githubusercontent.com/fantasma/fantasma_bazel_registry/trunk
-common --registry=https://raw.githubusercontent.com/bazelbuild/bazel-central-registry/main
-
 #build --cxxopt='-std=c++17'
+
+common:bzlmod --experimental_enable_bzlmod
+common:bzlmod --registry=https://raw.githubusercontent.com/fantasma/fantasma_bazel_registry/trunk
+common:bzlmod --registry=https://raw.githubusercontent.com/bazelbuild/bazel-central-registry/main
 
 # Define the --config=asan-libfuzzer configuration.
 build:asan-libfuzzer --//test:enable_full_fuzzing

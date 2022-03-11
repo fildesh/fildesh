@@ -54,7 +54,7 @@ jobs:
     - name: Setup bazel
       uses: jwlawson/actions-setup-bazel@v1
       with:
-        bazel-version: '5.0.0'
+        bazel-version: '4.2.2'
 
     - name: Checkout
       uses: actions/checkout@v2
@@ -76,7 +76,7 @@ jobs:
     - name: Setup bazel
       uses: jwlawson/actions-setup-bazel@v1
       with:
-        bazel-version: '5.0.0'
+        bazel-version: '4.2.2'
 
     - name: Checkout
       uses: actions/checkout@v2
@@ -96,3 +96,25 @@ jobs:
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         path-to-lcov: bazel-out/_coverage/_coverage_report.dat
+
+
+  test_with_bzlmod:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+
+    steps:
+    - name: Setup bazel
+      uses: jwlawson/actions-setup-bazel@v1
+      with:
+        bazel-version: '5.0.0'
+
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Set bzlmod_on
+      run: sed -i -E -e "s/bzlmod_on=False/bzlmod_on=True/" WORKSPACE.bazel
+
+    - name: Test
+      run: bazel test --config=bzlmod --test_timeout 10 //...
