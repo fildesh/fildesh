@@ -253,6 +253,35 @@ lose_Commands (void* arg)
   free(cmds);
 }
 
+  static CommandHookup*
+new_CommandHookup(FildeshAlloc* alloc)
+{
+  CommandHookup* cmd_hookup = fildesh_allocate(CommandHookup, 1, alloc);
+  InitAssocia( AlphaTab, SymVal, cmd_hookup->map, cmp_AlphaTab );
+  InitAssocia( AlphaTab, SymVal, cmd_hookup->add_map, cmp_AlphaTab );
+  cmd_hookup->temporary_directory = NULL;
+  cmd_hookup->tmpfile_count = 0;
+  return cmd_hookup;
+}
+
+static void free_CommandHookup(CommandHookup* cmd_hookup, int* istat) {
+  Assoc* assoc;
+  Associa* map = &cmd_hookup->map;
+  for (assoc = beg_Associa(map);
+      assoc;
+      assoc = next_Assoc(assoc))
+  {
+    SymVal* x = (SymVal*) val_of_Assoc(map, assoc);
+    if (x->kind == ODescVal && *istat == 0) {
+      fildesh_log_errorf("Dangling output stream! Symbol: %s", x->name.s);
+      *istat = -1;
+    }
+    lose_SymVal (x);
+  }
+  lose_Associa(&cmd_hookup->map);
+  lose_Associa(&cmd_hookup->add_map);
+}
+
   static void
 close_FildeshAlloc_generic(void* arg)
 { close_FildeshAlloc((FildeshAlloc*) arg); }
@@ -796,20 +825,14 @@ write_here_doc_file (const char* name, const char* doc)
 
 static
   int
-setup_commands(TableT(Command)* cmds)
+setup_commands(TableT(Command)* cmds, CommandHookup* cmd_hookup)
 {
-  CommandHookup cmd_hookup[1];
   Associa* map = &cmd_hookup->map;
   /* Temporarily hold new symbols for the current line.*/
   Associa* add_map = &cmd_hookup->add_map;
   Assoc* assoc;
   int istat = 0;
   unsigned i;
-
-  cmd_hookup->temporary_directory = NULL;
-  cmd_hookup->tmpfile_count = 0;
-  InitAssocia( AlphaTab, SymVal, *map, cmp_AlphaTab );
-  InitAssocia( AlphaTab, SymVal, *add_map, cmp_AlphaTab );
 
 #define FailBreak(cmd, msg, arg) { \
   perror_Command(cmd, msg, arg); \
@@ -1134,21 +1157,6 @@ setup_commands(TableT(Command)* cmds)
     } while (assoc);
   }
 #undef FailBreak
-
-  for (assoc = beg_Associa (map);
-      assoc;
-      assoc = next_Assoc (assoc))
-  {
-    SymVal* x = (SymVal*) val_of_Assoc (map, assoc);
-    if (x->kind == ODescVal && istat == 0) {
-      fildesh_log_errorf("Dangling output stream! Symbol: %s", x->name.s);
-      istat = -1;
-    }
-    lose_SymVal (x);
-  }
-
-  lose_Associa (map);
-  lose_Associa (add_map);
   return istat;
 }
 
@@ -1674,6 +1682,7 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
   bool use_stdin = true;
   FildeshX* script_in = NULL;
   FildeshAlloc* alloc;
+  CommandHookup* cmd_hookup;
   unsigned argi = 1;
   unsigned i;
   Associa alias_map[1];
@@ -1690,6 +1699,8 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
   assert(!outputv);
 
   init_strmap(alias_map);
+  alloc = open_FildeshAlloc();
+  cmd_hookup = new_CommandHookup(alloc);
 
   /* add_util_path_env (); */
   (void) add_util_path_env;
@@ -1744,6 +1755,24 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
        }
      } else {
         fildesh_log_errorf("Failed alias: %s", k);
+        exstatus = 64;
+      }
+    }
+    else if (eq_cstr(arg, "-a")) {
+      char* k = argv[argi++];
+      char* v = NULL;
+     if (k) {
+       v = strchr(k, '=');
+     }
+     if (k && v) {
+       SymVal* sym;
+       v[0] = '\0';
+       v = &v[1];
+       sym = getf_SymVal(&cmd_hookup->map, k);
+       sym->kind = HereDocVal;
+       sym->as.here_doc = v;
+     } else {
+        fildesh_log_errorf("Bad -a arg: %s", k);
         exstatus = 64;
       }
     }
@@ -1826,10 +1855,10 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
   if (exiting || exstatus != 0) {
     LoseTable( script_args );
     lose_strmap(alias_map);
+    free_CommandHookup(cmd_hookup, &istat);
+    close_FildeshAlloc(alloc);
     return exstatus;
   }
-
-  alloc = open_FildeshAlloc();
   push_losefn_sysCx(close_FildeshAlloc_generic, alloc);
 
   cmds = AllocT(TableT(Command), 1);
@@ -1889,9 +1918,10 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
 
   if (istat == 0) {
     fildesh_compat_errno_trace();
-    istat = setup_commands(cmds);
+    istat = setup_commands(cmds, cmd_hookup);
     fildesh_compat_errno_trace();
   }
+  free_CommandHookup(cmd_hookup, &istat);
 
   if (exstatus == 0 && istat != 0) {
     exstatus = 65;

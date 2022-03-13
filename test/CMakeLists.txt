@@ -9,6 +9,7 @@ set (zec_exe "$<TARGET_FILE:zec>")
 
 add_subdirectory(builtin)
 add_subdirectory(fault)
+add_subdirectory(flag)
 
 set(plain_example_test_list
   "args"

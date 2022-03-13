@@ -54,7 +54,9 @@ _fildesh_test = rule(
 
 def fildesh_test(
     name, srcs,
-    aliases=[], data=[], args=[],
+    main=None,
+    aliases=[], named_args=[],
+    data=[], args=[],
     forkonly=False,
     size="small"):
 
@@ -67,15 +69,27 @@ def fildesh_test(
     data = data + ["//:fildesh"]
   for a in aliases:
     fildesh_options += ["-alias", a]
+  for a in named_args:
+    fildesh_options += ["-a", a]
 
   if forkonly:
     fildesh_options += ["-forkonly"]
+
+  if not main:
+    if len(srcs) == 1:
+      main = srcs[0]
+    else:
+      for src in srcs:
+        if src.endswith(name + ".fildesh"):
+          main = src
+  if not main:
+    fail("unknown main source file")
 
   _fildesh_test(
       name = name,
       args = (
           fildesh_options +
-          ["-f", "$(location " + srcs[0] + ")"] +
+          ["-f", "$(location " + main + ")"] +
           args),
       data = srcs + data,
       size = size,
