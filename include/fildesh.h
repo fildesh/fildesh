@@ -27,6 +27,7 @@ typedef struct FildeshX_VTable FildeshX_VTable;
 typedef struct FildeshX FildeshX;
 typedef struct FildeshO_VTable FildeshO_VTable;
 typedef struct FildeshO FildeshO;
+typedef struct FildeshAlloc FildeshAlloc;
 typedef struct FildeshKV FildeshKV;
 typedef struct FildeshKVE FildeshKVE;
 
@@ -188,6 +189,20 @@ struct FildeshO {
 #define DEFAULT_FildeshO  { NULL, 0, 0, 0, 12, NULL }
 #define DEFAULT1_FildeshO(vt)  { NULL, 0, 0, 0, 12, vt }
 
+#define FILDESH_ALLOC_MIN_BLOCK_LGSIZE 12
+#define FILDESH_ALLOC_MAX_BLOCKS \
+  (sizeof(size_t)*CHAR_BIT - (size_t)FILDESH_ALLOC_MIN_BLOCK_LGSIZE-1)
+
+struct FildeshAlloc {
+  fildesh_lgsize_t block_count;
+  char* blocks[FILDESH_ALLOC_MAX_BLOCKS];
+  size_t sizes[FILDESH_ALLOC_MAX_BLOCKS];
+};
+
+FildeshAlloc* open_FildeshAlloc();
+void close_FildeshAlloc(FildeshAlloc*);
+void create_block_FildeshAlloc(FildeshAlloc*);
+
 struct FildeshKV {
   FildeshKVE* at;
   size_t freelist_head;
@@ -202,6 +217,23 @@ static inline FildeshX default_FildeshX()
 {FildeshX tmp = DEFAULT_FildeshX; return tmp;}
 static inline FildeshO default_FildeshO()
 {FildeshO tmp = DEFAULT_FildeshO; return tmp;}
+
+static inline
+  void*
+alloc_FildeshAlloc(FildeshAlloc* alloc, size_t size, size_t alignment)
+{
+  const size_t mask = ~(alignment-1);
+  fildesh_lgsize_t i = alloc->block_count-1;
+  while (alloc->sizes[i] <= size) {
+    create_block_FildeshAlloc(alloc);
+    i = alloc->block_count-1;
+  }
+  alloc->sizes[i] = (alloc->sizes[i] - size) & mask;
+  return &alloc->blocks[i][alloc->sizes[i]];
+}
+
+#define fildesh_allocate(T, n, alloc) \
+  ((T*) alloc_FildeshAlloc(alloc, (n)*sizeof(T), fildesh_alignof(T)))
 
 static inline
   void*

@@ -1,5 +1,12 @@
 load("//tool:spawn.bzl", "spawn_test")
 
+cc_test(
+    name = "alloc_test",
+    srcs = ["alloc_test.c"],
+    deps = ["//:fildesh_lib"],
+    size = "small",
+)
+
 spawn_test(
     name = "chatty_test",
     args = ["$(location //src:chatty)"],

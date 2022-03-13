@@ -1,6 +1,7 @@
 
 # For //:fildesh_lib.
 exports_files([
+    "alloc.c",
     "infile.c",
     "instream.c",
     "kve.c",

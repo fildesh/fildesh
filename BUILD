@@ -42,6 +42,7 @@ cc_library(
     name = "fildesh_lib",
     srcs = [
         "//include:fildesh.h",
+        "//src:alloc.c",
         "//src:infile.c",
         "//src:instream.c",
         "//src:kve.c",

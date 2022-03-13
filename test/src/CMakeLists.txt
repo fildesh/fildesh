@@ -3,6 +3,11 @@ if (UNIX AND NOT APPLE)
   add_test(NAME chatty_test COMMAND chatty)
 endif()
 
+add_executable(alloc_test
+  "alloc_test.c")
+target_link_libraries(alloc_test fildesh_lib)
+add_test(NAME alloc_test COMMAND alloc_test)
+
 add_executable(delimit_edge_test
   "delimit_edge_test.c")
 target_link_libraries(delimit_edge_test fildesh_lib)
