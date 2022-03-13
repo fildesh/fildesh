@@ -202,6 +202,7 @@ struct FildeshAlloc {
 FildeshAlloc* open_FildeshAlloc();
 void close_FildeshAlloc(FildeshAlloc*);
 void create_block_FildeshAlloc(FildeshAlloc*);
+char* strdup_FildeshAlloc(FildeshAlloc*, const char*);
 
 struct FildeshKV {
   FildeshKVE* at;

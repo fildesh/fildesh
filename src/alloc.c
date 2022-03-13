@@ -1,6 +1,7 @@
 
 #include "fildesh.h"
 #include <stdlib.h>
+#include <string.h>
 
   FildeshAlloc*
 open_FildeshAlloc()
@@ -33,4 +34,13 @@ create_block_FildeshAlloc(FildeshAlloc* alloc)
   alloc->sizes[alloc->block_count] = size;
   alloc->blocks[alloc->block_count] = (char*) malloc(size);
   alloc->block_count += 1;
+}
+
+  char*
+strdup_FildeshAlloc(FildeshAlloc* alloc, const char* s)
+{
+  size_t size = 1+strlen(s);
+  char* buf = fildesh_allocate(char, size, alloc);
+  memcpy(buf, s, size);
+  return buf;
 }

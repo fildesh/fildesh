@@ -60,7 +60,6 @@ struct Command
   unsigned line_num;
   CommandKind kind;
   TableT(cstr) args;
-  TableT(cstr) extra_args;
   TableT(cstr) tmp_files;
   pthread_t thread;
   pid_t pid;
@@ -85,6 +84,11 @@ struct Command
 
   /** Use this if it's a HERE document.**/
   char* doc;
+
+  /** Use this to allocate stuff.
+   * Currently just extra args and elements of tmp_files.
+   **/
+  FildeshAlloc* alloc;
 };
 
 /* See the setup_commands() phase.*/
@@ -129,12 +133,11 @@ lose_SymVal (SymVal* v)
 }
 
   static void
-init_Command (Command* cmd)
+init_Command(Command* cmd, FildeshAlloc* alloc)
 {
   cmd->kind = NCommandKinds;
   cmd->line_num = 0;
   InitTable( cmd->args );
-  InitTable( cmd->extra_args );
   InitTable( cmd->tmp_files );
   cmd->pid = -1;
   cmd->stdis = -1;
@@ -146,6 +149,7 @@ init_Command (Command* cmd)
   cmd->exec_fd_has_bytes = false;
   cmd->exec_doc = NULL;
   InitTable( cmd->iargs );
+  cmd->alloc = alloc;
 }
 
   static void
@@ -227,13 +231,8 @@ lose_Command (Command* cmd)
       break;
   }
 
-  UFor( i, cmd->extra_args.sz )
-    free (cmd->extra_args.s[i]);
-  LoseTable( cmd->extra_args );
-
   UFor( i, cmd->tmp_files.sz ) {
     fildesh_compat_file_rm(cmd->tmp_files.s[i]);
-    free (cmd->tmp_files.s[i]);
   }
   LoseTable( cmd->tmp_files );
   cmd->kind = NCommandKinds;
@@ -254,8 +253,19 @@ lose_Commands (void* arg)
   free(cmds);
 }
 
+  static void
+close_FildeshAlloc_generic(void* arg)
+{ close_FildeshAlloc((FildeshAlloc*) arg); }
+
 static char* lace_strdup(const char* s) {
   return fildesh_compat_string_duplicate(s);
+}
+
+static char* strdup_fd_Command(Command* cmd, fd_t fd)
+{
+  char buf[FILDESH_INT_BASE10_SIZE_MAX];
+  fildesh_encode_int_base10(buf, fd);
+  return strdup_FildeshAlloc(cmd->alloc, buf);
 }
 
 static char* lace_fd_strdup(fildesh_fd_t fd) {
@@ -498,7 +508,11 @@ sep_line (TableT(cstr)* args, char* s)
 
 static
   int
-parse_file(TableT(Command)* cmds, FildeshX* in, const char* this_filename)
+parse_file(
+    TableT(Command)* cmds,
+    FildeshX* in,
+    const char* this_filename,
+    FildeshAlloc* alloc)
 {
   int istat = 0;
   size_t text_nlines = 0;
@@ -514,7 +528,7 @@ parse_file(TableT(Command)* cmds, FildeshX* in, const char* this_filename)
       break;
     }
     cmd = Grow1Table( *cmds );
-    init_Command (cmd);
+    init_Command(cmd, alloc);
     cmd->line = line;
     cmd->line_num = text_nlines;
 
@@ -541,7 +555,7 @@ parse_file(TableT(Command)* cmds, FildeshX* in, const char* this_filename)
       lose_Command (TopTable( *cmds ));
       MPopTable( *cmds, 1 );
 
-      istat = parse_file(cmds, src, filename_FildeshXF(src));
+      istat = parse_file(cmds, src, filename_FildeshXF(src), alloc);
       close_FildeshX(src);
     }
     else if (pfxeq_cstr ("$(>", line) ||
@@ -570,27 +584,21 @@ parse_file(TableT(Command)* cmds, FildeshX* in, const char* this_filename)
       PushTable( cmd->args, (char*) "/" );
 
       {
-        AlphaTab oname = DEFAULT_AlphaTab;
-        cat_cstr_AlphaTab (&oname, "$(O ");
-        cat_cstr_AlphaTab (&oname, sym);
-        cat_cstr_AlphaTab (&oname, ")");
-        PushTable( cmd->extra_args, forget_AlphaTab (&oname));
+        char* buf = fildesh_allocate(char, 6+strlen(sym), alloc);
+        sprintf(buf, "$(O %s)", sym);
+        PushTable( cmd->args, buf );
       }
-      PushTable( cmd->args, *TopTable( cmd->extra_args ) );
 
       cmd = Grow1Table( *cmds );
-      init_Command (cmd);
+      init_Command(cmd, alloc);
       cmd->kind = DefCommand;
       cmd->line_num = text_nlines;
       PushTable( cmd->args, (char*) "elastic" );
       {
-        AlphaTab xname = DEFAULT_AlphaTab;
-        cat_cstr_AlphaTab (&xname, "$(X ");
-        cat_cstr_AlphaTab (&xname, sym);
-        cat_cstr_AlphaTab (&xname, ")");
-        PushTable( cmd->extra_args, forget_AlphaTab (&xname));
+        char* buf = fildesh_allocate(char, 6+strlen(sym), alloc);
+        sprintf(buf, "$(X %s)", sym);
+        PushTable( cmd->args, buf );
       }
-      PushTable( cmd->args, *TopTable( cmd->extra_args ) );
       cmd->line = lace_strdup(sym);
     }
     else
@@ -726,18 +734,11 @@ add_iarg_Command (Command* cmd, int in, bool scrap_newline)
 }
 
   static char*
-add_extra_arg_Command (Command* cmd, const char* s)
-{
-  PushTable( cmd->extra_args, lace_strdup(s) );
-  return *TopTable( cmd->extra_args );
-}
-
-  static char*
 add_fd_arg_Command (Command* cmd, int fd)
 {
   char buf[FILDESH_FD_PATH_SIZE_MAX];
   fildesh_encode_fd_path(buf, fd);
-  return add_extra_arg_Command (cmd, buf);
+  return strdup_FildeshAlloc(cmd->alloc, buf);
 }
 
   static void
@@ -772,7 +773,7 @@ add_tmp_file_Command(Command* cmd,
   sprintf(buf, "%s/%u%s", cmd_hookup->temporary_directory,
           cmd_hookup->tmpfile_count, extension);
   cmd_hookup->tmpfile_count += 1;
-  PushTable( cmd->tmp_files, lace_strdup(buf) );
+  PushTable( cmd->tmp_files, strdup_FildeshAlloc(cmd->alloc, buf) );
   return cmd->tmp_files.s[cmd->tmp_files.sz - 1];
 }
 
@@ -1040,7 +1041,7 @@ setup_commands(TableT(Command)* cmds)
         InitDomMax( sym->ios_idx );
       }
       else if (kind == ODescFileVal && eq_cstr (arg, "VOID")) {
-        cmd->args.s[arg_q] = add_extra_arg_Command (cmd, "/dev/null");
+        cmd->args.s[arg_q] = strdup_FildeshAlloc(cmd->alloc, "/dev/null");
         arg_q += 1;
       }
       else if (kind == ODescVal || kind == ODescFileVal ||
@@ -1453,7 +1454,7 @@ fix_known_flags_Command(Command* cmd, Associa* alias_map) {
 #else
         const char line_buffering_flag[] = "-u";
 #endif
-        cmd->args.s[i] = add_extra_arg_Command(cmd, line_buffering_flag);
+        cmd->args.s[i] = strdup_FildeshAlloc(cmd->alloc, line_buffering_flag);
       }
     }
   }
@@ -1597,8 +1598,7 @@ spawn_commands(const char* fildesh_exe, TableT(Command) cmds,
 
       for (j = 0; j < fdargs.sz; ++j) {
         uint2 p = fdargs.s[j];
-        PushTable( cmd->extra_args, lace_fd_strdup(p.s[1]) );
-        cmd->args.s[p.s[0]] = *TopTable( cmd->extra_args );
+        cmd->args.s[p.s[0]] = strdup_fd_Command(cmd, p.s[1]);
         execfd_fmt[2*p.s[0]] = 'x';
       }
 
@@ -1673,6 +1673,7 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
   TableT(Command)* cmds = NULL;
   bool use_stdin = true;
   FildeshX* script_in = NULL;
+  FildeshAlloc* alloc;
   unsigned argi = 1;
   unsigned i;
   Associa alias_map[1];
@@ -1828,6 +1829,9 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
     return exstatus;
   }
 
+  alloc = open_FildeshAlloc();
+  push_losefn_sysCx(close_FildeshAlloc_generic, alloc);
+
   cmds = AllocT(TableT(Command), 1);
   InitTable(*cmds);
   push_losefn_sysCx(lose_Commands, cmds);
@@ -1850,7 +1854,7 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
     cat_cstr_AlphaTab (&line, "$(H: #)");
     cat_uint_AlphaTab (&doc, script_args.sz-1);
 
-    init_Command (cmd);
+    init_Command(cmd, alloc);
     cmd->kind = HereDocCommand;
     cmd->line_num = 0;
     cmd->line = forget_AlphaTab (&line);
@@ -1868,7 +1872,7 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
     cat_uint_AlphaTab (&line, i);
     cat_cstr_AlphaTab (&line, ")");
 
-    init_Command (cmd);
+    init_Command(cmd, alloc);
     cmd->kind = HereDocCommand;
     cmd->line_num = 0;
     cmd->line = forget_AlphaTab (&line);
@@ -1877,7 +1881,7 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
   LoseTable( script_args );
 
   fildesh_compat_errno_trace();
-  istat = parse_file(cmds, script_in, filename_FildeshXF(script_in));
+  istat = parse_file(cmds, script_in, filename_FildeshXF(script_in), alloc);
   close_FildeshX(script_in);
   fildesh_compat_errno_trace();
 

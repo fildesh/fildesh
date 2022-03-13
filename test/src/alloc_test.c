@@ -4,9 +4,7 @@
 #include <assert.h>
 #include <string.h>
 
-static
-  void
-alloc_test()
+static void alloc_test()
 {
   FildeshAlloc* alloc = open_FildeshAlloc();
   char* bufs[3];
@@ -29,7 +27,17 @@ alloc_test()
 }
 
 
+static void strdup_test()
+{
+  const char expect[] = "Hello world I am a string!";
+  FildeshAlloc* alloc = open_FildeshAlloc();
+  const char* result = strdup_FildeshAlloc(alloc, expect);
+  assert(0 == strcmp(expect, result));
+  close_FildeshAlloc(alloc);
+}
+
 int main() {
   alloc_test();
+  strdup_test();
   return 0;
 }
