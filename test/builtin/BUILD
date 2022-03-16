@@ -1,6 +1,5 @@
-load("//:def.bzl", "fildesh_test")
+load("//:def.bzl", "fildesh_test", "spawn_test")
 load("//tool:comparispawn.bzl", "fildesh_expect_test")
-load("//tool:spawn.bzl", "spawn_test")
 
 #### add
 
@@ -25,22 +24,21 @@ cc_test(
 
 spawn_test(
     name = "cmp_equal_test",
+    binary = "//builtin:cmp",
     args = [
-        "$(location //builtin:cmp)",
         "$(location :hello_newline.txt)",
         "$(location :hello_newline.txt)",
         "-o", "-",
     ],
     data = [
         ":hello_newline.txt",
-        "//builtin:cmp",
     ],
 )
 spawn_test(
     name = "cmp_diff_test",
+    expect_failure = True,
+    binary = "//builtin:cmp",
     args = [
-        "!",
-        "$(location //builtin:cmp)",
         "-o", "-",
         "$(location :hello_newline.txt)",
         "$(location :hello_newline_x2.txt)",
@@ -48,7 +46,6 @@ spawn_test(
     data = [
         ":hello_newline.txt",
         ":hello_newline_x2.txt",
-        "//builtin:cmp",
     ],
 )
 
@@ -127,8 +124,8 @@ fildesh_test(
 
 spawn_test(
     name = "fildesh_as_add_test",
+    binary = "//tool:comparispawn",
     args = [
-        "$(location //tool:comparispawn)",
         "$(location summed_integers.txt)",
         "$(location //:fildesh)",
         "-stdin",
@@ -140,7 +137,6 @@ spawn_test(
         "integers.txt",
         "summed_integers.txt",
         "//:fildesh",
-        "//tool:comparispawn",
     ],
 )
 
@@ -210,8 +206,7 @@ cc_binary(
 fildesh_test(
     name = "echocat_test",
     srcs = ["echocat_test.fildesh"],
-    aliases = ["echocat=$(location :echocat)"],
-    data = [":echocat"],
+    aliases = {"echocat": ":echocat"}
 )
 
 cc_test(
@@ -314,12 +309,12 @@ fildesh_expect_test(
 
 spawn_test(
     name = "zec_nop_test",
-    data = ["//builtin:zec"],
-    args = ["$(location //builtin:zec)", "/", "/"],
+    binary = "//builtin:zec",
+    args = ["/", "/"],
 )
 
 spawn_test(
     name = "zec_usage_test",
-    data = ["//builtin:zec"],
-    args = ["$(location //builtin:zec)", "-h"],
+    binary = "//builtin:zec",
+    args = ["-h"],
 )

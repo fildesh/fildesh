@@ -1,24 +1,36 @@
+load("//:def.bzl", "spawn_test")
 
-def spawn_test(name, data=[], args=[],
-               expect_failure=False,
-               size="small",
-               **kwargs):
-  status_args = []
-  if expect_failure:
-    status_args += ["!"]
 
-  native.cc_test(
-      name = name,
-      srcs = ["@fildesh//tool:spawn.c"],
-      data = data,
-      args = status_args + args,
-      size = size,
-      **kwargs,
-  )
+def _fildespawn_test_impl(ctx):
+  executable = ctx.actions.declare_file(ctx.label.name)
+  ctx.actions.symlink(output=executable,
+                      target_file=ctx.file._fildespawn,
+                      is_executable=True)
+  runfiles = ctx.runfiles(files=ctx.files.data)
+  return DefaultInfo(executable=executable, runfiles=runfiles)
+
+_fildespawn_test = rule(
+    implementation = _fildespawn_test_impl,
+    test = True,
+    attrs = {
+        "data": attr.label_list(allow_files=True),
+        "_fildespawn": attr.label(
+            default = Label("//:fildespawn"),
+            allow_single_file = True,
+            executable = True,
+            cfg = "exec",
+        ),
+    },
+)
+
+def fildespawn_test(name, args, data=[], size="small"):
+  # Example of how to write a test rule, but it's missing coverage!
+  _fildespawn_test(name=name, args=args, data=data, size=size)
+
+
 
 def fildesh_failure_test(name, srcs, aliases=[], data=[], args=[],
                          forkonly=False,
-                         size="small",
                          **kwargs):
   fildesh_options = []
   for a in aliases:
@@ -27,15 +39,11 @@ def fildesh_failure_test(name, srcs, aliases=[], data=[], args=[],
     fildesh_options += ["-forkonly"]
   spawn_test(
       name = name,
-      data = [
-          "@fildesh//:fildesh",
-      ] + srcs + data,
-      args = [
-          "$(location @fildesh//:fildesh)",
-      ] + fildesh_options + [
+      expect_failure = True,
+      binary = "@fildesh//:fildesh",
+      data = srcs + data,
+      args = fildesh_options + [
           "-f", "$(location " + srcs[0] + ")",
       ] + args,
-      expect_failure = True,
-      size = size,
       **kwargs,
   )

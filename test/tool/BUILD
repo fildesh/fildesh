@@ -1,5 +1,5 @@
-load("//:def.bzl", "fildespawn_test")
-load("//tool:spawn.bzl", "spawn_test")
+load("//:def.bzl", "spawn_test")
+load("//tool:spawn.bzl", "fildespawn_test")
 
 cc_binary(
     name = "success",
@@ -21,27 +21,25 @@ cc_test(
 
 spawn_test(
     name = "comparispawn_diff_test",
+    expect_failure = True,
+    binary = "//tool:comparispawn",
     args = [
-        "!",
-        "$(location //tool:comparispawn)",
         "$(location //test/expect:hello.txt)",
         "$(location //tool:shout)", "-", "hel", "lo",
     ],
     data = [
-        "//tool:comparispawn",
         "//tool:shout",
         "//test/expect:hello.txt",
     ],
 )
 spawn_test(
     name = "comparispawn_shout_hello_test",
+    binary = "//tool:comparispawn",
     args = [
-        "$(location //tool:comparispawn)",
         "$(location //test/expect:hello.txt)",
         "$(location //tool:shout)", "-", "hello",
     ],
     data = [
-        "//tool:comparispawn",
         "//tool:shout",
         "//test/expect:hello.txt",
     ],
@@ -94,35 +92,46 @@ cc_test(
 
 #### spawn
 
-spawn_test(
+# spawn ! !
+cc_test(
     name = "spawn_not_not_test",
+    srcs = ["//tool:spawn.c"],
     args = ["!", "!"],
+    size = "small",
 )
+# spawn spawn ! !
 spawn_test(
     name = "spawn_spawn_not_not_test",
-    args = ["$(location //tool:spawn)", "!", "!"],
-    data = ["//tool:spawn"],
+    binary = "//tool:spawn",
+    args = ["!", "!"],
 )
+# spawn ! spawn !
 spawn_test(
     name = "spawn_not_spawn_not_test",
-    args = ["!", "$(location //tool:spawn)", "!"],
-    data = ["//tool:spawn"],
+    expect_failure = True,
+    binary = "//tool:spawn",
+    args = ["!"],
 )
+# spawn ! spawn
 spawn_test(
     name = "spawn_not_spawn_nothing_test",
-    args = ["!", "$(location //tool:spawn)"],
-    data = ["//tool:spawn"],
+    expect_failure = True,
+    binary = "//tool:spawn",
 )
 
+# spawn ! spawn file_that.doesnotexist
 spawn_test(
     name = "spawn_not_spawn_absent_test",
-    args = ["!", "$(location //tool:spawn)", "$(location //tool:spawn).doesnotexist"],
-    data = ["//tool:spawn"],
+    expect_failure = True,
+    binary = "//tool:spawn",
+    args = ["$(location //tool:spawn).doesnotexist"],
 )
+# spawn ! spawn ! file_that.doesnotexist
 spawn_test(
     name = "spawn_not_spawn_not_absent_test",
-    args = ["!", "$(location //tool:spawn)", "!", "$(location //tool:spawn).doesnotexist"],
-    data = ["//tool:spawn"],
+    expect_failure = True,
+    binary = "//tool:spawn",
+    args = ["!", "$(location //tool:spawn).doesnotexist"],
 )
 
 cc_test(

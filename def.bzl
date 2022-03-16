@@ -3,74 +3,57 @@
 # This would be in @rules_fildesh//fildesh:defs.bzl
 # if such a @rules_fildesh repository existed!
 
+def spawn_test(
+    name,
+    binary, args=[], data=[],
+    expect_failure=False,
+    size="small",
+    **kwargs):
+  spawn_args = []
+  if expect_failure:
+    spawn_args += ["!"]
+  spawn_args += ["$(location " + binary + ")"]
 
-def _fildespawn_test_impl(ctx):
-  executable = ctx.actions.declare_file(ctx.label.name)
-  ctx.actions.symlink(output=executable,
-                      target_file=ctx.file._fildespawn,
-                      is_executable=True)
-  runfiles = ctx.runfiles(files=ctx.files.data)
-  return DefaultInfo(executable=executable, runfiles=runfiles)
+  native.cc_test(
+      name = name,
+      srcs = ["@fildesh//tool:spawn.c"],
+      args = spawn_args + args,
+      data = [binary] + data,
+      size = size,
+      **kwargs)
 
-_fildespawn_test = rule(
-    implementation = _fildespawn_test_impl,
-    test = True,
-    attrs = {
-        "data": attr.label_list(allow_files=True),
-        "_fildespawn": attr.label(
-            default = Label("//:fildespawn"),
-            allow_single_file = True,
-            executable = True,
-            cfg = "exec",
-        ),
-    },
-)
-
-def fildespawn_test(name, size="small", **kwargs):
-  _fildespawn_test(name=name, size=size, **kwargs)
-
-
-def _fildesh_test_impl(ctx):
-  executable = ctx.actions.declare_file(ctx.label.name)
-  ctx.actions.symlink(output=executable,
-                      target_file=ctx.file._fildesh,
-                      is_executable=True)
-  runfiles = ctx.runfiles(files=ctx.files.data)
-  return DefaultInfo(executable=executable, runfiles=runfiles)
-
-_fildesh_test = rule(
-    implementation = _fildesh_test_impl,
-    test = True,
-    attrs = {
-        "data": attr.label_list(allow_files=True),
-        "_fildesh": attr.label(
-            default = Label("//:fildesh"),
-            allow_single_file = True,
-            executable = True,
-            cfg = "exec",
-        ),
-    },
-)
 
 def fildesh_test(
     name, srcs,
     main=None,
-    aliases=[], named_args=[],
+    aliases=[],
+    named_inputs=[],
     data=[], args=[],
     forkonly=False,
-    size="small"):
+    **kwargs):
+  data = list(data)
+  fildesh_options = []
 
   # Windows has trouble with fildesh spawning itself when it's symlinked.
   alias_fildesh = True
-
-  fildesh_options = []
   if alias_fildesh:
-    fildesh_options += ["-alias", "fildesh=$(location //:fildesh)"]
-    data = data + ["//:fildesh"]
-  for a in aliases:
-    fildesh_options += ["-alias", a]
-  for a in named_args:
-    fildesh_options += ["-a", a]
+    fildesh_options += ["-alias", "fildesh=$(location @fildesh//:fildesh)"]
+
+  if type(aliases) == type([]):
+    for a in aliases:
+      fildesh_options += ["-alias", a]
+  else:
+    for (k, v) in sorted(aliases.items()):
+      fildesh_options += ["-alias", k + "=$(location " + v + ")"]
+      data.append(v)
+
+  if type(named_inputs) == type([]):
+    for a in named_inputs:
+      fildesh_options += ["-a", a]
+  else:
+    for (k, v) in sorted(named_inputs.items()):
+      fildesh_options += ["-a", k + "=$(location " + v + ")"]
+      data.append(v)
 
   if forkonly:
     fildesh_options += ["-forkonly"]
@@ -85,12 +68,11 @@ def fildesh_test(
   if not main:
     fail("unknown main source file")
 
-  _fildesh_test(
+  spawn_test(
       name = name,
-      args = (
-          fildesh_options +
-          ["-f", "$(location " + main + ")"] +
-          args),
+      binary = "@fildesh//:fildesh",
+      args = fildesh_options + [
+          "-f", "$(location " + main + ")",
+      ] + args,
       data = srcs + data,
-      size = size,
-  )
+      **kwargs)

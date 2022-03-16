@@ -1,7 +1,12 @@
-load("//:def.bzl", "fildesh_test")
+load("//:def.bzl", "spawn_test")
 
-fildesh_test(
+spawn_test(
     name = "named_arg_test",
-    srcs = ["named_arg_test.fildesh"],
-    named_args = ["hello=Hello", "world=World"],
+    binary = "//:fildesh",
+    args = [
+        "-a", "hello=Hello",
+        "-a", "world=World",
+        "-f", "$(location named_arg_test.fildesh)",
+    ],
+    data = ["named_arg_test.fildesh"],
 )

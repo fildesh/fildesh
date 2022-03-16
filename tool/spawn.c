@@ -13,18 +13,70 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#if defined(FILDESH_TOOL_LIBRARY) || defined(_MSC_VER)
+#include <string.h>
+static size_t escape_allocated_argv_for_windows(char* dst, const char* arg) {
+  size_t bytec = 1;
+  size_t n;
+  if (dst) {
+    dst[0] = '"';
+    dst = &dst[1];
+  }
+  for (n = strcspn(arg, "\"");
+       arg[n];
+       n = strcspn(arg, "\""))
+  {
+    if (dst) {
+      memcpy(dst, arg, n);
+      dst[n] = '"';
+      dst[n+1] = arg[n];
+      dst = &dst[n+2];
+    }
+    bytec += n + 2;
+    arg = &arg[n+1];
+  }
+  if (dst) {
+    memcpy(dst, arg, n);
+    dst[n] = '"';
+    dst[n+1] = '\0';
+  }
+  bytec += n + 2;
+  return bytec;
+}
+
+char** fildesh_tool_escape_argv_for_windows(const char* const* argv) {
+  char** dstv;
+  unsigned argc = 0;
+  size_t bytec = 0;
+  for (; argv[argc]; ++argc) {
+    bytec += escape_allocated_argv_for_windows(NULL, argv[argc]);
+  }
+  dstv = (char**) malloc(sizeof(char*) * (argc + 1) + bytec);
+  dstv[0] = (char*)(void*)&dstv[argc+1];
+  dstv[argc] = NULL;
+  bytec = 0;
+  for (argc = 0; argv[argc]; ++argc) {
+    dstv[argc] = &dstv[0][bytec];
+    bytec += escape_allocated_argv_for_windows(dstv[argc], argv[argc]);
+  }
+  return dstv;
+}
+#endif
+
 static
   int
 fildesh_tool_spawn_expect(char** argv, int expect) {
   int istat = 70;
 #ifdef _MSC_VER
-  intptr_t pid = _spawnvp(_P_NOWAIT, argv[0], argv);
+  char** escaped_argv = fildesh_tool_escape_argv_for_windows((const char**)argv);
+  intptr_t pid = _spawnvp(_P_NOWAIT, argv[0], escaped_argv);
+  free(escaped_argv);
   if (pid < 0) {
     return (expect == 0) ? 126 : 65;
   }
 #else
   pid_t pid = fork();
-  if (pid < 0)  return 71;  /* -EX_OSERR: Can't fork.*/
+  if (pid < 0)  return 71;  /* EX_OSERR: Can't fork.*/
   if (pid == 0) {
     execvp(argv[0], argv);
     if (expect != 0)  exit(0);
@@ -43,7 +95,7 @@ fildesh_tool_spawn_expect(char** argv, int expect) {
 #else
   pid = waitpid(pid, &istat, 0);
 #endif
-  if (pid < 0)  return 70;  /* -EX_SOFTWARE: Internal software error.*/
+  if (pid < 0)  return 70;  /* EX_SOFTWARE: Internal software error.*/
 
 #ifdef _MSC_VER
   istat &= 0xFF;

@@ -13,7 +13,11 @@ cc_test(
 
 cc_test(
     name = "sh_escape_argv_test",
-    srcs = ["sh_escape_argv_test.c"],
+    srcs = [
+        "sh_escape_argv_test.c",
+        "//tool:spawn.c",
+    ],
+    defines = ["FILDESH_TOOL_LIBRARY"],
     deps = ["//:fildesh_compat_lib"],
 )
 

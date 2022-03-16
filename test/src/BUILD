@@ -1,4 +1,4 @@
-load("//tool:spawn.bzl", "spawn_test")
+load("//:def.bzl", "spawn_test")
 
 cc_test(
     name = "alloc_test",
@@ -9,8 +9,7 @@ cc_test(
 
 spawn_test(
     name = "chatty_test",
-    args = ["$(location //src:chatty)"],
-    data = ["//src:chatty"],
+    binary = "//src:chatty",
     target_compatible_with = [
         "@platforms//os:linux",
     ],
