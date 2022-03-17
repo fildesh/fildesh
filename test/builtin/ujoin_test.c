@@ -10,7 +10,8 @@ struct PipemFnArg {
   fildesh_compat_fd_t stdin_fd;
   fildesh_compat_fd_t stdout_fd;
   const char* input_large;
-  char* argv[10];
+  const char* argv[10];
+  char fd_arg[FILDESH_FD_PATH_SIZE_MAX];
 };
 
 FILDESH_TOOL_PIPEM_CALLBACK(run_query_ujoin, in_fd, out_fd, PipemFnArg*, st) {
@@ -18,10 +19,10 @@ FILDESH_TOOL_PIPEM_CALLBACK(run_query_ujoin, in_fd, out_fd, PipemFnArg*, st) {
     fildesh_compat_fd_t extra_fds[] = {-1, -1};
     int istat;
     extra_fds[0] = in_fd;
-    fildesh_encode_fd_path(st->argv[2], in_fd);
+    fildesh_encode_fd_path(st->fd_arg, in_fd);
+    st->argv[2] = st->fd_arg;
     istat = fildesh_compat_fd_spawnvp_wait(
-        st->stdin_fd, st->stdout_fd, 2, extra_fds,
-        (const char**)st->argv);
+        st->stdin_fd, st->stdout_fd, 2, extra_fds, st->argv);
     assert(istat == 0);
   } else {
     const char* input_large = st->input_large;
@@ -68,7 +69,6 @@ int main(int argc, char** argv) {
   const size_t expect_size = strlen(expect_data);
   size_t output_size;
   char* output_data = NULL;
-  char fd_arg[FILDESH_FD_PATH_SIZE_MAX];
   PipemFnArg st[1];
 
   assert(argc == 2);
@@ -76,7 +76,7 @@ int main(int argc, char** argv) {
   st->input_large = input_large;
   st->argv[0] = argv[1];
   st->argv[1] = "-";
-  st->argv[2] = fd_arg;
+  st->argv[2] = "replace with fd_arg";
   st->argv[3] = "-l";
   st->argv[4] = "-p";
   st->argv[5] = "x";

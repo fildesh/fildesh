@@ -4,6 +4,11 @@ Automate everything, but remember how it actually works.
 
 ## Quick Reference
 
+### Benchmark
+```shell
+bazel test --config=benchmark //test/benchmark/...
+```
+
 ### Coverage
 ```shell
 bazel coverage --instrument_test_targets --instrumentation_filter="^//..." --combined_report=lcov //...
@@ -34,4 +39,12 @@ bazel build //src:fildesh
 ```shell
 # Casting function pointers is usually unsafe (https://stackoverflow.com/a/559671/5039395).
 grep -E -e '\([^()]*\(\*\) *\([^()]*\)' -R builtin compat src test tool
+```
+
+### TinyCC Compilation
+```shell
+mkdir -p bld
+cd bld
+cmake -D CMAKE_C_COMPILER=tcc ..
+make
 ```

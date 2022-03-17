@@ -3,7 +3,7 @@
 #ifndef _MSC_VER
 #include <pthread.h>
 
-#ifdef PTHREAD_RWLOCK_INITIALIZER
+#if defined(PTHREAD_RWLOCK_INITIALIZER) && !defined(__TINYC__)
 static pthread_rwlock_t fildesh_compat_fd_lock = PTHREAD_RWLOCK_INITIALIZER;
 #define FILDESH_COMPAT_FD_ENTER_SHARED pthread_rwlock_rdlock(&fildesh_compat_fd_lock)
 #define FILDESH_COMPAT_FD_LEAVE_SHARED pthread_rwlock_unlock(&fildesh_compat_fd_lock)
