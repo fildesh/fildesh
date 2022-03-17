@@ -6,6 +6,8 @@ exports_files([
     "cycle.txt",
     "familiar.txt",
     "hello.txt",
+    "literal_0.txt",
+    "literal_127.txt",
     "name.txt",
     "silly.txt",
     "test.txt",

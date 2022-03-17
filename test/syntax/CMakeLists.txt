@@ -10,6 +10,9 @@ add_test(NAME syntax_executable_bytes_oxf_test COMMAND fildesh -f
 add_test(NAME syntax_executable_bytes_ofxf_test COMMAND fildesh -f
   "${CMAKE_CURRENT_SOURCE_DIR}/executable_bytes_ofxf_test.fildesh" "$<TARGET_FILE:zec>")
 
+add_test(NAME expect_failure_oxf_test COMMAND fildesh -f
+  "${CMAKE_CURRENT_SOURCE_DIR}/expect_failure_oxf_test.fildesh")
+
 add_test(NAME syntax_pump_ofxf_test COMMAND fildesh -f
   "${CMAKE_CURRENT_SOURCE_DIR}/pump_ofxf_test.fildesh")
 add_test(NAME syntax_pump_oxf_test COMMAND fildesh -f

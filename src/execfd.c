@@ -29,6 +29,7 @@ show_usage()
   f("    Only useful when invoked as builtin.");
   f("  -waitfd fd -- Wait on this file descriptor to close.");
   f("  -exitfd fd -- Close this file descriptor on exit.");
+  f("  -o? filename -- Print exit status to this file upon exit.");
 #undef f
 }
 
@@ -118,6 +119,7 @@ fildesh_builtin_execfd_main(unsigned argc, char** argv,
   fildesh_fd_t* fds_to_inherit;
   unsigned exitfd_count;
   fildesh_fd_t* exitfds;
+  FildeshO* status_out = NULL;
   char* exe = NULL;
   char** spawn_argv = NULL;
   unsigned spawn_argc = 0;
@@ -177,6 +179,12 @@ fildesh_builtin_execfd_main(unsigned argc, char** argv,
       } else {
         fildesh_log_errorf("Cannot parse -exitfd: %s", argv[argi]);
         exstatus = 64;
+      }
+    } else if (0 == strcmp(argv[argi], "-o?")) {
+      status_out = open_arg_FildeshOF(++argi, argv, outputv);
+      if (!status_out) {
+        fildesh_log_errorf("Cannot open -o?: %s", argv[argi]);
+        exstatus = 73;
       }
     } else {
       arg_fmt = argv[argi];
@@ -271,25 +279,26 @@ fildesh_builtin_execfd_main(unsigned argc, char** argv,
 
   if (exstatus != 0) {
     show_usage();
-  }
+  } else {
 #if defined(FILDESH_BUILTIN_LIBRARY) || defined(UNIT_TESTING)
-  else {
     exstatus = fildesh_compat_fd_spawnvp_wait(
         stdin_fd, stdout_fd, 2, fds_to_inherit,
         (const char**)spawn_argv);
-  }
 #else
-  else {
     fildesh_compat_fd_move_to(0, stdin_fd);
     fildesh_compat_fd_move_to(1, stdout_fd);
-    if (exitfd_count == 0) {
+    if (exitfd_count == 0 && !status_out) {
       exstatus = -1;
       fildesh_compat_sh_exec((const char**)&spawn_argv[off]);
     } else {
       exstatus = fildesh_compat_sh_spawn((const char**)&spawn_argv[off]);
     }
-  }
 #endif
+    if (status_out && exstatus >= 0) {
+      print_int_FildeshO(status_out, exstatus);
+      exstatus = 0;
+    }
+  }
 
   if (spawn_offsets) {
     free(spawn_offsets);
@@ -298,6 +307,10 @@ fildesh_builtin_execfd_main(unsigned argc, char** argv,
     free(spawn_argv);
   }
   close_FildeshO(&spawn_buf);
+
+  if (status_out) {
+    close_FildeshO(status_out);
+  }
 
   for (i = 0; i < exitfd_count; ++i) {
     fildesh_compat_fd_close(exitfds[i]);

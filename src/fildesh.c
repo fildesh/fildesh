@@ -27,6 +27,7 @@
 enum SymValKind
 {
   IDescVal, ODescVal, IODescVal,
+  ODescStatusVal,
   IDescArgVal,
   IDescFileVal, ODescFileVal,
   IFutureDescVal, OFutureDescVal,
@@ -68,6 +69,8 @@ struct Command
   TableT( int ) is; /**< Input streams.**/
   fildesh_fd_t stdos; /**< Standard output stream.**/
   TableT( int ) os; /** Output streams.**/
+  /* Exit status stream.**/
+  fildesh_fd_t status_fd;
   /** File descriptor to close upon exit.**/
   TableT( int ) exit_fds;
   /** If >= 0, this is a file descriptor that will
@@ -144,6 +147,7 @@ init_Command(Command* cmd, FildeshAlloc* alloc)
   InitTable( cmd->is );
   cmd->stdos = -1;
   InitTable( cmd->os );
+  cmd->status_fd = -1;
   InitTable( cmd->exit_fds );
   cmd->exec_fd = -1;
   cmd->exec_fd_has_bytes = false;
@@ -176,6 +180,10 @@ close_Command (Command* cmd)
   LoseTable( cmd->os );
   InitTable( cmd->os );
 
+  if (cmd->status_fd >= 0) {
+    fildesh_compat_fd_close(cmd->status_fd);
+    cmd->status_fd = -1;
+  }
   LoseTable( cmd->exit_fds );
   InitTable( cmd->exit_fds );
 
@@ -703,13 +711,14 @@ parse_sym (char* s, bool firstarg)
   }
   else if (s[o] == 'O')
   {
-    if (s[o+1] == 'F')
-    {
+    if (s[o+1] == '?') {
+      kind = ODescStatusVal;
+    }
+    else if (s[o+1] == 'F') {
       if (s[o+2] == '^')  kind = OFutureDescFileVal;
       else                kind = ODescFileVal;
     }
-    else
-    {
+    else {
       if (s[o+1] == '^')  kind = OFutureDescVal;
       else                kind = ODescVal;
     }
@@ -1066,9 +1075,9 @@ setup_commands(TableT(Command)* cmds, CommandHookup* cmd_hookup)
       else if (kind == ODescFileVal && eq_cstr (arg, "VOID")) {
         cmd->args.s[arg_q] = strdup_FildeshAlloc(cmd->alloc, "/dev/null");
         arg_q += 1;
-      }
-      else if (kind == ODescVal || kind == ODescFileVal ||
-          kind == IODescVal)
+      } else if (kind == ODescVal || kind == IODescVal ||
+                 kind == ODescStatusVal ||
+                 kind == ODescFileVal)
       {
         fildesh_fd_t fd[2];
         SymVal* sym = getf_SymVal (add_map, arg);
@@ -1087,6 +1096,8 @@ setup_commands(TableT(Command)* cmds, CommandHookup* cmd_hookup)
 
         if (kind == ODescVal || kind == IODescVal) {
           cmd->stdos = fd[1];
+        } else if (kind == ODescStatusVal) {
+          cmd->status_fd = fd[1];
         } else {
           sym->ios_idx = add_ios_Command (cmd, -1, fd[1]);
           cmd->args.s[arg_q] = add_fd_arg_Command (cmd, fd[1]);
@@ -1225,6 +1236,9 @@ static int fildesh_main_elastic_pthread(unsigned argc, char** argv) {
 static int main_execfd(unsigned argc, char** argv) {
   return fildesh_builtin_execfd_main(argc, argv, NULL, NULL);
 }
+static int main_expect_failure(unsigned argc, char** argv) {
+  return fildesh_builtin_expect_failure_main(argc, argv, NULL, NULL);
+}
 static int main_fildesh(unsigned argc, char** argv) {
   return fildesh_builtin_fildesh_main(argc, argv, NULL, NULL);
 }
@@ -1264,6 +1278,7 @@ bool fildesh_builtin_is_threadsafe(const char* name)
 #endif
     "elastic_pthread",
     "execfd",
+    "expect_failure",
     "seq",
     "sponge",
     "time2sec",
@@ -1301,6 +1316,7 @@ int (*fildesh_specific_util (const char* arg)) (unsigned, char**)
     {"elastic_poll", main_elastic_poll},
 #endif
     {"execfd", main_execfd},
+    {"expect_failure", main_expect_failure},
     {"fildesh", main_fildesh},
     {"godo", main_godo},
     {"seq", fildesh_main_seq},
@@ -1351,6 +1367,7 @@ FILDESH_POSIX_THREAD_CALLBACK(builtin_command_thread_fn, BuiltinCommandThreadArg
 #endif
     {"elastic_pthread", fildesh_builtin_elastic_pthread_main},
     {"execfd", fildesh_builtin_execfd_main},
+    {"expect_failure", fildesh_builtin_expect_failure_main},
     {"seq", fildesh_builtin_seq_main},
     {"sponge", fildesh_builtin_sponge_main},
     {"time2sec", fildesh_builtin_time2sec_main},
@@ -1537,6 +1554,13 @@ add_inheritfd_flags_Command(TableT(cstr)* argv, Command* cmd, bool inprocess) {
   }
   LoseTable(cmd->exit_fds);
   InitTable(cmd->exit_fds);
+
+  if (cmd->status_fd >= 0) {
+    PushTable( *argv, lace_strdup("-o?") );
+    PushTable( *argv, lace_fd_path_strdup(cmd->status_fd) );
+    PushTable( cmd->os, cmd->status_fd );
+  }
+  cmd->status_fd = -1;
 }
 
   static int
@@ -1571,7 +1595,9 @@ spawn_commands(const char* fildesh_exe, TableT(Command) cmds,
 
     fix_known_flags_Command(cmd, alias_map);
 
-    if (cmd->exec_fd >= 0 || fdargs.sz > 0 || cmd->exit_fds.sz > 0) {
+    if (cmd->exec_fd >= 0 || fdargs.sz > 0 ||
+        cmd->status_fd >=0 || cmd->exit_fds.sz > 0)
+    {
       const char* execfd_exe = lookup_strmap(alias_map, "execfd");
       char* execfd_fmt = NULL;
       if (execfd_exe) {

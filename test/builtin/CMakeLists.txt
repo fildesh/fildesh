@@ -81,6 +81,19 @@ add_test(NAME execfd_cat_test COMMAND
 add_test(NAME execfd_script_test COMMAND
   fildesh -x "${CMAKE_CURRENT_SOURCE_DIR}/execfd_script_test.fildesh" "$<TARGET_FILE:zec>")
 
+#### expect_failure
+
+add_executable(expect_failure_test "expect_failure_test.c"
+  "${CMAKE_SOURCE_DIR}/builtin/expect_failure.c")
+target_link_libraries(expect_failure_test fildesh_lib)
+set_property(TARGET expect_failure_test
+  APPEND PROPERTY COMPILE_DEFINITIONS UNIT_TESTING)
+add_test(NAME expect_failure_test COMMAND
+  expect_failure_test
+  "${CMAKE_SOURCE_DIR}/test/expect/literal_0.txt"
+  "${CMAKE_SOURCE_DIR}/test/expect/literal_127.txt"
+  )
+
 #### fildesh
 
 add_test(NAME fildesh_as_add_test COMMAND

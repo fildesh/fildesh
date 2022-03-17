@@ -120,6 +120,27 @@ fildesh_test(
     data = ["//builtin:zec"],
 )
 
+#### expect_failure
+
+cc_test(
+    name = "expect_failure_test",
+    srcs = [
+        "expect_failure_test.c",
+        "//builtin:expect_failure.c",
+        "//include:fildesh_builtin.h",
+    ],
+    defines = ["UNIT_TESTING"],
+    deps = ["//:fildesh_lib"],
+    data = [
+        "//test/expect:literal_0.txt",
+        "//test/expect:literal_127.txt",
+    ],
+    args = [
+        "$(location //test/expect:literal_0.txt)",
+        "$(location //test/expect:literal_127.txt)",
+    ],
+)
+
 #### fildesh
 
 spawn_test(

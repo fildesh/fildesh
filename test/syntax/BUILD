@@ -24,6 +24,11 @@ fildesh_test(
 )
 
 fildesh_test(
+    name = "expect_failure_oxf_test",
+    srcs = ["expect_failure_oxf_test.fildesh"],
+)
+
+fildesh_test(
     name = "pump_ofxf_test",
     srcs = ["pump_ofxf_test.fildesh"],
 )

@@ -111,6 +111,11 @@ execfd_usage_tests(const char* fildesh_exe, const char* bad_filename)
   assert(istat == 73);
 
   istat = fildesh_compat_fd_spawnlp_wait(
+      0, 1, 2, NULL, fildesh_exe, "-as", "execfd",
+      "-o?", bad_filename, NULL);
+  assert(istat == 73);
+
+  istat = fildesh_compat_fd_spawnlp_wait(
       0, 1, 2, NULL, fildesh_exe, "-as", "execfd", "--", NULL);
   assert(istat == 64);
 

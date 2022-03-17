@@ -1,0 +1,9 @@
+# How to expect a certain failure status of a program.
+
+# Command exits with status 69.
+# But the $(O? status) keeps the script from failing.
+$(O? status) expect_failure -status 69 -propagate
+
+# Test that the previous command exited with status 69.
+# If the status differs, then this command will fail (along with the script).
+expect_failure -status 69 -x? $(XF status)
