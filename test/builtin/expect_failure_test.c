@@ -26,12 +26,14 @@ static int call_sut_main(const char* name, ...)
 int main(int argc, char** argv) {
   const char* literal_0_filename;
   const char* literal_127_filename;
+  const char* literal_hello_filename;
   char* bad_filename;
   int istat;
 
-  assert(argc == 3);
+  assert(argc == 4);
   literal_0_filename = argv[1];
   literal_127_filename = argv[2];
+  literal_hello_filename = argv[3];
   bad_filename = fildesh_compat_file_catpath(
       literal_0_filename, "no_file_here");
 
@@ -39,8 +41,16 @@ int main(int argc, char** argv) {
   istat = call_sut_main("expect_failure", NULL);
   assert(istat == 64);
 
-  /* Cannot open status file.*/
+  /* Unknown arg.*/
+  istat = call_sut_main("expect_failure", "-unknownarg", NULL);
+  assert(istat == 64);
+
+  /* Cannot parse status arg.*/
   istat = call_sut_main("expect_failure", "-status", "notanumber", NULL);
+  assert(istat == 65);
+
+  /* Cannot parse status file.*/
+  istat = call_sut_main("expect_failure", "-x?", literal_hello_filename, NULL);
   assert(istat == 65);
 
   /* Cannot open status file.*/

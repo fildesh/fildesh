@@ -83,15 +83,16 @@ add_test(NAME execfd_script_test COMMAND
 
 #### expect_failure
 
-add_executable(expect_failure_test "expect_failure_test.c"
+add_executable(builtin_expect_failure_test "expect_failure_test.c"
   "${CMAKE_SOURCE_DIR}/builtin/expect_failure.c")
-target_link_libraries(expect_failure_test fildesh_lib)
-set_property(TARGET expect_failure_test
+target_link_libraries(builtin_expect_failure_test fildesh_lib)
+set_property(TARGET builtin_expect_failure_test
   APPEND PROPERTY COMPILE_DEFINITIONS UNIT_TESTING)
-add_test(NAME expect_failure_test COMMAND
-  expect_failure_test
+add_test(NAME builtin_expect_failure_test COMMAND
+  builtin_expect_failure_test
   "${CMAKE_SOURCE_DIR}/test/expect/literal_0.txt"
   "${CMAKE_SOURCE_DIR}/test/expect/literal_127.txt"
+  "${CMAKE_CURRENT_SOURCE_DIR}/hello_newline.txt"
   )
 
 #### fildesh

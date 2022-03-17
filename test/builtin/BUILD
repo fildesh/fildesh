@@ -132,12 +132,14 @@ cc_test(
     defines = ["UNIT_TESTING"],
     deps = ["//:fildesh_lib"],
     data = [
+        ":hello_newline.txt",
         "//test/expect:literal_0.txt",
         "//test/expect:literal_127.txt",
     ],
     args = [
         "$(location //test/expect:literal_0.txt)",
         "$(location //test/expect:literal_127.txt)",
+        "$(location :hello_newline.txt)",
     ],
 )
 

@@ -34,7 +34,7 @@ foreach (f ${plain_example_test_list})
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
     COMMAND
     comparispawn "${CMAKE_CURRENT_SOURCE_DIR}/expect/${f}.txt"
-    ${fildesh_exe} -x example/${f}.fildesh
+    ${fildesh_exe} -f example/${f}.fildesh
     )
 endforeach ()
 
@@ -42,5 +42,5 @@ add_test (NAME example_args2
   WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
   COMMAND
   comparispawn "${CMAKE_CURRENT_SOURCE_DIR}/expect/args2.txt"
-  ${fildesh_exe} -x example/args.fildesh 2 7
+  ${fildesh_exe} -f example/args.fildesh 2 7
   )

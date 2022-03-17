@@ -30,9 +30,14 @@ def fildesh_test(
     named_inputs=[],
     data=[], args=[],
     forkonly=False,
+    expect_failure=False,
     **kwargs):
   data = list(data)
   fildesh_options = []
+
+  if expect_failure:
+    fail("Please test exit statuses with the expect_failure Fildesh builtin " +
+        "instead of expecting the entire test script to fail.")
 
   # Windows has trouble with fildesh spawning itself when it's symlinked.
   alias_fildesh = True
