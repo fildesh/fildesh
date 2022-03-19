@@ -2,6 +2,9 @@
 add_executable(add "add.c")
 target_link_libraries(add fildesh_lib)
 
+add_executable(bestmatch "bestmatch.c")
+target_link_libraries(bestmatch fildesh_lib)
+
 add_executable(cmp "cmp.c")
 target_link_libraries(cmp fildesh_lib)
 

@@ -1,6 +1,7 @@
 
 exports_files([
     "add.c",
+    "bestmatch.c",
     "cmp.c",
     "elastic_pthread.c",
     "expect_failure.c",
@@ -19,6 +20,13 @@ exports_files([
 cc_binary(
     name = "add",
     srcs = ["add.c"],
+    deps = ["//:fildesh_lib"],
+    visibility = ["//visibility:public"],
+)
+
+cc_binary(
+    name = "bestmatch",
+    srcs = ["bestmatch.c"],
     deps = ["//:fildesh_lib"],
     visibility = ["//visibility:public"],
 )

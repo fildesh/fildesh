@@ -35,7 +35,6 @@ endif()
 
 add_library(fildesh_builtin_lib_obj OBJECT
   "fildesh.c"
-  "best-match.c"
   ${FILDESH_EXTRA_ELASTIC_SOURCES}
   "execfd.c"
   "godo.c"
@@ -43,6 +42,7 @@ add_library(fildesh_builtin_lib_obj OBJECT
   "waitdo.c"
   "xpipe.c"
   "${CMAKE_SOURCE_DIR}/builtin/add.c"
+  "${CMAKE_SOURCE_DIR}/builtin/bestmatch.c"
   "${CMAKE_SOURCE_DIR}/builtin/cmp.c"
   "${CMAKE_SOURCE_DIR}/builtin/elastic_pthread.c"
   "${CMAKE_SOURCE_DIR}/builtin/expect_failure.c"
@@ -85,9 +85,6 @@ target_link_libraries(fildesh_builtin_lib
 add_executable(fildesh "main_fildesh.c")
 target_link_libraries(fildesh fildesh_builtin_lib)
 
-
-add_executable(bestmatch "best-match.c")
-target_link_libraries(bestmatch fildesh_lib)
 
 add_executable(execfd "execfd.c"
   "${CMAKE_SOURCE_DIR}/include/fildesh_builtin.h")

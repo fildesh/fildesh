@@ -16,8 +16,8 @@ cc_test(
     name = "bestmatch_test",
     srcs = ["bestmatch_test.c"],
     deps = ["//:fildesh_lib", "//:fildesh_tool_lib"],
-    data = ["//src:bestmatch"],
-    args = ["$(location //src:bestmatch)"],
+    data = ["//builtin:bestmatch"],
+    args = ["$(location //builtin:bestmatch)"],
 )
 
 #### cmp

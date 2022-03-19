@@ -29,13 +29,13 @@ cc_library(
     name = "fildesh_builtin_lib",
     srcs = [
         "fildesh.c",
-        "best-match.c",
         "execfd.c",
         "godo.c",
         "ssh-all.c",
         "waitdo.c",
         "xpipe.c",
         "//builtin:add.c",
+        "//builtin:bestmatch.c",
         "//builtin:cmp.c",
         "//builtin:elastic_pthread.c",
         "//builtin:expect_failure.c",
@@ -62,13 +62,6 @@ cc_binary(
     srcs = ["main_fildesh.c"],
     deps = [":fildesh_builtin_lib"],
     visibility = ["//:__pkg__"],
-)
-
-cc_binary(
-    name = "bestmatch",
-    srcs = ["best-match.c"],
-    deps = ["//:fildesh_lib"],
-    visibility = ["//test/builtin:__pkg__"],
 )
 
 cc_binary(
