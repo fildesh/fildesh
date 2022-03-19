@@ -1,0 +1,31 @@
+# Test transpose with tabs.
+
+$(H input_content)
+a	b	c	d	e	f	g
+1	2	3	4	5	6
+A	B	C	D	E
+aa	bb	cc	dd	ee	ff	gg	hh	ii
+11	22	33
+AA	BB	CC	DD	EE
+$(H input_content)
+
+$(H expect_content)
+a	1	A	aa	11	AA
+b	2	B	bb	22	BB
+c	3	C	cc	33	CC
+d	4	D	dd		DD
+e	5	E	ee		EE
+f	6		ff		
+g			gg		
+			hh		
+			ii		
+
+$(H expect_content)
+
+zec -o $(OF expect) / $(XA expect_content) /
+
+|< zec / $(XA input_content) /
+|- transpose
+|- cmp $(XF expect)
+|> stdout
+

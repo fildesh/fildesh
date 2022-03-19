@@ -1,5 +1,7 @@
 #include "fildesh.h"
+#include "fildesh_builtin.h"
 #include "fildesh_tool.h"
+
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,10 +15,10 @@ int
 main_transpose(unsigned argc, char** argv);
 
 FILDESH_TOOL_PIPEM_NULLARY_CALLBACK(run_transpose, in_fd, out_fd) {
-  const char* argv[] = {"transpose", ",", NULL};
+  const char* argv[] = {"transpose", "-d", ",", "-blank", NULL};
   FildeshX* in = open_fd_FildeshX(in_fd);
   FildeshO* out = open_fd_FildeshO(out_fd);
-  int istat = fildesh_builtin_transpose_main(2, (char**)argv, &in, &out);
+  int istat = fildesh_builtin_transpose_main(4, (char**)argv, &in, &out);
   assert(istat == 0);
 }
 

@@ -1219,7 +1219,6 @@ int main_elastic_poll(unsigned argc, char** argv);
 #endif
 int main_godo(unsigned argc, char** argv);
 int main_ssh_all(unsigned argc, char** argv);
-int main_transpose(unsigned argc, char** argv);
 int main_waitdo(unsigned argc, char** argv);
 int main_xpipe(unsigned argc, char** argv);
 
@@ -1250,7 +1249,10 @@ static int fildesh_main_sponge(unsigned argc, char** argv) {
 static int fildesh_main_time2sec(unsigned argc, char** argv) {
   return fildesh_builtin_time2sec_main(argc, argv, NULL, NULL);
 }
-static int main_ujoin(unsigned argc, char** argv) {
+static int fildesh_main_transpose(unsigned argc, char** argv) {
+  return fildesh_builtin_transpose_main(argc, argv, NULL, NULL);
+}
+static int fildesh_main_ujoin(unsigned argc, char** argv) {
   return fildesh_builtin_ujoin_main(argc, argv, NULL, NULL);
 }
 static int fildesh_main_void(unsigned argc, char** argv) {
@@ -1284,6 +1286,7 @@ bool fildesh_builtin_is_threadsafe(const char* name)
     "seq",
     "sponge",
     "time2sec",
+    "transpose",
     "ujoin",
     "void",
     "zec",
@@ -1326,8 +1329,8 @@ int (*fildesh_specific_util (const char* arg)) (unsigned, char**)
     {"sponge", fildesh_main_sponge},
     {"ssh-all", main_ssh_all},
     {"time2sec", fildesh_main_time2sec},
-    {"transpose", main_transpose},
-    {"ujoin", main_ujoin},
+    {"transpose", fildesh_main_transpose},
+    {"ujoin", fildesh_main_ujoin},
     {"void", fildesh_main_void},
     {"waitdo", main_waitdo},
     {"xpipe", main_xpipe},
@@ -1374,6 +1377,7 @@ FILDESH_POSIX_THREAD_CALLBACK(builtin_command_thread_fn, BuiltinCommandThreadArg
     {"seq", fildesh_builtin_seq_main},
     {"sponge", fildesh_builtin_sponge_main},
     {"time2sec", fildesh_builtin_time2sec_main},
+    {"transpose", fildesh_builtin_transpose_main},
     {"ujoin", fildesh_builtin_ujoin_main},
     {"void", fildesh_builtin_void_main},
     {"zec", fildesh_builtin_zec_main},

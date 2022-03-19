@@ -40,7 +40,6 @@ add_library(fildesh_builtin_lib_obj OBJECT
   "execfd.c"
   "godo.c"
   "ssh-all.c"
-  "transpose.c"
   "waitdo.c"
   "xpipe.c"
   "${CMAKE_SOURCE_DIR}/builtin/add.c"
@@ -50,6 +49,7 @@ add_library(fildesh_builtin_lib_obj OBJECT
   "${CMAKE_SOURCE_DIR}/builtin/seq.c"
   "${CMAKE_SOURCE_DIR}/builtin/sponge.c"
   "${CMAKE_SOURCE_DIR}/builtin/time2sec.c"
+  "${CMAKE_SOURCE_DIR}/builtin/transpose.c"
   "${CMAKE_SOURCE_DIR}/builtin/ujoin.c"
   "${CMAKE_SOURCE_DIR}/builtin/void.c"
   "${CMAKE_SOURCE_DIR}/builtin/zec.c"
@@ -99,9 +99,6 @@ target_link_libraries(godo cx_lib)
 
 add_executable(sshall "ssh-all.c")
 target_link_libraries(sshall fildesh_lib)
-
-add_executable(transpose "transpose.c")
-target_link_libraries(transpose cx_lib)
 
 add_executable(waitdo "waitdo.c"
   "${CMAKE_SOURCE_DIR}/include/fildesh_builtin.h")

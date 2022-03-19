@@ -7,6 +7,7 @@ exports_files([
     "seq.c",
     "sponge.c",
     "time2sec.c",
+    "transpose.c",
     "ujoin.c",
     "void.c",
     "zec.c",
@@ -69,6 +70,13 @@ cc_binary(
     srcs = ["time2sec.c"],
     deps = ["//:fildesh_lib"],
     visibility = ["//visibility:public"],
+)
+
+cc_binary(
+    name = "transpose",
+    srcs = ["transpose.c"],
+    deps = ["//:fildesh_lib"],
+    visibility = ["//test/builtin:__pkg__"],
 )
 
 cc_binary(

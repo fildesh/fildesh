@@ -14,6 +14,7 @@ int fildesh_builtin_fildesh_main(unsigned, char**, FildeshX**, FildeshO**);
 int fildesh_builtin_seq_main(unsigned, char**, FildeshX**, FildeshO**);
 int fildesh_builtin_sponge_main(unsigned, char**, FildeshX**, FildeshO**);
 int fildesh_builtin_time2sec_main(unsigned, char**, FildeshX**, FildeshO**);
+int fildesh_builtin_transpose_main(unsigned, char**, FildeshX**, FildeshO**);
 int fildesh_builtin_ujoin_main(unsigned, char**, FildeshX**, FildeshO**);
 int fildesh_builtin_void_main(unsigned, char**, FildeshX**, FildeshO**);
 int fildesh_builtin_zec_main(unsigned, char**, FildeshX**, FildeshO**);

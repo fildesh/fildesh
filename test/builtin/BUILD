@@ -267,13 +267,19 @@ cc_test(
     name = "transpose_test",
     srcs = [
         "transpose_test.c",
-        "//src:transpose.c",
+        "//builtin:transpose.c",
+        "//include:fildesh_builtin.h",
     ],
     defines = ["FILDESH_BUILTIN_LIBRARY"],
     deps = [
+        "//:fildesh_lib",
         "//:fildesh_tool_lib",
-        "//src/cx:cx_lib",
     ],
+)
+
+fildesh_test(
+    name = "transpose_tab_test",
+    srcs = ["transpose_tab_test.fildesh"],
 )
 
 #### ujoin

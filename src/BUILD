@@ -20,7 +20,6 @@ exports_files([
     "execfd.c",
     "godo.c",
     "time2sec.c",
-    "transpose.c",
     "void.c",
 ], visibility = [
     "//test/builtin:__pkg__",
@@ -34,7 +33,6 @@ cc_library(
         "execfd.c",
         "godo.c",
         "ssh-all.c",
-        "transpose.c",
         "waitdo.c",
         "xpipe.c",
         "//builtin:add.c",
@@ -44,6 +42,7 @@ cc_library(
         "//builtin:seq.c",
         "//builtin:sponge.c",
         "//builtin:time2sec.c",
+        "//builtin:transpose.c",
         "//builtin:ujoin.c",
         "//builtin:void.c",
         "//builtin:zec.c",

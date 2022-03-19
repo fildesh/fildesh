@@ -279,7 +279,7 @@ fildesh_builtin_ujoin_main(
     }
     else {
       fildesh_log_errorf("Unknown argument: %s", argv[argi]);
-        exstatus = 64;
+      exstatus = 64;
     }
   }
 

@@ -144,11 +144,15 @@ add_test(NAME time2sec_test COMMAND time2sec_test)
 
 #### transpone
 
-add_executable(transpose_test "transpose_test.c" "${CMAKE_SOURCE_DIR}/src/transpose.c")
-target_link_libraries(transpose_test cx_lib fildesh_tool_lib)
-set_property(TARGET transpose_test
-  APPEND PROPERTY COMPILE_DEFINITIONS FILDESH_BUILTIN_LIBRARY)
-add_test(NAME transpose_test COMMAND transpose_test)
+add_executable(builtin_transpose_test "transpose_test.c"
+  "${CMAKE_SOURCE_DIR}/builtin/transpose.c")
+target_link_libraries(builtin_transpose_test fildesh_lib fildesh_tool_lib)
+set_property(TARGET builtin_transpose_test
+  APPEND PROPERTY COMPILE_DEFINITIONS UNIT_TESTING)
+add_test(NAME builtin_transpose_test COMMAND builtin_transpose_test)
+
+add_test(NAME builtin_transpose_tab_test COMMAND fildesh -f
+  "${CMAKE_CURRENT_SOURCE_DIR}/transpose_tab_test.fildesh")
 
 #### ujoin
 
