@@ -1,5 +1,5 @@
 #include "fildesh.h"
-#include "fildesh_compat_fd.h"
+#include "fildesh_builtin.h"
 #include "fildesh_tool.h"
 #include <assert.h>
 #include <stdlib.h>
@@ -7,36 +7,33 @@
 
 typedef struct PipemFnArg PipemFnArg;
 struct PipemFnArg {
-  fildesh_compat_fd_t stdin_fd;
-  fildesh_compat_fd_t stdout_fd;
   const char* input_large;
-  const char* argv[10];
-  char fd_arg[FILDESH_FD_PATH_SIZE_MAX];
+  const char* argv[20];
+  unsigned argc;
+  char small_input_arg[FILDESH_FD_PATH_SIZE_MAX];
+  char large_input_arg[FILDESH_FD_PATH_SIZE_MAX];
+  char output_arg[FILDESH_FD_PATH_SIZE_MAX];
 };
 
 FILDESH_TOOL_PIPEM_CALLBACK(run_query_ujoin, in_fd, out_fd, PipemFnArg*, st) {
-  if (!st->input_large) {
-    fildesh_compat_fd_t extra_fds[] = {-1, -1};
-    int istat;
-    extra_fds[0] = in_fd;
-    fildesh_encode_fd_path(st->fd_arg, in_fd);
-    st->argv[2] = st->fd_arg;
-    istat = fildesh_compat_fd_spawnvp_wait(
-        st->stdin_fd, st->stdout_fd, 2, extra_fds, st->argv);
-    assert(istat == 0);
-  } else {
+  if (st->input_large) {
     const char* input_large = st->input_large;
     st->input_large = NULL;
-    st->stdin_fd = in_fd;
-    st->stdout_fd = out_fd;
+    fildesh_encode_fd_path(st->small_input_arg, in_fd);
+    fildesh_encode_fd_path(st->output_arg, out_fd);
     fildesh_tool_pipem(
         strlen(input_large), input_large,
         run_query_ujoin, st,
         NULL);
+  } else {
+    int istat;
+    fildesh_encode_fd_path(st->large_input_arg, in_fd);
+    istat = fildesh_builtin_ujoin_main(st->argc, (char**)st->argv, NULL, NULL);
+    assert(istat == 0);
   }
 }
 
-int main(int argc, char** argv) {
+int main() {
   static const char input_small[] =
     "jwbackus\tBackus, John\n"
     "wbsearp\tEarp, Wyatt\n"
@@ -71,16 +68,19 @@ int main(int argc, char** argv) {
   char* output_data = NULL;
   PipemFnArg st[1];
 
-  assert(argc == 2);
-
   st->input_large = input_large;
-  st->argv[0] = argv[1];
-  st->argv[1] = "-";
-  st->argv[2] = "replace with fd_arg";
-  st->argv[3] = "-l";
-  st->argv[4] = "-p";
-  st->argv[5] = "x";
-  st->argv[6] = NULL;
+  st->argc = 0;
+  st->argv[st->argc++] = "ujoin";
+  st->argv[st->argc++] = "-x-lut";
+  st->argv[st->argc++] = st->small_input_arg;
+  st->argv[st->argc++] = "-x";
+  st->argv[st->argc++] = st->large_input_arg;
+  st->argv[st->argc++] = "-o";
+  st->argv[st->argc++] = st->output_arg;
+  st->argv[st->argc++] = "-l";
+  st->argv[st->argc++] = "-p";
+  st->argv[st->argc++] = "x";
+  st->argv[st->argc] = NULL;
 
   output_size = fildesh_tool_pipem(
       strlen(input_small), input_small,

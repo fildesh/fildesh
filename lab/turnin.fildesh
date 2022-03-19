@@ -12,7 +12,7 @@ $(H wrong-section-file)
  $(O a) ls
 $(XO a) grep '^D\.'
 $(XO a) sed -e 's/^D\.\(.*\)/\1\t*/'
-$(XO a) ujoin $(H names-file) - -p '' -l -nomatch $(H wrong-section-file)
+$(XO a) ujoin -x-lut $(H names-file) -p '' -l -o-not-found $(H wrong-section-file)
 $(XO a) tee $(OF b)
 $(XO a) cut -f1,2
 $(XO b) cut --complement -f1,2

@@ -141,29 +141,45 @@ time2sec_usage_tests(const char* fildesh_exe) {
 
 static void
 ujoin_usage_tests(const char* fildesh_exe, const char* bad_filename) {
+  const char* good_filename = "/dev/null";
   int istat;
   /* Not quite enough args.*/
   istat = fildesh_compat_fd_spawnlp_wait(
       0, 1, 2, NULL, fildesh_exe, "-as", "ujoin",
-      "need_one_more_than_this", NULL);
+      "-x", "-", NULL);
+  assert(istat == 64);
+
+  /* Delimiter missing.*/
+  istat = fildesh_compat_fd_spawnlp_wait(
+      0, 1, 2, NULL, fildesh_exe, "-as", "ujoin", "-d", NULL);
   assert(istat == 64);
 
   /* Second open should fail.*/
   istat = fildesh_compat_fd_spawnlp_wait(
       0, 1, 2, NULL, fildesh_exe, "-as", "ujoin",
-      "-", "-", NULL);
+      "-x-lut", "-", "-x", "-", NULL);
   assert(istat == 66);
 
-  /* Invalid output file.*/
+  /* Invalid output files.*/
   istat = fildesh_compat_fd_spawnlp_wait(
       0, 1, 2, NULL, fildesh_exe, "-as", "ujoin",
-      "-", "-", "-o", bad_filename,  NULL);
+      "-o", bad_filename,  NULL);
+  assert(istat == 73);
+
+  istat = fildesh_compat_fd_spawnlp_wait(
+      0, 1, 2, NULL, fildesh_exe, "-as", "ujoin",
+      "-o-not-found", bad_filename,  NULL);
+  assert(istat == 73);
+
+  istat = fildesh_compat_fd_spawnlp_wait(
+      0, 1, 2, NULL, fildesh_exe, "-as", "ujoin",
+      "-o-conflicts", bad_filename,  NULL);
   assert(istat == 73);
 
   /* No default record given.*/
   istat = fildesh_compat_fd_spawnlp_wait(
       0, 1, 2, NULL, fildesh_exe, "-as", "ujoin",
-      "-", "-", "-p", NULL);
+      "-x-lut", good_filename, "-x", good_filename, "-p", NULL);
   assert(istat == 64);
 }
 

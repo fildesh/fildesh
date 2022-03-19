@@ -23,7 +23,7 @@ $(XO lookup) fildesh -- $(H parse-lab)
  $(O present) cat $(H attend-file)
 $(XO present) fildesh -- $(H parse-lab)
 
- $(O b) ujoin $(XF lookup) $(XF present) -nomatch $(OF a)
+ $(O b) ujoin -x-lut $(XF lookup) -x $(XF present) -o-not-found $(OF a)
 $(X b) void
 
 cat $(XF a)

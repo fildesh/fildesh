@@ -94,7 +94,7 @@ $(H perstudent)
  $(O a) ls
 $(XO a) grep '^D\.'
 $(XO a) grep -o '[^\.]*$'
-$(XO a) ujoin $(H names_file) -
+$(XO a) ujoin -x-lut $(H names_file)
 
 #$(X a) cat -
 #$(XO a) head -n1

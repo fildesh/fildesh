@@ -7,6 +7,7 @@ exports_files([
     "seq.c",
     "sponge.c",
     "time2sec.c",
+    "ujoin.c",
     "void.c",
     "zec.c",
 ], visibility = [
@@ -68,6 +69,13 @@ cc_binary(
     srcs = ["time2sec.c"],
     deps = ["//:fildesh_lib"],
     visibility = ["//visibility:public"],
+)
+
+cc_binary(
+    name = "ujoin",
+    srcs = ["ujoin.c"],
+    deps = ["//:fildesh_lib"],
+    visibility = ["//test/builtin:__pkg__"],
 )
 
 cc_binary(

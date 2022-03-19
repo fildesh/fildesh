@@ -280,10 +280,17 @@ cc_test(
 
 cc_test(
     name = "ujoin_test",
-    srcs = ["ujoin_test.c"],
+    srcs = [
+        "ujoin_test.c",
+        "//builtin:ujoin.c",
+        "//include:fildesh_builtin.h",
+    ],
+    defines = ["UNIT_TESTING"],
     deps = ["//:fildesh_lib", "//:fildesh_tool_lib"],
-    data = ["//src:ujoin"],
-    args = ["$(location //src:ujoin)"],
+)
+fildesh_test(
+    name = "ujoin_misdup_test",
+    srcs = ["ujoin_misdup_test.fildesh"],
 )
 
 #### void

@@ -55,5 +55,5 @@ $(XO a) cut --complement -f1
  $(O passwd) cut '--delimiter=:' $(XA arg) -f1,3 $(H passwd_file)
 $(XO passwd) awk -- '{ print $2 "\t" $1 ; }'
 
-$(X a) ujoin - $(XF passwd) -x -l -p 'NOTHERE' -o $(XA outfile)
+$(X a) ujoin -x-lut - -x $(XF passwd) -n -l -p 'NOTHERE' -o $(XA outfile)
 

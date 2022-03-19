@@ -6,4 +6,4 @@ $(H: passwd_file) passwd
 $(XO passwd) awk -- 'BEGIN { FS=":"; } { print $1 "\t" $5 ; }'
 
 $(X passwd) cat -
-#$(X a) ujoin - $(XF passwd) -x -l -p 'NOTHERE' -o $(XA outfile)
+#$(X a) ujoin -x-lut - -x $(XF passwd) -n -l -p 'NOTHERE' -o $(XA outfile)

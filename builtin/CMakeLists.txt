@@ -21,6 +21,9 @@ target_link_libraries(sponge fildesh_lib)
 add_executable(time2sec "time2sec.c")
 target_link_libraries(time2sec fildesh_lib)
 
+add_executable(ujoin "ujoin.c")
+target_link_libraries(ujoin fildesh_lib)
+
 add_executable(void "void.c")
 target_link_libraries(void fildesh_lib)
 

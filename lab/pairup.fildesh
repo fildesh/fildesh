@@ -81,7 +81,7 @@ $(XO a) awk -- $(H pair_up)
 
 # Add the student's full name to the end of the line.
 # This also introduces students who did not attend lab as lines without '*'.
-$(XO a) ujoin $(H names_file) - -l -p ' ' -nomatch $(OF wrong_section)
+$(XO a) ujoin -x-lut $(H names_file) -l -p ' ' -o-not-found $(OF wrong_section)
 
 # Record who is in the wrong section.
 $(XO wrong_section) cut -f1

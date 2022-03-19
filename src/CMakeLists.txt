@@ -15,6 +15,7 @@ add_library(fildesh_lib STATIC
   $<TARGET_OBJECTS:fildesh_lib_obj>
   $<TARGET_OBJECTS:fildesh_compat_lib_obj>
   )
+target_link_libraries(fildesh_lib ${CMAKE_THREAD_LIBS_INIT})
 
 
 add_subdirectory(cx)
@@ -40,7 +41,6 @@ add_library(fildesh_builtin_lib_obj OBJECT
   "godo.c"
   "ssh-all.c"
   "transpose.c"
-  "ujoin.c"
   "waitdo.c"
   "xpipe.c"
   "${CMAKE_SOURCE_DIR}/builtin/add.c"
@@ -50,16 +50,11 @@ add_library(fildesh_builtin_lib_obj OBJECT
   "${CMAKE_SOURCE_DIR}/builtin/seq.c"
   "${CMAKE_SOURCE_DIR}/builtin/sponge.c"
   "${CMAKE_SOURCE_DIR}/builtin/time2sec.c"
+  "${CMAKE_SOURCE_DIR}/builtin/ujoin.c"
   "${CMAKE_SOURCE_DIR}/builtin/void.c"
   "${CMAKE_SOURCE_DIR}/builtin/zec.c"
   "${CMAKE_SOURCE_DIR}/include/fildesh_builtin.h"
   "${CMAKE_SOURCE_DIR}/include/fildesh_posix_thread.h"
-  )
-add_library(fildesh_builtin_lib STATIC
-  $<TARGET_OBJECTS:fildesh_builtin_lib_obj>
-  $<TARGET_OBJECTS:cx_lib_obj>
-  $<TARGET_OBJECTS:fildesh_lib_obj>
-  $<TARGET_OBJECTS:fildesh_compat_lib_obj>
   )
 
 set_property(TARGET fildesh_builtin_lib_obj APPEND PROPERTY COMPILE_DEFINITIONS
@@ -77,9 +72,18 @@ else()
     FILDESH_BUILTIN_PERMIT_ELASTIC_POLL)
 endif()
 
+add_library(fildesh_builtin_lib STATIC
+  $<TARGET_OBJECTS:fildesh_builtin_lib_obj>
+  $<TARGET_OBJECTS:cx_lib_obj>
+  $<TARGET_OBJECTS:fildesh_lib_obj>
+  $<TARGET_OBJECTS:fildesh_compat_lib_obj>
+  )
+target_link_libraries(fildesh_builtin_lib
+  ${CMAKE_THREAD_LIBS_INIT}
+  ${FILDESH_EXTRA_ELASTIC_AIO_LIBS})
+
 add_executable(fildesh "main_fildesh.c")
-target_link_libraries(fildesh
-  fildesh_builtin_lib ${CMAKE_THREAD_LIBS_INIT} ${FILDESH_EXTRA_ELASTIC_AIO_LIBS})
+target_link_libraries(fildesh fildesh_builtin_lib)
 
 
 add_executable(bestmatch "best-match.c")
@@ -98,9 +102,6 @@ target_link_libraries(sshall fildesh_lib)
 
 add_executable(transpose "transpose.c")
 target_link_libraries(transpose cx_lib)
-
-add_executable(ujoin "ujoin.c")
-target_link_libraries(ujoin cx_lib)
 
 add_executable(waitdo "waitdo.c"
   "${CMAKE_SOURCE_DIR}/include/fildesh_builtin.h")

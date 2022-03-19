@@ -21,6 +21,7 @@ open_FildeshAlloc()
 close_FildeshAlloc(FildeshAlloc* alloc)
 {
   unsigned i;
+  if (!alloc) {return;}
   for (i = alloc->block_count; i > 0; --i) {
     free(alloc->blocks[i-1]);
   }

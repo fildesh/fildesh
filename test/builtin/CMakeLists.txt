@@ -152,10 +152,15 @@ add_test(NAME transpose_test COMMAND transpose_test)
 
 #### ujoin
 
-add_executable(ujoin_test "ujoin_test.c")
-target_link_libraries(ujoin_test fildesh_lib fildesh_tool_lib)
-add_test(NAME ujoin_test COMMAND
-  ujoin_test "$<TARGET_FILE:ujoin>")
+add_executable(builtin_ujoin_test "ujoin_test.c"
+  "${CMAKE_SOURCE_DIR}/builtin/ujoin.c")
+target_link_libraries(builtin_ujoin_test fildesh_lib fildesh_tool_lib)
+set_property(TARGET builtin_ujoin_test
+  APPEND PROPERTY COMPILE_DEFINITIONS UNIT_TESTING)
+add_test(NAME builtin_ujoin_test COMMAND builtin_ujoin_test)
+
+add_test(NAME builtin_ujoin_misdup_test COMMAND fildesh -f
+  "${CMAKE_CURRENT_SOURCE_DIR}/ujoin_misdup_test.fildesh")
 
 #### void
 

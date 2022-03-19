@@ -35,7 +35,6 @@ cc_library(
         "godo.c",
         "ssh-all.c",
         "transpose.c",
-        "ujoin.c",
         "waitdo.c",
         "xpipe.c",
         "//builtin:add.c",
@@ -45,6 +44,7 @@ cc_library(
         "//builtin:seq.c",
         "//builtin:sponge.c",
         "//builtin:time2sec.c",
+        "//builtin:ujoin.c",
         "//builtin:void.c",
         "//builtin:zec.c",
         "//include:fildesh_builtin.h",
@@ -125,13 +125,6 @@ cc_binary(
     name = "sshall",
     srcs = ["ssh-all.c"],
     deps = ["//:fildesh_lib"],
-    visibility = ["//test/builtin:__pkg__"],
-)
-
-cc_binary(
-    name = "ujoin",
-    srcs = ["ujoin.c"],
-    deps = ["//src/cx:cx_lib"],
     visibility = ["//test/builtin:__pkg__"],
 )
 

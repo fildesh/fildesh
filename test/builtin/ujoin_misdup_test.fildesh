@@ -1,0 +1,69 @@
+# Test misses and duplicates.
+
+$(H input_lut_content)
+f 6
+e 5
+d 4
+c 3
+b 2
+a 1
+$(H input_lut_content)
+
+$(H input_stream_content)
+a alpha
+b  bravo
+c charlie
+a apple
+b  banana
+g golf
+t tango
+t tangerine
+d    delta
+d    durian
+t  tomato
+f	 foxtrot
+e 	echo
+$(H input_stream_content)
+
+$(H expect_not_found_content)
+g golf
+t tango
+t tangerine
+t  tomato
+
+$(H expect_not_found_content)
+
+$(H expect_conflicts_content)
+a apple
+b  banana
+d    durian
+
+$(H expect_conflicts_content)
+
+# These have tabs!
+$(H expect_output_content)
+f	6	foxtrot
+e	5	echo
+d	4	delta
+c	3	charlie
+b	2	bravo
+a	1	alpha
+
+$(H expect_output_content)
+
+
+zec -o $(OF lut) / $(XA input_lut_content) /
+zec -o $(OF expect_output) / $(XA expect_output_content) /
+
+|< zec / $(XA input_stream_content) /
+|- ujoin -blank -x-lut $(XF lut) \
+    -o-not-found $(OF result_not_found) \
+    -o-conflicts $(OF result_conflicts)
+|> cmp $(XF expect_output)
+
+|< zec / $(XA expect_not_found_content) /
+|> cmp - $(XF result_not_found)
+
+|< zec / $(XA expect_conflicts_content) /
+|> cmp - $(XF result_conflicts)
+
