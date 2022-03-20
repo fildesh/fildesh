@@ -19,20 +19,20 @@ write_all(FildeshO* out, const char* buf, size_t sz)
   return (0 == out->size);
 }
 
-static
-  void
-show_usage()
-{
-#define W( a )  fputs(a "\n", stderr)
-  W("Usage: zec [OPTIONS] [FILE...] / [STRING...] / [FILE...]");
-  W("   or: zec [OPTIONS] [FILE...] / [STRING...]");
-  W("   or: zec [OPTIONS] [FILE...]");
-  W("The FILE and STRING contents are output in order.");
-  W("OPTIONS:");
-  W("  -o FILE -- Write to a file instead of stdout.");
-  W("  -paste -- Operate like the paste utility without delimiters.");
-  W("            The STRINGs can act as a delimiter or as a prefix/suffix.");
-#undef W
+static void show_usage() {
+  const char usage[] =
+    "Usage: zec [OPTIONS] [FILE...] / [STRING...] / [FILE...]\n"
+    "   or: zec [OPTIONS] [FILE...] / [STRING...]\n"
+    "   or: zec [OPTIONS] [FILE...]\n"
+    "   or: zec [-o FILE] -x FILE\n"
+    "The FILE and STRING contents are output in order.\n"
+    "OPTIONS:\n"
+    "  -o FILE -- Write to a file instead of stdout.\n"
+    "  -paste -- Operate like the paste utility without delimiters.\n"
+    "      The STRINGs can act as a delimiter or as a prefix/suffix.\n"
+    "  -x FILE -- Explicit \"useless use of cat\" syntax (only 1 input).\n"
+    ;
+  fputs(usage, stderr);
 }
 
 static
@@ -96,8 +96,9 @@ fildesh_builtin_zec_main(unsigned argc, char** argv,
   char* mid_buf;
   unsigned nbegs;
   unsigned nends;
+  int exstatus = 0;
 
-  for (argi = 1; argi < argc; ++argi) {
+  for (argi = 1; argi < argc && exstatus == 0; ++argi) {
     const char* arg = argv[argi];
     if (0 == strcmp(arg, "--")) {
       argi += 1;
@@ -105,14 +106,24 @@ fildesh_builtin_zec_main(unsigned argc, char** argv,
     }
     else if (0 == strcmp(arg, "-h")) {
       show_usage ();
-      return 0;
+      exstatus = 1;
+    }
+    else if (0 == strcmp(arg, "-x")) {
+      ++argi;
+      if (argi + 1 == argc && 0 != strcmp(argv[argi], "/")) {
+        break;
+      }
+      else {
+        fildesh_log_error("Please make -x the penultimate arg.");
+        exstatus = 64;
+      }
     }
     else if (0 == strcmp(arg, "-o")) {
       arg = argv[++argi];
       out = open_arg_FildeshOF(argi, argv, outputv);
       if (!out) {
         fildesh_log_errorf("Cannot open file for writing! %s\n", arg);
-        return 1;
+        exstatus = 73;
       }
     }
     else if (0 == strcmp(arg, "-paste")) {
@@ -123,7 +134,7 @@ fildesh_builtin_zec_main(unsigned argc, char** argv,
       if (!unless_arg) {
         show_usage ();
         fildesh_log_error("Need a string after -unless.\n");
-        return 1;
+        exstatus = 64;
       }
     }
     else {
@@ -131,12 +142,18 @@ fildesh_builtin_zec_main(unsigned argc, char** argv,
     }
   }
 
-  if (!out) {
+  if (exstatus == 0 && !out) {
     out = open_arg_FildeshOF(0, argv, outputv);
     if (!out) {
       fildesh_log_error("Cannot open /dev/stdout for writing!\n");
-      return 1;
+      exstatus = 73;
     }
+  }
+
+  /* Early return.*/
+  if (exstatus != 0) {
+    close_FildeshO(out);
+    return exstatus;
   }
 
   if (unless_arg && unless_arg[0]) {
@@ -181,23 +198,32 @@ fildesh_builtin_zec_main(unsigned argc, char** argv,
   nbegs = beg_slash - argi;
   nends = argc - end_slash - (argc != end_slash ? 1 : 0);
 
+  assert(nbegs < argc);
+  assert(nends < argc);
   inputs = (FildeshX**) malloc((nbegs + nends) * sizeof(FildeshX*));
 
   for (i = 0; i < nbegs; ++i) {
     inputs[i] = open_arg_FildeshXF(argi+i, argv, inputv);
-    if (!inputs[i]) {
-      return 1;
+    if (!inputs[i] && exstatus == 0) {
+      exstatus = 66;
     }
   }
 
   for (i = 0; i < nends; ++i) {
     inputs[nbegs+i] = open_arg_FildeshXF(end_slash+1+i, argv, inputv);
-    if (!inputs[nbegs + i]) {
-      return 1;
+    if (!inputs[nbegs + i] && exstatus == 0) {
+      exstatus = 66;
     }
   }
 
-  if (paste_mode) {
+  if (exstatus != 0) {
+    if (inputs) {
+      for (i = 0; i < nbegs + nends; ++i) {
+        close_FildeshX(inputs[i]);
+      }
+    }
+  }
+  else if (paste_mode) {
     bool good = true;
     while (good) {
       good = all_have_data(inputs, nbegs + nends);
@@ -220,23 +246,20 @@ fildesh_builtin_zec_main(unsigned argc, char** argv,
     }
   }
   else {
-    bool good = true;
-
-    for (i = 0; i < nbegs && good; ++i)
+    for (i = 0; i < nbegs; ++i) {
       cat_the_file(out, inputs[i]);
-
-    if (good)
-      good = write_all(out, mid_buf, mid_sz);
-
-    for (i = 0; i < nends && good; ++i)
+    }
+    write_all(out, mid_buf, mid_sz);
+    for (i = 0; i < nends; ++i) {
       cat_the_file(out, inputs[nbegs+i]);
+    }
   }
 
   fildesh_compat_errno_trace();
   close_FildeshO(out);
-  free (inputs);
-  free (mid_buf);
-  return 0;
+  if (inputs) {free(inputs);}
+  if (mid_buf) {free(mid_buf);}
+  return exstatus;
 }
 
 #ifndef FILDESH_BUILTIN_LIBRARY

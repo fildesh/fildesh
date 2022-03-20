@@ -353,9 +353,3 @@ spawn_test(
     binary = "//builtin:zec",
     args = ["/", "/"],
 )
-
-spawn_test(
-    name = "zec_usage_test",
-    binary = "//builtin:zec",
-    args = ["-h"],
-)

@@ -199,7 +199,3 @@ add_test(NAME zec_cat_test COMMAND
 add_test(NAME zec_nop_test COMMAND
   spawn ${zec_exe} "/" "/"
   )
-
-add_test(NAME zec_usage_test COMMAND
-  spawn ${zec_exe} -h
-  )

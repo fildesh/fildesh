@@ -202,6 +202,50 @@ ujoin_usage_tests(const char* fildesh_exe, const char* bad_filename) {
   assert(istat == 64);
 }
 
+static void
+zec_usage_tests(const char* fildesh_exe, const char* bad_filename) {
+  const char* good_filename = "/dev/null";
+  int istat;
+
+  /* Cannot open output file.*/
+  istat = fildesh_compat_fd_spawnlp_wait(
+      0, 1, 2, NULL, fildesh_exe, "-as", "zec",
+      "-o", bad_filename, NULL);
+  assert(istat == 73);
+
+  /* Cannot open input file.*/
+  istat = fildesh_compat_fd_spawnlp_wait(
+      0, 1, 2, NULL, fildesh_exe, "-as", "zec",
+      "-x", bad_filename, NULL);
+  assert(istat == 66);
+
+  istat = fildesh_compat_fd_spawnlp_wait(
+      0, 1, 2, NULL, fildesh_exe, "-as", "zec",
+      bad_filename, NULL);
+  assert(istat == 66);
+
+  istat = fildesh_compat_fd_spawnlp_wait(
+      0, 1, 2, NULL, fildesh_exe, "-as", "zec",
+      good_filename, good_filename, bad_filename, NULL);
+  assert(istat == 66);
+
+  istat = fildesh_compat_fd_spawnlp_wait(
+      0, 1, 2, NULL, fildesh_exe, "-as", "zec",
+      "/", "/", good_filename, good_filename, bad_filename, NULL);
+  assert(istat == 66);
+
+  /* Need filename after -x.*/
+  istat = fildesh_compat_fd_spawnlp_wait(
+      0, 1, 2, NULL, fildesh_exe, "-as", "zec",
+      "-o", "-", "-x", NULL);
+  assert(istat == 64);
+
+  /* Help.*/
+  istat = fildesh_compat_fd_spawnlp_wait(
+      0, 1, 2, NULL, fildesh_exe, "-as", "zec", "-h", NULL);
+  assert(istat == 1);
+}
+
 int main(int argc, char** argv) {
   const char* fildesh_exe = argv[1];
   char* bad_filename;
@@ -217,6 +261,7 @@ int main(int argc, char** argv) {
   execfd_usage_tests(fildesh_exe, bad_filename);
   time2sec_usage_tests(fildesh_exe);
   ujoin_usage_tests(fildesh_exe, bad_filename);
+  zec_usage_tests(fildesh_exe, bad_filename);
 
   free(bad_filename);
   return 0;
