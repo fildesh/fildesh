@@ -17,7 +17,7 @@ cc_test(
         "sh_escape_argv_test.c",
         "//tool:spawn.c",
     ],
-    defines = ["FILDESH_TOOL_LIBRARY"],
+    defines = ["UNIT_TESTING"],
     deps = ["//:fildesh_compat_lib"],
 )
 

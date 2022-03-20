@@ -6,6 +6,7 @@
 #endif
 
 int fildesh_builtin_add_main(unsigned, char**, FildeshX**, FildeshO**);
+int fildesh_builtin_bestmatch_main(unsigned, char**, FildeshX**, FildeshO**);
 int fildesh_builtin_cmp_main(unsigned, char**, FildeshX**, FildeshO**);
 int fildesh_builtin_elastic_pthread_main(unsigned, char**, FildeshX**, FildeshO**);
 int fildesh_builtin_execfd_main(unsigned, char**, FildeshX**, FildeshO**);

@@ -20,6 +20,11 @@ cc_test(
     args = ["$(location //builtin:bestmatch)"],
 )
 
+fildesh_test(
+    name = "bestmatch_edge_test",
+    srcs = ["bestmatch_edge_test.fildesh"],
+)
+
 #### cmp
 
 spawn_test(

@@ -24,6 +24,9 @@ target_link_libraries(bestmatch_test fildesh_lib fildesh_tool_lib)
 add_test(NAME bestmatch_test COMMAND
   bestmatch_test "$<TARGET_FILE:bestmatch>")
 
+add_test(NAME builtin_bestmatch_edge_test COMMAND fildesh -f
+  "${CMAKE_CURRENT_SOURCE_DIR}/bestmatch_edge_test.fildesh")
+
 #### cmp
 
 add_test(NAME cmp_equal_test COMMAND cmp

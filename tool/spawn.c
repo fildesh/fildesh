@@ -13,7 +13,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#if defined(FILDESH_TOOL_LIBRARY) || defined(_MSC_VER)
+#if defined(UNIT_TESTING) || defined(_MSC_VER)
 #include <string.h>
 static size_t escape_allocated_argv_for_windows(char* dst, const char* arg) {
   size_t bytec = 1;
@@ -84,7 +84,7 @@ fildesh_tool_spawn_expect(char** argv, int expect) {
   }
 #endif
 
-#ifndef FILDESH_TOOL_LIBRARY
+#ifndef UNIT_TESTING
   fclose(stdin);
   fclose(stdout);
   fclose(stderr);
@@ -110,27 +110,29 @@ fildesh_tool_spawn_expect(char** argv, int expect) {
   return istat;
 }
 
-#ifndef FILDESH_TOOL_LIBRARY
+#ifndef UNIT_TESTING
 #define fildesh_tool_spawn_main main
 #endif
 int fildesh_tool_spawn_main(int argc, char** argv) {
   if (argc < 2 || !argv[1]) {
     return 64;  /* EX_USAGE: Command line usage error.*/
   }
-  if (argv[1][0] != '!' || argv[1][1] != '\0') {
-    /* Just run the command.*/
-#if defined(FILDESH_TOOL_LIBRARY) || defined(_MSC_VER)
-    /* Exec does not seem to propagate exit status on Windows, so use Spawn.*/
-    return fildesh_tool_spawn_expect(&argv[1], 0);
+  if (argv[1][0] == '!' && argv[1][1] == '\0') {
+    if (argc == 2) {
+      return 64;  /* `spawn !` acts like `false`, mimicking `bash -c "!"`.*/
+    }
+    if (argc == 3 && argv[2][0] == '!' && argv[2][1] == '\0') {
+      return 0;  /* `spawn ! !` acts like `true`, mimicking `bash -c "! !"`.*/
+    }
+    return fildesh_tool_spawn_expect(&argv[2], -1);
+  }
+
+  /* Just run the command.*/
+#if defined(UNIT_TESTING) || defined(_MSC_VER)
+  /* Exec does not seem to propagate exit status on Windows, so use Spawn.*/
+  return fildesh_tool_spawn_expect(&argv[1], 0);
 #else
-    execvp(argv[1], &argv[1]);
+  execvp(argv[1], &argv[1]);
+  return 126;
 #endif
-  }
-  if (argc < 3 || !argv[2]) {
-    return 64;  /* `spawn !` can serve as `false`, much like `bash -c "!"`.*/
-  }
-  if (argc == 3 && argv[2][0] == '!' && argv[2][1] == '\0') {
-    return 0;  /* `spawn ! !` can serve as `true`, much like `bash -c "! !"`.*/
-  }
-  return fildesh_tool_spawn_expect(&argv[2], -1);
 }

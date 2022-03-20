@@ -14,20 +14,39 @@ static void add_usage_tests(const char* fildesh_exe) {
 
 static void bestmatch_usage_tests(const char* fildesh_exe, const char* bad_filename) {
   int istat;
+  /* Need -x-lut.*/
   istat = fildesh_compat_fd_spawnlp_wait(
       0, 1, 2, NULL, fildesh_exe, "-as", "bestmatch",
-      "need_one_more_than_this", NULL);
+      "-x", "/dev/null", NULL);
   assert(istat == 64);
 
+  /* Missing -d arg.*/
   istat = fildesh_compat_fd_spawnlp_wait(
       0, 1, 2, NULL, fildesh_exe, "-as", "bestmatch",
-      "-", "-", "--invalid-flag", NULL);
+      "-x-lut", "/dev/null", "-d", NULL);
   assert(istat == 64);
 
+  /* Bad flag.*/
   istat = fildesh_compat_fd_spawnlp_wait(
       0, 1, 2, NULL, fildesh_exe, "-as", "bestmatch",
-      bad_filename, "-", NULL);
+      "--invalid-flag", NULL);
+  assert(istat == 64);
+
+  /* Can't open files.*/
+  istat = fildesh_compat_fd_spawnlp_wait(
+      0, 1, 2, NULL, fildesh_exe, "-as", "bestmatch",
+      "-x-lut", bad_filename, NULL);
   assert(istat == 66);
+
+  istat = fildesh_compat_fd_spawnlp_wait(
+      0, 1, 2, NULL, fildesh_exe, "-as", "bestmatch",
+      "-x", bad_filename, NULL);
+  assert(istat == 66);
+
+  istat = fildesh_compat_fd_spawnlp_wait(
+      0, 1, 2, NULL, fildesh_exe, "-as", "bestmatch",
+      "-o", bad_filename, NULL);
+  assert(istat == 73);
 }
 
 static void

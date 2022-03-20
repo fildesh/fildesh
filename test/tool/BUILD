@@ -140,7 +140,7 @@ cc_test(
         "spawn_status_test.c",
         "//tool:spawn.c",
     ],
-    defines = ["FILDESH_TOOL_LIBRARY"],
+    defines = ["UNIT_TESTING"],
     args = ["$(location :success)", "$(location :failure)"],
     data = [
         ":failure",

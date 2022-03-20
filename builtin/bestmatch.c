@@ -9,67 +9,63 @@
 #include <string.h>
 
 static void print_usage() {
-#define f(s)  fputs(s "\n", stderr)
-  f( "Usage: best-match TABLE QUERIES [OPTION]*" );
-  f( "    TABLE is a file used for lookup." );
-  f( "    QUERIES is a file, each line prompts an output of the closest match from TABLE." );
-#undef f
+  const char usage[] =
+    "Usage: bestmatch -x-lut LUT [OPTION]*\n"
+    "  -x-lut LUT -- File used for lookup. Lines formatted as \"KEY\\tVALUE\".\n"
+    "  -x QUERIES -- Input queries; stdin by default.\n"
+    "  -o FILE -- Output file; stdout by default.\n"
+    "  -d DELIM -- Use a non-tab delimiter in LUT. Empty string means none.\n"
+    ;
+  fputs(usage, stderr);
 }
 
-static
-  char**
-split_lines (char* buf, unsigned* ret_max_len)
+static char** split_lines(char* buf, unsigned* ret_line_count)
 {
   unsigned i;
-  unsigned n = 1;
-  unsigned max_len = 1;
-  char* s = buf;
+  unsigned line_count = 0;
+  char* s;
   char** lines;
 
-  while (1)
-  {
-    s = strchr (s, '\n');
-    if (!s)  break;
-    ++n;
+  for (s = strchr(buf, '\n'); s; s = strchr(s, '\n')) {
+    ++line_count;
     s[0] = '\0';
     s = &s[1];
   }
 
-  lines = (char**) malloc(sizeof(char*)*(n+1));
-  lines[n] = 0;
+  lines = (char**) malloc((line_count+1)*sizeof(char*));
 
   s = buf;
-  for (i = 0; i < n; ++i)
-  {
-    unsigned len;
+  for (i = 0; i < line_count; ++i) {
+    unsigned len = strlen(s);
     lines[i] = s;
-    len = strlen (s);
-    if (len > max_len)  max_len = len;
     s = &s[1 + len];
   }
+  assert(!s[-1]);
 
-  *ret_max_len = max_len;
+  if (line_count == 0 || lines[line_count-1][0]) {
+    lines[line_count] = &s[-1];
+    line_count += 1;
+  }
+  *ret_line_count = line_count;
   return lines;
 }
 
-/** Find the length of the longest common subsequence between /x/ and /y/.
- * /width/ of /a/ must not be less than the length of /y/.
+/** Find the length of the longest common subsequence between `x` and `y`.
+ * `a` is scratch space. It must be at least as long as `y`.
  **/
 static
   unsigned
-lcs_count (unsigned* a, unsigned width, const char* x, const char* y)
+lcs_count(
+    const char* x, unsigned m,
+    const char* y, unsigned n,
+    unsigned* a)
 {
-  unsigned i, j, m, n;
+  unsigned i, j;
 
-  memset (a, 0, width * sizeof (unsigned));
-  m = strlen (x);
-  n = strlen (y);
-  assert(n <= width);
+  if (m == 0 || n == 0) {return 0;}
+  memset(a, 0, n * sizeof(unsigned));
 
-  if (m == 0 || n == 0)  return 0;
-
-  for (i = 0; i < m; ++i)
-  {
+  for (i = 0; i < m; ++i) {
     unsigned back_j = 0, back_ij = 0;
     char xc;
     xc = tolower (x[i]);
@@ -95,118 +91,151 @@ lcs_count (unsigned* a, unsigned width, const char* x, const char* y)
 
 static
   unsigned
-matching_line (unsigned* a, unsigned width, const char* s, char* const* lines)
+matching_line(const char* query,
+              char* const* lines, unsigned line_count,
+              const unsigned* key_widths, unsigned* a)
 {
   unsigned max_count = 0;
-  unsigned match_idx = 0;
+  unsigned min_key_width = 1;
+  unsigned match_index = 0;
+  unsigned query_width = strlen(query);
   unsigned i;
 
-  for (i = 0; lines[i]; ++i)
-  {
-    unsigned count;
-    count = lcs_count (a, width, s, lines[i]);
-    if (count > max_count)
-    {
+  for (i = 0; i < line_count; ++i) {
+    unsigned count = lcs_count(
+        query, query_width,
+        lines[i], key_widths[i],
+        a);
+
+    if (count > max_count) {
       max_count = count;
-      match_idx = i;
+      min_key_width = key_widths[i];
+      match_index = i;
+    }
+    else if (count >= max_count && key_widths[i] < min_key_width) {
+      min_key_width = key_widths[i];
+      match_index = i;
     }
   }
-  return match_idx;
+  return match_index;
 }
 
   int
-main_best_match(unsigned argc, char** argv)
+fildesh_builtin_bestmatch_main(
+    unsigned argc, char** argv, FildeshX** inputv, FildeshO** outputv)
 {
   int exstatus = 0;
   unsigned argi = 1;
-  unsigned* lcs_array;
+  unsigned* lcs_array = NULL;
   FildeshX* lookup_in = NULL;
   FildeshX* stream_in = NULL;
-  const char* lookup_in_arg = NULL;
-  const char* stream_in_arg = NULL;
   FildeshO* out = NULL;
-  char* buf;
   char* s;
-  char** lines;
-  unsigned width;
+  char* delim = "\t";
+  char** lines = NULL;
+  unsigned line_count = 0;
+  unsigned* key_widths = NULL;
+  unsigned max_key_width = 0;
 
-  if (argi + 2 <= argc) {
-    lookup_in_arg = argv[argi++];
-    stream_in_arg = argv[argi++];
-  } else {
-    exstatus = 64;
-  }
-
-  while (argi < argc && exstatus == 0) {
-    const char* arg = argv[argi];
-    ++ argi;
-    if (0 == strcmp (arg, "-h")) {
-      print_usage();
-      exstatus = 1;
+  for (argi = 1; argi < argc && exstatus == 0; ++argi) {
+    if (0 == strcmp(argv[argi], "-x-lut")) {
+      lookup_in = open_arg_FildeshXF(++argi, argv, inputv);
+      if (!lookup_in) {
+        fildesh_compat_errno_trace();
+        fildesh_log_errorf("Cannot open file for reading: %s", argv[argi]);
+        exstatus = 66;
+      }
+    }
+    else if (0 == strcmp(argv[argi], "-x")) {
+      stream_in = open_arg_FildeshXF(++argi, argv, inputv);
+      if (!stream_in) {
+        fildesh_compat_errno_trace();
+        fildesh_log_errorf("Cannot open file for reading: %s", argv[argi]);
+        exstatus = 66;
+      }
+    }
+    else if (0 == strcmp(argv[argi], "-o")) {
+      out = open_arg_FildeshOF(++argi, argv, outputv);
+      if (!out) {
+        fildesh_log_errorf("Cannot open file for writing: %s", argv[argi]);
+        exstatus = 73;
+      }
+    }
+    else if (0 == strcmp(argv[argi], "-d")) {
+      delim = argv[++argi];
+      if (!delim) {
+        fildesh_log_error("Missing delimiter after -d.");
+        exstatus = 64;
+      } else if (delim[0] == '\0') {
+        delim = NULL;
+      }
     }
     else {
-      fildesh_log_errorf("Unknown argument: %s", arg);
+      fildesh_log_errorf("Unknown argument: %s", argv[argi]);
       exstatus = 64;
     }
   }
 
-  if (exstatus == 0) {
-    lookup_in = open_FildeshXF(lookup_in_arg);
-    if (!lookup_in) {
-      fildesh_compat_errno_trace();
-      fildesh_log_errorf("bestmatch: cannot open %s", lookup_in_arg);
-      exstatus = 66;
-    }
-  }
-  if (exstatus == 0) {
-    stream_in = open_FildeshXF(stream_in_arg);
-    if (!stream_in) {
-      fildesh_compat_errno_trace();
-      fildesh_log_errorf("bestmatch: cannot open %s", stream_in_arg);
-      exstatus = 66;
-    }
-  }
-
-  if (exstatus != 0) {
-    close_FildeshX(lookup_in);
-    close_FildeshX(stream_in);
+  if (exstatus == 0 && !lookup_in) {
+    fildesh_log_error("Please provide a -x-lut file.");
     print_usage();
-    return exstatus;
+    exstatus = 64;
   }
 
-  buf = slurp_FildeshX(lookup_in);
-  lines = split_lines(buf, &width);
-  lcs_array = (unsigned*)malloc(sizeof(unsigned)*width);
-
-  out = open_FildeshOF("-");
-  if (!out) {
-    fildesh_log_error("Cannot open stdout.");
-    return 1;
+  if (exstatus == 0 && !stream_in) {
+    stream_in = open_arg_FildeshXF(0, argv, inputv);
+    if (!stream_in) {
+      fildesh_log_error("Cannot open stdin.");
+      exstatus = 66;
+    }
   }
 
-  for (s = getline_FildeshX(stream_in);
-       s;
-       s = getline_FildeshX(stream_in))
-  {
+  if (exstatus == 0 && !out) {
+    out = open_arg_FildeshOF(0, argv, outputv);
+    if (!out) {
+      fildesh_log_error("Cannot open stdout.");
+      exstatus = 73;
+    }
+  }
+
+  if (exstatus == 0) {
+    char* buf = slurp_FildeshX(lookup_in);
     unsigned i;
-    i = matching_line (lcs_array, width, s, lines);
-    puts_FildeshO(out, lines[i]);
-    putc_FildeshO(out, '\n');
+    lines = split_lines(buf, &line_count);
+    key_widths = (unsigned*)malloc(line_count * sizeof(unsigned));
+    for (i = 0; i < line_count; ++i) {
+      unsigned key_width = delim ? strcspn(lines[i], delim) : strlen(lines[i]);
+      key_widths[i] = key_width;
+      if (key_width > max_key_width) {
+        max_key_width = key_width;
+      }
+    }
+    lcs_array = (unsigned*)malloc(max_key_width * sizeof(unsigned));
   }
 
-  free (lcs_array);
-  free (lines);
+  if (exstatus == 0) {
+    for (s = getline_FildeshX(stream_in); s;
+         s = getline_FildeshX(stream_in))
+    {
+      unsigned i = matching_line(s, lines, line_count, key_widths, lcs_array);
+      puts_FildeshO(out, lines[i]);
+      putc_FildeshO(out, '\n');
+    }
+  }
+
+  if (lcs_array) {free(lcs_array);}
+  if (key_widths) {free(key_widths);}
+  if (lines) {free(lines);}
   close_FildeshX(lookup_in);
   close_FildeshX(stream_in);
   close_FildeshO(out);
-  return 0;
+  return exstatus;
 }
 
 #ifndef FILDESH_BUILTIN_LIBRARY
   int
 main(int argc, char** argv)
 {
-  int istat = main_best_match(argc, argv);
-  return istat;
+  return fildesh_builtin_bestmatch_main((unsigned)argc, argv, NULL, NULL);
 }
 #endif

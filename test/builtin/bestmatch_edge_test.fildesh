@@ -1,0 +1,32 @@
+
+# Has tabs.
+$(H lut_content)
+aaaaa	5x letter a
+aaaa	4x letter a
+aaaaaa	6x letter a
+c	first c
+c	second c
+$(H lut_content)
+
+$(H queries_content)
+aaaa
+bbbbb
+c
+$(H queries_content)
+
+$(H expect_content)
+aaaa	4x letter a
+
+c	first c
+
+$(H expect_content)
+
+
+zec -o $(OF lut) / $(XA lut_content) /
+zec -o $(OF expect) / $(XA expect_content) /
+
+|< zec / $(XA queries_content) /
+|- bestmatch -x-lut $(XF lut)
+|- cmp $(XF expect) -
+|> stdout
+

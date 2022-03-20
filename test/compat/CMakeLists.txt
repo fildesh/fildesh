@@ -9,7 +9,7 @@ add_test(NAME random_bytes_test COMMAND random_bytes_test)
 
 add_executable(sh_escape_argv_test "sh_escape_argv_test.c" "${CMAKE_SOURCE_DIR}/tool/spawn.c")
 set_property(TARGET sh_escape_argv_test
-  APPEND PROPERTY COMPILE_DEFINITIONS FILDESH_TOOL_LIBRARY)
+  APPEND PROPERTY COMPILE_DEFINITIONS UNIT_TESTING)
 target_link_libraries(sh_escape_argv_test fildesh_compat_lib)
 add_test(NAME sh_escape_argv_test COMMAND sh_escape_argv_test)
 
