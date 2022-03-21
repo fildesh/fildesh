@@ -2,49 +2,52 @@
 [![CMake](https://github.com/fildesh/fildesh/actions/workflows/cmake.yml/badge.svg)](https://github.com/fildesh/fildesh/actions/workflows/cmake.yml)
 \
 [![Coverage Status](https://coveralls.io/repos/github/fildesh/fildesh/badge.svg?branch=trunk)](https://coveralls.io/github/fildesh/fildesh?branch=trunk)
+[![lgtm.com alerts](https://img.shields.io/lgtm/alerts/g/fildesh/fildesh.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/fildesh/fildesh/alerts/)
 
 # Fildesh: File Descriptor Shell Scripting Language
 
-This is a domain-specific language meant to simplify complex pipelines between programs.
+Fildesh is a domain-specific language meant to simplify complex pipelines between programs.
 It allows multiple inputs and outputs, undirected cycles ([example/familiar.fildesh](example/familiar.fildesh)), and even directed cycles ([example/cycle.fildesh](example/cycle.fildesh)).
 Though when the dataflow graph has undirected cycles, you should use the `elastic` utility to avoid deadlocks.
 
-## How to Use
-
-```
-make
-./bld/src/fildesh < example/hello.fildesh
-```
-
-Hopefully that worked, the only real dependencies are `git` (for pulling submodules), `cmake`, a C compiler, and the POSIX librt for the `elastic` tool.
-
 ## Motivating Example
 
-Let's walk through a fairly useful script!
-Open [example/whophys.fildesh](example/whophys.fildesh) in a new window and follow along.
+Diff tests are a simple way of testing program behavior, but they usually involve multiple files.
+A Fildesh script can instead create those multiple files as pipes, letting the whole test be in one place.
 
-The `whophys` script is made for instructors to easily (or magically) learn the names of students sitting in a computer lab.
-It does this by taking the layout of the computer lab as a variable `lab` and replacing each machine name with the username of whoever is logged in.
+```shell
+# Pretend that these first 3 lines are just one program that we're testing,
+# expecting it to sum the integers from 1 to 10.
+|< seq 1 10
+|- tr "\n" " "
+|- add
+# Redirect output to a stream named `result`.
+|> zec -o $(OF result)
 
-The `lab` is defined as a Here document, much like in shell scripting.
-The entire text between two occurrences of `$(H lab)` (on separate lines) is then stored in that variable.
-All variables are referenced this way, where the prefix (`H` in this case) indicates both type and intent.
+# Make a stream named `expect` that contains the expected result: "55\n".
+zec -o $(OF expect) / "55\n" /
 
-Next, a `zec` command prints the lab text to a stream `a`.
-The stream is defined by `$(O a)`, where the `O` indicates output.
-Notice from the next comment that we could alternatively use `stdin` to read a lab description from standard input.
+# Compare the two streams. The script fails if the streams differ.
+|< cmp $(XF expect) $(XF result)
+|> stdout
+```
 
-We will need to reference the lab description twice, so use `tee` to make a copy of the `a` stream to a stream `b`.
-This line uses `$(XO a)` to say that `a` is used for both input (`X`) and output (`O`).
-The stream `b` is introduced as `$(OF b)`, which means it is an output (`O`) file (`F`) passed as an argument to `tee`.
-It is a stream though, just passed to `tee` as `/dev/fd/3` (or some other number).
+## How to Use
 
-When using `tee` to save a stream for later, we must use `elastic` on the slow stream to ensure no deadlocks occur.
-The `elastic` tool asynchronously reads and writes whenever possible, thereby providing a dynamic buffer.
+If you have Bazel, try:
+```shell
+bazel run //:fildesh -- $PWD/example/hello.fildesh
+```
 
-The next 3 lines just `grep` out the hostnames in the lab description.
-These are piped to `xargs` which runs `ssh` to execute `clientcmd` on every host.
-At this point, each line has a hostname and a username which are then transformed by `awk` into a `sed` script to do a bunch of search and replace operations.
-The `b` stream holding a copy of the lab description is finally used here when `sed` replaces hostnames with usernames.
-This output is then piped to `stdout` to display.
+If you have CMake, try:
+```shell
+make && ./bld/src/fildesh example/hello.fildesh
+```
+Or if you must use CMake directly:
+```shell
+mkdir -p bld; cd bld
+cmake .. && cmake --build .
+cd ..
+./bld/src/fildesh example/hello.fildesh
+```
 

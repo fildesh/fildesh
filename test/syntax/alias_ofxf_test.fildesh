@@ -1,0 +1,4 @@
+# `shout` and `expectish` are external programs.
+
+shout $(OF f) hello world
+expectish $(XF f) hello world

@@ -1,4 +1,11 @@
 
+if (UNIX)
+  add_test(NAME syntax_alias_ofxf_test COMMAND fildesh
+    -alias "expectish=$<TARGET_FILE:expectish>"
+    -alias "shout=$<TARGET_FILE:shout>"
+    -f "${CMAKE_CURRENT_SOURCE_DIR}/alias_ofxf_test.fildesh")
+endif()
+
 add_test(NAME syntax_concatenate_oooxfxax_test COMMAND fildesh -f
   "${CMAKE_CURRENT_SOURCE_DIR}/concatenate_oooxfxax_test.fildesh")
 add_test(NAME syntax_concatenate_forkonly_oooxfxax_test COMMAND

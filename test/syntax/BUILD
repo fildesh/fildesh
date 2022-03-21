@@ -1,6 +1,19 @@
 load("//:def.bzl", "fildesh_test")
 
 fildesh_test(
+    name = "alias_ofxf_test",
+    srcs = ["alias_ofxf_test.fildesh"],
+    aliases = {
+        "expectish": "//tool:expectish",
+        "shout": "//tool:shout",
+    },
+    target_compatible_with = select({
+        "@platforms//os:windows": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }),
+)
+
+fildesh_test(
     name = "concatenate_oooxfxax_test",
     srcs = ["concatenate_oooxfxax_test.fildesh"],
 )
