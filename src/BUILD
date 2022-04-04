@@ -7,11 +7,14 @@ exports_files([
     "kve.c",
     "kve.h",
     "log.c",
+    "mascii.c",
+    "mascii.h",
     "outfile.c",
     "outstream.c",
     "string.c",
 ], visibility = [
     "//:__pkg__",
+    "//test/benchmark:__pkg__",
     "//test/fuzz:__pkg__",
     "//test/src:__pkg__",
 ])

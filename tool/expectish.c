@@ -5,7 +5,7 @@
  **/
 #include <stdio.h>
 
-#ifndef FILDESH_TOOL_LIBRARY
+#ifndef UNIT_TESTING
 #define fildesh_tool_expectish_main main
 #endif
 int fildesh_tool_expectish_main(int argc, char** argv) {

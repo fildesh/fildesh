@@ -1,7 +1,8 @@
-#include "fildesh.h"
-
+#include "fuzz_common.h"
 #include <assert.h>
 #include <stdlib.h>
+
+#include "fildesh.h"
 
 
 static
@@ -11,7 +12,6 @@ testbit_FildeshA_(const char data[], size_t bitpos)
   return 0 != (1 & (data[bitpos/CHAR_BIT] >> (bitpos % CHAR_BIT)));
 }
 
-extern
   int
 LLVMFuzzerTestOneInput(const uint8_t data[], size_t size) {
   size_t i;

@@ -10,8 +10,6 @@ add_library(fildesh_tool_lib STATIC
   "${CMAKE_SOURCE_DIR}/include/fildesh_posix_thread.h"
   "${CMAKE_SOURCE_DIR}/include/fildesh_tool.h"
   )
-set_property(TARGET fildesh_tool_lib
-  APPEND PROPERTY COMPILE_DEFINITIONS FILDESH_TOOL_LIBRARY)
 target_link_libraries(fildesh_tool_lib fildesh_compat_lib ${CMAKE_THREAD_LIBS_INIT})
 
 add_executable(comparispawn comparispawn.c)

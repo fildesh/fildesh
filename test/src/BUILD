@@ -46,6 +46,13 @@ cc_test(
 )
 
 cc_test(
+    name = "mascii_test",
+    srcs = ["mascii_test.c"],
+    deps = ["//:fildesh_lib"],
+    size = "small",
+)
+
+cc_test(
     name = "parse_int_test",
     srcs = ["parse_int_test.c"],
     deps = ["//:fildesh_lib"],

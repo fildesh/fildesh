@@ -1,6 +1,7 @@
 
 #include "fildesh.h"
 #include "fildesh_compat_string.h"
+#include "mascii.h"
 
 #include <assert.h>
 #include <stdlib.h>
@@ -169,10 +170,10 @@ sliceline_FildeshX(FildeshX* in)
   return slice;
 }
 
-
-/** Like strcspn or strtok but returns a slice.**/
+/** Like strcspn but returns a slice.**/
+static
   FildeshX
-slicechrs_FildeshX(FildeshX* in, const char* delims)
+until_mascii_FildeshX(FildeshX* in, const FildeshMascii* mascii)
 {
   FildeshX slice = DEFAULT_FildeshX;
   size_t ret_off;
@@ -180,46 +181,10 @@ slicechrs_FildeshX(FildeshX* in, const char* delims)
 
   maybe_flush_FildeshX(in);
   ret_off = in->off;
-  end = in->off + strcspn(cstr_of_FildeshX(in), delims);
-
-  while (end == in->size) {
-    in->off = in->size;
-    if (0 == read_FildeshX(in)) {
-      break;
-    }
-    end = in->off + strcspn(cstr_of_FildeshX(in), delims);
-  }
-
-  if (ret_off == in->size) {
-    assert(in->off == in->size);
-    return slice;  /* Empty.*/
-  }
-  assert(in->at[in->size] == '\0');
-
-  if (end < in->size) {
-    in->off = end + 1;
-    slice = slice_FildeshX(in, ret_off, in->off-1);
-    slice.at[slice.size] = '\0';
-  } else {
-    assert(in->off == in->size);
-    slice = slice_FildeshX(in, ret_off, in->size);
-  }
-  assert(slice.at[slice.size] == '\0');
-  return slice;
-}
-
-/** Like strspn but skips.**/
-  FildeshX
-slicespan_FildeshX(FildeshX* in, const char* span)
-{
-  FildeshX slice = DEFAULT_FildeshX;
-  size_t ret_off;
-  size_t end = in->size;
-
-  maybe_flush_FildeshX(in);
-  ret_off = in->off;
+  end = 0;
   if (in->size > 0) {
-    end = in->off + strspn(cstr_of_FildeshX(in), span);
+    end = in->off + find_FildeshMascii(
+        mascii, &in->at[in->off], in->size - in->off);
   }
 
   while (end == in->size) {
@@ -227,25 +192,39 @@ slicespan_FildeshX(FildeshX* in, const char* span)
     if (0 == read_FildeshX(in)) {
       break;
     }
-    end = in->off + strspn(cstr_of_FildeshX(in), span);
+    end = in->off + find_FildeshMascii(
+        mascii, &in->at[in->off], in->size - in->off);
   }
 
   if (ret_off == in->size) {
     assert(in->off == in->size);
     return slice;  /* Empty.*/
   }
-  assert(in->at[in->size] == '\0');
 
   if (end < in->size) {
     in->off = end;
     slice = slice_FildeshX(in, ret_off, in->off);
-    assert(slice.at[slice.size] != '\0');
   } else {
     assert(in->off == in->size);
     slice = slice_FildeshX(in, ret_off, in->size);
-    assert(slice.at[slice.size] == '\0');
   }
   return slice;
+}
+
+/** Like strcspn but returns a slice.**/
+  FildeshX
+until_chars_FildeshX(FildeshX* in, const char* delims)
+{
+  FildeshMascii mascii = charset_FildeshMascii(delims, strlen(delims));
+  return until_mascii_FildeshX(in, &mascii);
+}
+
+/** Like strspn but returns a slice.**/
+  FildeshX
+while_chars_FildeshX(FildeshX* in, const char* span)
+{
+  FildeshMascii mascii = charnot_FildeshMascii(span, strlen(span));
+  return until_mascii_FildeshX(in, &mascii);
 }
 
 /** Like strstr but returns a slice.**/
@@ -314,7 +293,7 @@ gets_FildeshX(FildeshX* in, const char* delim)
   bool
 skipchrs_FildeshX(FildeshX* in, const char* span)
 {
-  FildeshX slice = slicespan_FildeshX(in, span);
+  FildeshX slice = while_chars_FildeshX(in, span);
   maybe_flush_FildeshX(in);
   return (slice.size > 0);
 }
@@ -342,7 +321,7 @@ parse_int_FildeshX(FildeshX* in, int* ret)
   FildeshX slice;
   char* end = NULL;
   skipchrs_FildeshX(in, fildesh_compat_string_blank_bytes);
-  slice = slicespan_FildeshX(in, "+-0123456789");
+  slice = while_chars_FildeshX(in, "+-0123456789");
   if (slice.size > 0) {
     end = fildesh_parse_int(ret, slice.at);
   }
@@ -355,7 +334,7 @@ parse_double_FildeshX(FildeshX* in, double* ret)
   FildeshX slice;
   char* end = NULL;
   skipchrs_FildeshX(in, fildesh_compat_string_blank_bytes);
-  slice = slicespan_FildeshX(in, "+-.0123456789Ee");
+  slice = while_chars_FildeshX(in, "+-.0123456789Ee");
   if (slice.size > 0) {
     end = fildesh_parse_double(ret, slice.at);
   }

@@ -9,7 +9,7 @@
 #include <io.h>
 #endif
 
-#ifndef FILDESH_TOOL_LIBRARY
+#ifndef UNIT_TESTING
 #define fildesh_tool_shout_main main
 #endif
 int fildesh_tool_shout_main(int argc, char** argv) {

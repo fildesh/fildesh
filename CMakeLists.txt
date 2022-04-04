@@ -25,20 +25,24 @@ set(MSVC_COMPILER_ID "MSVC")
 
 if (CMAKE_C_COMPILER_ID STREQUAL GCC_COMPILER_ID)
   # GCC.
-  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -ansi -pedantic -Werror")
+  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=native -Wall -Wextra -ansi -pedantic -Werror")
+  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
 elseif (CMAKE_C_COMPILER_ID STREQUAL CLANG_COMPILER_ID)
   # Clang.
-  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -pedantic")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=native -Wall -Wextra -pedantic")
+  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
   if (NOT APPLE)
     set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror")
   endif()
 elseif (CMAKE_C_COMPILER_ID STREQUAL TCC_COMPILER_ID)
   # TinyCC:
   #  cmake -D CMAKE_C_COMPILER=tcc ..
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wunsupported -Wwrite-strings -Werror")
+  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=native -Wall -Wunsupported -Wwrite-strings -Werror")
+  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
 elseif (CMAKE_C_COMPILER_ID STREQUAL MSVC_COMPILER_ID)
   # Windows.
-  set (CMAKE_C_FLAGS "/W4 /MP")
+  set (CMAKE_C_FLAGS "/favor:ATOM /W4 /MP")
+  set (CMAKE_CXX_FLAGS "/favor:ATOM")
   # Disable warning: 'fopen' unsafe, use fopen_s instead
   add_definitions ("-D_CRT_SECURE_NO_WARNINGS")
   # See src/cx/def.h for how to disable other warnings via #pragmas.

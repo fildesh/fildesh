@@ -53,9 +53,9 @@ char* slurp_FildeshX(FildeshX*);
 void wait_close_FildeshX(FildeshX*);
 FildeshX slicechr_FildeshX(FildeshX*, const char delim);
 FildeshX sliceline_FildeshX(FildeshX*);
-FildeshX slicechrs_FildeshX(FildeshX*, const char* delims);
-FildeshX slicespan_FildeshX(FildeshX*, const char* span);
 FildeshX slicestr_FildeshX(FildeshX*, const char* delim);
+FildeshX until_chars_FildeshX(FildeshX*, const char* delims);
+FildeshX while_chars_FildeshX(FildeshX*, const char* span);
 char* getline_FildeshX(FildeshX*);
 char* gets_FildeshX(FildeshX*, const char* delim);
 bool skipchrs_FildeshX(FildeshX*, const char* span);
@@ -201,8 +201,9 @@ struct FildeshAlloc {
 
 FildeshAlloc* open_FildeshAlloc();
 void close_FildeshAlloc(FildeshAlloc*);
-void create_block_FildeshAlloc(FildeshAlloc*);
+void* reserve_FildeshAlloc(FildeshAlloc*, size_t size, size_t alignment);
 char* strdup_FildeshAlloc(FildeshAlloc*, const char*);
+char* strdup_FildeshX(const FildeshX*, FildeshAlloc*);
 
 struct FildeshKV {
   FildeshKVE* at;
@@ -219,22 +220,8 @@ static inline FildeshX default_FildeshX()
 static inline FildeshO default_FildeshO()
 {FildeshO tmp = DEFAULT_FildeshO; return tmp;}
 
-static inline
-  void*
-alloc_FildeshAlloc(FildeshAlloc* alloc, size_t size, size_t alignment)
-{
-  const size_t mask = ~(alignment-1);
-  fildesh_lgsize_t i = alloc->block_count-1;
-  while (alloc->sizes[i] <= size) {
-    create_block_FildeshAlloc(alloc);
-    i = alloc->block_count-1;
-  }
-  alloc->sizes[i] = (alloc->sizes[i] - size) & mask;
-  return &alloc->blocks[i][alloc->sizes[i]];
-}
-
 #define fildesh_allocate(T, n, alloc) \
-  ((T*) alloc_FildeshAlloc(alloc, (n)*sizeof(T), fildesh_alignof(T)))
+  ((T*) reserve_FildeshAlloc(alloc, (n)*sizeof(T), fildesh_alignof(T)))
 
 static inline
   void*

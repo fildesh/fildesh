@@ -6,6 +6,8 @@ add_library(fildesh_lib_obj OBJECT
   "kve.c"
   "kve.h"
   "log.c"
+  "mascii.c"
+  "mascii.h"
   "outfile.c"
   "outstream.c"
   "string.c"

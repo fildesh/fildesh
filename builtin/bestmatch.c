@@ -131,7 +131,7 @@ fildesh_builtin_bestmatch_main(
   FildeshX* stream_in = NULL;
   FildeshO* out = NULL;
   char* s;
-  char* delim = "\t";
+  const char* delim = "\t";
   char** lines = NULL;
   unsigned line_count = 0;
   unsigned* key_widths = NULL;

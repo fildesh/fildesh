@@ -41,6 +41,11 @@ bazel build //src:fildesh
 grep -E -e '\([^()]*\(\*\) *\([^()]*\)' -R builtin compat src test tool
 ```
 
+### SIMD Instructions
+```shell
+objdump -M intel --disassemble=find_FildeshMascii bld/test/benchmark/strcspn_benchmark | cut -f3
+```
+
 ### TinyCC Compilation
 ```shell
 mkdir -p bld

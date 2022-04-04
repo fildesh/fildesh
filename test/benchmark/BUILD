@@ -27,3 +27,16 @@ cc_benchmark(
         "//src/cx:int_int_map_lib",
     ],
 )
+
+cc_benchmark(
+    name = "strchr_benchmark",
+    srcs = ["strchr_benchmark.cc"],
+    deps = ["//:fildesh_lib"],
+)
+
+cc_benchmark(
+    name = "strcspn_benchmark",
+    srcs = ["strcspn_benchmark.cc"],
+    deps = ["//:fildesh_lib"],
+)
+

@@ -27,6 +27,7 @@ close_FildeshAlloc(FildeshAlloc* alloc)
   }
 }
 
+static
   void
 create_block_FildeshAlloc(FildeshAlloc* alloc)
 {
@@ -37,11 +38,42 @@ create_block_FildeshAlloc(FildeshAlloc* alloc)
   alloc->block_count += 1;
 }
 
+  void*
+reserve_FildeshAlloc(FildeshAlloc* alloc, size_t size, size_t alignment)
+{
+  uintptr_t p;
+  const size_t mask = ~(alignment-1);
+  fildesh_lgsize_t i = alloc->block_count-1;
+  while (alloc->sizes[i] <= size) {
+    create_block_FildeshAlloc(alloc);
+    i = alloc->block_count-1;
+  }
+
+  p = (uintptr_t)&alloc->blocks[i][alloc->sizes[i] - size] & mask;
+  while (p < (uintptr_t)alloc->blocks[i]) {
+    create_block_FildeshAlloc(alloc);
+    i = alloc->block_count-1;
+    p = (uintptr_t)&alloc->blocks[i][alloc->sizes[i] - size] & mask;
+  }
+  alloc->sizes[i] = p - (uintptr_t)alloc->blocks[i];
+  return (void*)p;
+}
+
   char*
 strdup_FildeshAlloc(FildeshAlloc* alloc, const char* s)
 {
   size_t size = 1+strlen(s);
   char* buf = fildesh_allocate(char, size, alloc);
   memcpy(buf, s, size);
+  return buf;
+}
+
+  char*
+strdup_FildeshX(const FildeshX* in, FildeshAlloc* alloc)
+{
+  size_t n = in->size - in->off;
+  char* buf = fildesh_allocate(char, n+1, alloc);
+  memcpy(buf, &in->at[in->off], n);
+  buf[n] = '\0';
   return buf;
 }
