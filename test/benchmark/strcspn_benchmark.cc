@@ -2,13 +2,22 @@
 #include <cstring>
 #include "src/mascii.h"
 
+static unsigned expected_index(unsigned n) {
+  if (n % 3 == 2) {
+    return n-1;
+  }
+  return n;
+}
+
 static std::string make_haystack(unsigned n) {
   std::string s = std::string(n, 'x');
   for (unsigned i = 0; i < s.size(); ++i) {
     char c = 32+3*(i%32);
     s[i] = c;
   }
-  s[s.size()-1] = '!';
+  if (n % 3 == 2) {
+    s[s.size()-1] = '!';
+  }
   return s;
 }
 
@@ -25,9 +34,10 @@ static void BM_strcspn_mascii(benchmark::State& state) {
   const std::string needle = make_needle();
   const FildeshMascii mascii = charset_FildeshMascii(needle.c_str(), needle.size());
   for (auto _ : state) {
-    int idx = find_FildeshMascii(&mascii, haystack.c_str(), haystack.size());
+    unsigned idx = find_FildeshMascii(
+        &mascii, haystack.c_str(), haystack.size());
     benchmark::DoNotOptimize(idx);
-    assert(idx == state.range(0)-1);
+    assert(idx == expected_index(haystack.size()));
   }
 }
 BENCHMARK(BM_strcspn_mascii)->THIS_BENCHMARK_RANGE;
@@ -55,7 +65,7 @@ static void BM_strcspn_switch(benchmark::State& state) {
   for (auto _ : state) {
     unsigned idx = benchfn_switch(haystack.c_str(), haystack.size());
     benchmark::DoNotOptimize(idx);
-    assert(idx == (unsigned)state.range(0)-1);
+    assert(idx == expected_index(haystack.size()));
   }
 }
 BENCHMARK(BM_strcspn_switch)->THIS_BENCHMARK_RANGE;
@@ -66,7 +76,8 @@ static void BM_strcspn_StdFindFirstOf(benchmark::State& state) {
   for (auto _ : state) {
     auto idx = haystack.find_first_of(needle);
     benchmark::DoNotOptimize(idx);
-    assert(idx == (unsigned)state.range(0)-1);
+    if (idx == std::string::npos) {idx = haystack.size();}
+    assert((unsigned)idx == expected_index(haystack.size()));
   }
 }
 BENCHMARK(BM_strcspn_StdFindFirstOf)->THIS_BENCHMARK_RANGE;
@@ -77,7 +88,7 @@ static void BM_strcspn_strcspn(benchmark::State& state) {
   for (auto _ : state) {
     size_t idx = strcspn(haystack.c_str(), needle.c_str());
     benchmark::DoNotOptimize(idx);
-    assert(idx == (unsigned)state.range(0)-1);
+    assert(idx == expected_index(haystack.size()));
   }
 }
 BENCHMARK(BM_strcspn_strcspn)->THIS_BENCHMARK_RANGE;

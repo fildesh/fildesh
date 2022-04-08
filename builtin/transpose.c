@@ -19,25 +19,27 @@ struct TransposeLine {
 parse_row(
     FildeshX* row_in, TransposeLine* row,
     char*** fields_buf, fildesh_lgsize_t* field_lgcount,
-    const char* delim, bool pad, FildeshAlloc* alloc)
+    const unsigned char* delim, bool pad, FildeshAlloc* alloc)
 {
-  const char* field;
+  FildeshX field;
+  const size_t delim_size = strlen((char*)delim);
   row->max_width = 0;
   row->field_count = 0;
 
   if (pad) {skipchrs_FildeshX(row_in, fildesh_compat_string_blank_bytes);}
-  for (field = gets_FildeshX(row_in, delim);
-       field;
-       field = gets_FildeshX(row_in, delim))
+  for (field = until_bytestring_FildeshX(row_in, delim, delim_size);
+       field.at;
+       field = until_bytestring_FildeshX(row_in, delim, delim_size))
   {
-    size_t width = strlen(field);
-    if (width > row->max_width) {
-      row->max_width = width;
+    if (field.size > row->max_width) {
+      row->max_width = field.size;
     }
     *(char**) grow_FildeshA_(
         (void**)fields_buf, &row->field_count, field_lgcount,
         sizeof(char*), 1, realloc)
-      = strdup_FildeshAlloc(alloc, field);
+      = strdup_FildeshX(&field, alloc);
+
+    skipstr_FildeshX(row_in, (const char*)delim);
     if (pad) {skipchrs_FildeshX(row_in, fildesh_compat_string_blank_bytes);}
   }
   row->fields = fildesh_allocate(char*, row->field_count, alloc);
@@ -101,7 +103,8 @@ fildesh_builtin_transpose_main(unsigned argc, char** argv,
     TransposeLine* row = (TransposeLine*)
       grow_FildeshA_((void**) &mat, &line_count, &line_lgcount,
                      sizeof(TransposeLine), 1, realloc);
-    parse_row(&slice, row, &fields_buf, &field_lgcount, delim, pad, alloc);
+    parse_row(&slice, row, &fields_buf, &field_lgcount,
+              (const unsigned char*)delim, pad, alloc);
     if (line_count > 1) {
       row->max_width += 1;  /* 1 extra space after delim in the output.*/
     }

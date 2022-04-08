@@ -90,11 +90,9 @@ static
   char*
 cstr_of_FildeshX(FildeshX* in)
 {
-  if (!sliced_FildeshX(in)) {
-    *grow_FildeshX(in, 1) = '\0';
-    in->size -= 1;
-  }
-  assert(in->at[in->size] == '\0');
+  assert(!sliced_FildeshX(in));
+  *grow_FildeshX(in, 1) = '\0';
+  in->size -= 1;
   return &in->at[in->off];
 }
 
@@ -117,9 +115,8 @@ wait_close_FildeshX(FildeshX* in)
   close_FildeshX(in);
 }
 
-/** Like strcspn or strtok but returns a slice.**/
   FildeshX
-slicechr_FildeshX(FildeshX* in, const char delim)
+until_char_FildeshX(FildeshX* in, char delim)
 {
   FildeshX slice = DEFAULT_FildeshX;
   size_t ret_off;
@@ -128,7 +125,7 @@ slicechr_FildeshX(FildeshX* in, const char delim)
   maybe_flush_FildeshX(in);
   ret_off = in->off;
   if (in->size > 0) {
-    s = strchr(cstr_of_FildeshX(in), delim);
+    s = (char*) memchr(&in->at[in->off], delim, in->size - in->off);
   }
 
   while (!s) {
@@ -136,36 +133,85 @@ slicechr_FildeshX(FildeshX* in, const char delim)
     if (0 == read_FildeshX(in)) {
       break;
     }
-    s = strchr(cstr_of_FildeshX(in), delim);
+    s = (char*) memchr(&in->at[in->off], delim, in->size - in->off);
   }
 
   if (ret_off == in->size) {
     assert(in->off == in->size);
     return slice;  /* Empty.*/
   }
-  assert(in->at[in->size] == '\0');
 
   if (s) {
-    in->off = 1 + (s - in->at);
-    slice = slice_FildeshX(in, ret_off, in->off-1);
-    slice.at[slice.size] = '\0';
+    in->off = (s - in->at);
+    slice = slice_FildeshX(in, ret_off, in->off);
   } else {
     assert(in->off == in->size);
     slice = slice_FildeshX(in, ret_off, in->size);
   }
-  assert(slice.at[slice.size] == '\0');
   return slice;
 }
 
-/** Get line, return slice.**/
-  FildeshX
-sliceline_FildeshX(FildeshX* in)
+static inline
+  const char*
+discount_memmem(const char* haystack, size_t haystack_size,
+                const unsigned char* needle, size_t needle_size)
 {
-  FildeshX slice = slicechr_FildeshX(in, '\n');
-  /* Ignore carriage returns.*/
-  if (slice.size > 0 && slice.at[slice.size-1] == '\r') {
-    slice.size -= 1;
-    slice.at[slice.size] = '\0';
+  while (needle_size <= haystack_size) {
+    const char* const s = (const char*) memchr(
+        haystack, needle[0], haystack_size - needle_size + 1);
+    if (!s) {
+      break;
+    }
+    if (0 == memcmp(&s[1], &needle[1], needle_size-1)) {
+      return s;
+    }
+    haystack_size -= (size_t) (&s[1] - haystack);
+    haystack = &s[1];
+  }
+  return NULL;
+}
+
+  FildeshX
+until_bytestring_FildeshX(
+    FildeshX* in,
+    const unsigned char* delim,
+    size_t delim_length)
+{
+  FildeshX slice = DEFAULT_FildeshX;
+  const char* s = NULL;
+  size_t ret_off;
+
+  assert(delim_length > 0);
+
+  maybe_flush_FildeshX(in);
+  ret_off = in->off;
+
+  while (in->off + delim_length > in->size) {
+    if (0 == read_FildeshX(in)) {
+      break;
+    }
+  }
+  if (in->off + delim_length <= in->size) {
+    s = discount_memmem(&in->at[in->off], in->size - in->off, delim, delim_length);
+    while (!s) {
+      in->off = in->size + 1 - delim_length;
+      if (0 == read_FildeshX(in)) {
+        break;
+      }
+      s = discount_memmem(&in->at[in->off], in->size - in->off, delim, delim_length);
+    }
+  }
+
+  if (ret_off == in->size) {
+    return slice;  /* Empty.*/
+  }
+
+  if (s) {
+    in->off = (s - in->at);
+    slice = slice_FildeshX(in, ret_off, in->off);
+  } else {
+    in->off = in->size;
+    slice = slice_FildeshX(in, ret_off, in->size);
   }
   return slice;
 }
@@ -227,6 +273,41 @@ while_chars_FildeshX(FildeshX* in, const char* span)
   return until_mascii_FildeshX(in, &mascii);
 }
 
+/** Like strcspn or strtok but returns a slice.**/
+  FildeshX
+slicechr_FildeshX(FildeshX* in, char delim)
+{
+  FildeshX slice;
+  assert(!sliced_FildeshX(in));
+  slice = until_char_FildeshX(in, delim);
+  if (slice.at) {
+    if (in->off < in->size) {
+      in->at[in->off] = '\0';
+      in->off += 1;
+    }
+    else {
+      size_t slice_offset = (size_t) (slice.at - in->at);
+      cstr_of_FildeshX(in);
+      slice.at = &in->at[slice_offset];
+    }
+    assert(slice.at[slice.size] == '\0');
+  }
+  return slice;
+}
+
+/** Get line, return slice.**/
+  FildeshX
+sliceline_FildeshX(FildeshX* in)
+{
+  FildeshX slice = slicechr_FildeshX(in, '\n');
+  /* Ignore carriage returns.*/
+  if (slice.size > 0 && slice.at[slice.size-1] == '\r') {
+    slice.size -= 1;
+    slice.at[slice.size] = '\0';
+  }
+  return slice;
+}
+
 /** Like strstr but returns a slice.**/
   FildeshX
 slicestr_FildeshX(FildeshX* in, const char* delim)
@@ -236,6 +317,7 @@ slicestr_FildeshX(FildeshX* in, const char* delim)
   char* s = NULL;
   size_t ret_off;
 
+  assert(!sliced_FildeshX(in));
   assert(delim_length > 0);
 
   maybe_flush_FildeshX(in);
@@ -318,12 +400,16 @@ skipstr_FildeshX(FildeshX* in, const char* s)
   bool
 parse_int_FildeshX(FildeshX* in, int* ret)
 {
+  char buf[101];
   FildeshX slice;
   char* end = NULL;
   skipchrs_FildeshX(in, fildesh_compat_string_blank_bytes);
   slice = while_chars_FildeshX(in, "+-0123456789");
   if (slice.size > 0) {
-    end = fildesh_parse_int(ret, slice.at);
+    if (slice.size > sizeof(buf)-1) {return false;}
+    memcpy(buf, slice.at, slice.size);
+    buf[slice.size] = '\0';
+    end = fildesh_parse_int(ret, buf);
   }
   return !!end;
 }
@@ -331,12 +417,16 @@ parse_int_FildeshX(FildeshX* in, int* ret)
   bool
 parse_double_FildeshX(FildeshX* in, double* ret)
 {
+  char buf[101];
   FildeshX slice;
   char* end = NULL;
   skipchrs_FildeshX(in, fildesh_compat_string_blank_bytes);
   slice = while_chars_FildeshX(in, "+-.0123456789Ee");
   if (slice.size > 0) {
-    end = fildesh_parse_double(ret, slice.at);
+    if (slice.size > sizeof(buf)-1) {return false;}
+    memcpy(buf, slice.at, slice.size);
+    buf[slice.size] = '\0';
+    end = fildesh_parse_double(ret, buf);
   }
   return !!end;
 }

@@ -8,11 +8,16 @@
 /* These already have bool.*/
 #elif defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)
 #include <stdbool.h>
-#elif !defined(true)
-# define true 1
-# define false 0
+#else
+# if !defined(true)
+#  define true 1
+#  define false 0
 typedef char bool;
-# define bool bool
+#  define bool bool
+# endif
+# if !defined(inline)
+#  define inline __inline
+# endif
 #endif
 
 typedef int fildesh_fd_t;
@@ -51,11 +56,13 @@ void flush_FildeshX(FildeshX*);
 void maybe_flush_FildeshX(FildeshX*);
 char* slurp_FildeshX(FildeshX*);
 void wait_close_FildeshX(FildeshX*);
-FildeshX slicechr_FildeshX(FildeshX*, const char delim);
-FildeshX sliceline_FildeshX(FildeshX*);
-FildeshX slicestr_FildeshX(FildeshX*, const char* delim);
+FildeshX until_char_FildeshX(FildeshX*, char delim);
+FildeshX until_bytestring_FildeshX(FildeshX*, const unsigned char*, size_t);
 FildeshX until_chars_FildeshX(FildeshX*, const char* delims);
 FildeshX while_chars_FildeshX(FildeshX*, const char* span);
+FildeshX slicechr_FildeshX(FildeshX*, char delim);
+FildeshX sliceline_FildeshX(FildeshX*);
+FildeshX slicestr_FildeshX(FildeshX*, const char* delim);
 char* getline_FildeshX(FildeshX*);
 char* gets_FildeshX(FildeshX*, const char* delim);
 bool skipchrs_FildeshX(FildeshX*, const char* span);
@@ -212,13 +219,20 @@ struct FildeshKV {
   fildesh_lgsize_t lgcount;
 };
 
-#if __STDC_VERSION__ < 199901L && !defined(inline)
-#define inline __inline
-#endif
-static inline FildeshX default_FildeshX()
-{FildeshX tmp = DEFAULT_FildeshX; return tmp;}
-static inline FildeshO default_FildeshO()
-{FildeshO tmp = DEFAULT_FildeshO; return tmp;}
+/* Inlines.*/
+static inline FildeshX default_FildeshX() {FildeshX tmp = DEFAULT_FildeshX; return tmp;}
+static inline FildeshO default_FildeshO() {FildeshO tmp = DEFAULT_FildeshO; return tmp;}
+static inline bool peek_char_FildeshX(FildeshX* in, char guess) {
+  if (in->off < in->size) {return (in->at[in->off] == guess);}
+  if (0 < read_FildeshX(in)) {return (in->at[in->off] == guess);}
+  return false;
+}
+static inline bool peek_byte_FildeshX(FildeshX* in, unsigned char guess) {
+  return peek_char_FildeshX(in, (char)guess);
+}
+static inline FildeshX until_byte_FildeshX(FildeshX* in, unsigned char delim) {
+  return until_char_FildeshX(in, (char)delim);
+}
 
 #define fildesh_allocate(T, n, alloc) \
   ((T*) reserve_FildeshAlloc(alloc, (n)*sizeof(T), fildesh_alignof(T)))

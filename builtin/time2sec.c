@@ -16,13 +16,14 @@ static unsigned conv_line(FildeshX* in)
   unsigned x = 0;
 
   for (i = 0; i < 4; ++i) {
-    FildeshX slice = slicechr_FildeshX(in, ':');
+    FildeshX slice = until_char_FildeshX(in, ':');
     int tmp_int = -1;
     if (parse_int_FildeshX(&slice, &tmp_int) && tmp_int >= 0) {
       a[i] = (unsigned) tmp_int;
     } else {
       break;
     }
+    skipstr_FildeshX(in, ":");
   }
   if (i == 0)  return x;
   m = 1;

@@ -2,13 +2,22 @@
 #include <cstring>
 #include "src/mascii.h"
 
+static unsigned expected_index(unsigned n) {
+  if (n % 3 == 2) {
+    return n-1;
+  }
+  return n;
+}
+
 static std::string make_haystack(unsigned n) {
   std::string s = std::string(n, 'x');
   for (unsigned i = 0; i < s.size(); ++i) {
     char c = 32+3*(i%32);
     s[i] = c;
   }
-  s[s.size()-1] = '!';
+  if (n % 3 == 2) {
+    s[s.size()-1] = '!';
+  }
   return s;
 }
 
@@ -19,9 +28,10 @@ static void BM_strchr_mascii(benchmark::State& state) {
   const std::string haystack = make_haystack(state.range(0));
   const FildeshMascii mascii = charset_FildeshMascii("!", 1);
   for (auto _ : state) {
-    int idx = find_FildeshMascii(&mascii, haystack.c_str(), haystack.size());
+    unsigned idx = find_FildeshMascii(
+        &mascii, haystack.c_str(), haystack.size());
     benchmark::DoNotOptimize(idx);
-    assert(idx == state.range(0)-1);
+    assert(idx == expected_index(haystack.size()));
   }
 }
 BENCHMARK(BM_strchr_mascii)->THIS_BENCHMARK_RANGE;
@@ -40,7 +50,7 @@ static void BM_strchr_if1(benchmark::State& state) {
   for (auto _ : state) {
     unsigned idx = benchfn_if1(haystack.c_str(), haystack.size());
     benchmark::DoNotOptimize(idx);
-    assert(idx == (unsigned)state.range(0)-1);
+    assert(idx == expected_index(haystack.size()));
   }
 }
 BENCHMARK(BM_strchr_if1)->THIS_BENCHMARK_RANGE;
@@ -50,7 +60,8 @@ static void BM_strchr_StdFind(benchmark::State& state) {
   for (auto _ : state) {
     auto idx = haystack.find('!');
     benchmark::DoNotOptimize(idx);
-    assert(idx == (unsigned)state.range(0)-1);
+    if (idx == std::string::npos) {idx = haystack.size();}
+    assert((unsigned)idx == expected_index(haystack.size()));
   }
 }
 BENCHMARK(BM_strchr_StdFind)->THIS_BENCHMARK_RANGE;
@@ -59,10 +70,9 @@ static void BM_strchr_strchr(benchmark::State& state) {
   const std::string haystack = make_haystack(state.range(0));
   for (auto _ : state) {
     const char* s = strchr(haystack.c_str(), '!');
-    assert(s);
-    size_t idx = s - haystack.c_str();
+    size_t idx = s ? s - haystack.c_str() : haystack.size();
     benchmark::DoNotOptimize(idx);
-    assert(idx == (unsigned)state.range(0)-1);
+    assert(idx == expected_index(haystack.size()));
   }
 }
 BENCHMARK(BM_strchr_strchr)->THIS_BENCHMARK_RANGE;
@@ -71,10 +81,9 @@ static void BM_strchr_memchr(benchmark::State& state) {
   const std::string haystack = make_haystack(state.range(0));
   for (auto _ : state) {
     const char* s = (const char*) memchr(haystack.c_str(), '!', haystack.size());
-    assert(s);
-    size_t idx = s - haystack.c_str();
+    size_t idx = s ? s - haystack.c_str() : haystack.size();
     benchmark::DoNotOptimize(idx);
-    assert(idx == (unsigned)state.range(0)-1);
+    assert(idx == expected_index(haystack.size()));
   }
 }
 BENCHMARK(BM_strchr_memchr)->THIS_BENCHMARK_RANGE;
