@@ -42,6 +42,7 @@ cc_library(
         "//builtin:cmp.c",
         "//builtin:elastic_pthread.c",
         "//builtin:expect_failure.c",
+        "//builtin:replace_string.c",
         "//builtin:seq.c",
         "//builtin:sponge.c",
         "//builtin:time2sec.c",

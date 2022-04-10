@@ -42,7 +42,7 @@ $(H N)
 |- elastic - $(OF fivesum)
 
 # Add up all the numbers.
-|- tr '\n' ' '
+|- tr "\n" " "
 |- add
 |- zec / 'The sum of 1 to ' $(XA N) ' is ' / -
 |> zec $(O allsum)
@@ -52,7 +52,7 @@ $(H N)
 # add up all the numbers divisible by 5.
 |< zec $(X fivesum)
 |- grep -e '[05]$'
-|- tr '\n' ' '
+|- tr "\n" " "
 |- add
 |- zec / 'The sum of 1 to ' $(XA N) ' by 5 is ' / -
 |> zec $(O fivesum)

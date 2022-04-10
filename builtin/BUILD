@@ -5,6 +5,7 @@ exports_files([
     "cmp.c",
     "elastic_pthread.c",
     "expect_failure.c",
+    "replace_string.c",
     "seq.c",
     "sponge.c",
     "time2sec.c",
@@ -55,6 +56,13 @@ cc_binary(
 cc_binary(
     name = "expect_failure",
     srcs = ["expect_failure.c"],
+    deps = ["//:fildesh_lib"],
+    visibility = ["//visibility:public"],
+)
+
+cc_binary(
+    name = "replace_string",
+    srcs = ["replace_string.c"],
     deps = ["//:fildesh_lib"],
     visibility = ["//visibility:public"],
 )

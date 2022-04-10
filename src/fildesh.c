@@ -1242,6 +1242,9 @@ static int main_expect_failure(unsigned argc, char** argv) {
 static int main_fildesh(unsigned argc, char** argv) {
   return fildesh_builtin_fildesh_main(argc, argv, NULL, NULL);
 }
+static int fildesh_main_replace_string(unsigned argc, char** argv) {
+  return fildesh_builtin_replace_string_main(argc, argv, NULL, NULL);
+}
 static int fildesh_main_seq(unsigned argc, char** argv) {
   return fildesh_builtin_seq_main(argc, argv, NULL, NULL);
 }
@@ -1286,6 +1289,7 @@ bool fildesh_builtin_is_threadsafe(const char* name)
     "elastic_pthread",
     "execfd",
     "expect_failure",
+    "replace_string",
     "seq",
     "sponge",
     "time2sec",
@@ -1328,6 +1332,7 @@ int (*fildesh_specific_util (const char* arg)) (unsigned, char**)
     {"expect_failure", main_expect_failure},
     {"fildesh", main_fildesh},
     {"godo", main_godo},
+    {"replace_string", fildesh_main_replace_string},
     {"seq", fildesh_main_seq},
     {"sponge", fildesh_main_sponge},
     {"ssh-all", main_ssh_all},
@@ -1378,6 +1383,7 @@ FILDESH_POSIX_THREAD_CALLBACK(builtin_command_thread_fn, BuiltinCommandThreadArg
     {"elastic_pthread", fildesh_builtin_elastic_pthread_main},
     {"execfd", fildesh_builtin_execfd_main},
     {"expect_failure", fildesh_builtin_expect_failure_main},
+    {"replace_string", fildesh_builtin_replace_string_main},
     {"seq", fildesh_builtin_seq_main},
     {"sponge", fildesh_builtin_sponge_main},
     {"time2sec", fildesh_builtin_time2sec_main},
@@ -1493,6 +1499,13 @@ fix_known_flags_Command(Command* cmd, Associa* alias_map) {
 #endif
         cmd->args.s[i] = strdup_FildeshAlloc(cmd->alloc, line_buffering_flag);
       }
+    }
+  }
+  else if (eq_cstr("tr", cmd->args.s[0])) {
+    if (cmd->args.sz == 3 &&
+        1 == strlen(cmd->args.s[1]) &&
+        1 == strlen(cmd->args.s[2])) {
+      cmd->args.s[0] = strdup_FildeshAlloc(cmd->alloc, "replace_string");
     }
   }
 }

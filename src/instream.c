@@ -273,6 +273,31 @@ while_chars_FildeshX(FildeshX* in, const char* span)
   return until_mascii_FildeshX(in, &mascii);
 }
 
+  bool
+peek_bytestring_FildeshX(FildeshX* in, const unsigned char* s, size_t n)
+{
+  while (in->size - in->off < n) {
+    if (0 == read_FildeshX(in)) {
+      return false;
+    }
+  }
+  if (!s) {
+    return true;
+  }
+  return 0 == memcmp(&in->at[in->off], s, n);
+}
+
+  bool
+skip_bytestring_FildeshX(FildeshX* in, const unsigned char* s, size_t n)
+{
+  if (peek_bytestring_FildeshX(in, s, n)) {
+    in->off += n;
+    maybe_flush_FildeshX(in);
+    return true;
+  }
+  return false;
+}
+
 /** Like strcspn or strtok but returns a slice.**/
   FildeshX
 slicechr_FildeshX(FildeshX* in, char delim)
@@ -383,18 +408,10 @@ skipchrs_FildeshX(FildeshX* in, const char* span)
   bool
 skipstr_FildeshX(FildeshX* in, const char* s)
 {
-  const size_t n = strlen(s);
-  while (in->size - in->off < n) {
-    if (0 == read_FildeshX(in)) {
-      return false;
-    }
-  }
-  if (0 == memcmp(&in->at[in->off], s, n)) {
-    in->off += n;
-    maybe_flush_FildeshX(in);
-    return true;
-  }
-  return false;
+  return skip_bytestring_FildeshX(
+      in,
+      (const unsigned char*)s,
+      strlen(s));
 }
 
   bool

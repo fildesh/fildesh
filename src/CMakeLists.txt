@@ -48,6 +48,7 @@ add_library(fildesh_builtin_lib_obj OBJECT
   "${CMAKE_SOURCE_DIR}/builtin/cmp.c"
   "${CMAKE_SOURCE_DIR}/builtin/elastic_pthread.c"
   "${CMAKE_SOURCE_DIR}/builtin/expect_failure.c"
+  "${CMAKE_SOURCE_DIR}/builtin/replace_string.c"
   "${CMAKE_SOURCE_DIR}/builtin/seq.c"
   "${CMAKE_SOURCE_DIR}/builtin/sponge.c"
   "${CMAKE_SOURCE_DIR}/builtin/time2sec.c"
