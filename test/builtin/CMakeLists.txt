@@ -123,6 +123,11 @@ set_property(TARGET godo_test
 add_test(NAME godo_test COMMAND
   godo_test "$<TARGET_FILE:expectish>" "${CMAKE_SOURCE_DIR}/test/expect/hello.txt")
 
+#### replace_string
+
+add_test(NAME builtin_replace_string_test COMMAND fildesh -f
+  "${CMAKE_CURRENT_SOURCE_DIR}/replace_string_test.fildesh")
+
 #### sshall
 
 add_executable(echocat "echocat.c" "${CMAKE_SOURCE_DIR}/builtin/zec.c")
@@ -145,7 +150,7 @@ set_property(TARGET time2sec_test
   APPEND PROPERTY COMPILE_DEFINITIONS FILDESH_BUILTIN_LIBRARY)
 add_test(NAME time2sec_test COMMAND time2sec_test)
 
-#### transpone
+#### transpose
 
 add_executable(builtin_transpose_test "transpose_test.c"
   "${CMAKE_SOURCE_DIR}/builtin/transpose.c")

@@ -1,0 +1,23 @@
+# A few odd replacements.
+
+$(H expect_content)
+0hi
+2
+3
+4
+6
+7
+8
+9hi0
+
+$(H expect_content)
+
+
+zec -o $(OF expect) / $(XA expect_content) /
+
+
+|< seq 0 10
+|- replace_string "5\n" ""
+|- replace_string "\n1" "hi"
+|- cmp $(XF expect) -
+|> stdout

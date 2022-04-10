@@ -12,6 +12,7 @@ int fildesh_builtin_elastic_pthread_main(unsigned, char**, FildeshX**, FildeshO*
 int fildesh_builtin_execfd_main(unsigned, char**, FildeshX**, FildeshO**);
 int fildesh_builtin_expect_failure_main(unsigned, char**, FildeshX**, FildeshO**);
 int fildesh_builtin_fildesh_main(unsigned, char**, FildeshX**, FildeshO**);
+int fildesh_builtin_replace_string_main(unsigned, char**, FildeshX**, FildeshO**);
 int fildesh_builtin_seq_main(unsigned, char**, FildeshX**, FildeshO**);
 int fildesh_builtin_sponge_main(unsigned, char**, FildeshX**, FildeshO**);
 int fildesh_builtin_time2sec_main(unsigned, char**, FildeshX**, FildeshO**);

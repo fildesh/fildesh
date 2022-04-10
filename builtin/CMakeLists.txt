@@ -15,6 +15,9 @@ target_link_libraries(elastic_pthread fildesh_lib ${CMAKE_THREAD_LIBS_INIT})
 add_executable(expect_failure "expect_failure.c")
 target_link_libraries(expect_failure fildesh_lib)
 
+add_executable(replace_string "replace_string.c")
+target_link_libraries(replace_string fildesh_lib)
+
 add_executable(seq "seq.c")
 target_link_libraries(seq fildesh_lib)
 

@@ -206,6 +206,12 @@ cc_test(
     ],
 )
 
+#### replace_string
+fildesh_test(
+    name = "replace_string_test",
+    srcs = ["replace_string_test.fildesh"],
+)
+
 #### sponge
 
 sh_test(
