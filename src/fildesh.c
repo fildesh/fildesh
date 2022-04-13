@@ -725,8 +725,13 @@ parse_sym (char* s, bool firstarg)
   }
   else if (s[o] == 'H')
   {
-    if (s[o+1] == 'F')  kind = IHereDocFileVal;
-    else                kind = HereDocVal;
+    if (s[o+1] == 'F') {
+      fildesh_log_warning("For forward compatibility, please change $(HF ...) to the $(XF ...) syntax.");
+      kind = IDescFileVal;
+    }
+    else {
+      kind = HereDocVal;
+    }
   }
 
   if (kind != NSymValKinds)
@@ -815,21 +820,32 @@ add_tmp_file_Command(Command* cmd,
   return cmd->tmp_files.s[cmd->tmp_files.sz - 1];
 }
 
-/** Write a file /name/ given contents /doc/.**/
-  static void
-write_here_doc_file (const char* name, const char* doc)
+static
+  char*
+write_heredoc_tmpfile(Command* cmd, CommandHookup* cmd_hookup, const char* doc)
 {
-  unsigned n;
-  FILE* out;
+  FildeshO* out;
+  char* filename = add_tmp_file_Command(cmd, cmd_hookup, ".txt");
+  if (!filename) {return NULL;}
+  /* Write the temp file now.*/
+  out = open_FildeshOF(filename);
+  if (!out) {return NULL;}
+  put_bytestring_FildeshO(out, (const unsigned char*)doc, strlen(doc));
+  close_FildeshO(out);
+  return filename;
+}
 
-  out = fopen (name, "wb");
-  if (!out) {
-    fildesh_log_errorf("Cannot open file for writing!: %s", name);
-    return;
+static
+  fildesh_fd_t
+pipe_from_elastic(Command* elastic_cmd)
+{
+  fildesh_fd_t fd[2];
+  if (0 != fildesh_compat_fd_pipe(&fd[1], &fd[0])) {
+    return -1;
   }
-  n = strlen (doc);
-  fwrite (doc, sizeof (char), n, out);
-  fclose (out);
+  add_ios_Command(elastic_cmd, -1, fd[1]);
+  PushTable( elastic_cmd->args, add_fd_arg_Command(elastic_cmd, fd[1]) );
+  return fd[0];
 }
 
 static
@@ -910,17 +926,11 @@ setup_commands(TableT(Command)* cmds, CommandHookup* cmd_hookup)
           cmd->args.s[arg_q] = NULL;
         }
         else if (sym->kind == DefVal) {
-          fildesh_fd_t fd[2];
-          Command* xcmd = &cmds->s[sym->cmd_idx];
-
-          if (0 != fildesh_compat_fd_pipe(&fd[1], &fd[0])) {
+          fildesh_fd_t fd = pipe_from_elastic(&cmds->s[sym->cmd_idx]);
+          if (fd < 0) {
             FailBreak(cmd, "Failed to create pipe for variable", arg);
           }
-
-          add_ios_Command (xcmd, -1, fd[1]);
-          PushTable( xcmd->args, add_fd_arg_Command (xcmd, fd[1]) );
-
-          add_iarg_Command (cmd, fd[0], true);
+          add_iarg_Command (cmd, fd, true);
           cmd->args.s[arg_q] = NULL;
         }
         else {
@@ -948,32 +958,48 @@ setup_commands(TableT(Command)* cmds, CommandHookup* cmd_hookup)
         sym->kind = NSymValKinds;
         cmd->stdos = -1;
       }
-      else if (kind == IDescVal || kind == IDescFileVal ||
-          kind == IODescVal || kind == IHereDocFileVal)
+      else if (kind == IDescVal ||
+               kind == IDescFileVal ||
+               kind == IODescVal)
       {
         SymVal* sym = getf_SymVal (map, arg);
-        int fd;
-        if (kind == IHereDocFileVal)
-        {
-          if (sym->kind != HereDocVal) {
-            FailBreak(cmd, "Unknown HERE doc", arg);
-          }
+        int fd = sym->as.file_desc;
+        if (sym->kind == HereDocVal) {
+          /* Do nothing.*/
         }
-        else
-        {
-          if (sym->kind != ODescVal) {
-            FailBreak(cmd, "Unknown source for", arg);
-          }
+        else if (sym->kind == ODescVal) {
           sym->kind = NSymValKinds;
         }
-        fd = sym->as.file_desc;
+        else if (sym->kind == DefVal) {
+          fd = pipe_from_elastic(&cmds->s[sym->cmd_idx]);
+        }
+        else {
+          FailBreak(cmd, "Unknown source for", arg);
+        }
 
-        if (kind == IDescVal || kind == IODescVal)
-        {
+        if (sym->kind == HereDocVal) {
+          char* filename = write_heredoc_tmpfile(
+              cmd, cmd_hookup, sym->as.here_doc);
+          if (!filename) {
+            FailBreak(cmd, "Cannot create tmpfile for heredoc.", NULL);
+          }
+
+          assert(kind != IODescVal);
+          if (kind == IDescVal) {
+            fd = fildesh_arg_open_readonly(filename);
+            cmd->stdis = fd;
+          }
+          else {
+            cmd->args.s[arg_q] = filename;
+            if (arg_q == 0)
+              cmd->exec_doc = sym->as.here_doc;
+            ++ arg_q;
+          }
+        }
+        else if (kind == IDescVal || kind == IODescVal) {
           cmd->stdis = fd;
         }
-        else if (kind == IDescFileVal)
-        {
+        else if (kind == IDescFileVal) {
           add_ios_Command(cmd, fd, -1);
           if (arg_q > 0) {
             cmd->args.s[arg_q] = add_fd_arg_Command (cmd, fd);
@@ -1006,22 +1032,8 @@ setup_commands(TableT(Command)* cmds, CommandHookup* cmd_hookup)
           }
           ++ arg_q;
         }
-        else
-        {
-          if (kind != IHereDocFileVal) {
-            FailBreak(cmd, "Not a HERE doc file?", arg);
-          }
-          cmd->args.s[arg_q] =
-            add_tmp_file_Command(cmd, cmd_hookup, ".txt");
-          if (!cmd->args.s[arg_q]) {
-            FailBreak(cmd, "Cannot create tmpfile for heredoc.", NULL);
-          }
-          /* Write the temp file now.*/
-          write_here_doc_file (cmd->args.s[arg_q],
-              sym->as.here_doc);
-          if (arg_q == 0)
-            cmd->exec_doc = sym->as.here_doc;
-          ++ arg_q;
+        else {
+          FailBreak(cmd, "Unexpected kind.", NULL);
         }
       }
       else if (kind == OFutureDescVal || kind == OFutureDescFileVal)

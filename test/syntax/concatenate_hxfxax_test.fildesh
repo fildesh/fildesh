@@ -1,0 +1,12 @@
+# A heredoc can be referenced multiple times.
+
+$(O expect) zec / "hello hello hello" /
+
+$(H hello)
+hello
+$(H hello)
+
+|< zec $(XF hello) / " " $(XA hello) " " / - $(X hello)
+|- cmp $(XF expect)
+|> stdout
+

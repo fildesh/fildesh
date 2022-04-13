@@ -36,7 +36,7 @@ BEGIN {
     print $0;
 }
 $(H find_args_script)
- $(O files) awk -- $(H find_args_script) $(HF files_to_print)
+ $(O files) awk -- $(H find_args_script) $(XF files_to_print)
 
  $(O nameline) tee $(OF a)
 $(XO a) cut -f1
@@ -85,7 +85,7 @@ $(H page_break)
 
 $(H page_break)
 $(X to_tmp) $(O^ up_a) \
-    xargs -ifile echo $(HF page_break) file
+    xargs -ifile echo $(XF page_break) file
 
 $(H perstudent)
 ## End sub-fildesh program.

@@ -32,7 +32,7 @@ $(H split_script)
 s/^ *\(.*[^ ]\) *worked with *\(.*[^ ]\) *(.*$/1\t\1\n2\t\2/
 s/^ *\(.*[^ ]\) *worked alone.*$/0\t\1/
 $(H split_script)
-$(XO a) sed -f $(HF split_script)
+$(XO a) sed -f $(XF split_script)
 
 # Split /tag/ and /name/ columns as described above.
 # They will be pasted back together later.
