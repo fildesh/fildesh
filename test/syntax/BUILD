@@ -14,6 +14,15 @@ fildesh_test(
 )
 
 fildesh_test(
+    name = "concatenate_axfxax_test",
+    srcs = ["concatenate_axfxax_test.fildesh"],
+)
+fildesh_test(
+    name = "concatenate_hxfxax_test",
+    srcs = ["concatenate_hxfxax_test.fildesh"],
+)
+
+fildesh_test(
     name = "concatenate_oooxfxax_test",
     srcs = ["concatenate_oooxfxax_test.fildesh"],
 )
