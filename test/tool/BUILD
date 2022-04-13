@@ -24,24 +24,24 @@ spawn_test(
     expect_failure = True,
     binary = "//tool:comparispawn",
     args = [
-        "$(location //test/expect:hello.txt)",
+        "$(location //test/expect:literal_hello.txt)",
         "$(location //tool:shout)", "-", "hel", "lo",
     ],
     data = [
         "//tool:shout",
-        "//test/expect:hello.txt",
+        "//test/expect:literal_hello.txt",
     ],
 )
 spawn_test(
     name = "comparispawn_shout_hello_test",
     binary = "//tool:comparispawn",
     args = [
-        "$(location //test/expect:hello.txt)",
+        "$(location //test/expect:literal_hello.txt)",
         "$(location //tool:shout)", "-", "hello",
     ],
     data = [
         "//tool:shout",
-        "//test/expect:hello.txt",
+        "//test/expect:literal_hello.txt",
     ],
 )
 
@@ -50,8 +50,8 @@ spawn_test(
 cc_test(
     name = "expectish_hello_test",
     srcs = ["//tool:expectish.c"],
-    args = ["$(location //test/expect:hello.txt)", "hello"],
-    data = ["//test/expect:hello.txt"],
+    args = ["$(location //test/expect:literal_hello.txt)", "hello"],
+    data = ["//test/expect:literal_hello.txt"],
 )
 
 #### fildespawn
@@ -67,13 +67,13 @@ fildespawn_test(
 fildespawn_test(
     name = "fildespawn_stdin_test",
     args = [
-        "stdin=open_readonly:$(location //test/expect:hello.txt)",
+        "stdin=open_readonly:$(location //test/expect:literal_hello.txt)",
         "--",
         "$(location //tool:expectish)", "-", "hello",
     ],
     data = [
         "//tool:expectish",
-        "//test/expect:hello.txt",
+        "//test/expect:literal_hello.txt",
     ],
 )
 

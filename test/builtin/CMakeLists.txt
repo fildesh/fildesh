@@ -116,12 +116,12 @@ add_test(NAME fildesh_usage_test COMMAND fildesh_usage_test "${fildesh_exe}")
 
 #### godo
 
-add_executable(godo_test "godo_test.c" "${CMAKE_SOURCE_DIR}/src/godo.c")
-target_link_libraries(godo_test fildesh_lib)
-set_property(TARGET godo_test
+add_executable(builtin_godo_test "godo_test.c" "${CMAKE_SOURCE_DIR}/src/godo.c")
+target_link_libraries(builtin_godo_test fildesh_lib)
+set_property(TARGET builtin_godo_test
   APPEND PROPERTY COMPILE_DEFINITIONS FILDESH_BUILTIN_LIBRARY)
-add_test(NAME godo_test COMMAND
-  godo_test "$<TARGET_FILE:expectish>" "${CMAKE_SOURCE_DIR}/test/expect/hello.txt")
+add_test(NAME builtin_godo_test COMMAND
+  builtin_godo_test "$<TARGET_FILE:expectish>" "${CMAKE_SOURCE_DIR}/test/expect/literal_hello.txt")
 
 #### replace_string
 
@@ -188,9 +188,8 @@ add_test(NAME waitdo_test COMMAND waitdo_test "$<TARGET_FILE:waitdo>" "$<TARGET_
 
 #### xpipe
 
-add_test(NAME xpipe_nested_test COMMAND
-  comparispawn "${CMAKE_CURRENT_SOURCE_DIR}/../expect/xpipe_nested.txt"
-  ${fildesh_exe} -x "${CMAKE_CURRENT_SOURCE_DIR}/xpipe_nested.fildesh")
+add_test(NAME builtin_xpipe_nested_test COMMAND fildesh -f
+  "${CMAKE_CURRENT_SOURCE_DIR}/xpipe_nested_test.fildesh")
 
 #### zec
 

@@ -1,0 +1,84 @@
+load("//tool:comparispawn.bzl", "fildesh_expect_test")
+
+
+fildesh_expect_test(
+    name = "args_test",
+    srcs = ["//example:args.fildesh"],
+    expect = "args.txt",
+)
+
+fildesh_expect_test(
+    name = "args2_test",
+    srcs = ["//example:args.fildesh"],
+    expect = "args2.txt",
+    args = [
+        "2",
+        "7",
+    ],
+)
+
+fildesh_expect_test(
+    name = "convoluted_test",
+    srcs = ["//example:convoluted.fildesh"],
+    expect = "convoluted.txt",
+    target_compatible_with = select({
+        "@platforms//os:windows": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }),
+)
+
+fildesh_expect_test(
+    name = "cycle_test",
+    srcs = ["//example:cycle.fildesh"],
+    expect = "cycle.txt",
+)
+
+fildesh_expect_test(
+    name = "familiar_test",
+    srcs = ["//example:familiar.fildesh"],
+    expect = "familiar.txt",
+    target_compatible_with = select({
+        "@platforms//os:windows": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }),
+)
+
+fildesh_expect_test(
+    name = "hello_test",
+    srcs = ["//example:hello.fildesh"],
+    expect = "//test/expect:literal_hello.txt",
+)
+
+fildesh_expect_test(
+    name = "name_test",
+    srcs = [
+        "//example:name.fildesh",
+        "//example:includetest.fildesh",
+    ],
+    expect = "name.txt",
+)
+
+fildesh_expect_test(
+    name = "silly_test",
+    srcs = ["//example:silly.fildesh"],
+    expect = "silly.txt",
+    data = [
+        "//example:args.fildesh",
+        "//example:cycle.fildesh",
+        "//example:hello.fildesh",
+    ],
+    target_compatible_with = select({
+        "@platforms//os:windows": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }),
+)
+
+fildesh_expect_test(
+    name = "test_test",
+    srcs = ["//example:test.fildesh"],
+    expect = "test.txt",
+    target_compatible_with = select({
+        "@platforms//os:windows": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }),
+)

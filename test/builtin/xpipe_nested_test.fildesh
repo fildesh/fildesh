@@ -1,5 +1,8 @@
 #!/usr/bin/env fildesh
 
+zec -o $(OF expect) / "lo\ngoo\n" /
+
 |< zec / "lo\ngoo"
 |- xpipe zec -
+|- cmp $(XF expect) -
 |> stdout

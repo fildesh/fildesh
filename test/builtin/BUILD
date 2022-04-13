@@ -197,12 +197,12 @@ cc_test(
         "//:fildesh_lib",
     ],
     data = [
+        "hello_newline.txt",
         "//tool:expectish",
-        "//test/expect:hello.txt",
     ],
     args = [
         "$(location //tool:expectish)",
-        "$(location //test/expect:hello.txt)",
+        "$(location hello_newline.txt)",
     ],
 )
 
@@ -340,10 +340,9 @@ cc_test(
 
 #### xpipe
 
-fildesh_expect_test(
+fildesh_test(
     name = "xpipe_nested_test",
-    srcs = ["xpipe_nested.fildesh"],
-    expect = "//test/expect:xpipe_nested.txt",
+    srcs = ["xpipe_nested_test.fildesh"],
 )
 
 #### zec
