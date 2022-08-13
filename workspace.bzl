@@ -34,7 +34,7 @@ def fildesh_dev_dependencies(bzlmod_on=False):
   maybe(
       http_archive,
       name = "google_benchmark",
-      sha256 = "6132883bc8c9b0df5375b16ab520fac1a85dc9e4cf5be59480448ece74b278d4",
-      strip_prefix = "benchmark-1.6.1",
-      urls = ["https://github.com/google/benchmark/archive/refs/tags/v1.6.1.tar.gz"],
+      sha256 = "3aff99169fa8bdee356eaa1f691e835a6e57b1efeadb8a0f9f228531158246ac",
+      strip_prefix = "benchmark-1.7.0",
+      urls = ["https://github.com/google/benchmark/archive/refs/tags/v1.7.0.tar.gz"],
   )
