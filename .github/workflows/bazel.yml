@@ -14,17 +14,20 @@ jobs:
     - name: Setup bazel
       uses: jwlawson/actions-setup-bazel@v1
       with:
-        bazel-version: '5.0.0'
+        bazel-version: '5.2.0'
 
     - name: Checkout
       uses: actions/checkout@v2
 
+    - name: Remove WORKSPACE.bazel content.
+      run: sed -i -E -e 's/^.*$//' WORKSPACE.bazel
+
     - name: Build
-      run: bazel build //...
+      run: bazel build --config=bzlmod //...
 
     - name: Test
       # --enable_runfiles is for Windows tests to access data deps.
-      run: bazel test --enable_runfiles --test_timeout 10 //...
+      run: bazel test --config=bzlmod --enable_runfiles --test_timeout 10 //...
 
     - name: Upload Test Results
       uses: actions/upload-artifact@v2
@@ -46,51 +49,41 @@ jobs:
 
   benchmark:
     runs-on: ubuntu-latest
-
     strategy:
       fail-fast: false
-
     steps:
     - name: Setup bazel
       uses: jwlawson/actions-setup-bazel@v1
       with:
-        bazel-version: '4.2.2'
-
+        bazel-version: '5.2.0'
     - name: Checkout
       uses: actions/checkout@v2
-
     - name: Build
-      run: bazel build --config=benchmark --jobs=auto //test/benchmark/...
-
+      run: bazel build --config=bzlmod --config=benchmark --jobs=auto //test/benchmark/...
     - name: Benchmark
-      run: bazel test --config=benchmark //test/benchmark/...
+      run: bazel test --config=bzlmod --config=benchmark //test/benchmark/...
 
 
   coverage:
     runs-on: ubuntu-latest
-
     strategy:
       fail-fast: false
-
     steps:
     - name: Setup bazel
       uses: jwlawson/actions-setup-bazel@v1
       with:
-        bazel-version: '4.2.2'
-
+        bazel-version: '5.2.0'
     - name: Checkout
       uses: actions/checkout@v2
-
     - name: Coverage
       run: >
         bazel coverage
+        --config=bzlmod
         --instrument_test_targets
         --instrumentation_filter="^//..."
         --combined_report=lcov
         --
         //...
-        -//test/fuzz/...
-
     - name: Coveralls
       uses: coverallsapp/github-action@master
       with:
@@ -98,23 +91,31 @@ jobs:
         path-to-lcov: bazel-out/_coverage/_coverage_report.dat
 
 
-  test_with_bzlmod:
+  fuzz:
     runs-on: ubuntu-latest
-
     strategy:
       fail-fast: false
-
     steps:
     - name: Setup bazel
       uses: jwlawson/actions-setup-bazel@v1
       with:
-        bazel-version: '5.0.0'
-
+        bazel-version: '5.2.0'
     - name: Checkout
       uses: actions/checkout@v2
+    - name: Fuzz
+      run: bazel test --config=bzlmod --config=asan-libfuzzer //test/fuzz/...
 
-    - name: Set bzlmod_on
-      run: sed -i -E -e "s/bzlmod_on=False/bzlmod_on=True/" WORKSPACE.bazel
 
+  test_without_bzlmod:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+    steps:
+    - name: Setup bazel
+      uses: jwlawson/actions-setup-bazel@v1
+      with:
+        bazel-version: '4.2.2'
+    - name: Checkout
+      uses: actions/checkout@v2
     - name: Test
-      run: bazel test --config=bzlmod --test_timeout 10 //...
+      run: bazel test --test_timeout 10 //...

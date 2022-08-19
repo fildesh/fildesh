@@ -2,10 +2,7 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
 
 
-def fildesh_dependencies(bzlmod_on=False):
-  if bzlmod_on:
-    return
-
+def fildesh_dependencies():
   maybe(
       http_archive,
       name = "platforms",
@@ -16,20 +13,20 @@ def fildesh_dependencies(bzlmod_on=False):
       ],
   )
 
-
-def fildesh_dev_dependencies(bzlmod_on=False):
-  fildesh_dependencies(bzlmod_on=bzlmod_on)
-
   maybe(
       http_archive,
-      name = "rules_fuzzing",
-      sha256 = "23bb074064c6f488d12044934ab1b0631e8e6898d5cf2f6bde087adb01111573",
-      strip_prefix = "rules_fuzzing-0.3.1",
-      urls = ["https://github.com/bazelbuild/rules_fuzzing/archive/v0.3.1.zip"],
+      name = "bazel_skylib",
+      sha256 = "f7be3474d42aae265405a592bb7da8e171919d74c16f082a5457840f06054728",
+      urls = [
+          "https://mirror.bazel.build/github.com/bazelbuild/bazel-skylib/releases/download/1.2.1/bazel-skylib-1.2.1.tar.gz",
+          "https://github.com/bazelbuild/bazel-skylib/releases/download/1.2.1/bazel-skylib-1.2.1.tar.gz",
+      ],
   )
 
-  if bzlmod_on:
-    return
+
+
+def fildesh_dev_dependencies():
+  fildesh_dependencies()
 
   maybe(
       http_archive,

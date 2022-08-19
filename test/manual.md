@@ -18,7 +18,9 @@ chromium coverage/index.html
 
 ### Fuzz Test
 ```shell
-bazel run --config=asan-libfuzzer //test/fuzz:grow_mpop_fuzz_test_run
+bazel run --config=asan-libfuzzer //test/fuzz:grow_mpop_fuzz_test_full
+# Full fuzz tests never terminate.
+# Get better info if there's an error with: -c dbg
 ```
 
 ### Valgrind Debugging

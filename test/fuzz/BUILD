@@ -13,10 +13,12 @@ cc_fuzz_test(
     name = "grow_mpop_fuzz_test",
     srcs = ["grow_mpop_fuzz_test.c"],
     deps = ["//:fildesh_lib"],
+    max_guesses = 50000,
 )
 
 cc_fuzz_test(
     name = "mascii_fuzz_test",
     srcs = ["mascii_fuzz_test.c"],
     deps = ["//:fildesh_lib"],
+    max_guesses = 1000000,
 )
