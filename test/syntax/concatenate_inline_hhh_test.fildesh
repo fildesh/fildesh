@@ -1,0 +1,18 @@
+
+$(O expect) zec / "hello there world" /
+
+$(H alpha)
+he
+$(H alpha)
+
+$(H beta)
+her
+$(H beta)
+
+$(H gamma)
+e world
+$(H gamma)
+
+|< zec / "${alpha}llo t${beta}${gamma}" /
+|- cmp $(XF expect)
+|> stdout

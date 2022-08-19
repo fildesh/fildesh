@@ -1,0 +1,31 @@
+
+zec -o $(OF expect) / "omae wa mou za warudo" /
+
+$(H h)
+omae
+$(H h)
+
+zec -o $(OF a) / $(XA h) /
+
+$(H h)
+ wa
+$(H h)
+
+zec -o $(OF b) / / $(XF h)
+
+$(H h)
+ mou
+$(H h)
+
+zec -o $(OF c) $(X h)
+
+$(H h)
+ za warudo
+$(H h)
+
+zec -o $(OF d) / "${h}" /
+
+
+|< zec / / $(XF a) $(XF b) $(XF c) $(XF d)
+|- cmp $(XF expect)
+|> stdout

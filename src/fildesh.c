@@ -36,6 +36,7 @@ enum SymValKind
   DefVal,
   NSymValKinds
 };
+
 enum CommandKind {
   RunCommand, HereDocCommand,
   StdinCommand, StdoutCommand,
@@ -43,9 +44,9 @@ enum CommandKind {
   NCommandKinds
 };
 
+
 typedef enum SymValKind SymValKind;
 typedef enum CommandKind CommandKind;
-
 typedef struct SymVal SymVal;
 typedef struct Command Command;
 typedef struct CommandHookup CommandHookup;
@@ -54,6 +55,9 @@ typedef struct BuiltinCommandThreadArg BuiltinCommandThreadArg;
 DeclTableT( Command, Command );
 DeclTableT( SymVal, SymVal );
 DeclTableT( iargs, struct { int fd; bool scrap_newline; } );
+
+
+static SymValKind parse_sym(char* s, bool firstarg);
 
 struct Command
 {
@@ -471,11 +475,72 @@ parse_line (FildeshX* xf, size_t* text_nlines)
   return forget_AlphaTab (&line);
 }
 
-  static void
-sep_line (TableT(cstr)* args, char* s)
+static
+  char*
+parse_double_quoted_string(FildeshO* out, char* s, Associa* map)
 {
-  while (1)
-  {
+  while (s[0] != '"') {
+    if (s[0] == '\0') {
+      fildesh_log_error("Unterminated double quote.");
+      return NULL;
+    }
+    else if (s[0] == '\\') {
+      switch(s[1]) {
+        case 'n':
+          putc_FildeshO(out, '\n');
+          s = &s[2];
+          break;
+        case 't':
+          putc_FildeshO(out, '\t');
+          s = &s[2];
+          break;
+        case '\\':
+        case '$':
+          putc_FildeshO(out, s[1]);
+          s = &s[2];
+          break;
+        case '\0':
+          fildesh_log_error("Unterminated double quote.");
+          return NULL;
+        default:
+          fildesh_log_error("Unrecognized escape charactor.");
+          return NULL;
+      }
+    }
+    else if (s[0] == '$') {
+      char* name = &s[2];
+      SymVal* sym;
+      if (s[1] != '{') {
+        fildesh_log_error("Please wrap varible name in curly braces when it is part of a string.");
+        return NULL;
+      }
+      s = strchr(name, '}');
+      if (!s) {
+        fildesh_log_error("Missing closing curly brace.");
+        return NULL;
+      }
+      s[0] = '\0';
+      s = &s[1];
+      sym = getf_SymVal(map, name);
+      if (sym->kind != HereDocVal) {
+        fildesh_log_error("Can only reference variables within a string if they have known values.");
+        return NULL;
+      }
+      puts_FildeshO(out, sym->as.here_doc);
+    }
+    else {
+      putc_FildeshO(out, s[0]);
+      s = &s[1];
+    }
+  }
+  return &s[1];
+}
+
+static
+  int
+sep_line(TableT(cstr)* args, char* s, Associa* map, FildeshAlloc* alloc, FildeshO* tmp_out)
+{
+  while (1) {
     s = &s[count_ws (s)];
     if (s[0] == '\0')  break;
 
@@ -486,40 +551,16 @@ sep_line (TableT(cstr)* args, char* s)
       i = strcspn (s, "'");
       if (s[i] == '\0') {
         fildesh_log_warning("Unterminated single quote.");
+        s = NULL;
         break;
       }
       s = &s[i];
     }
     else if (s[0] == '"') {
-      unsigned i = 0;
-      unsigned j = 0;
-      s = &s[1];
-      PushTable( *args, s );
-
-      while (s[j] != '\0' && s[j] != '"') {
-        if (s[j] == '\\') {
-          j += 1;
-#define C( c, d )  case c: s[j] = d; break;
-          switch (s[j])
-          {
-            C( 'n', '\n' );
-            C( 't', '\t' );
-            default: break;
-          }
-#undef C
-        }
-        s[i] = s[j];
-        i += 1;
-        j += 1;
-      }
-
-      if (s[j] == '\0') {
-        fildesh_log_warning("Unterminated double quote.");
-        break;
-      }
-      j += 1;
-      s[i] = '\0';
-      s = &s[j];
+      truncate_FildeshO(tmp_out);
+      s = parse_double_quoted_string(tmp_out, &s[1], map);
+      if (!s)  break;
+      PushTable( *args, strdup_FildeshO(tmp_out, alloc) );
     }
     else if (s[0] == '$' && s[1] == '(') {
       unsigned i;
@@ -541,6 +582,7 @@ sep_line (TableT(cstr)* args, char* s)
     s = &s[1];
   }
   PackTable( *args );
+  return s ? 0 : -1;
 }
 
 static
@@ -549,8 +591,10 @@ parse_file(
     TableT(Command)* cmds,
     FildeshX* in,
     const char* this_filename,
+    Associa* map,
     FildeshAlloc* alloc)
 {
+  FildeshO oslice = DEFAULT_FildeshO;
   int istat = 0;
   size_t text_nlines = 0;
   while (istat == 0) {
@@ -572,8 +616,17 @@ parse_file(
     if (line[0] == '$' && line[1] == '(' &&
         line[2] == 'H' && line[3] != 'F')
     {
+      SymVal* sym;
+      SymValKind sym_kind;
+
       cmd->kind = HereDocCommand;
       cmd->doc = parse_here_doc(in, line, &text_nlines);
+
+      sym_kind = parse_sym(cmd->line, false);
+      assert(sym_kind == HereDocVal);
+      sym = getf_SymVal(map, cmd->line);
+      sym->kind = HereDocVal;
+      sym->as.here_doc = cmd->doc;
     }
     else if (pfxeq_cstr ("$(<<", line))
     {
@@ -592,7 +645,7 @@ parse_file(
       lose_Command (TopTable( *cmds ));
       MPopTable( *cmds, 1 );
 
-      istat = parse_file(cmds, src, filename_FildeshXF(src), alloc);
+      istat = parse_file(cmds, src, filename_FildeshXF(src), map, alloc);
       close_FildeshX(src);
     }
     else if (pfxeq_cstr ("$(>", line) ||
@@ -617,7 +670,8 @@ parse_file(
 
       PushTable( cmd->args, (char*) "zec" );
       PushTable( cmd->args, (char*) "/" );
-      sep_line (&cmd->args, begline);
+      istat = sep_line(&cmd->args, begline, map, alloc, &oslice);
+      if (istat != 0)  break;
       PushTable( cmd->args, (char*) "/" );
 
       {
@@ -641,13 +695,14 @@ parse_file(
     else
     {
       cmd->kind = RunCommand;
-      sep_line (&cmd->args, cmd->line);
+      istat = sep_line(&cmd->args, cmd->line, map, alloc, &oslice);
     }
   }
+  close_FildeshO(&oslice);
   return istat;
 }
 
-  static SymValKind
+  SymValKind
 parse_sym (char* s, bool firstarg)
 {
   unsigned i, o;
@@ -873,17 +928,17 @@ setup_commands(TableT(Command)* cmds, CommandHookup* cmd_hookup)
     /* The command defines a HERE document.*/
     if (cmd->kind == HereDocCommand)
     {
-      SymVal* sym;
-      SymValKind kind;
+      /* Command symbol was parsed during parsing
+       * but we need to overwrite the symbol
+       * just in case there are multiple occurrences.
+       */
+      SymVal* sym = getf_SymVal(map, cmd->line);
+
+      sym->kind = HereDocVal;
+      sym->as.here_doc = cmd->doc;
 
       /* The loops should not run.*/
-      Claim2( cmd->args.sz ,==, 0 ); /* Invariant.*/
-
-      kind = parse_sym (cmd->line, false);
-      Claim2( kind ,==, HereDocVal);
-      sym = getf_SymVal (map, cmd->line);
-      sym->kind = kind;
-      sym->as.here_doc = cmd->doc;
+      assert( cmd->args.sz == 0 ); /* Invariant.*/
     }
 
     for (arg_r = 0; arg_r < cmd->args.sz; ++ arg_r) {
@@ -1940,6 +1995,8 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
 
   if (script_args.sz > 0)
   {
+    SymVal* sym;
+    SymValKind sym_kind;
     Command* cmd = Grow1Table( *cmds );
     AlphaTab line = DEFAULT_AlphaTab;
     AlphaTab doc = DEFAULT_AlphaTab;
@@ -1952,12 +2009,20 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
     cmd->line = forget_AlphaTab (&line);
     cmd->doc = forget_AlphaTab (&doc);
 
+    sym_kind = parse_sym(cmd->line, false);
+    assert(sym_kind == HereDocVal);
+    sym = getf_SymVal(&cmd_hookup->map, cmd->line);
+    sym->kind = HereDocVal;
+    sym->as.here_doc = cmd->doc;
+
     while (script_args.sz < 10) {
       PushTable( script_args, cons1_AlphaTab ("") );
     }
   }
 
   for (i = 0; i < script_args.sz; ++i) {
+    SymVal* sym;
+    SymValKind sym_kind;
     Command* cmd = Grow1Table( *cmds );
     AlphaTab line = DEFAULT_AlphaTab;
     cat_cstr_AlphaTab (&line, "$(H: ");
@@ -1969,11 +2034,19 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
     cmd->line_num = 0;
     cmd->line = forget_AlphaTab (&line);
     cmd->doc = forget_AlphaTab (&script_args.s[i]);
+
+    sym_kind = parse_sym(cmd->line, false);
+    assert(sym_kind == HereDocVal);
+    sym = getf_SymVal(&cmd_hookup->map, cmd->line);
+    sym->kind = HereDocVal;
+    sym->as.here_doc = cmd->doc;
   }
   LoseTable( script_args );
 
   fildesh_compat_errno_trace();
-  istat = parse_file(cmds, script_in, filename_FildeshXF(script_in), alloc);
+  istat = parse_file(
+      cmds, script_in, filename_FildeshXF(script_in),
+      &cmd_hookup->map, alloc);
   close_FildeshX(script_in);
   fildesh_compat_errno_trace();
 

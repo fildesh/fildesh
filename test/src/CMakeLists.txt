@@ -72,3 +72,8 @@ add_executable(slicechrs_test
   "slicechrs_test.c")
 target_link_libraries(slicechrs_test fildesh_lib)
 add_test(NAME slicechrs_test COMMAND slicechrs_test)
+
+add_executable(urandom_variety_test
+  "urandom_variety_test.c")
+target_link_libraries(urandom_variety_test fildesh_lib)
+add_test(NAME urandom_variety_test COMMAND urandom_variety_test)

@@ -62,14 +62,18 @@ grow_FildeshX(FildeshX* in, size_t capac)
 flush_FildeshX(FildeshX* x)
 {
   assert(x->off <= x->size);
-  if (x->off == 0)  return;
-  x->size -= x->off;
-  if (x->size > 0) {
-    memmove(x->at, &x->at[x->off], x->size);
-  }
-  x->off = 0;
-  if (sliced_FildeshX(x)) {
-    x->at[x->size] = '\0';
+  if (x->off > 0) {
+    if (x->off == x->size) {
+      truncate_FildeshX(x);
+    }
+    else {
+      x->size -= x->off;
+      memmove(x->at, &x->at[x->off], x->size);
+      x->off = 0;
+    }
+    if (sliced_FildeshX(x)) {
+      x->at[x->size] = '\0';
+    }
   }
 }
 

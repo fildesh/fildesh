@@ -54,12 +54,16 @@ flush_FildeshO(FildeshO* o)
       break;
     }
   }
-  if (o->off == 0)  return;
-  o->size -= o->off;
-  if (o->size > 0) {
-    memmove(o->at, &o->at[o->off], o->size);
+  if (o->off > 0) {
+    if (o->off == o->size) {
+      truncate_FildeshO(o);
+    }
+    else {
+      o->size -= o->off;
+      memmove(o->at, &o->at[o->off], o->size);
+      o->off = 0;
+    }
   }
-  o->off = 0;
 }
 
 /** If the buffer offset is too big, then shift data to the front.

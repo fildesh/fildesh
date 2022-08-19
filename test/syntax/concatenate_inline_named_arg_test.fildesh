@@ -1,0 +1,10 @@
+
+$(O expect) zec / "hello there world" /
+
+|< fildesh \
+  -a "alpha=he" -a "beta=her" -a "gamma=e world" \
+  -- \
+  '|< zec / "${alpha}llo t${beta}${gamma}" /' \
+  '|> stdout'
+|- cmp $(XF expect)
+|> stdout

@@ -23,6 +23,14 @@ bazel run --config=asan-libfuzzer //test/fuzz:grow_mpop_fuzz_test_full
 # Get better info if there's an error with: -c dbg
 ```
 
+### Build System Parity
+```shell
+make
+make test | grep 'Test *#' | wc -l
+bazel test -- //... -//test/benchmark/... -//test/fuzz/... | grep '^//' | wc -l
+# Bazel and CMake should run the same number of tests on Linux.
+```
+
 ### Valgrind Debugging
 ```shell
 bazel test -c dbg --test_output=all --cache_test_results=no --run_under='valgrind --trace-children=yes' //test/src:kve_test

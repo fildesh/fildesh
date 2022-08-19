@@ -77,3 +77,13 @@ strdup_FildeshX(const FildeshX* in, FildeshAlloc* alloc)
   buf[n] = '\0';
   return buf;
 }
+
+  char*
+strdup_FildeshO(const FildeshO* out, FildeshAlloc* alloc)
+{
+  size_t n = out->size - out->off;
+  char* buf = fildesh_allocate(char, n+1, alloc);
+  memcpy(buf, &out->at[out->off], n);
+  buf[n] = '\0';
+  return buf;
+}

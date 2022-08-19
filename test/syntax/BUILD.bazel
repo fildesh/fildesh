@@ -33,6 +33,15 @@ fildesh_test(
 )
 
 fildesh_test(
+    name = "concatenate_inline_hhh_test",
+    srcs = ["concatenate_inline_hhh_test.fildesh"],
+)
+fildesh_test(
+    name = "concatenate_inline_named_arg_test",
+    srcs = ["concatenate_inline_named_arg_test.fildesh"],
+)
+
+fildesh_test(
     name = "executable_bytes_oxf_test",
     srcs = ["executable_bytes_oxf_test.fildesh"],
     args = ["$(location //builtin:zec)"],
@@ -65,4 +74,9 @@ fildesh_test(
 fildesh_test(
     name = "pump_ox_test",
     srcs = ["pump_ox_test.fildesh"],
+)
+
+fildesh_test(
+    name = "redefine_hxahxfhxh_test",
+    srcs = ["redefine_hxahxfhxh_test.fildesh"],
 )

@@ -1,18 +1,18 @@
 
-add_executable(fd_move_off_stdio_test "fd_move_off_stdio_test.c")
-target_link_libraries(fd_move_off_stdio_test fildesh_compat_lib)
-add_test(NAME fd_move_off_stdio_test COMMAND fd_move_off_stdio_test)
+add_executable(compat_fd_move_off_stdio_test "fd_move_off_stdio_test.c")
+target_link_libraries(compat_fd_move_off_stdio_test fildesh_compat_lib)
+add_test(NAME compat_fd_move_off_stdio_test COMMAND compat_fd_move_off_stdio_test)
 
-add_executable(random_bytes_test "random_bytes_test.c")
-target_link_libraries(random_bytes_test fildesh_compat_lib)
-add_test(NAME random_bytes_test COMMAND random_bytes_test)
+add_executable(compat_random_bytes_test "random_bytes_test.c")
+target_link_libraries(compat_random_bytes_test fildesh_compat_lib)
+add_test(NAME compat_random_bytes_test COMMAND compat_random_bytes_test)
 
-add_executable(sh_escape_argv_test "sh_escape_argv_test.c" "${CMAKE_SOURCE_DIR}/tool/spawn.c")
-set_property(TARGET sh_escape_argv_test
+add_executable(compat_sh_escape_argv_test "sh_escape_argv_test.c" "${CMAKE_SOURCE_DIR}/tool/spawn.c")
+set_property(TARGET compat_sh_escape_argv_test
   APPEND PROPERTY COMPILE_DEFINITIONS UNIT_TESTING)
-target_link_libraries(sh_escape_argv_test fildesh_compat_lib)
-add_test(NAME sh_escape_argv_test COMMAND sh_escape_argv_test)
+target_link_libraries(compat_sh_escape_argv_test fildesh_compat_lib)
+add_test(NAME compat_sh_escape_argv_test COMMAND compat_sh_escape_argv_test)
 
-add_executable(string_byte_translate_test "string_byte_translate_test.c")
-target_link_libraries(string_byte_translate_test fildesh_compat_lib)
-add_test(NAME string_byte_translate_test COMMAND string_byte_translate_test)
+add_executable(compat_string_byte_translate_test "string_byte_translate_test.c")
+target_link_libraries(compat_string_byte_translate_test fildesh_compat_lib)
+add_test(NAME compat_string_byte_translate_test COMMAND compat_string_byte_translate_test)
