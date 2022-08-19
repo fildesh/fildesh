@@ -1,6 +1,7 @@
 
 #include "fildesh.h"
 #include "fildesh_compat_fd.h"
+#include "fildesh_compat_random.h"
 #include "fildesh_compat_string.h"
 
 #include <assert.h>
@@ -13,6 +14,11 @@ struct FildeshXF {
   fildesh_fd_t fd;
   /* unsigned basename_offset; */
   char* filename;
+};
+
+typedef struct FildeshURandomX FildeshURandomX;
+struct FildeshURandomX {
+  FildeshX base;
 };
 
 
@@ -55,6 +61,27 @@ static inline FildeshXF default_FildeshXF() {
   return tmp;
 }
 
+
+static void read_FildeshURandomX(FildeshURandomX* xrng)
+{
+  static const size_t chunksize = 4096;
+  const size_t orig_size = xrng->base.size;
+  char* buf = grow_FildeshX(&xrng->base, chunksize);
+  xrng->base.size =
+    orig_size + fildesh_compat_random_bytes(buf, chunksize);
+}
+static void close_FildeshURandomX(FildeshURandomX* xrng) {(void) xrng;}
+static void free_FildeshURandomX(FildeshURandomX* xrng) {free(xrng);}
+DEFINE_FildeshX_VTable(FildeshURandomX, base);
+
+static inline FildeshX* open_urandom_FildeshX() {
+  FildeshURandomX* xrng = (FildeshURandomX*) malloc(sizeof(FildeshURandomX));
+  xrng->base = default_FildeshX();
+  xrng->base.vt = DEFAULT_FildeshURandomX_FildeshX_VTable;
+  return &xrng->base;
+}
+
+
 static fildesh_fd_t fildesh_open_null_readonly() {
   fildesh_compat_fd_t fd = -1;
   fildesh_compat_fd_t tmp_fd = -1;
@@ -87,6 +114,7 @@ open_FildeshXF(const char* filename)
 open_sibling_FildeshXF(const char* sibling, const char* filename)
 {
   static const char dev_stdin[] = "/dev/stdin";
+  static const char dev_urandom[] = "/dev/urandom";
   static const char dev_null[] = "/dev/null";
   static const char dev_fd_prefix[] = "/dev/fd/";
   static const unsigned dev_fd_prefix_length = sizeof(dev_fd_prefix)-1;
@@ -97,6 +125,9 @@ open_sibling_FildeshXF(const char* sibling, const char* filename)
 
   if (0 == strcmp("-", filename) || 0 == strcmp(dev_stdin, filename)) {
     return open_fd_FildeshX(0);
+  }
+  if (0 == strcmp(dev_urandom, filename)) {
+    return open_urandom_FildeshX();
   }
   if (0 == strcmp(dev_null, filename)) {
     return open_null_FildeshXF();

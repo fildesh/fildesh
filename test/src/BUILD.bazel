@@ -101,3 +101,10 @@ cc_test(
     deps = ["//:fildesh_lib"],
     size = "small",
 )
+
+cc_test(
+    name = "urandom_variety_test",
+    srcs = ["urandom_variety_test.c"],
+    deps = ["//:fildesh_lib"],
+    size = "small",
+)
