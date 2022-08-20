@@ -10,8 +10,8 @@ then
     exit 1
 fi
 
-sec=`grep '$(H: \+section)' "$configf" | grep -o '[[:digit:]]\+'`
-lab=`grep '$(H: \+lab)' "$configf" | grep -o '[[:digit:]]\+'`
+sec=$(grep '$(H: \+section)' "$configf" | grep -o '[[:digit:]]\+')
+lab=$(grep '$(H: \+lab)' "$configf" | grep -o '[[:digit:]]\+')
 
 # Accept lab.
 "$bin/accept.fildesh"
