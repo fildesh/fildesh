@@ -15,16 +15,51 @@ else()
   set(CMAKE_CXX_FLAGS "-march=native")
 endif()
 
-add_executable(strchr_benchmark "strchr_benchmark.cc"
-  "${CMAKE_SOURCE_DIR}/src/mascii.c"
-  "${CMAKE_SOURCE_DIR}/src/mascii.h"
-  "${CMAKE_SOURCE_DIR}/include/fildesh.h")
-target_include_directories(strchr_benchmark PRIVATE "${CMAKE_SOURCE_DIR}")
-target_link_libraries(strchr_benchmark benchmark::benchmark)
+set(FILDESH_BENCHMARK_TEST_ARG "--benchmark_min_time=0.000001")
 
-add_executable(strcspn_benchmark "strcspn_benchmark.cc"
+
+add_executable(benchmark_file_write_read_benchmark
+  "file_write_read_benchmark.cc")
+target_link_libraries(benchmark_file_write_read_benchmark fildesh_lib benchmark::benchmark)
+add_test(NAME benchmark_file_write_read_benchmark COMMAND
+  "${CMAKE_COMMAND}" -E env "TEST_TMPDIR=${CMAKE_CURRENT_BINARY_DIR}"
+  "$<TARGET_FILE:benchmark_file_write_read_benchmark>" "${FILDESH_BENCHMARK_TEST_ARG}")
+
+add_executable(benchmark_grow_mpop_benchmark
+  "grow_mpop_benchmark.cc")
+target_link_libraries(benchmark_grow_mpop_benchmark fildesh_lib benchmark::benchmark)
+add_test(NAME benchmark_grow_mpop_benchmark COMMAND
+  benchmark_grow_mpop_benchmark "${FILDESH_BENCHMARK_TEST_ARG}")
+
+add_executable(benchmark_map_benchmark
+  "map_benchmark.cc")
+target_link_libraries(benchmark_map_benchmark cx_int_int_map_lib benchmark::benchmark)
+add_test(NAME benchmark_map_benchmark COMMAND
+  benchmark_map_benchmark "${FILDESH_BENCHMARK_TEST_ARG}")
+
+
+add_executable(benchmark_strchr_benchmark
+  "strchr_benchmark.cc"
   "${CMAKE_SOURCE_DIR}/src/mascii.c"
   "${CMAKE_SOURCE_DIR}/src/mascii.h"
   "${CMAKE_SOURCE_DIR}/include/fildesh.h")
-target_include_directories(strcspn_benchmark PRIVATE "${CMAKE_SOURCE_DIR}")
-target_link_libraries(strcspn_benchmark benchmark::benchmark)
+target_include_directories(benchmark_strchr_benchmark PRIVATE "${CMAKE_SOURCE_DIR}")
+target_link_libraries(benchmark_strchr_benchmark benchmark::benchmark)
+add_test(NAME benchmark_strchr_benchmark COMMAND
+  benchmark_strchr_benchmark "${FILDESH_BENCHMARK_TEST_ARG}")
+
+add_executable(benchmark_strcspn_benchmark
+  "strcspn_benchmark.cc"
+  "${CMAKE_SOURCE_DIR}/src/mascii.c"
+  "${CMAKE_SOURCE_DIR}/src/mascii.h"
+  "${CMAKE_SOURCE_DIR}/include/fildesh.h")
+target_include_directories(benchmark_strcspn_benchmark PRIVATE "${CMAKE_SOURCE_DIR}")
+target_link_libraries(benchmark_strcspn_benchmark benchmark::benchmark)
+add_test(NAME benchmark_strcspn_benchmark COMMAND
+  benchmark_strcspn_benchmark "${FILDESH_BENCHMARK_TEST_ARG}")
+
+add_executable(benchmark_strdup_benchmark
+  "strdup_benchmark.cc")
+target_link_libraries(benchmark_strdup_benchmark fildesh_lib benchmark::benchmark)
+add_test(NAME benchmark_strdup_benchmark COMMAND
+  benchmark_strdup_benchmark "${FILDESH_BENCHMARK_TEST_ARG}")

@@ -23,11 +23,17 @@ jobs:
       run: sed -i -E -e 's/^.*$//' WORKSPACE.bazel
 
     - name: Build
-      run: bazel build --config=bzlmod //...
+      run: >
+        bazel build --config=${{ matrix.platform }}_test_platform
+        //...
 
     - name: Test
       # --enable_runfiles is for Windows tests to access data deps.
-      run: bazel test --config=bzlmod --enable_runfiles --test_timeout 10 //...
+      run: >
+        bazel test --config=${{ matrix.platform }}_test_platform
+        --enable_runfiles
+        --test_timeout 10
+        //...
 
     - name: Upload Test Results
       uses: actions/upload-artifact@v2
@@ -59,9 +65,14 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
     - name: Build
-      run: bazel build --config=bzlmod --config=benchmark --jobs=auto //test/benchmark/...
+      run: >
+        bazel build --config=linux_test_platform
+        --jobs=auto
+        --config=benchmark //test/benchmark/...
     - name: Benchmark
-      run: bazel test --config=bzlmod --config=benchmark //test/benchmark/...
+      run: >
+        bazel test --config=linux_test_platform
+        --config=benchmark //test/benchmark/...
 
 
   coverage:
@@ -77,8 +88,7 @@ jobs:
       uses: actions/checkout@v2
     - name: Coverage
       run: >
-        bazel coverage
-        --config=bzlmod
+        bazel coverage --config=linux_test_platform
         --instrument_test_targets
         --instrumentation_filter="^//..."
         --combined_report=lcov
@@ -103,7 +113,10 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
     - name: Fuzz
-      run: bazel test --config=bzlmod --config=asan-libfuzzer //test/fuzz/...
+      run: >
+        bazel test --config=linux_test_platform
+        --config=asan-libfuzzer
+        //test/fuzz/...
 
 
   test_without_bzlmod:

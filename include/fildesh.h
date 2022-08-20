@@ -141,7 +141,15 @@ void fildesh_log_trace_(
 #define fildesh_castup( T, field, p ) \
   ((T*) ((uintptr_t) (p) - (ptrdiff_t) offsetof(T, field)))
 
-#define fildesh_alignof(T) ((size_t) offsetof(struct { char a; T b; }, b))
+#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L)
+# define fildesh_alignof(T)  _Alignof(T)
+#elif defined(__cplusplus) && (__cplusplus >= 201103L)
+# define fildesh_alignof(T)  alignof(T)
+#elif defined(_MSC_VER)
+# define fildesh_alignof(T)  __alignof(T)
+#else
+# define fildesh_alignof(T) ((size_t) offsetof(struct { char a; T b; }, b))
+#endif
 
 
 struct FildeshX_VTable

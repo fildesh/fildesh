@@ -40,3 +40,9 @@ cc_benchmark(
     deps = ["//:fildesh_lib"],
 )
 
+cc_benchmark(
+    name = "strdup_benchmark",
+    srcs = ["strdup_benchmark.cc"],
+    deps = ["//:fildesh_lib"],
+)
+

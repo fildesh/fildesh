@@ -14,13 +14,32 @@ add_library(cx_lib_obj OBJECT
   "syscx.c"
   "syscx.h"
   "table.h"
-  )
+)
 add_library(cx_lib STATIC
   $<TARGET_OBJECTS:cx_lib_obj>
   $<TARGET_OBJECTS:fildesh_lib_obj>
   $<TARGET_OBJECTS:fildesh_compat_lib_obj>
-  )
+)
 target_link_libraries(cx_lib ${CMAKE_THREAD_LIBS_INIT})
+
+add_library(cx_int_int_map_lib_obj OBJECT
+  "associa.h"
+  "bittable.h"
+  "bstree.c"
+  "bstree.h"
+  "def.h"
+  "int_int_map.c"
+  "lgtable.h"
+  "rbtree.c"
+  "rbtree.h"
+  "synhax.h"
+  "table.h"
+)
+add_library(cx_int_int_map_lib STATIC
+  $<TARGET_OBJECTS:cx_int_int_map_lib_obj>
+  $<TARGET_OBJECTS:fildesh_lib_obj>
+  $<TARGET_OBJECTS:fildesh_compat_lib_obj>
+)
 
 add_executable(bittable_test
   "bittable_test.c")
