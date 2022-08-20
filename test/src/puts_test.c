@@ -50,6 +50,7 @@ param3_test_puts(unsigned chunk_size, fildesh_lgsize_t flush_lgsize, const char*
   of->chunk_size = chunk_size;
   of->o.flush_lgsize = flush_lgsize;
   of->content = (char*)malloc((30+strlen(delim))*5+1);
+  assert(of->content);
   sprintf(of->content, "%s%s%s%s%s%s%s%s%s",
           lines[0], delim,
           lines[1], delim,

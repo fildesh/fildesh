@@ -17,7 +17,7 @@ jobs:
         bazel-version: '5.2.0'
 
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Remove WORKSPACE.bazel content.
       run: sed -i -E -e 's/^.*$//' WORKSPACE.bazel
@@ -63,7 +63,7 @@ jobs:
       with:
         bazel-version: '5.2.0'
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     - name: Build
       run: >
         bazel build --config=linux_test_platform
@@ -85,7 +85,7 @@ jobs:
       with:
         bazel-version: '5.2.0'
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     - name: Coverage
       run: >
         bazel coverage --config=linux_test_platform
@@ -111,7 +111,7 @@ jobs:
       with:
         bazel-version: '5.2.0'
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     - name: Fuzz
       run: >
         bazel test --config=linux_test_platform
@@ -129,6 +129,6 @@ jobs:
       with:
         bazel-version: '4.2.2'
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     - name: Test
       run: bazel test --test_timeout 10 //...

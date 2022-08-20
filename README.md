@@ -2,7 +2,9 @@
 [![CMake](https://github.com/fildesh/fildesh/actions/workflows/cmake.yml/badge.svg)](https://github.com/fildesh/fildesh/actions/workflows/cmake.yml)
 \
 [![Coverage Status](https://coveralls.io/repos/github/fildesh/fildesh/badge.svg?branch=trunk)](https://coveralls.io/github/fildesh/fildesh?branch=trunk)
-[![lgtm.com alerts](https://img.shields.io/lgtm/alerts/g/fildesh/fildesh.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/fildesh/fildesh/alerts/)
+[![CodeFactor](https://www.codefactor.io/repository/github/fildesh/fildesh/badge)](https://www.codefactor.io/repository/github/fildesh/fildesh)
+[![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/6377/badge)](https://bestpractices.coreinfrastructure.org/projects/6377)
+
 
 # Fildesh: File Descriptor Shell Scripting Language
 
