@@ -76,6 +76,7 @@ DEFINE_FildeshX_VTable(FildeshURandomX, base);
 
 static inline FildeshX* open_urandom_FildeshX() {
   FildeshURandomX* xrng = (FildeshURandomX*) malloc(sizeof(FildeshURandomX));
+  if (!xrng) {return NULL;}
   xrng->base = default_FildeshX();
   xrng->base.vt = DEFAULT_FildeshURandomX_FildeshX_VTable;
   return &xrng->base;
@@ -98,6 +99,7 @@ static FildeshX* open_null_FildeshXF() {
   fildesh_compat_fd_t fd = fildesh_open_null_readonly();
   if (fd < 0) {return NULL;}
   xf = (FildeshXF*) malloc(sizeof(FildeshXF));
+  if (!xf) {return NULL;}
   *xf = default_FildeshXF();
   xf->fd = fd;
   xf->filename = fildesh_compat_string_duplicate("/dev/null");
@@ -149,21 +151,29 @@ open_sibling_FildeshXF(const char* sibling, const char* filename)
       }
     }
     xf->filename = malloc(sibling_dirlen + filename_length + 1);
-    memcpy(xf->filename, sibling, sibling_dirlen);
-    memcpy(&xf->filename[sibling_dirlen], filename, filename_length+1);
+    if (xf->filename) {
+      memcpy(xf->filename, sibling, sibling_dirlen);
+      memcpy(&xf->filename[sibling_dirlen], filename, filename_length+1);
+    }
   }
   else {
     xf->filename = fildesh_compat_string_duplicate(filename);
   }
 
-  xf->fd = fildesh_compat_file_open_readonly(xf->filename);
-  if (xf->fd >= 0) {
-    FildeshXF* p = malloc(sizeof(FildeshXF));
-    *p = *xf;
-    return &p->base;
+  if (xf->filename) {
+    xf->fd = fildesh_compat_file_open_readonly(xf->filename);
+    if (xf->fd >= 0) {
+      FildeshXF* p = malloc(sizeof(FildeshXF));
+      if (p) {
+        *p = *xf;
+        return &p->base;
+      }
+      /* Failed to allocate.*/
+      fildesh_compat_fd_close(xf->fd);
+    }
+    /* Failed to open file.*/
+    free(xf->filename);
   }
-
-  if (xf->filename) {free(xf->filename);}
   return NULL;
 }
 
@@ -202,12 +212,14 @@ open_fd_FildeshX(fildesh_fd_t fd)
   fd = fildesh_compat_fd_claim(fd);
   if (fd < 0) {return NULL;}
   xf = (FildeshXF*) malloc(sizeof(FildeshXF));
+  if (!xf) {fildesh_compat_fd_close(fd); return NULL;}
   *xf = default_FildeshXF();
   /* File descriptor.*/
   xf->fd = fd;
   /* Filename.*/
   filename_size = 1 + fildesh_encode_fd_path(filename, fd);
   xf->filename = (char*)malloc(filename_size);
+  if (!xf->filename) {fildesh_compat_fd_close(fd); free(xf); return NULL;}
   memcpy(xf->filename, filename, filename_size);
   return &xf->base;
 }

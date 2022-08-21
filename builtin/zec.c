@@ -187,9 +187,10 @@ fildesh_builtin_zec_main(unsigned argc, char** argv,
     mid_sz += strlen (argv[i]);
 
   mid_buf = (char*) malloc (mid_sz);
+  if (!mid_buf) {exstatus = 71; fildesh_compat_errno_trace();}
 
   mid_sz = 0;
-  for (i = beg_slash+1; i < end_slash; ++i) {
+  for (i = beg_slash+1; i < end_slash && exstatus == 0; ++i) {
     size_t sz = strlen (argv[i]);
     memcpy (&mid_buf[mid_sz], argv[i], sz);
     mid_sz += sz;
@@ -201,15 +202,16 @@ fildesh_builtin_zec_main(unsigned argc, char** argv,
   assert(nbegs < argc);
   assert(nends < argc);
   inputs = (FildeshX**) malloc((nbegs + nends) * sizeof(FildeshX*));
+  if (!inputs) {exstatus = 71; fildesh_compat_errno_trace();}
 
-  for (i = 0; i < nbegs; ++i) {
+  for (i = 0; i < nbegs && exstatus == 0; ++i) {
     inputs[i] = open_arg_FildeshXF(argi+i, argv, inputv);
     if (!inputs[i] && exstatus == 0) {
       exstatus = 66;
     }
   }
 
-  for (i = 0; i < nends; ++i) {
+  for (i = 0; i < nends && exstatus == 0; ++i) {
     inputs[nbegs+i] = open_arg_FildeshXF(end_slash+1+i, argv, inputv);
     if (!inputs[nbegs + i] && exstatus == 0) {
       exstatus = 66;

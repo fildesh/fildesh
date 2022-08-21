@@ -18,10 +18,11 @@
 fildesh_compat_sh_escape_argv_for_windows(const char* const* argv)
 {
   char** escaped_argv;
-  unsigned i, argc;
+  size_t i, argc;
   if (!argv || !argv[0]) {return NULL;}
   for (argc = 0; argv[argc]; ++argc) {/* Nothing.*/}
   escaped_argv = (char**) malloc(sizeof(char*) * (argc+1));
+  if (!escaped_argv) {fildesh_compat_errno_trace(); return NULL;}
   for (i = 0; i < argc; ++i) {
     static const char* const replacements[] = {
       "\"\"",
@@ -37,8 +38,12 @@ fildesh_compat_sh_escape_argv_for_windows(const char* const* argv)
 fildesh_compat_sh_free_escaped_argv(char** argv)
 {
   unsigned i;
+  unsigned n = 0;
   if (!argv || !argv[0]) {return;}
-  for (i = 0; argv[i]; ++i) {
+  while (argv[n]) {
+    n += 1;
+  }
+  for (i = 0; i < n; ++i) {
     free(argv[i]);
   }
   free(argv);

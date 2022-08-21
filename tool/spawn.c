@@ -51,7 +51,8 @@ char** fildesh_tool_escape_argv_for_windows(const char* const* argv) {
   for (; argv[argc]; ++argc) {
     bytec += escape_allocated_argv_for_windows(NULL, argv[argc]);
   }
-  dstv = (char**) malloc(sizeof(char*) * (argc + 1) + bytec);
+  dstv = (char**) malloc(sizeof(char*) * (argc + (size_t)1) + bytec);
+  if (!dstv)  return NULL;
   dstv[0] = (char*)(void*)&dstv[argc+1];
   dstv[argc] = NULL;
   bytec = 0;
@@ -69,7 +70,9 @@ fildesh_tool_spawn_expect(char** argv, int expect) {
   int istat = 70;
 #ifdef _MSC_VER
   char** escaped_argv = fildesh_tool_escape_argv_for_windows((const char**)argv);
-  intptr_t pid = _spawnvp(_P_NOWAIT, argv[0], escaped_argv);
+  intptr_t pid;
+  if (!escaped_argv)  return 71;
+  pid = _spawnvp(_P_NOWAIT, argv[0], escaped_argv);
   free(escaped_argv);
   if (pid < 0) {
     return (expect == 0) ? 126 : 65;

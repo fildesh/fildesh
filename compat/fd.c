@@ -113,7 +113,12 @@ fildesh_compat_fd_duplicate(fildesh_compat_fd_t fd)
   _set_thread_local_invalid_parameter_handler(old_handler);
 #endif
   if (0 > newfd) {return -1;}
-  if (0 != fildesh_compat_fd_cloexec(newfd)) {return -1;}
+  if (0 != fildesh_compat_fd_cloexec(newfd)) {
+    /* Caller will assume the fd wasn't created.*/
+    fildesh_compat_errno_trace();
+    fildesh_compat_fd_close(newfd);
+    return -1;
+  }
   return newfd;
 }
 
@@ -209,7 +214,12 @@ fildesh_compat_fd_claim(fildesh_compat_fd_t fd)
   }
 #ifdef _MSC_VER
   if (fd >= 0) {
-    _setmode(fd, _O_BINARY);
+    int istat = _setmode(fd, _O_BINARY);
+    if (istat < 0) {
+      fildesh_compat_errno_trace();
+      fildesh_compat_fd_close(fd);
+      fd = -1;
+    }
   }
 #endif
   FILDESH_COMPAT_FD_LEAVE_SHARED;

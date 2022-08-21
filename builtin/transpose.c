@@ -118,7 +118,7 @@ fildesh_builtin_transpose_main(unsigned argc, char** argv,
 
   out = open_arg_FildeshOF(0, argv, outputs);
   for (i = 0; i < ncols && exstatus == 0; ++i) {
-    unsigned j;
+    size_t j;
     for (j = 0; j < line_count; ++j) {
       char* field = (i < mat[j].field_count ? mat[j].fields[i] : NULL);
       size_t field_width = field ? strlen(field) : 0;

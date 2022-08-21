@@ -14,6 +14,7 @@ DEFINE_FildeshX_VTable(FildeshXA, base);
 
 FildeshX* open_FildeshXA() {
   FildeshXA* x = (FildeshXA*) malloc(sizeof(FildeshXA));
+  if (!x) {return NULL;}
   x->base = default_FildeshX();
   x->base.vt = DEFAULT_FildeshXA_FildeshX_VTable;
   return &x->base;

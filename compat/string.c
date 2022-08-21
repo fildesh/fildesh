@@ -1,4 +1,5 @@
 #include "fildesh_compat_string.h"
+#include <assert.h>
 #include <string.h>
 #include <stdlib.h>
 
@@ -11,16 +12,23 @@ fildesh_compat_string_byte_translate(
 {
   unsigned char replacement_length_lut[256];
   unsigned char replacement_index_lut[256];
+  const size_t needles_length = strlen(needles);
   size_t lhs_length, rhs_length;
   char* dst;
   size_t offset;
 
+  { /* Preconditions for static analyis.*/
+    assert(needles_length <= 256);
+    memset(replacement_length_lut, 0, sizeof(replacement_length_lut));
+    memset(replacement_index_lut, 0, sizeof(replacement_index_lut));
+  }
+
   { /* Preprocess.*/
     unsigned i;
-    for (i = 0; needles[i] != '\0'; ++i) {
+    for (i = 0; i < (unsigned)needles_length; ++i) {
+      const unsigned char needle = needles[i];
       size_t n = strlen(replacements[i]);
-      const unsigned needle = (unsigned)needles[i];
-      if (n >= 256) {return NULL;}
+      assert(n < 256);
       replacement_length_lut[needle] = (unsigned char) n;
       replacement_index_lut[needle] = (unsigned char) i;
     }
@@ -39,7 +47,7 @@ fildesh_compat_string_byte_translate(
          haystack[i+n] != '\0';
          n = strcspn(&haystack[i], needles))
     {
-      const unsigned needle = (unsigned) haystack[i+n];
+      const unsigned char needle = haystack[i+n];
       offset += n + replacement_length_lut[needle];
       i += n+1;
     }
@@ -48,6 +56,7 @@ fildesh_compat_string_byte_translate(
 
   /* Allocate.*/
   dst = (char*) malloc(offset+1);
+  if (!dst) {return NULL;}
 
   { /* Copy.*/
     size_t n;

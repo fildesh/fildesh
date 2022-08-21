@@ -40,9 +40,9 @@ void init_sysCx()
 {
   signal (SIGSEGV, signal_hook_sysCx);
 #ifndef FILDESH_POSIX_SOURCE
-  _setmode(_fileno(stdin), _O_BINARY);
-  _setmode(_fileno(stdout), _O_BINARY);
-  _setmode(_fileno(stderr), _O_BINARY);
+  (void) _setmode(_fileno(stdin), _O_BINARY);
+  (void) _setmode(_fileno(stdout), _O_BINARY);
+  (void) _setmode(_fileno(stderr), _O_BINARY);
 #endif
 }
 
@@ -115,6 +115,7 @@ mktmppath_sysCx(const char* hint)
   }
   offset = strlen(v);
   buf = (char*) malloc(offset + hint_length + 50);
+  if (!buf) {return NULL;}
   memcpy(buf, v, offset);
   buf[offset++] = '/';
   memcpy(&buf[offset], hint, hint_length);

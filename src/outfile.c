@@ -89,21 +89,29 @@ open_sibling_FildeshOF(const char* sibling, const char* filename)
       }
     }
     of->filename = malloc(sibling_dirlen + filename_length + 1);
-    memcpy(of->filename, sibling, sibling_dirlen);
-    memcpy(&of->filename[sibling_dirlen], filename, filename_length+1);
+    if (of->filename) {
+      memcpy(of->filename, sibling, sibling_dirlen);
+      memcpy(&of->filename[sibling_dirlen], filename, filename_length+1);
+    }
   }
   else {
     of->filename = fildesh_compat_string_duplicate(filename);
   }
 
-  of->fd = fildesh_compat_file_open_writeonly(of->filename);
-  if (of->fd >= 0) {
-    FildeshOF* p = malloc(sizeof(FildeshOF));
-    *p = *of;
-    return &p->base;
+  if (of->filename) {
+    of->fd = fildesh_compat_file_open_writeonly(of->filename);
+    if (of->fd >= 0) {
+      FildeshOF* p = malloc(sizeof(FildeshOF));
+      if (p) {
+        *p = *of;
+        return &p->base;
+      }
+      /* Failed to allocate.*/
+      fildesh_compat_fd_close(of->fd);
+    }
+    /* Failed to open file.*/
+    free(of->filename);
   }
-
-  if (of->filename) {free(of->filename);}
   return NULL;
 }
 
@@ -138,12 +146,14 @@ open_fd_FildeshO(fildesh_fd_t fd)
   fd = fildesh_compat_fd_claim(fd);
   if (fd < 0) {return NULL;}
   of = (FildeshOF*) malloc(sizeof(FildeshOF));
+  if (!of) {fildesh_compat_fd_close(fd); return NULL;}
   *of = default_FildeshOF();
   /* File descriptor.*/
   of->fd = fd;
   /* Filename.*/
   filename_size = 1 + fildesh_encode_fd_path(filename, fd);
   of->filename = (char*)malloc(filename_size);
+  if (!of->filename) {fildesh_compat_fd_close(fd); free(of); return NULL;}
   memcpy(of->filename, filename, filename_size);
   return &of->base;
 }

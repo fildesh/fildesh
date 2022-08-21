@@ -1,17 +1,15 @@
 # Find more information at:
 # https://github.com/microsoft/msvc-code-analysis-action
 
-name: Microsoft C++ Code Analysis
+name: "MSVC Analysis"
 
 on:
   push:
-    #branches: ["trunk", "scan"]
-    branches: ["scan"]
+    branches: ["trunk", "stage"]
   pull_request:
-    #branches: ["trunk", "scan"]
-    branches: ["scan"]
-  #schedule:
-  #  - cron: '18 23 * * 1'
+    branches: ["trunk", "stage"]
+  schedule:
+    - cron: '18 23 * * 1'
 
 env:
   # Path to the CMake build directory.
@@ -32,22 +30,18 @@ jobs:
 
       - name: Run MSVC Code Analysis
         uses: microsoft/msvc-code-analysis-action@v0.1.1
-        # Provide a unique ID to access the sarif output path
         id: run-analysis
         with:
           cmakeBuildDirectory: ${{ env.build }}
           buildConfiguration: ${{ env.config }}
-          # Ruleset file that will determine what checks will be run
           ruleset: NativeRecommendedRules.ruleset
-          ignoredPaths: ${{ github.workspace }}/test
+          ignoredPaths: ${{ github.workspace }}/builtin;${{ github.workspace }}/src;${{ github.workspace }}/test;${{ github.workspace }}/tool
 
-      # Upload SARIF file to GitHub Code Scanning Alerts
       - name: Upload SARIF to GitHub
         uses: github/codeql-action/upload-sarif@v2
         with:
           sarif_file: ${{ steps.run-analysis.outputs.sarif }}
 
-      # Upload SARIF file as an Artifact to download and view
       - name: Upload SARIF as an Artifact
         uses: actions/upload-artifact@v2
         with:

@@ -52,6 +52,7 @@ fildesh_compat_file_catpath(const char* dir, const char* filename)
   if (dir_length + add_length == 0) {return NULL;}
 
   p = (char*) malloc(dir_length + 1 + add_length + 1);
+  if (!p) {return NULL;}
   i = 0;
   memcpy(&p[i], dir, dir_length);
   i += dir_length;

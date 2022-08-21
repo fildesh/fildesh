@@ -33,6 +33,7 @@ static char** split_lines(char* buf, unsigned* ret_line_count)
   }
 
   lines = (char**) malloc((line_count+1)*sizeof(char*));
+  if (!lines) {return NULL;}
 
   s = buf;
   for (i = 0; i < line_count; ++i) {
@@ -200,9 +201,13 @@ fildesh_builtin_bestmatch_main(
 
   if (exstatus == 0) {
     char* buf = slurp_FildeshX(lookup_in);
-    unsigned i;
     lines = split_lines(buf, &line_count);
+    if (!lines) {exstatus = 71;}
     key_widths = (unsigned*)malloc(line_count * sizeof(unsigned));
+    if (!key_widths) {exstatus = 71;}
+  }
+  if (exstatus == 0) {
+    unsigned i;
     for (i = 0; i < line_count; ++i) {
       unsigned key_width = delim ? strcspn(lines[i], delim) : strlen(lines[i]);
       key_widths[i] = key_width;
@@ -211,6 +216,7 @@ fildesh_builtin_bestmatch_main(
       }
     }
     lcs_array = (unsigned*)malloc(max_key_width * sizeof(unsigned));
+    if (!lcs_array) {exstatus = 71;}
   }
 
   if (exstatus == 0) {
