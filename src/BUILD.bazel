@@ -34,6 +34,8 @@ cc_library(
         "fildesh.c",
         "execfd.c",
         "godo.c",
+        "parse_fildesh.c",
+        "parse_fildesh.h",
         "ssh-all.c",
         "waitdo.c",
         "xpipe.c",

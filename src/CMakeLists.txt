@@ -40,6 +40,8 @@ add_library(fildesh_builtin_lib_obj OBJECT
   ${FILDESH_EXTRA_ELASTIC_SOURCES}
   "execfd.c"
   "godo.c"
+  "parse_fildesh.c"
+  "parse_fildesh.h"
   "ssh-all.c"
   "waitdo.c"
   "xpipe.c"

@@ -13,6 +13,8 @@
 #include "fildesh_compat_string.h"
 #include "fildesh_posix_thread.h"
 
+#include "parse_fildesh.h"
+
 #include "cx/syscx.h"
 #include "cx/alphatab.h"
 #include "cx/associa.h"
@@ -237,7 +239,6 @@ lose_Command (Command* cmd)
       LoseTable( cmd->args );
       break;
     case HereDocCommand:
-      free (cmd->doc);
       break;
     default:
       break;
@@ -372,14 +373,6 @@ count_non_ws (const char* s)
 {
   return strcspn (s, fildesh_compat_string_blank_bytes);
 }
-  static unsigned
-trim_trailing_ws (char* s)
-{
-  unsigned n = strlen (s);
-  while (0 < n && strchr (fildesh_compat_string_blank_bytes, s[n-1]))  --n;
-  s[n] = '\0';
-  return n;
-}
 
   static void
 perror_Command(const Command* cmd, const char* msg, const char* msg2)
@@ -391,88 +384,6 @@ perror_Command(const Command* cmd, const char* msg, const char* msg2)
   } else {
     fildesh_log_errorf("Problem on line %u.", cmd->line_num);
   }
-}
-
-/** HERE document is created by
- * $(H var_name) Optional identifying stuff.
- * Line 1 in here.
- * Line 2 in here.
- * ...
- * Line n in here.
- * $(H var_name) Optional identifying stuff.
- *
- * OR it could look like:
- * $(H: var_name) value
- **/
-  static char*
-parse_here_doc (FildeshX* in, const char* term, size_t* text_nlines)
-{
-  char* s;
-  const size_t term_length = strlen(term);
-  FildeshX slice;
-  FildeshX* content;
-
-  /* Check for the single-line case.*/
-  if (term[3] == ':')
-  {
-    term = strchr (term, ')');
-    if (!term) {return lace_strdup("");}
-    term = &term[1];
-    term = &term[count_ws (term)];
-    s = lace_strdup(term);
-    trim_trailing_ws (s);
-    return s;
-  }
-
-  content = open_FildeshXA();
-  for (slice = sliceline_FildeshX(in);
-       slice.at;
-       slice = sliceline_FildeshX(in))
-  {
-    *text_nlines += 1;
-    if (slice.size >= term_length) {
-      if (0 == memcmp(term, slice.at, term_length)) {
-        break;
-      }
-    }
-    memcpy(grow_FildeshX(content, slice.size), slice.at, slice.size);
-    *grow_FildeshX(content, 1) = '\n';
-  }
-  if (content->size > 0) {content->size -= 1;}
-  *grow_FildeshX(content, 1) = '\0';
-
-  s = content->at;
-  content->at = NULL;
-  close_FildeshX(content);
-  return s;
-}
-
-  static char*
-parse_line (FildeshX* xf, size_t* text_nlines)
-{
-  AlphaTab line = DEFAULT_AlphaTab;
-  char* s;
-
-  while ((s = getline_FildeshX(xf)))
-  {
-    unsigned n;
-    bool multiline = false;
-    *text_nlines += 1;
-
-    s = &s[count_ws (s)];
-    if (s[0] == '#' || s[0] == '\0')  continue;
-
-    n = trim_trailing_ws (s);
-
-    multiline = s[n-1] == '\\';
-    if (multiline)
-      --n;
-
-    cat1_cstr_AlphaTab (&line, s, n);
-
-    if (!multiline)  break;
-  }
-  return forget_AlphaTab (&line);
 }
 
 static
@@ -621,7 +532,7 @@ parse_file(
   while (istat == 0) {
     char* line;
     Command* cmd;
-    line = parse_line(in, &text_nlines);
+    line = fildesh_syntax_parse_line(in, &text_nlines);
     if (!line) {
       break;
     }
@@ -641,7 +552,8 @@ parse_file(
       SymValKind sym_kind;
 
       cmd->kind = HereDocCommand;
-      cmd->doc = parse_here_doc(in, line, &text_nlines);
+      cmd->doc = fildesh_syntax_parse_here_doc(
+          in, line, &text_nlines, alloc, &oslice);
 
       sym_kind = parse_sym(cmd->line, false);
       assert(sym_kind == HereDocVal);
@@ -673,13 +585,14 @@ parse_file(
         pfxeq_cstr ("$(set", line))
     {
       char* begline;
-      char* sym = line;
+      char* sym_name = line;
+      char* concatenated_args = NULL;
 
       cmd->kind = RunCommand;
 
-      sym = &sym[count_non_ws (sym)];
-      sym = &sym[count_ws(sym)];
-      begline = strchr (sym, ')');
+      sym_name = &sym_name[count_non_ws(sym_name)];
+      sym_name = &sym_name[count_ws(sym_name)];
+      begline = strchr(sym_name, ')');
       if (!begline) {
         perror_Command(cmd, "Unclosed paren in variable def.", 0);
         istat = -1;
@@ -692,12 +605,30 @@ parse_file(
       PushTable( cmd->args, (char*) "zec" );
       PushTable( cmd->args, (char*) "/" );
       istat = sep_line(&cmd->args, begline, map, alloc, &oslice);
-      if (istat != 0)  break;
+      if (istat != 0) {
+        break;
+      }
+
+      concatenated_args = fildesh_syntax_maybe_concatenate_args(
+          (unsigned) cmd->args.sz-2,
+          (const char* const*)(void*)&cmd->args.s[2],
+          alloc);
+      if (concatenated_args) {
+        SymVal* sym = getf_SymVal(map, sym_name);
+        sym->kind = HereDocVal;
+        sym->as.here_doc = concatenated_args;
+
+        cmd->kind = HereDocCommand;
+        cmd->doc = concatenated_args;
+        cmd->args.sz = 0;
+        PackTable(cmd->args);
+        continue;
+      }
       PushTable( cmd->args, (char*) "/" );
 
       {
-        char* buf = fildesh_allocate(char, 6+strlen(sym), alloc);
-        sprintf(buf, "$(O %s)", sym);
+        char* buf = fildesh_allocate(char, 6+strlen(sym_name), alloc);
+        sprintf(buf, "$(O %s)", sym_name);
         PushTable( cmd->args, buf );
       }
 
@@ -707,11 +638,11 @@ parse_file(
       cmd->line_num = text_nlines;
       PushTable( cmd->args, (char*) "elastic" );
       {
-        char* buf = fildesh_allocate(char, 6+strlen(sym), alloc);
-        sprintf(buf, "$(X %s)", sym);
+        char* buf = fildesh_allocate(char, 6+strlen(sym_name), alloc);
+        sprintf(buf, "$(X %s)", sym_name);
         PushTable( cmd->args, buf );
       }
-      cmd->line = lace_strdup(sym);
+      cmd->line = lace_strdup(sym_name);
     }
     else
     {
@@ -2035,19 +1966,19 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
 
   if (script_args.sz > 0)
   {
+    FildeshO tmp_out[1] = {DEFAULT_FildeshO};
     SymVal* sym;
     SymValKind sym_kind;
     Command* cmd = Grow1Table( *cmds );
     AlphaTab line = DEFAULT_AlphaTab;
-    AlphaTab doc = DEFAULT_AlphaTab;
     cat_cstr_AlphaTab (&line, "$(H: #)");
-    cat_uint_AlphaTab (&doc, script_args.sz-1);
+    print_int_FildeshO(tmp_out, (int)(script_args.sz-1));
 
     init_Command(cmd, alloc);
     cmd->kind = HereDocCommand;
     cmd->line_num = 0;
     cmd->line = forget_AlphaTab (&line);
-    cmd->doc = forget_AlphaTab (&doc);
+    cmd->doc = strdup_FildeshO(tmp_out, alloc);
 
     sym_kind = parse_sym(cmd->line, false);
     assert(sym_kind == HereDocVal);
@@ -2058,6 +1989,7 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
     while (script_args.sz < 10) {
       PushTable( script_args, cons1_AlphaTab ("") );
     }
+    close_FildeshO(tmp_out);
   }
 
   for (i = 0; i < script_args.sz; ++i) {
@@ -2073,7 +2005,8 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
     cmd->kind = HereDocCommand;
     cmd->line_num = 0;
     cmd->line = forget_AlphaTab (&line);
-    cmd->doc = forget_AlphaTab (&script_args.s[i]);
+    cmd->doc = strdup_FildeshAlloc(alloc, ccstr_of_AlphaTab(&script_args.s[i]));
+    lose_AlphaTab(&script_args.s[i]);
 
     sym_kind = parse_sym(cmd->line, false);
     assert(sym_kind == HereDocVal);
