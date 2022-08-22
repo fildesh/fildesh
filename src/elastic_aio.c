@@ -2,12 +2,15 @@
  * \file elastic_aio.c
  * Echo stdin to stdout with an arbitrary sized buffer.
  **/
-#define FILDESH_POSIX_SOURCE
 
 #include <aio.h>
-#include "cx/syscx.h"
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/wait.h>
+
 #include "cx/alphatab.h"
 #include "cx/table.h"
+#include "fildesh.h"
 
 #include <errno.h>
 #include <fcntl.h>
@@ -16,8 +19,8 @@
 /* #define DEBUGGING */
 
 #ifdef DEBUGGING
-#define StateMsg(msg)  DBog0(msg)
-#define StateMsg1(msg, x)  DBog1(msg, x)
+#define StateMsg(msg)  fildesh_log_trace(msg)
+#define StateMsg1(msg, x)  fildesh_log_tracef("%s: %s", msg, x)
 #else
 #define StateMsg(msg)
 #define StateMsg1(msg, x)
@@ -57,7 +60,7 @@ Bool all_done (const TableT(IOState)* ios)
 
 static
   int
-setfd_async(fd_t fd)
+setfd_async(fildesh_fd_t fd)
 {
   int istat;
   istat = fcntl(fd, F_GETFD);
@@ -86,7 +89,7 @@ main_elastic_aio(unsigned argc, char** argv)
   while (argi < argc) {
     const char* arg = argv[argi++];
     IOState* io;
-    fd_t fd;
+    fildesh_fd_t fd;
 
     if (eq_cstr (arg, "-x")) {
       if (argi == argc) {
@@ -123,7 +126,7 @@ main_elastic_aio(unsigned argc, char** argv)
 
   /* Default input is stdin.*/
   if (ios.s[0].aio.aio_fildes == -1) {
-    fd_t fd = fildesh_arg_open_readonly("-");
+    fildesh_fd_t fd = fildesh_arg_open_readonly("-");
     IOState* io = &ios.s[0];
     io->aio.aio_fildes = fd;
     if (0 > setfd_async(fd)) {
@@ -134,7 +137,7 @@ main_elastic_aio(unsigned argc, char** argv)
   }
   /* Default output is stdout.*/
   if (ios.sz == 1) {
-    fd_t fd = fildesh_arg_open_writeonly("-");
+    fildesh_fd_t fd = fildesh_arg_open_writeonly("-");
     IOState* io = Grow1Table( ios );
     Zeroize( *io );
     io->aio.aio_fildes = fd;
@@ -290,7 +293,7 @@ main_elastic_aio(unsigned argc, char** argv)
   }
 
   UFor( i, ios.sz ) {
-    fd_t fd = ios.s[i].aio.aio_fildes;
+    fildesh_fd_t fd = ios.s[i].aio.aio_fildes;
     if (ios.s[i].pending) {
       aio_cancel(fd, &ios.s[i].aio);
     }
@@ -308,9 +311,7 @@ main_elastic_aio(unsigned argc, char** argv)
 main(int argc, char** argv)
 {
   int exstatus;
-  init_sysCx();
   exstatus = main_elastic_aio((unsigned)argc, argv);
-  lose_sysCx();
   return exstatus;
 }
 #endif

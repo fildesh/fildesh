@@ -4,6 +4,7 @@
  **/
 
 #include "syscx.h"
+#include <stdio.h>
 
 #include "alphatab.h"
 #include "associa.h"

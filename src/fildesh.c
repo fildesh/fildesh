@@ -67,7 +67,7 @@ struct Command
   TableT(cstr) args;
   TableT(cstr) tmp_files;
   pthread_t thread;
-  pid_t pid;
+  fildesh_compat_pid_t pid;
   int status;
   fildesh_fd_t stdis; /**< Standard input stream.**/
   TableT( int ) is; /**< Input streams.**/
@@ -257,7 +257,7 @@ lose_Commands (void* arg)
   unsigned i;
   for (i = 0; i < cmds->sz; ++i) {
     if (cmds->s[i].kind == RunCommand && cmds->s[i].pid > 0)
-      kill_please_sysCx(cmds->s[i].pid);
+      fildesh_compat_sh_kill(cmds->s[i].pid);
     if (cmds->s[i].kind != NCommandKinds)
       lose_Command (&cmds->s[i]);
   }
@@ -302,7 +302,7 @@ static char* lace_strdup(const char* s) {
   return fildesh_compat_string_duplicate(s);
 }
 
-static char* strdup_fd_Command(Command* cmd, fd_t fd)
+static char* strdup_fd_Command(Command* cmd, fildesh_fd_t fd)
 {
   char buf[FILDESH_INT_BASE10_SIZE_MAX];
   fildesh_encode_int_base10(buf, fd);
@@ -562,6 +562,28 @@ sep_line(TableT(cstr)* args, char* s, Associa* map, FildeshAlloc* alloc, Fildesh
       if (!s)  break;
       PushTable( *args, strdup_FildeshO(tmp_out, alloc) );
     }
+    else if (pfxeq_cstr("$(getenv ", s)) {
+      FildeshX in[1] = {DEFAULT_FildeshX};
+      FildeshX slice;
+      in->at = s;
+      in->size = strlen(s);
+      in->off = strlen("$(getenv ");
+      while_chars_FildeshX(in, " ");
+      slice = until_char_FildeshX(in, ')');
+      if (slice.at) {
+        const char* v;
+        in->at[in->off++] = '\0';
+        s = &in->at[in->off];
+        v = getenv(slice.at);
+        if (!v) {v = "";}
+        PushTable( *args, strdup_FildeshAlloc(alloc, v) );
+      }
+      else {
+        s = NULL;
+        fildesh_log_error("Unterminated environment variable.");
+        break;
+      }
+    }
     else if (s[0] == '$' && s[1] == '(') {
       unsigned i;
       PushTable( *args, s );
@@ -581,7 +603,6 @@ sep_line(TableT(cstr)* args, char* s, Associa* map, FildeshAlloc* alloc, Fildesh
     s[0] = '\0';
     s = &s[1];
   }
-  PackTable( *args );
   return s ? 0 : -1;
 }
 
@@ -1825,7 +1846,7 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
 
   signal(SIGINT, lose_sysCx);
   signal(SIGSEGV, lose_sysCx);
-#ifdef FILDESH_POSIX_SOURCE
+#ifndef _MSC_VER
   signal(SIGQUIT, lose_sysCx);
   /* We already detect closed pipes when write() returns <= 0.*/
   signal(SIGPIPE, SIG_IGN);
@@ -1891,6 +1912,25 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
        sym->as.here_doc = v;
      } else {
         fildesh_log_errorf("Bad -a arg: %s", k);
+        exstatus = 64;
+      }
+    }
+    else if (eq_cstr(arg, "-setenv")) {
+      char* k = argv[argi++];
+      char* v = NULL;
+     if (k) {
+       v = strchr(k, '=');
+     }
+     if (k && v) {
+       v[0] = '\0';
+       v = &v[1];
+       istat = fildesh_compat_sh_setenv(k, v);
+       if (istat != 0) {
+         fildesh_log_error("Can't -setenv!");
+         exstatus = 71;
+       }
+     } else {
+        fildesh_log_errorf("Bad -setenv arg: %s", k);
         exstatus = 64;
       }
     }

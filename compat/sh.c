@@ -113,5 +113,9 @@ fildesh_compat_sh_chdir(const char* directory)
 #else
   istat = chdir(directory);
 #endif
+  if (istat != 0) {fildesh_compat_errno_trace();}
   return istat;
 }
+
+/* See kill.c for fildesh_compat_sh_kill() definition.*/
+/* See env.c for fildesh_compat_sh_env() definition.*/

@@ -1,8 +1,10 @@
 add_library(fildesh_compat_lib_obj OBJECT
   "errno.c"
+  "env.c"
   "fd.c"
   "fd_exclusive.h"
   "file.c"
+  "kill.c"
   "random.c"
   "sh.c"
   "string.c"

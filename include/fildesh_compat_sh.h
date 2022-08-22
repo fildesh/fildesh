@@ -30,5 +30,9 @@ fildesh_compat_fd_spawnlp(int stdin_fd, int stdout_fd, int stderr_fd,
 
 int
 fildesh_compat_sh_chdir(const char*);
+int
+fildesh_compat_sh_kill(fildesh_compat_pid_t);
+int
+fildesh_compat_sh_setenv(const char*, const char*);
 
 #endif

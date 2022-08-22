@@ -1,0 +1,6 @@
+
+zec -o $(OF expect) / "hello world" /
+
+|< zec / $(getenv VARIABLE_A) " " $(getenv VARIABLE_B) /
+|- cmp $(XF expect)
+|> stdout

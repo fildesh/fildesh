@@ -15,9 +15,11 @@ cc_library(
     name = "fildesh_compat_lib",
     srcs = [
         "//compat:errno.c",
+        "//compat:env.c",
         "//compat:fd.c",
         "//compat:fd_exclusive.h",
         "//compat:file.c",
+        "//compat:kill.c",
         "//compat:random.c",
         "//compat:sh.c",
         "//compat:string.c",

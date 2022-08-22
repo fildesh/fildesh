@@ -28,6 +28,7 @@ def fildesh_test(
     main=None,
     aliases=[],
     named_inputs=[],
+    environment_variables=[],
     data=[], args=[],
     forkonly=False,
     expect_failure=False,
@@ -59,6 +60,13 @@ def fildesh_test(
     for (k, v) in sorted(named_inputs.items()):
       fildesh_options += ["-a", k + "=$(location " + v + ")"]
       data.append(v)
+
+  if type(environment_variables) == type([]):
+    for a in environment_variables:
+      fildesh_options += ["-setenv", a]
+  else:
+    for (k, v) in sorted(environment_variables.items()):
+      fildesh_options += ["-setenv", k + "=" + v]
 
   if forkonly:
     fildesh_options += ["-forkonly"]

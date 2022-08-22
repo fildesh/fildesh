@@ -22,6 +22,11 @@ add_test(NAME syntax_concatenate_inline_hhh_test COMMAND fildesh -f
 add_test(NAME syntax_concatenate_inline_named_arg_test COMMAND fildesh -f
   "${CMAKE_CURRENT_SOURCE_DIR}/concatenate_inline_named_arg_test.fildesh")
 
+add_test(NAME syntax_environment_variable_xaxa_test COMMAND
+  "${CMAKE_COMMAND}" -E env "VARIABLE_A=hello" "VARIABLE_B=world"
+  "$<TARGET_FILE:fildesh>" -f
+  "${CMAKE_CURRENT_SOURCE_DIR}/environment_variable_xaxa_test.fildesh")
+
 add_test(NAME syntax_executable_bytes_oxf_test COMMAND fildesh -f
   "${CMAKE_CURRENT_SOURCE_DIR}/executable_bytes_oxf_test.fildesh" "$<TARGET_FILE:zec>")
 add_test(NAME syntax_executable_bytes_ofxf_test COMMAND fildesh -f

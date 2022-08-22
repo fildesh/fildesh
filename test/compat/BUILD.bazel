@@ -22,6 +22,12 @@ cc_test(
 )
 
 cc_test(
+    name = "sh_setenv_test",
+    srcs = ["sh_setenv_test.c"],
+    deps = ["//:fildesh_compat_lib"],
+)
+
+cc_test(
     name = "string_byte_translate_test",
     srcs = ["string_byte_translate_test.c"],
     deps = ["//:fildesh_compat_lib"],

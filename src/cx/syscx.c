@@ -2,13 +2,36 @@
  * \file syscx.c
  * Interact with the operating system.
  **/
+
+#if defined(_MSC_VER)
+#elif defined(__APPLE__)
+#define FILDESH_POSIX_SOURCE
+#else
+#define FILDESH_POSIX_SOURCE
+#endif
+
+#ifdef FILDESH_POSIX_SOURCE
+# include <fcntl.h>
+# include <unistd.h>
+# include <sys/wait.h>
+#else
+# include <fcntl.h>
+# include <windows.h>
+# include <direct.h>
+# include <io.h>
+# include <process.h>
+#endif
+
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <stdio.h>
+
 #include "syscx.h"
 #include "fildesh_compat_errno.h"
 #include "fildesh_compat_fd.h"
 #include "fildesh_compat_sh.h"
 #include "alphatab.h"
 
-#include <errno.h>
 #include <signal.h>
 
 DeclTableT( HookFn, struct { void (*f) (void*); void* x; } );
@@ -70,22 +93,6 @@ lose_sysCx ()
   LoseFns.sz = 0;
 }
 
-  bool
-kill_please_sysCx(pid_t pid)
-{
-#ifdef FILDESH_POSIX_SOURCE
-  return (0 == kill(pid, SIGINT));
-#else
-  bool success = false;
-  HANDLE handle = OpenProcess(PROCESS_TERMINATE, false, pid);
-  if (handle) {
-    success = !!TerminateProcess(handle, 1);
-    CloseHandle(handle);
-  }
-  return success;
-#endif
-}
-
 /**
  * \param path  Return value. Can come in as a hint for the path name.
  **/
@@ -94,9 +101,9 @@ mktmppath_sysCx(const char* hint)
 {
   const char* v = 0;
 #ifdef FILDESH_POSIX_SOURCE
-  pid_t pid = getpid ();
+  fildesh_compat_pid_t pid = getpid ();
 #else
-  pid_t pid = _getpid ();
+  fildesh_compat_pid_t pid = _getpid ();
 #endif
   char* buf;
   const size_t hint_length = (hint ? strlen(hint) : 0);
@@ -133,17 +140,6 @@ mktmppath_sysCx(const char* hint)
 }
 
   void
-setenv_sysCx (const char* key, const char* val)
-{
-#ifdef FILDESH_POSIX_SOURCE
-  setenv (key, val, 1);
-#else
-  SetEnvironmentVariable (key, val);
-  /* DBog2( "key:%s val:%s", key, val ); */
-#endif
-}
-
-  void
 tacenv_sysCx (const char* key, const char* val)
 {
 #ifdef FILDESH_POSIX_SOURCE
@@ -161,7 +157,7 @@ tacenv_sysCx (const char* key, const char* val)
     cat_cstr_AlphaTab (dec, v);
   }
 
-  setenv_sysCx (key, cstr_AlphaTab (dec));
+  fildesh_compat_sh_setenv(key, cstr_AlphaTab(dec));
   lose_AlphaTab (dec);
 }
 
