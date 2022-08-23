@@ -664,7 +664,7 @@ parse_file(
     {
       cmd->kind = RunCommand;
       istat = sep_line(&cmd->args, cmd->line, map, scope_alloc, tmp_out);
-      if (istat == 0 && 0 == strcmp(cmd->args.s[0], "barrier")) {
+      if (istat == 0 && 0 == strcmp(cmd->args.s[0], "$(barrier)")) {
         if (cmd->args.sz != 1) {
           perror_Command(cmd, "Barrier does not accept args.", 0);
           istat = -1;
