@@ -98,3 +98,8 @@ fildesh_test(
     name = "wait_xaxaxa_test",
     srcs = ["wait_xaxaxa_test.fildesh"],
 )
+fildesh_test(
+    name = "wait_forkonly_xaxaxa_test",
+    srcs = ["wait_xaxaxa_test.fildesh"],
+    forkonly = True,
+)

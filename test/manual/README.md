@@ -43,8 +43,6 @@ bazel test -c dbg --test_output=all --cache_test_results=no --run_under='valgrin
 bazel build //src:fildesh
 ./bazel-bin/src/fildesh test/manual/leak_check.fildesh
 # Don't worry if the `xargs ... grep ...` command fails.
-# Grep exits with a nonzero status because some
-# (hopefully most) testlogs do not have messages about leaks.
 ```
 
 ### Lint

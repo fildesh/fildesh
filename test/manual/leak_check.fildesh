@@ -10,21 +10,31 @@ tool
 $(H directories)
 
 ### Step 1: Remove the old logs.
-|< zec / $(XA directories) /
+|< zec / "${directories}" /
 |- xargs "-I{}" -d "\n" find "bazel-testlogs/test/{}/" -regex '.*/test.log'
-|- xargs "-I{}" -d "\n" rm "{}"
-|- void
+|- xargs "-I{}" -d "\n" rm -f "{}"
+|> void
+
+$(barrier)
 ### Step 2: Run tests.
-|- waitdo zec / $(XA directories) /
+|< zec / "${directories}" /
 |- zec -paste / "//test/" / -
 |- zec -paste - / "/..." /
 # Lines are "//test/builtin/...",  "//test/compat/...", etc.
 |- xargs -d "\n" bazel test --nocache_test_results --config=valgrindie
-|- void
+|> void
+
+$(barrier)
 ### Step 3: Grep for messages about memory leaks.
-|- waitdo zec / $(XA directories) /
+|< zec / "${directories}" /
 |- xargs "-I{}" -d "\n" find "bazel-testlogs/test/{}/" -regex '.*/test.log'
-|- xargs -d "\n" grep -H -E \
+|- xargs -d "\n" -n 1 grep -H -E \
   -e "lost:.* bytes in .* blocks" \
-  -e "Open file descriptor"
+  -e "Open file descriptor" \
+  $(O? xargs_grep_status)
 |> stdout
+
+# Grep often exits with status code 1, which xargs traslates to 123,
+# because (hopefully) most testlogs do not have messages about leaks.
+expect_failure -status 123 -x? $(XF xargs_grep_status)
+

@@ -107,6 +107,8 @@ struct CommandHookup {
   unsigned tmpfile_count;
   Associa map;
   Associa add_map; /* Temporarily hold new symbols for the current line.*/
+  fildesh_fd_t stdin_fd;
+  fildesh_fd_t stdout_fd;
 };
 
 struct SymVal
@@ -274,6 +276,8 @@ new_CommandHookup(FildeshAlloc* alloc)
   InitAssocia( AlphaTab, SymVal, cmd_hookup->add_map, cmp_AlphaTab );
   cmd_hookup->temporary_directory = NULL;
   cmd_hookup->tmpfile_count = 0;
+  cmd_hookup->stdin_fd = 0;
+  cmd_hookup->stdout_fd = 1;
   return cmd_hookup;
 }
 
@@ -293,6 +297,13 @@ static void free_CommandHookup(CommandHookup* cmd_hookup, int* istat) {
   }
   lose_Associa(&cmd_hookup->map);
   lose_Associa(&cmd_hookup->add_map);
+  /* Close stdin & stdout if they are still valid and have been changed.*/
+  if (cmd_hookup->stdin_fd >= 0 && cmd_hookup->stdin_fd != 0) {
+    fildesh_compat_fd_close(cmd_hookup->stdin_fd);
+  }
+  if (cmd_hookup->stdout_fd >= 0 && cmd_hookup->stdout_fd != 1) {
+    fildesh_compat_fd_close(cmd_hookup->stdout_fd);
+  }
 }
 
   static void
@@ -917,21 +928,29 @@ setup_commands(TableT(Command)* cmds, CommandHookup* cmd_hookup)
       assert( cmd->args.sz == 0 ); /* Invariant.*/
     }
 
-    for (arg_r = 0; arg_r < cmd->args.sz; ++ arg_r) {
+    for (arg_r = 0; arg_r < cmd->args.sz && istat == 0; ++ arg_r) {
       char* arg = cmd->args.s[arg_r];
       if (arg_q == 0 && eq_cstr("stdin", arg)) {
         cmd->kind = StdinCommand;
-        cmd->stdis = fildesh_compat_fd_claim(0);
+        cmd->stdis = cmd_hookup->stdin_fd;
+        cmd_hookup->stdin_fd = -1;
+        if (cmd->stdis < 0) {
+          FailBreak(cmd, "Cannot have multiple stdin commands", arg);
+        }
         break;
       }
       else if (arg_q == 0 && eq_cstr("stdout", arg)) {
         cmd->kind = StdoutCommand;
-        cmd->stdos = fildesh_compat_fd_claim(1);
+        cmd->stdos = cmd_hookup->stdout_fd;
+        cmd_hookup->stdout_fd = -1;
+        if (cmd->stdos < 0) {
+          FailBreak(cmd, "Cannot have multiple stdout commands", arg);
+        }
         break;
       }
     }
 
-    for (arg_r = 0; arg_r < cmd->args.sz; ++ arg_r)
+    for (arg_r = 0; arg_r < cmd->args.sz && istat == 0; ++ arg_r)
     {
       char* arg = cmd->args.s[arg_r];
       const SymValKind kind = parse_sym (arg, (arg_r == 0));
@@ -1897,7 +1916,7 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
       const char* stdin_filepath = argv[argi++];
       fildesh_fd_t fd = fildesh_arg_open_readonly(stdin_filepath);
       if (fd >= 0) {
-        istat = fildesh_compat_fd_move_to(0, fd);
+        istat = fildesh_compat_fd_move_to(cmd_hookup->stdin_fd, fd);
         if (istat != 0) {
           fildesh_log_error("Failed to dup2 -stdin.");
           exstatus = 72;
@@ -1911,7 +1930,7 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
       const char* stdout_filepath = argv[argi++];
       fildesh_fd_t fd = fildesh_arg_open_writeonly(stdout_filepath);
       if (fd >= 0) {
-        istat = fildesh_compat_fd_move_to(1, fd);
+        istat = fildesh_compat_fd_move_to(cmd_hookup->stdout_fd, fd);
         if (istat != 0) {
           fildesh_log_error("Failed to dup2 -stdout.");
           exstatus = 72;
@@ -2039,6 +2058,9 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
     sym->as.here_doc = cmd->doc;
   }
   LoseTable( script_args );
+
+  cmd_hookup->stdin_fd = fildesh_compat_fd_claim(cmd_hookup->stdin_fd);
+  cmd_hookup->stdout_fd = fildesh_compat_fd_claim(cmd_hookup->stdout_fd);
 
   fildesh_compat_errno_trace();
   while (exstatus == 0 && script_in) {

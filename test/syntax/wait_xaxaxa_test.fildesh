@@ -9,7 +9,8 @@ $(barrier)
 
 zec -o $(OF result) / / "${filename}"
 zec -o $(OF expect) / "hello za warudo" /
-cmp $(XF expect) $(XF result)
+|< cmp $(XF expect) $(XF result)
+|> stdout
 
 $(barrier)
 
