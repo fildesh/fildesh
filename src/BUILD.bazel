@@ -28,6 +28,13 @@ exports_files([
     "//test/builtin:__pkg__",
 ])
 
+exports_files([
+    "parse_fildesh.c",
+    "parse_fildesh.h",
+], visibility = [
+    "//test/fuzz:__pkg__",
+])
+
 cc_library(
     name = "fildesh_builtin_lib",
     srcs = [

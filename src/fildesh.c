@@ -547,9 +547,6 @@ parse_file(
     if (!line) {
       break;
     }
-    else if (line[0] == '\0') {
-      break;
-    }
     cmd = Grow1Table( *cmds );
     init_Command(cmd, scope_alloc);
     cmd->line = line;

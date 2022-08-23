@@ -2,9 +2,9 @@ common:bzlmod --experimental_enable_bzlmod
 common:bzlmod --registry=https://raw.githubusercontent.com/rendezqueue/rendezqueue_bazel_registry/trunk
 common:bzlmod --registry=https://raw.githubusercontent.com/bazelbuild/bazel-central-registry/main
 
-
-#build:grencez_dev_platform --cxxopt='-std=c++17'
-build:grencez_dev_platform --copt=-march=native
+# Development.
+#build:linux_dev_platform --cxxopt='-std=c++17'
+build:linux_dev_platform --copt=-march=native
 
 # Testing.
 build:linux_test_platform --copt=-march=native

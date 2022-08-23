@@ -47,6 +47,9 @@ fildesh_syntax_parse_line(
 
     if (!multiline)  break;
   }
+  if (tmp_out->size == 0) {
+    return NULL;
+  }
   return strdup_FildeshO(tmp_out, alloc);
 }
 
