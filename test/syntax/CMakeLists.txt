@@ -44,5 +44,12 @@ add_test(NAME syntax_pump_ofx_test COMMAND fildesh -f
 add_test(NAME syntax_pump_ox_test COMMAND fildesh -f
   "${CMAKE_CURRENT_SOURCE_DIR}/pump_ox_test.fildesh")
 
+add_test(NAME syntax_redefine_hhxhhx_test COMMAND fildesh -f
+  "${CMAKE_CURRENT_SOURCE_DIR}/redefine_hhxhhx_test.fildesh")
 add_test(NAME syntax_redefine_hxahxfhxh_test COMMAND fildesh -f
   "${CMAKE_CURRENT_SOURCE_DIR}/redefine_hxahxfhxh_test.fildesh")
+
+add_test(NAME wait_xaxaxa_test COMMAND
+  "${CMAKE_COMMAND}" -E env "TEST_TMPDIR=${CMAKE_CURRENT_BINARY_DIR}"
+  "$<TARGET_FILE:fildesh>" -f
+  "${CMAKE_CURRENT_SOURCE_DIR}/wait_xaxaxa_test.fildesh")

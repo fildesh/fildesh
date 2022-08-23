@@ -21,11 +21,13 @@ trim_trailing_ws (char* s)
 
 
   char*
-fildesh_syntax_parse_line(FildeshX* xf, size_t* text_nlines)
+fildesh_syntax_parse_line(
+    FildeshX* xf, size_t* text_nlines,
+    FildeshAlloc* alloc, FildeshO* tmp_out)
 {
-  FildeshO tmp_out[1] = {DEFAULT_FildeshO};
   char* s;
 
+  truncate_FildeshO(tmp_out);
   while ((s = getline_FildeshX(xf)))
   {
     unsigned n;
@@ -45,8 +47,7 @@ fildesh_syntax_parse_line(FildeshX* xf, size_t* text_nlines)
 
     if (!multiline)  break;
   }
-  putc_FildeshO(tmp_out, '\0');
-  return tmp_out->at;
+  return strdup_FildeshO(tmp_out, alloc);
 }
 
 

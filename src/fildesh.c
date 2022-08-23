@@ -43,6 +43,7 @@ enum CommandKind {
   RunCommand, HereDocCommand,
   StdinCommand, StdoutCommand,
   DefCommand,
+  BarrierCommand,
   NCommandKinds
 };
 
@@ -230,7 +231,6 @@ lose_Command (Command* cmd)
 {
   unsigned i;
   close_Command (cmd);
-  free (cmd->line);
   switch (cmd->kind) {
     case DefCommand:
     case RunCommand:
@@ -347,6 +347,16 @@ static char* lookup_strmap(Associa* map, const char* k) {
   return *(char**)val_of_Assoc(map, assoc);
 }
 
+  static SymVal*
+lookup_SymVal (Associa* map, const char* s)
+{
+  AlphaTab ts = dflt1_AlphaTab(s);
+  Assoc* assoc = lookup_Associa(map, &ts);
+  if (assoc) {
+    return (SymVal*) val_of_Assoc(map, assoc);
+  }
+  return NULL;
+}
 
   static SymVal*
 getf_SymVal (Associa* map, const char* s)
@@ -390,6 +400,7 @@ static
   char*
 parse_double_quoted_string(FildeshO* out, char* s, Associa* map)
 {
+  truncate_FildeshO(out);
   while (s[0] != '"') {
     if (s[0] == '\0') {
       fildesh_log_error("Unterminated double quote.");
@@ -432,8 +443,8 @@ parse_double_quoted_string(FildeshO* out, char* s, Associa* map)
       }
       s[0] = '\0';
       s = &s[1];
-      sym = getf_SymVal(map, name);
-      if (sym->kind != HereDocVal) {
+      sym = lookup_SymVal(map, name);
+      if (!sym || sym->kind != HereDocVal) {
         fildesh_log_error("Can only reference variables within a string if they have known values.");
         return NULL;
       }
@@ -468,7 +479,6 @@ sep_line(TableT(cstr)* args, char* s, Associa* map, FildeshAlloc* alloc, Fildesh
       s = &s[i];
     }
     else if (s[0] == '"') {
-      truncate_FildeshO(tmp_out);
       s = parse_double_quoted_string(tmp_out, &s[1], map);
       if (!s)  break;
       PushTable( *args, strdup_FildeshO(tmp_out, alloc) );
@@ -524,24 +534,24 @@ parse_file(
     FildeshX* in,
     const char* this_filename,
     Associa* map,
-    FildeshAlloc* alloc)
+    FildeshAlloc* scope_alloc,
+    FildeshAlloc* global_alloc,
+    FildeshO* tmp_out)
 {
-  FildeshO oslice = DEFAULT_FildeshO;
   int istat = 0;
   size_t text_nlines = 0;
   while (istat == 0) {
     char* line;
     Command* cmd;
-    line = fildesh_syntax_parse_line(in, &text_nlines);
+    line = fildesh_syntax_parse_line(in, &text_nlines, global_alloc, tmp_out);
     if (!line) {
       break;
     }
     else if (line[0] == '\0') {
-      free (line);
       break;
     }
     cmd = Grow1Table( *cmds );
-    init_Command(cmd, alloc);
+    init_Command(cmd, scope_alloc);
     cmd->line = line;
     cmd->line_num = text_nlines;
 
@@ -553,7 +563,7 @@ parse_file(
 
       cmd->kind = HereDocCommand;
       cmd->doc = fildesh_syntax_parse_here_doc(
-          in, line, &text_nlines, alloc, &oslice);
+          in, line, &text_nlines, global_alloc, tmp_out);
 
       sym_kind = parse_sym(cmd->line, false);
       assert(sym_kind == HereDocVal);
@@ -578,7 +588,16 @@ parse_file(
       lose_Command (TopTable( *cmds ));
       MPopTable( *cmds, 1 );
 
-      istat = parse_file(cmds, src, filename_FildeshXF(src), map, alloc);
+      istat = parse_file(cmds, src, filename_FildeshXF(src),
+                         map, scope_alloc, global_alloc, tmp_out);
+      if (istat == 0 && cmds->sz > 0 &&
+          cmds->s[cmds->sz-1].kind == BarrierCommand)
+      {
+        perror_Command(
+            &cmds->s[cmds->sz-1],
+            "No barrier allowed in included file", filename);
+        istat = -1;
+      }
       close_FildeshX(src);
     }
     else if (pfxeq_cstr ("$(>", line) ||
@@ -604,7 +623,7 @@ parse_file(
 
       PushTable( cmd->args, (char*) "zec" );
       PushTable( cmd->args, (char*) "/" );
-      istat = sep_line(&cmd->args, begline, map, alloc, &oslice);
+      istat = sep_line(&cmd->args, begline, map, scope_alloc, tmp_out);
       if (istat != 0) {
         break;
       }
@@ -612,7 +631,7 @@ parse_file(
       concatenated_args = fildesh_syntax_maybe_concatenate_args(
           (unsigned) cmd->args.sz-2,
           (const char* const*)(void*)&cmd->args.s[2],
-          alloc);
+          global_alloc);
       if (concatenated_args) {
         SymVal* sym = getf_SymVal(map, sym_name);
         sym->kind = HereDocVal;
@@ -627,30 +646,39 @@ parse_file(
       PushTable( cmd->args, (char*) "/" );
 
       {
-        char* buf = fildesh_allocate(char, 6+strlen(sym_name), alloc);
+        char* buf = fildesh_allocate(char, 6+strlen(sym_name), scope_alloc);
         sprintf(buf, "$(O %s)", sym_name);
         PushTable( cmd->args, buf );
       }
 
       cmd = Grow1Table( *cmds );
-      init_Command(cmd, alloc);
+      init_Command(cmd, scope_alloc);
       cmd->kind = DefCommand;
       cmd->line_num = text_nlines;
       PushTable( cmd->args, (char*) "elastic" );
       {
-        char* buf = fildesh_allocate(char, 6+strlen(sym_name), alloc);
+        char* buf = fildesh_allocate(char, 6+strlen(sym_name), scope_alloc);
         sprintf(buf, "$(X %s)", sym_name);
         PushTable( cmd->args, buf );
       }
-      cmd->line = lace_strdup(sym_name);
+      cmd->line = sym_name;
     }
     else
     {
       cmd->kind = RunCommand;
-      istat = sep_line(&cmd->args, cmd->line, map, alloc, &oslice);
+      istat = sep_line(&cmd->args, cmd->line, map, scope_alloc, tmp_out);
+      if (istat == 0 && 0 == strcmp(cmd->args.s[0], "barrier")) {
+        if (cmd->args.sz != 1) {
+          perror_Command(cmd, "Barrier does not accept args.", 0);
+          istat = -1;
+        }
+        cmd->kind = BarrierCommand;
+        cmd->args.sz = 0;
+        PackTable( cmd->args );
+        break;
+      }
     }
   }
-  close_FildeshO(&oslice);
   return istat;
 }
 
@@ -885,7 +913,6 @@ setup_commands(TableT(Command)* cmds, CommandHookup* cmd_hookup)
        * just in case there are multiple occurrences.
        */
       SymVal* sym = getf_SymVal(map, cmd->line);
-
       sym->kind = HereDocVal;
       sym->as.here_doc = cmd->doc;
 
@@ -1751,7 +1778,8 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
   TableT(Command)* cmds = NULL;
   bool use_stdin = true;
   FildeshX* script_in = NULL;
-  FildeshAlloc* alloc;
+  FildeshO tmp_out[1] = {DEFAULT_FildeshO};
+  FildeshAlloc* global_alloc;
   CommandHookup* cmd_hookup;
   unsigned argi = 1;
   unsigned i;
@@ -1769,8 +1797,8 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
   assert(!outputv);
 
   init_strmap(alias_map);
-  alloc = open_FildeshAlloc();
-  cmd_hookup = new_CommandHookup(alloc);
+  global_alloc = open_FildeshAlloc();
+  cmd_hookup = new_CommandHookup(global_alloc);
 
   /* add_util_path_env (); */
   (void) add_util_path_env;
@@ -1945,10 +1973,10 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
     LoseTable( script_args );
     lose_strmap(alias_map);
     free_CommandHookup(cmd_hookup, &istat);
-    close_FildeshAlloc(alloc);
+    close_FildeshAlloc(global_alloc);
     return exstatus;
   }
-  push_losefn_sysCx(close_FildeshAlloc_generic, alloc);
+  push_losefn_sysCx(close_FildeshAlloc_generic, global_alloc);
 
   cmds = AllocT(TableT(Command), 1);
   InitTable(*cmds);
@@ -1966,19 +1994,17 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
 
   if (script_args.sz > 0)
   {
-    FildeshO tmp_out[1] = {DEFAULT_FildeshO};
     SymVal* sym;
     SymValKind sym_kind;
     Command* cmd = Grow1Table( *cmds );
-    AlphaTab line = DEFAULT_AlphaTab;
-    cat_cstr_AlphaTab (&line, "$(H: #)");
+    truncate_FildeshO(tmp_out);
     print_int_FildeshO(tmp_out, (int)(script_args.sz-1));
 
-    init_Command(cmd, alloc);
+    init_Command(cmd, global_alloc);
     cmd->kind = HereDocCommand;
     cmd->line_num = 0;
-    cmd->line = forget_AlphaTab (&line);
-    cmd->doc = strdup_FildeshO(tmp_out, alloc);
+    cmd->line = strdup_FildeshAlloc(global_alloc, "$(H: #)");
+    cmd->doc = strdup_FildeshO(tmp_out, global_alloc);
 
     sym_kind = parse_sym(cmd->line, false);
     assert(sym_kind == HereDocVal);
@@ -1989,23 +2015,24 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
     while (script_args.sz < 10) {
       PushTable( script_args, cons1_AlphaTab ("") );
     }
-    close_FildeshO(tmp_out);
   }
 
   for (i = 0; i < script_args.sz; ++i) {
     SymVal* sym;
     SymValKind sym_kind;
     Command* cmd = Grow1Table( *cmds );
-    AlphaTab line = DEFAULT_AlphaTab;
-    cat_cstr_AlphaTab (&line, "$(H: ");
-    cat_uint_AlphaTab (&line, i);
-    cat_cstr_AlphaTab (&line, ")");
 
-    init_Command(cmd, alloc);
+    truncate_FildeshO(tmp_out);
+    puts_FildeshO(tmp_out, "$(H: ");
+    print_int_FildeshO(tmp_out, (int)i);
+    putc_FildeshO(tmp_out, ')');
+
+    init_Command(cmd, global_alloc);
     cmd->kind = HereDocCommand;
     cmd->line_num = 0;
-    cmd->line = forget_AlphaTab (&line);
-    cmd->doc = strdup_FildeshAlloc(alloc, ccstr_of_AlphaTab(&script_args.s[i]));
+    cmd->line = strdup_FildeshO(tmp_out, global_alloc);
+    cmd->doc = strdup_FildeshAlloc(
+        global_alloc, ccstr_of_AlphaTab(&script_args.s[i]));
     lose_AlphaTab(&script_args.s[i]);
 
     sym_kind = parse_sym(cmd->line, false);
@@ -2017,67 +2044,75 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
   LoseTable( script_args );
 
   fildesh_compat_errno_trace();
-  istat = parse_file(
-      cmds, script_in, filename_FildeshXF(script_in),
-      &cmd_hookup->map, alloc);
-  close_FildeshX(script_in);
-  fildesh_compat_errno_trace();
-
-  PackTable( *cmds );
-
-  if (istat == 0) {
-    fildesh_compat_errno_trace();
-    istat = setup_commands(cmds, cmd_hookup);
-    fildesh_compat_errno_trace();
-  }
-  free_CommandHookup(cmd_hookup, &istat);
-
-  if (exstatus == 0 && istat != 0) {
-    exstatus = 65;
-  }
-
-  if (false && exstatus == 0) {
-    for (i = 0; i < cmds->sz; ++i) {
-      output_Command (stderr, &cmds->s[i]);
+  while (exstatus == 0 && script_in) {
+    FildeshAlloc* scope_alloc = open_FildeshAlloc();
+    istat = parse_file(
+        cmds, script_in, filename_FildeshXF(script_in),
+        &cmd_hookup->map, scope_alloc, global_alloc, tmp_out);
+    if (istat != 0 ||
+        (cmds->sz == 0 || cmds->s[cmds->sz-1].kind != BarrierCommand))
+    {
+      close_FildeshX(script_in);
+      fildesh_compat_errno_trace();
+      script_in = NULL;
     }
-  }
-
-  if (exstatus == 0) {
-    fildesh_compat_errno_trace();
-    istat = spawn_commands(fildesh_exe, *cmds, alias_map, forkonly);
-    fildesh_compat_errno_trace();
-  }
-  lose_strmap(alias_map);
-  if (exstatus == 0 && istat != 0) {
-    exstatus = 126;
-  }
-
-  istat = 0;
-  for (i = 0; i < cmds->sz; ++i) {
-    Command* cmd = &cmds->s[i];
+    if (istat == 0) {
+      fildesh_compat_errno_trace();
+      istat = setup_commands(cmds, cmd_hookup);
+      fildesh_compat_errno_trace();
+    }
+    if (exstatus == 0 && istat != 0) {
+      exstatus = 65;
+    }
     if (false && exstatus == 0) {
-      output_Command(stderr, cmd);
-    }
-    if ((cmd->kind == RunCommand || cmd->kind == DefCommand) && cmd->pid >= 0) {
-      if (cmd->pid == 0) {
-        pthread_join(cmd->thread, NULL);
-      } else {
-        cmd->status = fildesh_compat_sh_wait(cmd->pid);
+      for (i = 0; i < cmds->sz; ++i) {
+        output_Command (stderr, &cmds->s[i]);
       }
-      cmd->pid = -1;
-      if (cmd->status != 0) {
-        fputs("FAILED ", stderr);
+    }
+
+    if (exstatus == 0) {
+      fildesh_compat_errno_trace();
+      istat = spawn_commands(fildesh_exe, *cmds, alias_map, forkonly);
+      fildesh_compat_errno_trace();
+    }
+    if (exstatus == 0 && istat != 0) {
+      exstatus = 126;
+    }
+
+    istat = 0;
+    for (i = 0; i < cmds->sz; ++i) {
+      Command* cmd = &cmds->s[i];
+      if (false && exstatus == 0) {
         output_Command(stderr, cmd);
-        if (istat < 127) {
-          /* Not sure what to do here. Just accumulate.*/
-          istat += 1;
+      }
+      if ((cmd->kind == RunCommand || cmd->kind == DefCommand) && cmd->pid >= 0) {
+        if (cmd->pid == 0) {
+          pthread_join(cmd->thread, NULL);
+        } else {
+          cmd->status = fildesh_compat_sh_wait(cmd->pid);
+        }
+        cmd->pid = -1;
+        if (cmd->status != 0) {
+          fputs("FAILED ", stderr);
+          output_Command(stderr, cmd);
+          if (istat < 127) {
+            /* Not sure what to do here. Just accumulate.*/
+            istat += 1;
+          }
         }
       }
-    }
 
-    lose_Command(cmd);
+      lose_Command(cmd);
+    }
+    cmds->sz = 0;
+    fildesh_compat_errno_trace();
+    close_FildeshAlloc(scope_alloc);
   }
-  fildesh_compat_errno_trace();
+  close_FildeshX(script_in);  /* Just in case we missed it.*/
+  free_CommandHookup(cmd_hookup, &istat);
+  lose_strmap(alias_map);
+  close_FildeshO(tmp_out);
+
   if (exstatus == 0) {
     exstatus = istat;
   }

@@ -86,6 +86,15 @@ fildesh_test(
 )
 
 fildesh_test(
+    name = "redefine_hhxhhx_test",
+    srcs = ["redefine_hhxhhx_test.fildesh"],
+)
+fildesh_test(
     name = "redefine_hxahxfhxh_test",
     srcs = ["redefine_hxahxfhxh_test.fildesh"],
+)
+
+fildesh_test(
+    name = "wait_xaxaxa_test",
+    srcs = ["wait_xaxaxa_test.fildesh"],
 )

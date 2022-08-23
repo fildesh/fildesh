@@ -1,0 +1,17 @@
+
+$(> filename) $(getenv TEST_TMPDIR) "/wait_xaxaxa_test_file.txt"
+
+|< zec / "hello world" /
+|- replace_string "world" "za warudo"
+|> sponge "${filename}"
+
+barrier
+
+zec -o $(OF result) / / "${filename}"
+zec -o $(OF expect) / "hello za warudo" /
+cmp $(XF expect) $(XF result)
+
+barrier
+
+zec -o "${filename}" / "overwrite" /
+

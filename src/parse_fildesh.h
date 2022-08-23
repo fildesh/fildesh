@@ -3,7 +3,8 @@
 #include "fildesh.h"
 
 char*
-fildesh_syntax_parse_line(FildeshX* xf, size_t* text_nlines);
+fildesh_syntax_parse_line(FildeshX* xf, size_t* text_nlines,
+                          FildeshAlloc* alloc, FildeshO* tmp_out);
 char*
 fildesh_syntax_maybe_concatenate_args(
     unsigned argc, const char* const* argv,
