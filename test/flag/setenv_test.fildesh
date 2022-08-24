@@ -1,0 +1,9 @@
+#!/usr/bin/env fildesh
+# Run with -setenv HELLO=Hello -setenv WORLD=World
+
+$(O expect) zec / "Hello there World" /
+
+|< zec / $(getenv HELLO) " there " $(getenv WORLD) /
+|- cmp $(XF expect)
+|> stdout
+

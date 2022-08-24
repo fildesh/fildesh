@@ -44,7 +44,7 @@ fildesh_test(
 fildesh_test(
     name = "environment_variable_xaxa_test",
     srcs = ["environment_variable_xaxa_test.fildesh"],
-    environment_variables = {
+    env = {
         "VARIABLE_A": "hello",
         "VARIABLE_B": "world",
     },
