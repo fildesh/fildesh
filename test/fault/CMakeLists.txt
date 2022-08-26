@@ -1,4 +1,7 @@
 
+add_test(NAME fault_barrier_bail_test COMMAND fildesh -f
+  "${CMAKE_CURRENT_SOURCE_DIR}/barrier_bail_test.fildesh")
+
 add_test(NAME fault_executable_bytes_of_test COMMAND spawn ! "$<TARGET_FILE:fildesh>"
   "${CMAKE_CURRENT_SOURCE_DIR}/executable_bytes_of_test.fildesh" "$<TARGET_FILE:zec>")
 

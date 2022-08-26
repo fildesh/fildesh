@@ -1,0 +1,13 @@
+
+$(H script)
+expect_failure -propagate -status 1
+$(barrier)
+|< zec / "should not print this\n" /
+|> stdout
+$(H script)
+
+|< fildesh $(X script) $(O? status)
+|- cmp /dev/null
+|> stdout
+
+expect_failure -x? $(XF status)

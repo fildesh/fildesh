@@ -1,4 +1,10 @@
+load("//:def.bzl", "fildesh_test")
 load("//tool:spawn.bzl", "fildesh_failure_test")
+
+fildesh_test(
+    name = "barrier_bail_test",
+    srcs = ["barrier_bail_test.fildesh"],
+)
 
 fildesh_failure_test(
     name = "executable_bytes_of_test",

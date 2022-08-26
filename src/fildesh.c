@@ -456,7 +456,7 @@ parse_double_quoted_string(FildeshO* out, char* s, Associa* map)
       s = &s[1];
       sym = lookup_SymVal(map, name);
       if (!sym || sym->kind != HereDocVal) {
-        fildesh_log_error("Can only reference variables within a string if they have known values.");
+        fildesh_log_errorf("${%s} variable not known at parse time.", name);
         return NULL;
       }
       puts_FildeshO(out, sym->as.here_doc);
@@ -2126,15 +2126,16 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
     cmds->sz = 0;
     fildesh_compat_errno_trace();
     close_FildeshAlloc(scope_alloc);
+
+    if (exstatus == 0) {
+      exstatus = istat;
+    }
   }
   close_FildeshX(script_in);  /* Just in case we missed it.*/
   free_CommandHookup(cmd_hookup, &istat);
   lose_strmap(alias_map);
   close_FildeshO(tmp_out);
 
-  if (exstatus == 0) {
-    exstatus = istat;
-  }
   return exstatus;
 }
 
