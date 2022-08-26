@@ -1,0 +1,37 @@
+#!/bin/env fildesh
+
+$(> source_root) "."
+$(> dst) "bld/pkg"
+$(> root_dst) "${dst}/fildesh"
+$(> pkg_debian) "${root_dst}/DEBIAN"
+
+install -d "${pkg_debian}" \
+  "${root_dst}/usr/bin" "${root_dst}/usr/lib64" "${root_dst}/usr/include"
+godo "${source_root}" bazel build -c opt //...
+
+$(barrier)
+
+install "${source_root}/bazel-bin/src/fildesh" "${root_dst}/usr/bin" 
+install "${source_root}/include/fildesh.h" "${root_dst}/usr/include" 
+install -T "${source_root}/bazel-bin/libfildesh_lib.a" "${root_dst}/usr/lib64/libfildesh.a" 
+install -T "${source_root}/bazel-bin/libfildesh_lib.so" "${root_dst}/usr/lib64/libfildesh.so"
+                                                                                              
+|< grep -m1 -E -e 'version = ' "${source_root}/MODULE.bazel"
+|> sed -E -e 's/.*"(.*)".*/\1/' $(O version)
+
+zec -o "${pkg_debian}/control" / \
+  "Package: fildesh\n" \
+  "Version: " $(XA version) "\n" \
+  "Maintainer: grencez\n" \
+  "Architecture: amd64\n" \
+  "Description: Now you're scripting with FIFOs.\n" \
+  /
+
+$(barrier)
+
+dpkg-deb --build "${root_dst}"
+
+$(barrier)
+
+|< zec / "You have a shiny new package at ${dst}/fildesh.deb\n" /
+|> stdout
