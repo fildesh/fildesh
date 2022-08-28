@@ -1,0 +1,18 @@
+# Here we run fildesh with no args.
+# Well, actually we run with an -stderr redirect to ensure no errors.
+# It should read the script from stdin.
+
+$(H script)
+|< zec / "Hello world!\n" /
+|- replace_string "Hello" "Jello"
+|> stdout
+$(H script)
+
+zec -o $(OF expect) / "Jello world!\n" /
+
+|< zec / "${script}" /
+|- fildesh -stderr $(OF err)
+|- cmp $(XF expect)
+|> stdout
+
+cmp /dev/null $(XF err)

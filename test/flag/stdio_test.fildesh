@@ -1,0 +1,17 @@
+
+$(H script)
+|< stdin
+|- replace_string "Hello" "Jello"
+|> stdout
+$(H script)
+
+zec -o $(OF in) / "Hello world!\n" /
+
+fildesh -stdin $(XF in) -stdout $(OF result) -stderr $(OF err) -f $(XF script)
+
+zec -o $(OF expect) / "Jello world!\n" /
+|< cmp $(XF expect) $(XF result)
+|> stdout
+
+cmp /dev/null $(XF err)
+

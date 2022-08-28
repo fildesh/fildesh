@@ -6,8 +6,6 @@
 
 #include "def.h"
 
-const char*
-exename_of_sysCx ();
 void
 init_sysCx();
 void

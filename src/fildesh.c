@@ -109,6 +109,8 @@ struct CommandHookup {
   Associa add_map; /* Temporarily hold new symbols for the current line.*/
   fildesh_fd_t stdin_fd;
   fildesh_fd_t stdout_fd;
+  /* Stderr stays at fd 2 but should be closed explicitly if we dup2 over it.*/
+  bool stderr_fd_opened;
 };
 
 struct SymVal
@@ -278,6 +280,7 @@ new_CommandHookup(FildeshAlloc* alloc)
   cmd_hookup->tmpfile_count = 0;
   cmd_hookup->stdin_fd = 0;
   cmd_hookup->stdout_fd = 1;
+  cmd_hookup->stderr_fd_opened = false;
   return cmd_hookup;
 }
 
@@ -297,12 +300,15 @@ static void free_CommandHookup(CommandHookup* cmd_hookup, int* istat) {
   }
   lose_Associa(&cmd_hookup->map);
   lose_Associa(&cmd_hookup->add_map);
-  /* Close stdin & stdout if they are still valid and have been changed.*/
+  /* Close stdio if they are still valid and have been changed.*/
   if (cmd_hookup->stdin_fd >= 0 && cmd_hookup->stdin_fd != 0) {
     fildesh_compat_fd_close(cmd_hookup->stdin_fd);
   }
   if (cmd_hookup->stdout_fd >= 0 && cmd_hookup->stdout_fd != 1) {
     fildesh_compat_fd_close(cmd_hookup->stdout_fd);
+  }
+  if (cmd_hookup->stderr_fd_opened) {
+    fildesh_compat_fd_close(2);
   }
 }
 
@@ -1267,8 +1273,9 @@ add_util_path_env ()
   static void
 show_usage()
 {
+  const char fildesh_exe[] = "fildesh";
   fprintf(stderr, "Usage: %s [[-f] SCRIPTFILE | -- SCRIPT]\n",
-          exename_of_sysCx ());
+          fildesh_exe);
 }
 
 
@@ -1805,6 +1812,9 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
   int exstatus = 0;
   int istat;
 
+  /* We shouldn't have an error yet.*/
+  fildesh_compat_errno_clear();
+
   /* With all the signal handling below,
    * primarily to clean up the temp directory,
    * it's not clear how to act as a proper builtin.
@@ -1945,7 +1955,10 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
       fildesh_fd_t fd = fildesh_arg_open_writeonly(stderr_filepath);
       if (fd >= 0) {
         istat = fildesh_compat_fd_move_to(2, fd);
-        if (istat != 0) {
+        if (istat == 0) {
+          cmd_hookup->stderr_fd_opened = true;
+        }
+        else {
           fildesh_log_error("Failed to dup2 -stderr.");
           exstatus = 72;
         }
@@ -2000,6 +2013,7 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
 
   if (use_stdin) {
     script_in = open_arg_FildeshXF(0, argv, inputv);
+    cmd_hookup->stdin_fd = -1;
     PushTable( script_args, cons1_AlphaTab("/dev/stdin") );
   }
 
@@ -2059,8 +2073,13 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
   }
   LoseTable( script_args );
 
-  cmd_hookup->stdin_fd = fildesh_compat_fd_claim(cmd_hookup->stdin_fd);
-  cmd_hookup->stdout_fd = fildesh_compat_fd_claim(cmd_hookup->stdout_fd);
+  if (cmd_hookup->stdin_fd == 0) {
+    cmd_hookup->stdin_fd = fildesh_compat_fd_claim(cmd_hookup->stdin_fd);
+  }
+  if (cmd_hookup->stdout_fd == 1) {
+    cmd_hookup->stdout_fd = fildesh_compat_fd_claim(cmd_hookup->stdout_fd);
+  }
+  /* Stderr stays at fd 2. It is closed on or immediately prior to exit.*/
 
   fildesh_compat_errno_trace();
   while (exstatus == 0 && script_in) {

@@ -37,13 +37,6 @@
 DeclTableT( HookFn, struct { void (*f) (void*); void* x; } );
 
 static DeclTable( HookFn, LoseFns );
-static const char* ExeName = 0;
-
-  const char*
-exename_of_sysCx ()
-{
-  return ExeName;
-}
 
 static
   void
