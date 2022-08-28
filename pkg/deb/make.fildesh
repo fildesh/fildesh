@@ -11,11 +11,11 @@ godo "${source_root}" bazel build -c opt //...
 
 $(barrier)
 
-install "${source_root}/bazel-bin/src/fildesh" "${root_dst}/usr/bin" 
-install "${source_root}/include/fildesh.h" "${root_dst}/usr/include" 
-install -T "${source_root}/bazel-bin/libfildesh_lib.a" "${root_dst}/usr/lib64/libfildesh.a" 
+install "${source_root}/bazel-bin/src/fildesh" "${root_dst}/usr/bin"
+install "${source_root}/include/fildesh.h" "${root_dst}/usr/include"
+install -T "${source_root}/bazel-bin/libfildesh_lib.a" "${root_dst}/usr/lib64/libfildesh.a"
 install -T "${source_root}/bazel-bin/libfildesh_lib.so" "${root_dst}/usr/lib64/libfildesh.so"
-                                                                                              
+
 |< grep -m1 -E -e 'version = ' "${source_root}/MODULE.bazel"
 |> sed -E -e 's/.*"(.*)".*/\1/' $(O version)
 
