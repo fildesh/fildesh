@@ -58,7 +58,7 @@ add_test(NAME builtin_elastic_pthread_tee_test COMMAND
 if (UNIX)
   add_test(NAME builtin_elastic_poll_tee_test COMMAND
     builtin_elastic_alt_tee_test "$<TARGET_FILE:elastic_poll>")
-  if (NOT APPLE)
+  if (NOT APPLE AND NOT CMAKE_BUILD_TYPE STREQUAL "Release")
     add_test(NAME builtin_elastic_aio_tee_test COMMAND
       builtin_elastic_alt_tee_test "$<TARGET_FILE:elastic_aio>")
   endif()

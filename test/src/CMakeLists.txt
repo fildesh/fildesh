@@ -1,5 +1,5 @@
 
-if (UNIX AND NOT APPLE)
+if (UNIX AND NOT APPLE AND NOT FILDESH_RELEASING)
   add_test(NAME chatty_test COMMAND chatty)
 endif()
 

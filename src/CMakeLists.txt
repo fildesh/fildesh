@@ -18,6 +18,8 @@ add_library(fildesh_lib STATIC
   $<TARGET_OBJECTS:fildesh_compat_lib_obj>
   )
 target_link_libraries(fildesh_lib ${CMAKE_THREAD_LIBS_INIT})
+set_target_properties(fildesh_lib PROPERTIES OUTPUT_NAME "fildesh")
+set_target_properties(fildesh_lib PROPERTIES PUBLIC_HEADER "${CMAKE_SOURCE_DIR}/include/fildesh.h")
 
 
 add_subdirectory(cx)
@@ -25,7 +27,9 @@ add_subdirectory(cx)
 
 set(FILDESH_EXTRA_ELASTIC_AIO_LIBS)
 set(FILDESH_EXTRA_ELASTIC_SOURCES)
-if (UNIX)
+if (FILDESH_RELEASING)
+  # No extra stuff during release.
+elseif(UNIX)
   if (APPLE)
     list(APPEND FILDESH_EXTRA_ELASTIC_SOURCES "elastic_poll.c")
     list(APPEND FILDESH_EXTRA_ELASTIC_AIO_LIBS "c")
@@ -67,7 +71,9 @@ set_property(TARGET fildesh_builtin_lib_obj APPEND PROPERTY COMPILE_DEFINITIONS
 
 if (WIN32)
   # Nothing special.
-elseif (APPLE)
+elseif(FILDESH_RELEASING)
+  # Nothing special.
+elseif(APPLE)
   set_property(TARGET fildesh_builtin_lib_obj APPEND PROPERTY COMPILE_DEFINITIONS
     FILDESH_BUILTIN_PERMIT_ELASTIC_POLL)
 else()
@@ -83,9 +89,13 @@ add_library(fildesh_builtin_lib STATIC
   $<TARGET_OBJECTS:fildesh_lib_obj>
   $<TARGET_OBJECTS:fildesh_compat_lib_obj>
   )
-target_link_libraries(fildesh_builtin_lib
-  ${CMAKE_THREAD_LIBS_INIT}
-  ${FILDESH_EXTRA_ELASTIC_AIO_LIBS})
+if (FILDESH_RELEASING)
+  target_link_libraries(fildesh_builtin_lib ${CMAKE_THREAD_LIBS_INIT})
+else()
+  target_link_libraries(fildesh_builtin_lib
+    ${CMAKE_THREAD_LIBS_INIT}
+    ${FILDESH_EXTRA_ELASTIC_AIO_LIBS})
+endif()
 
 add_executable(fildesh "main_fildesh.c")
 target_link_libraries(fildesh fildesh_builtin_lib)
@@ -109,9 +119,11 @@ target_link_libraries(waitdo cx_lib)
 if (UNIX)
   add_executable(elastic_poll "elastic_poll.c")
   target_link_libraries (elastic_poll cx_lib)
-endif ()
+endif()
 
-if (UNIX AND NOT APPLE)
+if(FILDESH_RELEASING)
+  # These don't need to be built during release.
+elseif(UNIX AND NOT APPLE)
   add_executable(elastic_aio "elastic_aio.c")
   target_link_libraries (elastic_aio cx_lib ${FILDESH_EXTRA_ELASTIC_AIO_LIBS})
   set_property (TARGET elastic_aio
@@ -121,8 +133,13 @@ if (UNIX AND NOT APPLE)
   target_link_libraries(chatty fildesh_lib ${FILDESH_EXTRA_ELASTIC_AIO_LIBS})
   set_property(TARGET chatty
     APPEND PROPERTY COMPILE_DEFINITIONS _POSIX_C_SOURCE=201112L)
-endif ()
+endif()
 
 
+include(GNUInstallDirs)
 install(TARGETS fildesh
-  RUNTIME DESTINATION bin)
+  RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}")
+install(TARGETS fildesh_lib
+  ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+  PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
+

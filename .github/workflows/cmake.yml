@@ -1,16 +1,18 @@
 name: CMake
 on: [push, pull_request]
 
-env:
-  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
-  BUILD_TYPE: Release
-
 jobs:
   test:
     strategy:
       fail-fast: false
       matrix:
-        platform: [ubuntu-latest, macos-latest, windows-latest]
+        include:
+          - platform: ubuntu-latest
+            cmake_build_type: RelOnHost
+          - platform: macos-latest
+            cmake_build_type: RelOnHost
+          - platform: windows-latest
+            cmake_build_type: Release
 
     runs-on: ${{ matrix.platform }}
 
@@ -28,17 +30,17 @@ jobs:
       # Note the current convention is to use the -S and -B options here to specify source
       # and build directories, but this is only available with CMake 3.13 and higher.
       # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
-      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=${{matrix.cmake_build_type}}
 
     - name: Build
       working-directory: ${{runner.workspace}}/bld
       shell: bash
-      run: cmake --build . --config $BUILD_TYPE
+      run: cmake --build . --config ${{matrix.cmake_build_type}}
 
     - name: Test
       working-directory: ${{runner.workspace}}/bld
       shell: bash
-      run: ctest --timeout 10 -C $BUILD_TYPE
+      run: ctest --timeout 10 -C ${{matrix.cmake_build_type}}
 
     - name: Upload Test Results
       uses: actions/upload-artifact@v3
@@ -47,10 +49,10 @@ jobs:
         name: Test Results (${{ matrix.platform }})
         path: |
           ${{runner.workspace}}/bld/Testing/
-          ${{runner.workspace}}/bld/builtin/Release/
-          ${{runner.workspace}}/bld/src/Release/
-          ${{runner.workspace}}/bld/test/*/Release/
-          ${{runner.workspace}}/bld/tool/Release/
+          ${{runner.workspace}}/bld/builtin/RelOnHost/
+          ${{runner.workspace}}/bld/src/RelOnHost/
+          ${{runner.workspace}}/bld/test/*/RelOnHost/
+          ${{runner.workspace}}/bld/tool/RelOnHost/
 
 
   configure_with_old_cmake:
@@ -73,4 +75,4 @@ jobs:
     - name: Configure
       shell: bash
       working-directory: ${{runner.workspace}}/bld
-      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=RelOnHost
