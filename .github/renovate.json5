@@ -3,16 +3,12 @@
   "extends": [
     "config:base"
   ],
-  // Group updates that bump minor versions.
   "packageRules": [{
-    "matchPackagePatterns": [
-      "*"
-    ],
-    "matchUpdateTypes": [
-      "minor",
-      "patch"
-    ],
-    "groupName": "all non-major dependencies",
-    "groupSlug": "all-minor-patch"
+    "matchPackagePatterns": ["*"],
+    "labels": ["dependencies"],
+    "matchUpdateTypes": ["major", "minor", "patch"],
+    // Group version update PRs into one.
+    "groupName": "all dependencies",
+    "groupSlug": "all-dependencies",
   }],
 }
