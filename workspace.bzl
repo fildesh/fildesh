@@ -33,5 +33,5 @@ def fildesh_dev_dependencies():
       name = "google_benchmark",
       sha256 = "3aff99169fa8bdee356eaa1f691e835a6e57b1efeadb8a0f9f228531158246ac",
       strip_prefix = "benchmark-1.7.0",
-      urls = ["https://github.com/google/benchmark/archive/refs/tags/v1.7.0.tar.gz"],
+      urls = ["https://github.com/google/benchmark/archive/v1.7.0.tar.gz"],
   )
