@@ -49,6 +49,7 @@ cc_library(
         "//src:instream.c",
         "//src:kve.c",
         "//src:kve.h",
+        "//src:kv_single_list.c",
         "//src:log.c",
         "//src:mascii.c",
         "//src:mascii.h",

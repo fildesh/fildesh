@@ -6,6 +6,7 @@ exports_files([
     "instream.c",
     "kve.c",
     "kve.h",
+    "kv_single_list.c",
     "log.c",
     "mascii.c",
     "mascii.h",

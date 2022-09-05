@@ -227,9 +227,16 @@ char* strdup_FildeshO(const FildeshO*, FildeshAlloc*);
 struct FildeshKV {
   FildeshKVE* at;
   size_t freelist_head;
-  size_t freelist_tail;
-  fildesh_lgsize_t lgcount;
+  fildesh_lgsize_t allocated_lgcount;
 };
+#define DEFAULT_FildeshKV_SINGLE_LIST  { NULL, 0, 0 }
+
+void* lookup_value_FildeshKV(FildeshKV*, const void*, size_t);
+const void* lookup_const_FildeshKV(const FildeshKV*, const void*, size_t);
+void* ensure_v_FildeshKV(FildeshKV*, const void*, size_t, void*, size_t);
+void* replace_v_FildeshKV(FildeshKV*, const void*, size_t, void*, size_t);
+bool del_FildeshKV(FildeshKV*, const void*, size_t);
+void close_FildeshKV(FildeshKV*);
 
 /* Inlines.*/
 static inline FildeshX default_FildeshX() {FildeshX tmp = DEFAULT_FildeshX; return tmp;}
@@ -252,6 +259,13 @@ static inline FildeshX until_byte_FildeshX(FildeshX* in, unsigned char delim) {
   ((T*) reserve_FildeshAlloc(alloc, (n)*sizeof(T), fildesh_alignof(T)))
 
 static inline
+  size_t
+fildesh_size_of_lgcount(size_t size, fildesh_lgsize_t lgcount) {
+  if (lgcount == 0) {return 0;}
+  return size << (lgcount - 1);
+}
+
+static inline
   void*
 grow_FildeshA_(void** p_at, size_t* p_count,
                fildesh_lgsize_t* p_allocated_lgcount,
@@ -269,7 +283,7 @@ grow_FildeshA_(void** p_at, size_t* p_count,
     do {
       allocated_lgcount += 1;
     } while ((count << 1) > ((size_t)1 << allocated_lgcount));
-    at = realloc_fn(at, element_size << (allocated_lgcount - 1));
+    at = realloc_fn(at, fildesh_size_of_lgcount(element_size, allocated_lgcount));
     if (!at) {return NULL;}
 
     *p_at = at;
@@ -296,7 +310,7 @@ mpop_FildeshA_(void** p_at, size_t* p_count,
       allocated_lgcount -= 1;
     } while ((allocated_lgcount >= 3) && ((count >> (allocated_lgcount - 3)) == 0));
 
-    at = realloc_fn(at, element_size << (allocated_lgcount - 1));
+    at = realloc_fn(at, fildesh_size_of_lgcount(element_size, allocated_lgcount));
     if (at) {*p_at = at;}
     *p_allocated_lgcount = allocated_lgcount;
   }

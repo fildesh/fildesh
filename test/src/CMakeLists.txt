@@ -29,6 +29,12 @@ target_link_libraries(kve_test fildesh_lib)
 target_include_directories(kve_test PRIVATE "${CMAKE_SOURCE_DIR}")
 add_test(NAME kve_test COMMAND kve_test)
 
+add_executable(src_kv_test
+  "kv_test.c")
+target_link_libraries(src_kv_test fildesh_lib)
+target_include_directories(src_kv_test PRIVATE "${CMAKE_SOURCE_DIR}")
+add_test(NAME src_kv_test COMMAND src_kv_test)
+
 add_executable(mascii_test
   "mascii_test.c")
 target_link_libraries(mascii_test fildesh_lib)

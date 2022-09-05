@@ -17,6 +17,13 @@ cc_fuzz_test(
 )
 
 cc_fuzz_test(
+    name = "kv_ensure_fuzz_test",
+    srcs = ["kv_ensure_fuzz_test.c"],
+    deps = ["//:fildesh_lib"],
+    max_guesses = 50000,
+)
+
+cc_fuzz_test(
     name = "parse_fildesh_line_fuzz_test",
     srcs = [
         "parse_fildesh_line_fuzz_test.c",

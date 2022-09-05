@@ -3,6 +3,13 @@
 #include <vector>
 #include "fildesh.h"
 
+
+#define THIS_BENCHMARK_RANGE \
+  Args({100, 3, 200}) \
+  ->Args({0, 7, 5000}) \
+  ->Args({0, 27273, 50000})
+
+
 extern "C" {
   void* make_FildeshLegacyIntIntMap();
   void set_FildeshLegacyIntIntMap(void*, int, int);
@@ -44,11 +51,33 @@ static void BM_MapAddIntegers_FildeshLegacy(benchmark::State& state) {
     free_FildeshLegacyIntIntMap(map);
   }
 }
-BENCHMARK(BM_MapAddIntegers_FildeshLegacy)
-  ->Args({100, 3, 200})
-  ->Args({0, 7, 5000})
-  ->Args({0, 27273, 50000})
-  ;
+BENCHMARK(BM_MapAddIntegers_FildeshLegacy)->THIS_BENCHMARK_RANGE;
+
+
+static void BM_MapAddIntegers_FildeshKV_SINGLE_LIST(benchmark::State& state) {
+  const int mul = state.range(0);
+  const int off = state.range(1);
+  const int count = state.range(2);
+  assert(mul < count);
+  assert(off < count);
+
+  for (auto _ : state) {
+    FildeshKV map[1] = {DEFAULT_FildeshKV_SINGLE_LIST};
+		for (int i = 0; i < count; ++i) {
+      const int k = calculate_key(i, mul, off, count);
+      int v = calculate_value(i, mul, off, count);
+      replace_v_FildeshKV(map, &k, sizeof(k), &v, sizeof(v));
+    }
+		for (int i = 0; i < count; ++i) {
+      const int k = calculate_key(i, mul, off, count);
+      const int* v = (int*) lookup_value_FildeshKV(map, &k, sizeof(int));
+      assert(v);
+      benchmark::DoNotOptimize(v);
+    }
+    close_FildeshKV(map);
+  }
+}
+BENCHMARK(BM_MapAddIntegers_FildeshKV_SINGLE_LIST)->THIS_BENCHMARK_RANGE;
 
 
 static void BM_MapAddIntegers_StdMap(benchmark::State& state) {
@@ -73,11 +102,7 @@ static void BM_MapAddIntegers_StdMap(benchmark::State& state) {
     }
   }
 }
-BENCHMARK(BM_MapAddIntegers_StdMap)
-  ->Args({100, 3, 200})
-  ->Args({0, 7, 5000})
-  ->Args({0, 27273, 50000})
-  ;
+BENCHMARK(BM_MapAddIntegers_StdMap)->THIS_BENCHMARK_RANGE;
 
 
 static void BM_MapAddIntegers_Array(benchmark::State& state) {
@@ -101,11 +126,7 @@ static void BM_MapAddIntegers_Array(benchmark::State& state) {
     delete[] map;
   }
 }
-BENCHMARK(BM_MapAddIntegers_Array)
-  ->Args({100, 3, 200})
-  ->Args({0, 7, 5000})
-  ->Args({0, 27273, 50000})
-  ;
+BENCHMARK(BM_MapAddIntegers_Array)->THIS_BENCHMARK_RANGE;
 
 
 static void BM_MapAddIntegers_Nop(benchmark::State& state) {
@@ -128,11 +149,7 @@ static void BM_MapAddIntegers_Nop(benchmark::State& state) {
     }
   }
 }
-BENCHMARK(BM_MapAddIntegers_Nop)
-  ->Args({100, 3, 200})
-  ->Args({0, 7, 5000})
-  ->Args({0, 27273, 50000})
-  ;
+BENCHMARK(BM_MapAddIntegers_Nop)->THIS_BENCHMARK_RANGE;
 
 
 // Run the benchmark
