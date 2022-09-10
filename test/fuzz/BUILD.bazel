@@ -37,6 +37,14 @@ cc_fuzz_test(
     deps = ["//:fildesh_lib"],
     max_guesses = 50000,
 )
+cc_smoke_test(
+    name = "kv_ensure_smoke_test",
+    srcs = [
+        "kv_ensure_smoke_test.c",
+        "kv_ensure_fuzz_test.c",
+    ],
+    deps = ["//:fildesh_lib"],
+)
 
 cc_fuzz_test(
     name = "mascii_fuzz_test",

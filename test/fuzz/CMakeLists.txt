@@ -23,6 +23,12 @@ add_executable(fuzz_kv_ensure_fuzz_test
 target_link_libraries(fuzz_kv_ensure_fuzz_test fildesh_lib)
 add_test(NAME fuzz_kv_ensure_fuzz_test COMMAND fuzz_kv_ensure_fuzz_test)
 
+add_executable(fuzz_kv_ensure_smoke_test
+  "kv_ensure_smoke_test.c"
+  "kv_ensure_fuzz_test.c")
+target_link_libraries(fuzz_kv_ensure_smoke_test fildesh_lib)
+add_test(NAME fuzz_kv_ensure_smoke_test COMMAND fuzz_kv_ensure_smoke_test)
+
 add_executable(fuzz_mascii_fuzz_test
   "mascii_fuzz_test.c"
   "fuzz_main.c")
