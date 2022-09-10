@@ -171,7 +171,7 @@ assign_at_FildeshKV(FildeshKV* map, FildeshKV_id_t id, const void* v, size_t vsi
       set1_splitvdirect_bit_FildeshKVE(e);
       memcpy(&e->split[1], v, vsize);
     } else {
-      set0_vdirect_bit_FildeshKVE(e);
+      set0_splitvdirect_bit_FildeshKVE(e);
       e->split[1] = (uintptr_t) v;
     }
   }

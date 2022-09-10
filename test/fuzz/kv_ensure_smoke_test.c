@@ -8,4 +8,10 @@ NEXT_FUZZ_DATA
 /* Just a key. Test needs to fill in a NUL delimiter.*/
 { 90, 90,
 }
+NEXT_FUZZ_DATA
+/* Replace splitvalue with pointer (when sizeof(void*) <= 8).*/
+{ 1,0, 1,0,
+  2,0, 1,0,
+  2,0, 1,2,3,4,5,6,7,8,9,0,
+}
 END_FUZZ_DATA

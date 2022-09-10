@@ -206,10 +206,32 @@ static void edge_split_test() {
   assert(!try_edge_split(&e, (1<<CHAR_BIT)-1, high_size_bit(2+sizeof(size_t)-2+CHAR_BIT),   1));
 }
 
+static void zero_length_key_test() {
+  FildeshKVE e[1] = {DEFAULT_FildeshKVE};
+  char dummy[1] = {'d'};
+  char value[1] = {'h'};
+  char splitvalue[2] = {'w', 'o'};
+
+  populate_empty_FildeshKVE(e, 0, dummy, sizeof(value), value);
+  assert(e->kv[0] == 0);
+  assert(e->kv[1] != 0);
+  assert(0 == ksize_FildeshKVE_size(e->size));
+  assert(0 == memcmp(value_FildeshKVE(e), value, sizeof(value)));
+
+  populate_splitkv_FildeshKVE(e, 0, dummy, sizeof(splitvalue), splitvalue);
+  assert(e->split[0] == 0);
+  assert(e->split[1] != 0);
+  assert(0 == ksize_FildeshKVE_size(e->size));
+  assert(0 == splitksize_FildeshKVE_size(e->size));
+  assert(0 == memcmp(value_FildeshKVE(e), value, sizeof(value)));
+  assert(0 == memcmp(splitvalue_FildeshKVE(e), splitvalue, sizeof(splitvalue)));
+}
+
 int main() {
   trivial_setget_bit_test();
   primary_setget_test();
   split_setget_test();
   edge_split_test();
+  zero_length_key_test();
   return 0;
 }

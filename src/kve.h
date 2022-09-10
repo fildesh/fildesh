@@ -150,13 +150,11 @@ static inline
   const void*
 value_FildeshKVE(const FildeshKVE* e)
 {
-  if (0 != e->size) {
-    if (0 != get_vexists_bit_FildeshKVE_joint(e->joint)) {
-      if (0 != get_vdirect_bit_FildeshKVE_joint(e->joint)) {
-        return (const void*)&e->kv[1];
-      } else {
-        return (const void*)e->kv[1];
-      }
+  if (0 != get_vexists_bit_FildeshKVE_joint(e->joint)) {
+    if (0 != get_vdirect_bit_FildeshKVE_joint(e->joint)) {
+      return (const void*)&e->kv[1];
+    } else {
+      return (const void*)e->kv[1];
     }
   }
   return NULL;

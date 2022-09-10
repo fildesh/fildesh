@@ -1,12 +1,11 @@
 /** Fuzz test that adds elements to a string->string map.
  *
- * We allow the values to have zero-length, which is interpreted as no value!
- * This approach gives better coverage, but can only be used when testing the
- * `ensure` function, not the `replace` function.
+ * We allow the keys and values to have zero-length.
  **/
 #include "fuzz_common.h"
 #include <assert.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "fildesh.h"
 
@@ -24,6 +23,16 @@ LLVMFuzzerTestOneInput(const uint8_t data[], size_t size) {
     if (i+1 == size || (v_index > k_index && b == 0)) {
       const FildeshKV_id_t id = ensure_FildeshKV(map, &data[k_index], k_size);
       assign_at_FildeshKV(map, id, &data[v_index], v_size);
+
+      {
+        const size_t result_size = size_of_key_at_FildeshKV(map, id);
+        const void* const result_key = key_at_FildeshKV(map, id);
+        const void* const result_value = value_at_FildeshKV(map, id);
+        assert(result_size == k_size);
+        assert(0 == memcmp(result_key, &data[k_index], k_size));
+        assert(0 == memcmp(result_value, &data[v_index], v_size));
+      }
+
       k_index = i+1;
       k_size = 0;
       v_index = 0;
