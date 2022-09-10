@@ -1,7 +1,18 @@
 
+def cc_smoke_test(name, srcs, deps):
+  srcs = srcs + [
+      "//test/fuzz:fuzz_common.h",
+      "//test/fuzz:smoke_common.h",
+  ]
+  native.cc_test(
+      name = name,
+      srcs = srcs,
+      deps = deps,
+      size = "small",
+  )
+
 def cc_fuzz_test(name, srcs, deps, max_guesses):
   srcs = srcs + [
-      "//test/fuzz:fuzz_common.c",
       "//test/fuzz:fuzz_common.h",
   ]
   libfuzzer_compile_flags = ["-fsanitize=address,fuzzer"]

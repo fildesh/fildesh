@@ -6,7 +6,22 @@
 #include <assert.h>
 #include "fuzz_common.h"
 
-#define MAX_FUZZ_BYTE_COUNT 1024
+
+#ifdef __cplusplus
+extern "C" int LLVMFuzzerInitialize(int* argc, char*** argv);
+#else
+extern int LLVMFuzzerInitialize(int* argc, char*** argv);
+#endif
+/* Needed for rules_fuzzing + GCC compilation.
+ * We have removed rules_fuzzing, so we keep the code here.
+ */
+int LLVMFuzzerInitialize(int* argc, char*** argv) {
+  (void)argc;
+  (void)argv;
+  return 0;
+}
+
+#define MAX_FUZZ_BYTE_COUNT 127
 
 int main(int argc, char** argv) {
   int istat;
@@ -24,7 +39,7 @@ int main(int argc, char** argv) {
     data[0] = i;
     istat = LLVMFuzzerTestOneInput(data, 1);
     assert(istat == 0);
-    for (j = 0; j < 256; ++j) {
+    for (j = i%17; j < 256; j+=17) {
       data[1] = j;
       istat = LLVMFuzzerTestOneInput(data, 2);
       assert(istat == 0);

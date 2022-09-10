@@ -27,10 +27,15 @@ bazel run --config=asan-libfuzzer //test/fuzz:grow_mpop_fuzz_test_full
 ```shell
 make
 make test | grep 'Test *#' | wc -l
-bazel test -- //... -//test/fuzz/... | grep '^//' | wc -l
+bazel test -- //... | grep '^//' | wc -l
 # Bazel and CMake should run the same number of tests on Linux.
 # If CMake is short by 5, try rerunning Bazel tests with `-//test/benchmark/...`
 # to exclude benchmarks. CMake only runs those if Google Benchmark is installed.
+
+# Run ./test/manual/parity.fildesh to find Bazel tests
+# that don't have a CMake counterpart.
+# It will list some extra tests due to an imperefct mapping,
+# but the missing tests are almost certainly in the list as well!
 ```
 
 ### Valgrind Debugging

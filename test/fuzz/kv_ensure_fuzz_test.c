@@ -22,8 +22,8 @@ LLVMFuzzerTestOneInput(const uint8_t data[], size_t size) {
   for (i = 0; i < size; ++i) {
     const uint8_t b = data[i];
     if (i+1 == size || (v_index > k_index && b == 0)) {
-      ensure_v_FildeshKV(map, (const void*) &data[k_index], k_size,
-                         (void*)&data[v_index], v_size);
+      const FildeshKV_id_t id = ensure_FildeshKV(map, &data[k_index], k_size);
+      assign_at_FildeshKV(map, id, &data[v_index], v_size);
       k_index = i+1;
       k_size = 0;
       v_index = 0;

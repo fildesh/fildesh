@@ -65,12 +65,13 @@ static void BM_MapAddIntegers_FildeshKV_SINGLE_LIST(benchmark::State& state) {
     FildeshKV map[1] = {DEFAULT_FildeshKV_SINGLE_LIST};
 		for (int i = 0; i < count; ++i) {
       const int k = calculate_key(i, mul, off, count);
-      int v = calculate_value(i, mul, off, count);
-      replace_v_FildeshKV(map, &k, sizeof(k), &v, sizeof(v));
+      const int v = calculate_value(i, mul, off, count);
+      const FildeshKV_id_t id = ensure_FildeshKV(map, &k, sizeof(k));
+      assign_at_FildeshKV(map, id, &v, sizeof(v));
     }
 		for (int i = 0; i < count; ++i) {
       const int k = calculate_key(i, mul, off, count);
-      const int* v = (int*) lookup_value_FildeshKV(map, &k, sizeof(int));
+      const int* v = (int*) lookup_value_FildeshKV(map, &k, sizeof(k));
       assert(v);
       benchmark::DoNotOptimize(v);
     }

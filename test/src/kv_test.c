@@ -22,8 +22,11 @@ static void add_remove_in_order_test()
   for (i = 0; i < n; ++i) {
     const unsigned k = i;
     unsigned v = i+10;
-    unsigned* p = (unsigned*)
-      ensure_v_FildeshKV(map, &k, sizeof(k), &v, sizeof(v));
+    const FildeshKV_id_t id = ensure_FildeshKV(map, &k, sizeof(k));
+    unsigned* p;
+    assert(!fildesh_nullid(id));
+    assign_at_FildeshKV(map, id, &v, sizeof(v));
+    p = (unsigned*)value_at_FildeshKV(map, id);
     assert(*p == v);
     assert(p != &v);
     print_whole_thing(map);
@@ -31,14 +34,12 @@ static void add_remove_in_order_test()
   for (i = 0; i < n; ++i) {
     const unsigned k = i;
     const unsigned expected_v = i+10;
-    unsigned* p = (unsigned*) lookup_value_FildeshKV(map, &k, sizeof(k));
+    const FildeshKV_id_t id = lookup_FildeshKV(map, &k, sizeof(k));
+    unsigned* p;
+    assert(!fildesh_nullid(id));
+    p = (unsigned*) value_at_FildeshKV(map, id);
     assert(*p == expected_v);
-    print_whole_thing(map);
-  }
-  for (i = 0; i < n; ++i) {
-    const unsigned k = i;
-    bool removed = del_FildeshKV(map, &k, sizeof(k));
-    assert(removed);
+    remove_at_FildeshKV(map, id);
     print_whole_thing(map);
   }
   close_FildeshKV(map);

@@ -4,14 +4,7 @@ cc_library(
     srcs = [
         "alphatab.c",
         "alphatab.h",
-        "associa.h",
-        "bittable.h",
-        "bstree.c",
-        "bstree.h",
         "def.h",
-        "lgtable.h",
-        "rbtree.c",
-        "rbtree.h",
         "synhax.h",
         "syscx.c",
         "syscx.h",
@@ -24,42 +17,47 @@ cc_library(
 )
 
 cc_library(
-    name = "int_int_map_lib",
+    name = "obsolete_cx_lib",
     srcs = [
         "associa.h",
         "bittable.h",
         "bstree.c",
         "bstree.h",
-        "def.h",
-        "int_int_map.c",
         "lgtable.h",
         "rbtree.c",
         "rbtree.h",
-        "synhax.h",
-        "table.h",
     ],
-    deps = ["//:fildesh_lib"],
+    deps = [":cx_lib"],
+    visibility = ["//visibility:public"],
+    testonly = 1,
+)
+
+cc_library(
+    name = "int_int_map_lib",
+    srcs = ["int_int_map.c"],
+    deps = [":obsolete_cx_lib"],
     visibility = ["//test/benchmark:__pkg__"],
+    testonly = 1,
 )
 
 cc_test(
     name = "bittable_test",
     srcs = ["bittable_test.c"],
-    deps = [":cx_lib"],
+    deps = [":obsolete_cx_lib"],
     size = "small",
 )
 
 cc_test(
     name = "lgtable_test",
     srcs = ["lgtable_test.c"],
-    deps = [":cx_lib"],
+    deps = [":obsolete_cx_lib"],
     size = "small",
 )
 
 cc_test(
     name = "rbtree_test",
     srcs = ["rbtree_test.c"],
-    deps = [":cx_lib"],
+    deps = [":obsolete_cx_lib"],
     size = "small",
 )
 

@@ -1,4 +1,4 @@
-load("//test/fuzz:fuzz.bzl", "cc_fuzz_test")
+load("//test/fuzz:fuzz.bzl", "cc_fuzz_test", "cc_smoke_test")
 
 
 config_setting(
@@ -17,10 +17,32 @@ cc_fuzz_test(
 )
 
 cc_fuzz_test(
+    name = "kv_direct_fuzz_test",
+    srcs = ["kv_direct_fuzz_test.c"],
+    deps = ["//:fildesh_lib"],
+    max_guesses = 50000,
+)
+cc_smoke_test(
+    name = "kv_direct_smoke_test",
+    srcs = [
+        "kv_direct_smoke_test.c",
+        "kv_direct_fuzz_test.c",
+    ],
+    deps = ["//:fildesh_lib"],
+)
+
+cc_fuzz_test(
     name = "kv_ensure_fuzz_test",
     srcs = ["kv_ensure_fuzz_test.c"],
     deps = ["//:fildesh_lib"],
     max_guesses = 50000,
+)
+
+cc_fuzz_test(
+    name = "mascii_fuzz_test",
+    srcs = ["mascii_fuzz_test.c"],
+    deps = ["//:fildesh_lib"],
+    max_guesses = 1000000,
 )
 
 cc_fuzz_test(
@@ -32,11 +54,4 @@ cc_fuzz_test(
     ],
     deps = ["//:fildesh_lib"],
     max_guesses = 100000,
-)
-
-cc_fuzz_test(
-    name = "mascii_fuzz_test",
-    srcs = ["mascii_fuzz_test.c"],
-    deps = ["//:fildesh_lib"],
-    max_guesses = 1000000,
 )

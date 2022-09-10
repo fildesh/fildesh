@@ -38,6 +38,16 @@ size_t splitksize_FildeshKVE_size(size_t x) {
 }
 
 
+bool kdirect_FildeshKVE(const FildeshKVE* e) {
+  const size_t ksize = ksize_FildeshKVE_size(e->size);
+  return kdirect_FildeshKVE_joint(e->joint, ksize);
+}
+
+bool splitkdirect_FildeshKVE(const FildeshKVE* e) {
+  const size_t ksize = splitksize_FildeshKVE_size(e->size);
+  return splitkdirect_FildeshKVE_size(e->size, ksize);
+}
+
 /** Assuming the node is empty, populate it with a key and value.
  *
  * This only overwrites data, leaving the node's connectivity intact.
@@ -51,9 +61,9 @@ populate_empty_FildeshKVE(FildeshKVE* e,
   /* Assuming no split data, so we can clear e->size.*/
   e->size = ksize;
 
-  if (vsize > 0 && v) {
+  if (vsize > 0) {
     set1_vexists_bit_FildeshKVE(e);
-    if (vsize <= sizeof(e->kv[1])) {
+    if (v && vsize <= sizeof(e->kv[1])) {
       set1_vdirect_bit_FildeshKVE(e);
       memcpy(&e->kv[1], v, vsize);
     } else {
@@ -79,7 +89,7 @@ populate_splitkv_FildeshKVE(FildeshKVE* e,
                             size_t ksize, const void* k,
                             size_t vsize, const void* v)
 {
-  const bool vexists = (vsize > 0 && v);
+  const bool vexists = (vsize > 0);
   bool kdirect;
   size_t tmp_ksize = ksize;
   unsigned i;
@@ -116,7 +126,7 @@ populate_splitkv_FildeshKVE(FildeshKVE* e,
 
   if (vexists) {
     set1_splitvexists_bit_FildeshKVE(e);
-    if (vsize <= sizeof(e->split[1])) {
+    if (v && vsize <= sizeof(e->split[1])) {
       set1_splitvdirect_bit_FildeshKVE(e);
       memcpy(&e->split[1], v, vsize);
     } else {
@@ -136,37 +146,6 @@ populate_splitkv_FildeshKVE(FildeshKVE* e,
   return true;
 }
 
-  const void*
-replace_v_FildeshKVE(FildeshKVE* e, size_t vsize, const void* v)
-{
-  const void* original_v = value_FildeshKVE(e);
-  assert(v && vsize > 0);
-  assert(original_v);
-  if (vsize <= sizeof(e->kv[1])) {
-    set1_vdirect_bit_FildeshKVE(e);
-    memcpy(&e->kv[1], v, vsize);
-  } else {
-    set0_vdirect_bit_FildeshKVE(e);
-    e->kv[1] = (uintptr_t) v;
-  }
-  if (original_v == (const void*)&e->kv[1]) {
-    return NULL;
-  }
-  return original_v;
-}
-
-  const void*
-replace_splitv_FildeshKVE(FildeshKVE* e, size_t vsize, const void* v)
-{
-  const void* original_splitv = splitvalue_FildeshKVE(e);
-  assert(v && vsize > 0);
-  assert(original_splitv);
-  if (original_splitv == (const void*)&e->split[1]) {
-    return NULL;
-  }
-  return original_splitv;
-}
-
   void
 erase_splitk_FildeshKVE(FildeshKVE* e)
 {
@@ -184,7 +163,7 @@ promote_splitk_FildeshKVE(FildeshKVE* e)
     /* The exists and direct bits are consistent across `joint` and `size`.*/
     const size_t splitvbits = (splitvexists_bit_FildeshKVE_size() |
                                splitvdirect_bit_FildeshKVE_size());
-    e->joint &= splitvbits;
+    e->joint &= ~splitvbits;
     e->joint |= (splitvbits & e->size);
   }
   e->size = splitksize_FildeshKVE_size(e->size);

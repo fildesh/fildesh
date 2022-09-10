@@ -115,7 +115,7 @@ static inline void set0_splitvdirect_bit_FildeshKVE(FildeshKVE* e) {
 static inline void set1_splitvdirect_bit_FildeshKVE(FildeshKVE* e) {
   e->size |= splitvdirect_bit_FildeshKVE_size();
 }
-static inline void set_joint_index_FildesKVE(FildeshKVE* e, size_t index) {
+static inline void set_joint_index_FildeshKVE(FildeshKVE* e, size_t index) {
   e->joint ^= get_index_FildeshKVE_joint(e->joint);
   e->joint ^= get_index_FildeshKVE_joint(index);
 }
@@ -181,6 +181,8 @@ splitvalue_FildeshKVE(const FildeshKVE* e)
 
 size_t ksize_FildeshKVE_size(size_t);
 size_t splitksize_FildeshKVE_size(size_t);
+bool kdirect_FildeshKVE(const FildeshKVE*);
+bool splitkdirect_FildeshKVE(const FildeshKVE*);
 
 void
 populate_empty_FildeshKVE(FildeshKVE* e,
@@ -190,10 +192,6 @@ bool
 populate_splitkv_FildeshKVE(FildeshKVE* e,
                             size_t ksize, const void* k,
                             size_t vsize, const void* v);
-const void*
-replace_v_FildeshKVE(FildeshKVE* e, size_t vsize, const void* v);
-const void*
-replace_splitv_FildeshKVE(FildeshKVE* e, size_t vsize, const void* v);
 void
 erase_splitk_FildeshKVE(FildeshKVE* e);
 void

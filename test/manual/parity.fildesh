@@ -1,0 +1,28 @@
+#!/usr/bin/env fildesh
+
+mkdir -p bld
+|< bazel build //...
+|> void
+
+$(barrier)
+|< godo bld cmake ..  -DCMAKE_BUILD_TYPE=RelOnHost
+|> void
+
+$(barrier)
+|< godo bld cmake --build .
+|> void
+
+$(barrier)
+
+|< bazel test -- //...
+|- grep -o -E -e '^//[^ ]*'
+|> elastic -o $(OF bazel_lut) -o $(OF bazel)
+
+|< godo bld ctest
+|- grep -o -E -e 'Test *#.*: [^ ]*'
+|- grep -o -E -e '[^ ]*$'
+|- bestmatch -x-lut $(XF bazel_lut) -d ""
+|- ujoin -x-lut - -x $(XF bazel) -o-not-found $(OF missing)
+|> void
+
+stdout $(X missing)

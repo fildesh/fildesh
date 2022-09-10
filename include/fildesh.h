@@ -229,13 +229,18 @@ struct FildeshKV {
   size_t freelist_head;
   fildesh_lgsize_t allocated_lgcount;
 };
+typedef size_t FildeshKV_id_t;
 #define DEFAULT_FildeshKV_SINGLE_LIST  { NULL, 0, 0 }
 
+FildeshKV_id_t lookup_FildeshKV(const FildeshKV*, const void*, FildeshKV_id_t);
+FildeshKV_id_t any_id_FildeshKV(const FildeshKV*);
 void* lookup_value_FildeshKV(FildeshKV*, const void*, size_t);
-const void* lookup_const_FildeshKV(const FildeshKV*, const void*, size_t);
-void* ensure_v_FildeshKV(FildeshKV*, const void*, size_t, void*, size_t);
-void* replace_v_FildeshKV(FildeshKV*, const void*, size_t, void*, size_t);
-bool del_FildeshKV(FildeshKV*, const void*, size_t);
+FildeshKV_id_t ensure_FildeshKV(FildeshKV*, const void*, size_t);
+size_t size_of_key_at_FildeshKV(const FildeshKV*, FildeshKV_id_t);
+const void* key_at_FildeshKV(const FildeshKV*, FildeshKV_id_t);
+const void* value_at_FildeshKV(const FildeshKV*, FildeshKV_id_t);
+void assign_at_FildeshKV(FildeshKV*, FildeshKV_id_t, const void*, size_t);
+void remove_at_FildeshKV(FildeshKV*, FildeshKV_id_t);
 void close_FildeshKV(FildeshKV*);
 
 /* Inlines.*/
@@ -257,6 +262,8 @@ static inline FildeshX until_byte_FildeshX(FildeshX* in, unsigned char delim) {
 
 #define fildesh_allocate(T, n, alloc) \
   ((T*) reserve_FildeshAlloc(alloc, (n)*sizeof(T), fildesh_alignof(T)))
+
+#define fildesh_nullid(id)  (!~(id))
 
 static inline
   size_t
