@@ -16,51 +16,6 @@ cc_library(
     visibility = ["//visibility:public"],
 )
 
-cc_library(
-    name = "obsolete_cx_lib",
-    srcs = [
-        "associa.h",
-        "bittable.h",
-        "bstree.c",
-        "bstree.h",
-        "lgtable.h",
-        "rbtree.c",
-        "rbtree.h",
-    ],
-    deps = [":cx_lib"],
-    visibility = ["//visibility:public"],
-    testonly = 1,
-)
-
-cc_library(
-    name = "int_int_map_lib",
-    srcs = ["int_int_map.c"],
-    deps = [":obsolete_cx_lib"],
-    visibility = ["//test/benchmark:__pkg__"],
-    testonly = 1,
-)
-
-cc_test(
-    name = "bittable_test",
-    srcs = ["bittable_test.c"],
-    deps = [":obsolete_cx_lib"],
-    size = "small",
-)
-
-cc_test(
-    name = "lgtable_test",
-    srcs = ["lgtable_test.c"],
-    deps = [":obsolete_cx_lib"],
-    size = "small",
-)
-
-cc_test(
-    name = "rbtree_test",
-    srcs = ["rbtree_test.c"],
-    deps = [":obsolete_cx_lib"],
-    size = "small",
-)
-
 cc_test(
     name = "table_test",
     srcs = ["table_test.c"],

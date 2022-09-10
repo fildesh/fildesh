@@ -24,7 +24,7 @@ cc_benchmark(
     name = "map_benchmark",
     srcs = ["map_benchmark.cc"],
     deps = [
-        "//src/cx:int_int_map_lib",
+        "//test/cx:int_int_map_lib",
     ],
 )
 

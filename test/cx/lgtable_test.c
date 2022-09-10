@@ -2,7 +2,7 @@
  * \file lgtable_test.c
  **/
 
-#include "syscx.h"
+#include "src/cx/syscx.h"
 
 #include "lgtable.h"
 

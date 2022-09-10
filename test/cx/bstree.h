@@ -6,7 +6,7 @@
 #ifndef __OPENCL_VERSION__
 #define BSTree_H_
 
-#include "def.h"
+#include "src/cx/def.h"
 #endif
 
 typedef struct BSTNode BSTNode;

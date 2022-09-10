@@ -4,7 +4,7 @@
 #ifndef BitTable_H_
 #define BitTable_H_
 
-#include "table.h"
+#include "src/cx/table.h"
 
 #include <assert.h>
 

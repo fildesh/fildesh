@@ -3,10 +3,10 @@
  * Tests for red-black tree.
  **/
 
-#include "syscx.h"
+#include "src/cx/syscx.h"
 #include <stdio.h>
 
-#include "alphatab.h"
+#include "src/cx/alphatab.h"
 #include "associa.h"
 #include "lgtable.h"
 #include "rbtree.h"

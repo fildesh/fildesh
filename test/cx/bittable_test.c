@@ -3,7 +3,7 @@
  * Tests for bitstrings of 0 and 1.
  **/
 
-#include "syscx.h"
+#include "src/cx/syscx.h"
 
 #include "bittable.h"
 

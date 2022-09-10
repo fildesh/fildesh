@@ -15,49 +15,6 @@ add_library(cx_lib STATIC
 )
 target_link_libraries(cx_lib ${CMAKE_THREAD_LIBS_INIT})
 
-add_library(obsolete_cx_lib_obj OBJECT
-  "associa.h"
-  "bittable.h"
-  "bstree.c"
-  "bstree.h"
-  "lgtable.h"
-  "rbtree.c"
-  "rbtree.h"
-)
-add_library(obsolete_cx_lib STATIC
-  $<TARGET_OBJECTS:cx_lib_obj>
-  $<TARGET_OBJECTS:obsolete_cx_lib_obj>
-  $<TARGET_OBJECTS:fildesh_lib_obj>
-  $<TARGET_OBJECTS:fildesh_compat_lib_obj>
-)
-target_link_libraries(obsolete_cx_lib ${CMAKE_THREAD_LIBS_INIT})
-
-add_library(cx_int_int_map_lib_obj OBJECT
-  "int_int_map.c"
-)
-add_library(cx_int_int_map_lib STATIC
-  $<TARGET_OBJECTS:cx_lib_obj>
-  $<TARGET_OBJECTS:obsolete_cx_lib_obj>
-  $<TARGET_OBJECTS:cx_int_int_map_lib_obj>
-  $<TARGET_OBJECTS:fildesh_lib_obj>
-  $<TARGET_OBJECTS:fildesh_compat_lib_obj>
-)
-
-add_executable(bittable_test
-  "bittable_test.c")
-target_link_libraries(bittable_test obsolete_cx_lib)
-add_test(NAME bittable_test COMMAND bittable_test)
-
-add_executable(lgtable_test
-  "lgtable_test.c")
-target_link_libraries(lgtable_test cx_lib)
-add_test(NAME lgtable_test COMMAND lgtable_test)
-
-add_executable(rbtree_test
-  "rbtree_test.c")
-target_link_libraries(rbtree_test obsolete_cx_lib)
-add_test(NAME rbtree_test COMMAND rbtree_test)
-
 add_executable(table_test
   "table_test.c")
 target_link_libraries(table_test cx_lib)
