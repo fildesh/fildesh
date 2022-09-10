@@ -14,4 +14,9 @@ NEXT_FUZZ_DATA
   2,0, 1,0,
   2,0, 1,2,3,4,5,6,7,8,9,0,
 }
+NEXT_FUZZ_DATA
+/* Use a pointer for the splitkey (when sizeof(void*) <= 8).*/
+{ 11,0, 1,0,
+  1,2,3,4,5,6,7,8,9,0, 1,0,
+}
 END_FUZZ_DATA
