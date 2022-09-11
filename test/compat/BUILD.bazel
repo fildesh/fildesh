@@ -32,3 +32,10 @@ cc_test(
     srcs = ["string_byte_translate_test.c"],
     deps = ["//:fildesh_compat_lib"],
 )
+
+cc_test(
+    name = "tmpdir_test",
+    srcs = ["tmpdir_test.c"],
+    deps = ["//:fildesh_compat_lib"],
+)
+

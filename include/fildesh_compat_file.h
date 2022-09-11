@@ -15,4 +15,7 @@ fildesh_compat_file_rm(const char*);
 int
 fildesh_compat_file_rmdir(const char*);
 
+char*
+fildesh_compat_file_mktmpdir(const char*);
+
 #endif

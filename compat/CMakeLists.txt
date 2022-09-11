@@ -8,6 +8,7 @@ add_library(fildesh_compat_lib_obj OBJECT
   "random.c"
   "sh.c"
   "string.c"
+  "tmpdir.c"
   "${CMAKE_SOURCE_DIR}/include/fildesh_compat_errno.h"
   "${CMAKE_SOURCE_DIR}/include/fildesh_compat_fd.h"
   "${CMAKE_SOURCE_DIR}/include/fildesh_compat_file.h"

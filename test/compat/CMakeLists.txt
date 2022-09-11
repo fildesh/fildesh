@@ -20,3 +20,7 @@ add_test(NAME compat_sh_setenv_test COMMAND compat_sh_setenv_test)
 add_executable(compat_string_byte_translate_test "string_byte_translate_test.c")
 target_link_libraries(compat_string_byte_translate_test fildesh_compat_lib)
 add_test(NAME compat_string_byte_translate_test COMMAND compat_string_byte_translate_test)
+
+add_executable(compat_tmpdir_test "tmpdir_test.c")
+target_link_libraries(compat_tmpdir_test fildesh_compat_lib)
+add_test(NAME compat_tmpdir_test COMMAND compat_tmpdir_test)

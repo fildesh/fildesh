@@ -833,7 +833,7 @@ add_tmp_file_Command(Command* cmd,
   char buf[2048];
   assert(extension);
   if (!cmd_hookup->temporary_directory) {
-    cmd_hookup->temporary_directory = mktmppath_sysCx("fildesh");
+    cmd_hookup->temporary_directory = fildesh_compat_file_mktmpdir("fildesh");
     fildesh_compat_errno_clear();
     if (!cmd_hookup->temporary_directory) {
       fildesh_log_error("Unable to create temp directory.");
@@ -1788,6 +1788,32 @@ spawn_commands(const char* fildesh_exe, TableT(Command) cmds,
 }
 
 
+/** Returns an appropriate exit status.**/
+static int handle_flag_tmpdir_from_env(const char* var) {
+  const char* d = NULL;
+  int istat;
+  if (var) {
+    d = getenv(var);
+  }
+  if (!d) {
+    fildesh_log_errorf("Failed to read environment variable: %s", var);
+    return 64;
+  }
+  istat = fildesh_compat_sh_setenv("TMPDIR", d);
+#ifdef _MSC_VER
+  if (istat == 0) {
+    istat = fildesh_compat_sh_setenv("TEMP", d);
+  }
+#endif
+  if (istat != 0) {
+    fildesh_compat_errno_trace();
+    fildesh_log_error("Failed to set testing temporary directory.");
+    return 71;
+  }
+  return 0;
+}
+
+
   int
 fildesh_builtin_fildesh_main(unsigned argc, char** argv,
                              FildeshX** inputv, FildeshO** outputv)
@@ -1895,21 +1921,24 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
         exstatus = 64;
       }
     }
+    else if (eq_cstr(arg, "-tmpdir_from_env")) {
+      exstatus = handle_flag_tmpdir_from_env(argv[argi++]);
+    }
     else if (eq_cstr(arg, "-setenv")) {
       char* k = argv[argi++];
       char* v = NULL;
-     if (k) {
-       v = strchr(k, '=');
-     }
-     if (k && v) {
-       v[0] = '\0';
-       v = &v[1];
-       istat = fildesh_compat_sh_setenv(k, v);
-       if (istat != 0) {
-         fildesh_log_error("Can't -setenv!");
-         exstatus = 71;
-       }
-     } else {
+      if (k) {
+        v = strchr(k, '=');
+      }
+      if (k && v) {
+        v[0] = '\0';
+        v = &v[1];
+        istat = fildesh_compat_sh_setenv(k, v);
+        if (istat != 0) {
+          fildesh_log_error("Can't -setenv!");
+          exstatus = 71;
+        }
+      } else {
         fildesh_log_errorf("Bad -setenv arg: %s", k);
         exstatus = 64;
       }

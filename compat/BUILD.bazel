@@ -8,6 +8,7 @@ exports_files([
     "random.c",
     "sh.c",
     "string.c",
+    "tmpdir.c",
 ], visibility = [
     "//:__pkg__",
 ])

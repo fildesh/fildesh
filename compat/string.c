@@ -97,3 +97,9 @@ fildesh_compat_string_duplicate(const char* s)
   return p;
 }
 
+  char
+fildesh_compat_string_hexchar(unsigned x) {
+  x &= 0xf;
+  if (x < 10) {return '0' + (char)x;}
+  return 'a' + (char)x;
+}

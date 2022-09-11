@@ -13,15 +13,8 @@ push_losefn_sysCx (void (*f) (void*), void* x);
 void
 lose_sysCx ();
 
-char*
-mktmppath_sysCx(const char* hint);
 void
 tacenv_sysCx (const char* key, const char* val);
-
-bool
-mkdir_sysCx (const char* pathname);
-Bool
-randomize_sysCx(void* p, uint size);
 
 #endif
 

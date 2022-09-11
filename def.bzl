@@ -82,7 +82,9 @@ def fildesh_test(
   spawn_test(
       name = name,
       binary = "@fildesh//:fildesh",
-      args = fildesh_options + [
+      args = [
+          "-tmpdir_from_env", "TEST_TMPDIR",
+      ] + fildesh_options + [
           "-f", "$(location " + main + ")",
       ] + args,
       data = srcs + data,

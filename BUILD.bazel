@@ -23,6 +23,7 @@ cc_library(
         "//compat:random.c",
         "//compat:sh.c",
         "//compat:string.c",
+        "//compat:tmpdir.c",
         "//include:fildesh_compat_errno.h",
         "//include:fildesh_compat_fd.h",
         "//include:fildesh_compat_file.h",

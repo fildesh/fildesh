@@ -11,5 +11,7 @@ fildesh_compat_string_byte_translate(
     const char* lhs, const char* rhs);
 char*
 fildesh_compat_string_duplicate(const char*);
+char
+fildesh_compat_string_hexchar(unsigned);
 
 #endif
