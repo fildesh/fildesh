@@ -46,10 +46,28 @@ free_FildeshOF(FildeshOF* of)
 
 DEFINE_FildeshO_VTable(FildeshOF, base);
 
+
+typedef struct FildeshVoidO FildeshVoidO;
+struct FildeshVoidO {FildeshO base;};
+static void write_FildeshVoidO(FildeshVoidO* o) {o->base.off = o->base.size;}
+static void close_FildeshVoidO(FildeshVoidO* o) {(void) o;}
+static void free_FildeshVoidO(FildeshVoidO* o) {free(o);}
+DEFINE_FildeshO_VTable(FildeshVoidO, base);
+
+
 static inline FildeshOF default_FildeshOF() {
   FildeshOF tmp = {DEFAULT_FildeshO, -1, NULL};
   tmp.base.vt = DEFAULT_FildeshOF_FildeshO_VTable;
   return tmp;
+}
+
+static FildeshO* open_null_FildeshO() {
+  FildeshVoidO* o = (FildeshVoidO*) malloc(sizeof(FildeshVoidO));
+  if (!o) {return NULL;}
+  o->base = default_FildeshO();
+  o->base.vt = DEFAULT_FildeshVoidO_FildeshO_VTable;
+  o->base.flush_lgsize = 1;
+  return &o->base;
 }
 
   FildeshO*
@@ -62,6 +80,7 @@ open_FildeshOF(const char* filename)
 open_sibling_FildeshOF(const char* sibling, const char* filename)
 {
   static const char dev_stdout[] = "/dev/stdout";
+  static const char dev_null[] = "/dev/null";
   static const char dev_fd_prefix[] = "/dev/fd/";
   static const unsigned dev_fd_prefix_length = sizeof(dev_fd_prefix)-1;
   const size_t filename_length = (filename ? strlen(filename) : 0);
@@ -71,6 +90,9 @@ open_sibling_FildeshOF(const char* sibling, const char* filename)
 
   if (0 == strcmp("-", filename) || 0 == strcmp(dev_stdout, filename)) {
     return open_fd_FildeshO(1);
+  }
+  if (0 == strcmp(dev_null, filename)) {
+    return open_null_FildeshO();
   }
   if (0 == strncmp(dev_fd_prefix, filename, dev_fd_prefix_length)) {
     int fd = -1;

@@ -22,6 +22,9 @@ add_test(NAME syntax_concatenate_inline_hhh_test COMMAND fildesh -f
 add_test(NAME syntax_concatenate_inline_named_arg_test COMMAND fildesh -f
   "${CMAKE_CURRENT_SOURCE_DIR}/concatenate_inline_named_arg_test.fildesh")
 
+add_test(NAME syntax_dev_null_o_test COMMAND fildesh -f
+  "${CMAKE_CURRENT_SOURCE_DIR}/dev_null_o_test.fildesh")
+
 add_test(NAME syntax_environment_variable_xaxa_test COMMAND
   "${CMAKE_COMMAND}" -E env "VARIABLE_A=hello" "VARIABLE_B=world"
   "$<TARGET_FILE:fildesh>" -f

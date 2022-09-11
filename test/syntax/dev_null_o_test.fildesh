@@ -1,0 +1,2 @@
+|< seq 1 1000
+|> zec -o /dev/null / "No printing or crashing.\n" / -
