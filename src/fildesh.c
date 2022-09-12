@@ -35,6 +35,7 @@ enum SymValKind
   IFutureDescFileVal, OFutureDescFileVal,
   HereDocVal, IHereDocFileVal,
   DefVal,
+  IOFileVal,
   NSymValKinds
 };
 
@@ -95,7 +96,6 @@ struct Command
   char* doc;
 
   /** Use this to allocate stuff.
-   * Currently just extra args and elements of tmp_files.
    **/
   FildeshAlloc* alloc;
 };
@@ -122,6 +122,7 @@ struct SymVal
   {
     int file_desc;
     char* here_doc;
+    const char* iofilename;  /* IOFileVal only.*/
   } as;
 };
 
@@ -129,6 +130,8 @@ struct BuiltinCommandThreadArg {
   Command* command;  /* Cleanup but don't free.*/
   char** argv;  /* Free nested.*/
 };
+
+static char* add_tmp_file(CommandHookup*, const char*, FildeshAlloc*);
 
   static void
 init_SymVal (SymVal* v)
@@ -244,7 +247,7 @@ lose_Command (Command* cmd)
       break;
   }
 
-  UFor( i, cmd->tmp_files.sz ) {
+  for (i = 0; i < cmd->tmp_files.sz; ++i) {
     fildesh_compat_file_rm(cmd->tmp_files.s[i]);
   }
   LoseTable( cmd->tmp_files );
@@ -293,6 +296,9 @@ static void free_CommandHookup(CommandHookup* cmd_hookup, int* istat) {
       fildesh_log_errorf("Dangling output stream! Symbol: %s",
                          (char*) key_at_FildeshKV(map, id));
       *istat = -1;
+    }
+    else if (x->kind == IOFileVal) {
+      fildesh_compat_file_rm(x->as.iofilename);
     }
     lose_SymVal(x);
     remove_at_FildeshKV(map, id);
@@ -367,6 +373,20 @@ getf_SymVal(FildeshKV* map, const char* s, FildeshAlloc* alloc)
     init_SymVal(x);
     assign_at_FildeshKV(map, id, x, sizeof(*x));
   }
+  return x;
+}
+
+static
+  SymVal*
+declare_SymVal(FildeshKV* map, SymValKind kind,
+               const char* name, FildeshAlloc* alloc)
+{
+  SymVal* x = getf_SymVal(map, name, alloc);
+  if (x->kind == IOFileVal) {
+    fildesh_log_errorf("Cannot redefine tmpfile symbol: %s", name);
+    return NULL;
+  }
+  x->kind = kind;
   return x;
 }
 
@@ -527,6 +547,7 @@ sep_line(TableT(cstr)* args, char* s, FildeshKV* map, FildeshAlloc* alloc, Filde
 static
   int
 parse_file(
+    CommandHookup* cmd_hookup,
     TableT(Command)* cmds,
     FildeshX* in,
     const char* this_filename,
@@ -561,8 +582,8 @@ parse_file(
 
       sym_kind = parse_sym(cmd->line, false);
       assert(sym_kind == HereDocVal);
-      sym = getf_SymVal(map, cmd->line, global_alloc);
-      sym->kind = HereDocVal;
+      sym = declare_SymVal(map, HereDocVal, cmd->line, global_alloc);
+      if (!sym) {istat = -1; break;}
       sym->as.here_doc = cmd->doc;
     }
     else if (pfxeq_cstr ("$(<<", line))
@@ -579,10 +600,10 @@ parse_file(
         istat = -1;
         break;
       }
-      lose_Command (TopTable( *cmds ));
+      lose_Command(TopTable( *cmds ));
       MPopTable( *cmds, 1 );
 
-      istat = parse_file(cmds, src, filename_FildeshXF(src),
+      istat = parse_file(cmd_hookup, cmds, src, filename_FildeshXF(src),
                          map, scope_alloc, global_alloc, tmp_out);
       if (istat == 0 && cmds->sz > 0 &&
           cmds->s[cmds->sz-1].kind == BarrierCommand)
@@ -627,8 +648,8 @@ parse_file(
           (const char* const*)(void*)&cmd->args.s[2],
           global_alloc);
       if (concatenated_args) {
-        SymVal* sym = getf_SymVal(map, sym_name, global_alloc);
-        sym->kind = HereDocVal;
+        SymVal* sym = declare_SymVal(map, HereDocVal, sym_name, global_alloc);
+        if (!sym) {istat = -1; break;}
         sym->as.here_doc = concatenated_args;
 
         cmd->kind = HereDocCommand;
@@ -656,6 +677,28 @@ parse_file(
         PushTable( cmd->args, buf );
       }
       cmd->line = sym_name;
+    }
+    else if (pfxeq_cstr("$(tmpfile ", line))
+    {
+      char* begline;
+      char* sym_name = line;
+      SymVal* sym;
+
+      sym_name = &sym_name[count_non_ws(sym_name)];
+      sym_name = &sym_name[count_ws(sym_name)];
+      begline = strchr(sym_name, ')');
+      if (!begline) {
+        perror_Command(cmd, "Unclosed paren in tmpfile def.", 0);
+        istat = -1;
+        break;
+      }
+      begline[0] = '\0';
+      sym = declare_SymVal(map, IOFileVal, sym_name, global_alloc);
+      if (!sym) {istat = -1; break;}
+      sym->as.iofilename = add_tmp_file(cmd_hookup, ".txt", global_alloc);
+
+      lose_Command(cmd);
+      MPopTable( *cmds, 1 );
     }
     else
     {
@@ -721,7 +764,8 @@ parse_sym (char* s, bool firstarg)
   {
     if (s[o+1] == 'O')
     {
-      kind = IODescVal;
+      if (s[o+2] == 'F')  kind = IOFileVal;
+      else                kind = IODescVal;
     }
     else if (s[o+1] == 'A')
     {
@@ -825,10 +869,9 @@ remove_tmppath(void* temporary_directory)
   fildesh_log_trace("freed temporary_directory");
 }
 
-  static char*
-add_tmp_file_Command(Command* cmd,
-                     CommandHookup* cmd_hookup,
-                     const char* extension)
+  char*
+add_tmp_file(CommandHookup* cmd_hookup, const char* extension,
+             FildeshAlloc* alloc)
 {
   char buf[2048];
   assert(extension);
@@ -845,7 +888,15 @@ add_tmp_file_Command(Command* cmd,
   sprintf(buf, "%s/%u%s", cmd_hookup->temporary_directory,
           cmd_hookup->tmpfile_count, extension);
   cmd_hookup->tmpfile_count += 1;
-  PushTable( cmd->tmp_files, strdup_FildeshAlloc(cmd->alloc, buf) );
+  return strdup_FildeshAlloc(alloc, buf);
+}
+
+  static char*
+add_tmp_file_Command(Command* cmd,
+                     CommandHookup* cmd_hookup,
+                     const char* extension)
+{
+  PushTable( cmd->tmp_files, add_tmp_file(cmd_hookup, extension, cmd->alloc) );
   return cmd->tmp_files.s[cmd->tmp_files.sz - 1];
 }
 
@@ -885,7 +936,7 @@ pipe_from_elastic(Command* elastic_cmd)
 
 static
   int
-transfer_map_entries(FildeshKV* map, FildeshKV* add_map, const Command* cmd, FildeshAlloc* global_alloc)
+transfer_map_entries(FildeshKV* map, FildeshKV* add_map, const Command* cmd)
 {
   int istat = 0;
   FildeshKV_id_t add_id;
@@ -895,21 +946,12 @@ transfer_map_entries(FildeshKV* map, FildeshKV* add_map, const Command* cmd, Fil
   {
     const char* add_key = (const char*) key_at_FildeshKV(add_map, add_id);
     const SymVal* add_sym = (const SymVal*) value_at_FildeshKV(add_map, add_id);
-#if 0
-    SymVal* sym = getf_SymVal(map, add_key, global_alloc);
-#else
     const FildeshKV_id_t id = ensure_FildeshKV( map, add_key, size_of_key_at_FildeshKV(add_map, add_id));
     const SymVal* sym = (const SymVal*) value_at_FildeshKV(map, id);
-    (void) global_alloc;
-#endif
     if (sym && !(sym->kind==NSymValKinds || sym->kind==HereDocVal || sym->kind==DefVal)) {
       FailBreak(cmd, "Trying to overwrite an existing stream variable", add_key);
     }
-#if 0
-    *sym = *add_sym;
-#else
     assign_at_FildeshKV(map, id, add_sym, sizeof(*add_sym));
-#endif
     remove_at_FildeshKV(add_map, add_id);
   }
   return istat;
@@ -938,8 +980,8 @@ setup_commands(TableT(Command)* cmds, CommandHookup* cmd_hookup,
        * but we need to overwrite the symbol
        * just in case there are multiple occurrences.
        */
-      SymVal* sym = getf_SymVal(map, cmd->line, global_alloc);
-      sym->kind = HereDocVal;
+      SymVal* sym = declare_SymVal(map, HereDocVal, cmd->line, global_alloc);
+      if (!sym) {istat = -1; break;}
       sym->as.here_doc = cmd->doc;
 
       /* The loops should not run.*/
@@ -1025,6 +1067,14 @@ setup_commands(TableT(Command)* cmds, CommandHookup* cmd_hookup,
         }
         sym->kind = NSymValKinds;
         cmd->stdos = -1;
+      }
+      else if (kind == IOFileVal) {
+        SymVal* sym = getf_SymVal(map, arg, global_alloc);
+        if (sym->kind != IOFileVal) {
+          FailBreak(cmd, "Not declared as a file", arg);
+        }
+        cmd->args.s[arg_q] = (char*)sym->as.iofilename;
+        arg_q += 1;
       }
       else if (kind == IDescVal ||
                kind == IDescFileVal ||
@@ -1144,24 +1194,21 @@ setup_commands(TableT(Command)* cmds, CommandHookup* cmd_hookup,
 
       if (cmd->kind == StdinCommand && kind == ODescVal)
       {
-        SymVal* sym = getf_SymVal(add_map, arg, global_alloc);
-        sym->kind = ODescVal;
+        SymVal* sym = declare_SymVal(add_map, ODescVal, arg, global_alloc);
+        if (!sym) {istat = -1; break;}
         sym->cmd_idx = i;
         sym->as.file_desc = cmd->stdis;
         cmd->stdis = -1;
         InitDomMax( sym->arg_idx );
         InitDomMax( sym->ios_idx );
       }
-      else if (kind == ODescFileVal && eq_cstr (arg, "VOID")) {
-        cmd->args.s[arg_q] = strdup_FildeshAlloc(cmd->alloc, "/dev/null");
-        arg_q += 1;
-      } else if (kind == ODescVal || kind == IODescVal ||
-                 kind == ODescStatusVal ||
-                 kind == ODescFileVal)
+      else if (kind == ODescVal || kind == IODescVal ||
+               kind == ODescStatusVal ||
+               kind == ODescFileVal)
       {
         fildesh_fd_t fd[2];
-        SymVal* sym = getf_SymVal(add_map, arg, global_alloc);
-        sym->kind = ODescVal;
+        SymVal* sym = declare_SymVal(add_map, ODescVal, arg, global_alloc);
+        if (!sym) {istat = -1; break;}
         sym->cmd_idx = i;
         InitDomMax( sym->arg_idx );
         InitDomMax( sym->ios_idx );
@@ -1188,8 +1235,8 @@ setup_commands(TableT(Command)* cmds, CommandHookup* cmd_hookup,
       else if (kind == IFutureDescVal || kind == IFutureDescFileVal)
       {
         fildesh_fd_t fd[2];
-        SymVal* sym = getf_SymVal(add_map, arg, global_alloc);
-        sym->kind = IFutureDescVal;
+        SymVal* sym = declare_SymVal(add_map, IFutureDescVal, arg, global_alloc);
+        if (!sym) {istat = -1; break;}
         sym->cmd_idx = i;
         InitDomMax( sym->arg_idx );
         InitDomMax( sym->ios_idx );
@@ -1225,12 +1272,12 @@ setup_commands(TableT(Command)* cmds, CommandHookup* cmd_hookup,
       cmd->args.sz = arg_q;
 
     if (cmd->kind == DefCommand) {
-      SymVal* sym = getf_SymVal(map, cmd->line, global_alloc);
-      sym->kind = DefVal;
+      SymVal* sym = declare_SymVal(map, DefVal, cmd->line, global_alloc);
+      if (!sym) {istat = -1; break;}
       sym->cmd_idx = i;
     }
 
-    istat = transfer_map_entries(map, add_map, cmd, global_alloc);
+    istat = transfer_map_entries(map, add_map, cmd);
   }
   return istat;
 }
@@ -1913,8 +1960,8 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
        SymVal* sym;
        v[0] = '\0';
        v = &v[1];
-       sym = getf_SymVal(&cmd_hookup->map, k, global_alloc);
-       sym->kind = HereDocVal;
+       sym = declare_SymVal(&cmd_hookup->map, HereDocVal, k, global_alloc);
+       if (!sym) {istat = -1; break;}
        sym->as.here_doc = v;
      } else {
         fildesh_log_errorf("Bad -a arg: %s", k);
@@ -2062,8 +2109,8 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
 
     sym_kind = parse_sym(cmd->line, false);
     assert(sym_kind == HereDocVal);
-    sym = getf_SymVal(&cmd_hookup->map, cmd->line, global_alloc);
-    sym->kind = HereDocVal;
+    sym = declare_SymVal(&cmd_hookup->map, HereDocVal, cmd->line, global_alloc);
+    assert(sym);
     sym->as.here_doc = cmd->doc;
 
     while (script_args.sz < 10) {
@@ -2091,8 +2138,8 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
 
     sym_kind = parse_sym(cmd->line, false);
     assert(sym_kind == HereDocVal);
-    sym = getf_SymVal(&cmd_hookup->map, cmd->line, global_alloc);
-    sym->kind = HereDocVal;
+    sym = declare_SymVal(&cmd_hookup->map, HereDocVal, cmd->line, global_alloc);
+    assert(sym);
     sym->as.here_doc = cmd->doc;
   }
   LoseTable( script_args );
@@ -2109,6 +2156,7 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
   while (exstatus == 0 && script_in) {
     FildeshAlloc* scope_alloc = open_FildeshAlloc();
     istat = parse_file(
+        cmd_hookup,
         cmds, script_in, filename_FildeshXF(script_in),
         &cmd_hookup->map, scope_alloc, global_alloc, tmp_out);
     if (istat != 0 ||

@@ -100,6 +100,11 @@ fildesh_test(
 )
 
 fildesh_test(
+    name = "tmpfile_xofxof_test",
+    srcs = ["tmpfile_xofxof_test.fildesh"],
+)
+
+fildesh_test(
     name = "wait_xaxaxa_test",
     srcs = ["wait_xaxaxa_test.fildesh"],
 )

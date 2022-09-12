@@ -1,0 +1,9 @@
+
+$(tmpfile f)
+
+zec -o $(XOF f) / "hello there world" /
+
+$(barrier)
+|< zec / "hello there world" /
+|- cmp - $(XOF f)
+|> stdout
