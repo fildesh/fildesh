@@ -2,12 +2,16 @@
 
 ## Supported Versions
 
-A Fildesh scripts should not be considered secure in any way unless it is run with the `-secure` flag.
-That flag is not currently implemented (https://github.com/fildesh/fildesh/issues/63).
+A Fildesh script should not be considered secure because it may:
+* Run external programs.
+* Create temporary files.
+As such, no versions of Fildesh receive security updates.
 
 | Version | Supported          |
 | ------- | ------------------ |
 | latest  | :x:                |
+
+Please run Fildesh in a Docker container if using it to process data from untrusted sources.
 
 ## Reporting a Vulnerability
 

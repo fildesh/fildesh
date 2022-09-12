@@ -33,13 +33,22 @@ zec -o $(OF expect) / "55\n" /
 |> stdout
 ```
 
-## How to Use
+## How to Run
 
+### Docker
+Self-contained scripts can be run in a Docker container:
+```shell
+docker pull ghcr.io/fildesh/fildesh:latest
+docker run --rm -i ghcr.io/fildesh/fildesh:latest < example/hello.fildesh
+```
+
+### Bazel
 If you have Bazel, try:
 ```shell
 bazel run //:fildesh -- $PWD/example/hello.fildesh
 ```
 
+### CMake
 If you have CMake, try:
 ```shell
 make && ./bld/src/fildesh example/hello.fildesh
