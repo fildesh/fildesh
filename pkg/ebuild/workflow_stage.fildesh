@@ -1,0 +1,11 @@
+#!/bin/env fildesh
+
+# source_root
+# final_dst
+
+|< grep -m1 -E -e 'version = ' "${source_root}/MODULE.bazel"
+|> sed -E -e 's/.*"(.*)".*/\1/' $(O version)
+
+zec -o $(OF dst) / "${final_dst}/fildesh-" $(XA version) ".ebuild" /
+cp "${source_root}/pkg/ebuild/fildesh.ebuild" $(XA dst)
+

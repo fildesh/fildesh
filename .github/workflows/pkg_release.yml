@@ -1,0 +1,54 @@
+name: Release Packages
+
+on:
+  push:
+    branches: ['release']
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Create Build Environment
+      run: >
+        cmake -E make_directory
+        ${{runner.workspace}}/bld/pkg/fildesh/DEBIAN
+        ${{runner.workspace}}/bld/pkg/fildesh/usr
+        ${{runner.workspace}}/bld/pkg/final
+
+    - name: Configure CMake
+      shell: bash
+      working-directory: ${{runner.workspace}}/bld
+      run: >
+        cmake $GITHUB_WORKSPACE
+        -DCMAKE_BUILD_TYPE:STRING=Release
+        -DCMAKE_INSTALL_PREFIX:PATH=${{runner.workspace}}/bld/pkg/fildesh/usr
+
+    - name: Build
+      working-directory: ${{runner.workspace}}/bld
+      shell: bash
+      run: cmake --build "." --target "install"
+
+    - name: Package deb
+      working-directory: ${{runner.workspace}}
+      run: >
+        ./bld/pkg/fildesh/usr/bin/fildesh
+        -a source_root=$GITHUB_WORKSPACE
+        -a pkg_dst=${{runner.workspace}}/bld/pkg
+        -f $GITHUB_WORKSPACE/pkg/deb/workflow_stage.fildesh
+
+    - name: Package ebuild
+      working-directory: ${{runner.workspace}}
+      run: >
+        ./bld/pkg/fildesh/usr/bin/fildesh
+        -a source_root=$GITHUB_WORKSPACE
+        -a final_dst=${{runner.workspace}}/bld/pkg/final
+        -f $GITHUB_WORKSPACE/pkg/ebuild/workflow_stage.fildesh
+
+    - name: Release
+      uses: fnkr/github-action-ghr@v1
+      env:
+        GHR_PATH: ${{runner.workspace}}/bld/pkg/final/
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -2,7 +2,7 @@ name: Docker Image
 
 on:
   push:
-    branches: ['deploy', 'release']
+    branches: ['deploy']
 
 env:
   REGISTRY: ghcr.io

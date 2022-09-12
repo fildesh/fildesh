@@ -1,0 +1,30 @@
+#!/bin/env fildesh
+
+# source_root
+# pkg_dst
+
+$(> root_dst) "${pkg_dst}/fildesh"
+$(> pkg_debian) "${root_dst}/DEBIAN"
+$(> architecture) "amd64"
+$(> final_dst) "${pkg_dst}/final"
+
+|< grep -m1 -E -e 'version = ' "${source_root}/MODULE.bazel"
+|> sed -E -e 's/.*"(.*)".*/\1/' $(O version)
+
+zec -o "${pkg_debian}/control" / \
+  "Package: fildesh\n" \
+  "Version: " $(XA version) "\n" \
+  "Maintainer: grencez\n" \
+  "Architecture: ${architecture}\n" \
+  "Description: Now you're scripting with FIFOs.\n" \
+  /
+
+$(barrier)
+dpkg-deb --build "${root_dst}"
+
+$(barrier)
+mv "${pkg_dst}/fildesh.deb" "${final_dst}/fildesh.deb"
+
+$(barrier)
+|< dpkg-name "${final_dst}/fildesh.deb"
+|> stdout
