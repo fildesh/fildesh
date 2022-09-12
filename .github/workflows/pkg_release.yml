@@ -47,8 +47,7 @@ jobs:
         -a final_dst=${{runner.workspace}}/bld/pkg/final
         -f $GITHUB_WORKSPACE/pkg/ebuild/workflow_stage.fildesh
 
-    - name: Release
-      uses: fnkr/github-action-ghr@v1
-      env:
-        GHR_PATH: ${{runner.workspace}}/bld/pkg/final/
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Upload Package Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        path: ${{runner.workspace}}/bld/pkg/final/
