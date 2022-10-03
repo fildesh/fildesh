@@ -243,6 +243,15 @@ void assign_at_FildeshKV(FildeshKV*, FildeshKV_id_t, const void*, size_t);
 void remove_at_FildeshKV(FildeshKV*, FildeshKV_id_t);
 void close_FildeshKV(FildeshKV*);
 
+
+void*
+realloc_more_FildeshA_(void* at, fildesh_lgsize_t* p_allocated_lgcount,
+                       const size_t element_size, const size_t count);
+void*
+realloc_less_FildeshA_(void* at, fildesh_lgsize_t* p_allocated_lgcount,
+                       const size_t element_size, const size_t count);
+
+
 /* Inlines.*/
 static inline FildeshX default_FildeshX() {FildeshX tmp = DEFAULT_FildeshX; return tmp;}
 static inline FildeshO default_FildeshO() {FildeshO tmp = DEFAULT_FildeshO; return tmp;}
@@ -276,25 +285,14 @@ static inline
   void*
 grow_FildeshA_(void** p_at, size_t* p_count,
                fildesh_lgsize_t* p_allocated_lgcount,
-               size_t element_size, size_t difference,
-               void* (*realloc_fn) (void*, size_t))
+               size_t element_size, size_t difference)
 {
   void* at = *p_at;
   const size_t count = *p_count + difference;
-  fildesh_lgsize_t allocated_lgcount = *p_allocated_lgcount;
-
-  if ((count << 1) > ((size_t)1 << allocated_lgcount)) {
-    if (allocated_lgcount == 0) {
-      allocated_lgcount = 1;
-    }
-    do {
-      allocated_lgcount += 1;
-    } while ((count << 1) > ((size_t)1 << allocated_lgcount));
-    at = realloc_fn(at, fildesh_size_of_lgcount(element_size, allocated_lgcount));
+  if ((count << 1) > ((size_t)1 << *p_allocated_lgcount)) {
+    at = realloc_more_FildeshA_(at, p_allocated_lgcount, element_size, count);
     if (!at) {return NULL;}
-
     *p_at = at;
-    *p_allocated_lgcount = allocated_lgcount;
   }
   *p_count = count;
   return (void*)((uintptr_t)at + (count - difference) * element_size);
@@ -304,22 +302,15 @@ static inline
   void
 mpop_FildeshA_(void** p_at, size_t* p_count,
                fildesh_lgsize_t* p_allocated_lgcount,
-               size_t element_size, size_t difference,
-               void* (*realloc_fn) (void*, size_t))
+               size_t element_size, size_t difference)
 {
-  void* at = *p_at;
   const size_t count = *p_count - difference;
-  fildesh_lgsize_t allocated_lgcount = *p_allocated_lgcount;
+  const fildesh_lgsize_t allocated_lgcount = *p_allocated_lgcount;
 
   *p_count = count;
   if ((allocated_lgcount >= 3) && ((count >> (allocated_lgcount - 3)) == 0)) {
-    do {
-      allocated_lgcount -= 1;
-    } while ((allocated_lgcount >= 3) && ((count >> (allocated_lgcount - 3)) == 0));
-
-    at = realloc_fn(at, fildesh_size_of_lgcount(element_size, allocated_lgcount));
-    if (at) {*p_at = at;}
-    *p_allocated_lgcount = allocated_lgcount;
+    *p_at = realloc_less_FildeshA_(
+        *p_at, p_allocated_lgcount, element_size, count);
   }
 }
 

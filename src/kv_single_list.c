@@ -75,7 +75,7 @@ add_FildeshKV(FildeshKV* map, const void* k, size_t ksize)
     size_t i;
     grow_FildeshA_(
         (void**)&map->at, &allocated_count, &map->allocated_lgcount,
-        sizeof(FildeshKVE), 1, realloc);
+        sizeof(FildeshKVE), 1);
 
     allocated_count = fildesh_size_of_lgcount(1, map->allocated_lgcount);
     assert(map->freelist_head < allocated_count);

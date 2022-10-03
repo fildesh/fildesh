@@ -1,6 +1,7 @@
 
 add_library(fildesh_lib_obj OBJECT
   "alloc.c"
+  "lib/array.c"
   "infile.c"
   "instream.c"
   "kve.c"

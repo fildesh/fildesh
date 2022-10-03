@@ -33,7 +33,7 @@ LLVMFuzzerTestOneInput(const uint8_t data[], size_t size) {
       if (growing) {
         int* dst = (int*)
           grow_FildeshA_((void**)&at, &count, &allocated_lgcount,
-                      sizeof(int), difference, realloc);
+                      sizeof(int), difference);
         for (j = 0; j < difference; ++j) {
           dst[j] = (int) j;
           assert(at[count-difference+j] == (int)j);
@@ -43,7 +43,7 @@ LLVMFuzzerTestOneInput(const uint8_t data[], size_t size) {
           difference = count;
         }
         mpop_FildeshA_((void**)&at, &count, &allocated_lgcount,
-                    sizeof(int), difference, realloc);
+                    sizeof(int), difference);
       }
       difference = 0;
     }

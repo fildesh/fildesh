@@ -42,7 +42,7 @@ grow_FildeshO(FildeshO* o, size_t capac)
 {
   return (char*) grow_FildeshA_(
       (void**)&o->at, &o->size, &o->alloc_lgsize,
-      1, capac, realloc);
+      1, capac);
 }
 
   void

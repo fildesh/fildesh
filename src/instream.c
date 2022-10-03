@@ -55,7 +55,7 @@ grow_FildeshX(FildeshX* in, size_t capac)
 {
   return (char*) grow_FildeshA_(
       (void**)&in->at, &in->size, &in->alloc_lgsize,
-      1, capac, realloc);
+      1, capac);
 }
 
   void

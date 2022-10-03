@@ -1,0 +1,5 @@
+exports_files([
+    "array.c",
+], visibility = [
+    "//:__pkg__",
+])

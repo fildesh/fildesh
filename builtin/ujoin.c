@@ -86,7 +86,7 @@ setup_lookup_table(FildeshX* in, const char* delim,
     s = strdup_FildeshAlloc(alloc, s);
     join = fildesh_allocate(LineJoin, 1, alloc);
     *(LineJoin**) grow_FildeshA_((void**)&joins, &join_count, &join_lgcount,
-                                 sizeof(LineJoin*), 1, realloc)
+                                 sizeof(LineJoin*), 1)
       = join;
     join->field = s;
     join->lookup_line = NULL;

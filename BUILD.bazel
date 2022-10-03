@@ -57,6 +57,7 @@ cc_library(
         "//src:outfile.c",
         "//src:outstream.c",
         "//src:string.c",
+        "//src/lib:array.c",
     ],
     includes = ["include"],
     deps = [":fildesh_compat_lib"],

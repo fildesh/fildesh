@@ -36,7 +36,7 @@ parse_row(
     }
     *(char**) grow_FildeshA_(
         (void**)fields_buf, &row->field_count, field_lgcount,
-        sizeof(char*), 1, realloc)
+        sizeof(char*), 1)
       = strdup_FildeshX(&field, alloc);
 
     skipstr_FildeshX(row_in, (const char*)delim);
@@ -102,7 +102,7 @@ fildesh_builtin_transpose_main(unsigned argc, char** argv,
   {
     TransposeLine* row = (TransposeLine*)
       grow_FildeshA_((void**) &mat, &line_count, &line_lgcount,
-                     sizeof(TransposeLine), 1, realloc);
+                     sizeof(TransposeLine), 1);
     parse_row(&slice, row, &fields_buf, &field_lgcount,
               (const unsigned char*)delim, pad, alloc);
     if (line_count > 1) {

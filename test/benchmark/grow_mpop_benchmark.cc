@@ -12,13 +12,12 @@ static void BM_PushPop_FildeshA(benchmark::State& state) {
 		fildesh_lgsize_t allocated_lgcount = 0;
 		for (int i = 0; i < state.range(0); ++i) {
 			*static_cast<unsigned char*>(
-          grow_FildeshA_((void**)(&at), &count, &allocated_lgcount, 1, 1, realloc))
+          grow_FildeshA_((void**)(&at), &count, &allocated_lgcount, 1, 1))
         = static_cast<unsigned char>(i & 0xFF);
 		}
 		for (int i = 0; i < state.range(0); ++i) {
       benchmark::DoNotOptimize(at[count-1]);
-      mpop_FildeshA_((void**)&at, &count, &allocated_lgcount,
-                  1, 1, realloc);
+      mpop_FildeshA_((void**)&at, &count, &allocated_lgcount, 1, 1);
 		}
     if (at) {free(at);}
   }
