@@ -1,7 +1,6 @@
 
 include(GNUInstallDirs)
 add_subdirectory(lib)
-add_subdirectory(cx)
 
 
 set(FILDESH_EXTRA_ELASTIC_AIO_LIBS)
@@ -64,7 +63,6 @@ endif()
 
 add_library(fildesh_builtin_lib STATIC
   $<TARGET_OBJECTS:fildesh_builtin_lib_obj>
-  $<TARGET_OBJECTS:cx_lib_obj>
   $<TARGET_OBJECTS:fildesh_lib_obj>
   $<TARGET_OBJECTS:fildesh_compat_lib_obj>
   )
@@ -86,14 +84,14 @@ target_link_libraries(execfd fildesh_lib)
 
 add_executable(godo "godo.c"
   "${CMAKE_SOURCE_DIR}/include/fildesh_builtin.h")
-target_link_libraries(godo cx_lib)
+target_link_libraries(godo fildesh_lib)
 
 add_executable(sshall "ssh-all.c")
 target_link_libraries(sshall fildesh_lib)
 
 add_executable(waitdo "waitdo.c"
   "${CMAKE_SOURCE_DIR}/include/fildesh_builtin.h")
-target_link_libraries(waitdo cx_lib)
+target_link_libraries(waitdo fildesh_lib)
 
 if (UNIX)
   add_executable(elastic_poll "elastic_poll.c")

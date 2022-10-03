@@ -2,8 +2,6 @@
  * \file lgtable_test.c
  **/
 
-#include "src/cx/syscx.h"
-
 #include "lgtable.h"
 
 /** \test
@@ -118,11 +116,9 @@ int main(int argc, char** argv)
 {
   (void) argc;
   (void) argv;
-  init_sysCx();
 
   testfn_LgTable();
   testfn_stress_LgTable();
 
-  lose_sysCx ();
   return 0;
 }

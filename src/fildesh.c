@@ -15,13 +15,13 @@
 
 #include "parse_fildesh.h"
 
-#include "cx/syscx.h"
-
 #include <assert.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+/* Defined in main_fildesh.c.*/
+void push_fildesh_exit_callback(void (*f) (void*), void* x);
 
 
 enum SymValKind
@@ -889,7 +889,7 @@ add_tmp_file(CommandHookup* cmd_hookup, const char* extension,
       fildesh_log_error("Unable to create temp directory.");
       return NULL;
     }
-    push_losefn_sysCx(remove_tmppath, cmd_hookup->temporary_directory);
+    push_fildesh_exit_callback(remove_tmppath, cmd_hookup->temporary_directory);
   }
 
   sprintf(buf, "%s/%u%s", cmd_hookup->temporary_directory,
@@ -1895,14 +1895,6 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
   global_alloc = open_FildeshAlloc();
   cmd_hookup = new_CommandHookup(global_alloc);
 
-  signal(SIGINT, lose_sysCx);
-  signal(SIGSEGV, lose_sysCx);
-#ifndef _MSC_VER
-  signal(SIGQUIT, lose_sysCx);
-  /* We already detect closed pipes when write() returns <= 0.*/
-  signal(SIGPIPE, SIG_IGN);
-#endif
-
   while (argi < argc && exstatus == 0 && !exiting) {
     const char* arg;
     arg = argv[argi++];
@@ -2074,7 +2066,7 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
     close_FildeshAlloc(global_alloc);
     return exstatus;
   }
-  push_losefn_sysCx(close_FildeshAlloc_generic, global_alloc);
+  push_fildesh_exit_callback(close_FildeshAlloc_generic, global_alloc);
 
   {
     DECLARE_FildeshAT(Command, tmp_cmds);
@@ -2082,7 +2074,7 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
     cmds = (Command**)malloc(sizeof(tmp_cmds));
     memcpy(cmds, tmp_cmds, sizeof(tmp_cmds));
   }
-  push_losefn_sysCx(lose_Commands, cmds);
+  push_fildesh_exit_callback(lose_Commands, cmds);
 
   if (use_stdin) {
     script_in = open_arg_FildeshXF(0, argv, inputv);

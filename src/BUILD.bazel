@@ -46,7 +46,7 @@ cc_library(
         "FILDESH_BUILTIN_LIBRARY",
     ],
     deps = [
-        "//src/cx:cx_lib",
+        "//:fildesh_lib",
     ],
 )
 
@@ -119,7 +119,7 @@ cc_binary(
         "waitdo.c",
         "//include:fildesh_builtin.h",
     ],
-    deps = ["//src/cx:cx_lib"],
+    deps = ["//:fildesh_lib"],
     visibility = ["//test/builtin:__pkg__"],
 )
 

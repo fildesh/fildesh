@@ -3,8 +3,6 @@
  * Tests for dynamic arrays.
  **/
 
-#include "src/cx/syscx.h"
-
 #include "table.h"
 
 
@@ -128,10 +126,8 @@ int main(int argc, char** argv)
 {
   (void) argc;
   (void) argv;
-  init_sysCx();
 
   testfn_Table();
 
-  lose_sysCx();
   return 0;
 }

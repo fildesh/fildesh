@@ -3,7 +3,6 @@
  * Tests for red-black tree.
  **/
 
-#include "src/cx/syscx.h"
 #include <stdio.h>
 
 #include "associa.h"
@@ -314,11 +313,9 @@ int main(int argc, char** argv)
 {
   (void) argc;
   (void) argv;
-  init_sysCx();
 
   testfn_RBTree();
   testfn_Associa();
 
-  lose_sysCx ();
   return 0;
 }

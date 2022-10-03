@@ -11,7 +11,6 @@ add_library(obsolete_cx_lib_obj OBJECT
 )
 target_include_directories(obsolete_cx_lib_obj PRIVATE "${CMAKE_SOURCE_DIR}")
 add_library(obsolete_cx_lib STATIC
-  $<TARGET_OBJECTS:cx_lib_obj>
   $<TARGET_OBJECTS:obsolete_cx_lib_obj>
   $<TARGET_OBJECTS:fildesh_lib_obj>
   $<TARGET_OBJECTS:fildesh_compat_lib_obj>
@@ -23,7 +22,6 @@ add_library(cx_int_int_map_lib_obj OBJECT
 )
 target_include_directories(cx_int_int_map_lib_obj PRIVATE "${CMAKE_SOURCE_DIR}")
 add_library(cx_int_int_map_lib STATIC
-  $<TARGET_OBJECTS:cx_lib_obj>
   $<TARGET_OBJECTS:obsolete_cx_lib_obj>
   $<TARGET_OBJECTS:cx_int_int_map_lib_obj>
   $<TARGET_OBJECTS:fildesh_lib_obj>
