@@ -1,6 +1,24 @@
 #include "fildesh.h"
 #include <stdlib.h>
 
+  void
+close_FildeshAT(void* p)
+{
+  FildeshA* a = (FildeshA*) p;
+  if (a->at) {
+    free(a->at);
+    a->at = NULL;
+  }
+  a->count = 0;
+  a->allocated_lgcount = 0;
+}
+
+  void
+clear_FildeshAT(void* p)
+{
+  close_FildeshAT(p);
+}
+
   void*
 realloc_more_FildeshA_(void* at, fildesh_lgsize_t* p_allocated_lgcount,
                        const size_t element_size, const size_t count)

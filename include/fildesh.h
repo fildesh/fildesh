@@ -35,6 +35,7 @@ typedef struct FildeshO FildeshO;
 typedef struct FildeshAlloc FildeshAlloc;
 typedef struct FildeshKV FildeshKV;
 typedef struct FildeshKVE FildeshKVE;
+typedef struct FildeshA FildeshA;
 
 
 struct FildeshX {
@@ -244,6 +245,16 @@ void remove_at_FildeshKV(FildeshKV*, FildeshKV_id_t);
 void close_FildeshKV(FildeshKV*);
 
 
+struct FildeshA {
+  void* at;
+  size_t count;
+  fildesh_lgsize_t allocated_lgcount;
+};
+#define DECLARE_FildeshAT(T, name) \
+  T* name[3]
+
+void close_FildeshAT(void*);
+void clear_FildeshAT(void*);
 void*
 realloc_more_FildeshA_(void* at, fildesh_lgsize_t* p_allocated_lgcount,
                        const size_t element_size, const size_t count);
@@ -279,6 +290,72 @@ static inline
 fildesh_size_of_lgcount(size_t size, fildesh_lgsize_t lgcount) {
   if (lgcount == 0) {return 0;}
   return size << (lgcount - 1);
+}
+
+/* Dynamic array inlines take up the rest of this file.*/
+
+static inline void init_FildeshAT(void* p) {
+  void** p_at = (void**) p;
+  p_at[0] = NULL;
+  ((uintptr_t*)p_at)[1] = 0;
+  ((uintptr_t*)p_at)[2] = 0;
+}
+static inline size_t count_of_FildeshAT(const void* p) {
+  return fildesh_castup(FildeshA, at, p)->count;
+}
+static inline size_t allocated_count_of_FildeshAT(const void* p) {
+  return fildesh_size_of_lgcount(
+      1, fildesh_castup(FildeshA, at, p)->allocated_lgcount);
+}
+#define grow_FildeshAT(a, difference)  grow_FildeshAT_(a, sizeof(**a), difference)
+#define mpop_FildeshAT(a, difference)  mpop_FildeshAT_(a, sizeof(**a), difference)
+#define resize_FildeshAT(a, n)  resize_FildeshAT_(a, sizeof(**a), n)
+#define last_FildeshAT(a)  (*(a))[count_of_FildeshAT(a)-1]
+#define grow1_FildeshAT(a) (grow_FildeshAT(a, 1), &(*(a))[count_of_FildeshAT(a)-1])
+#define push_FildeshAT(a, e)  do { \
+  grow_FildeshAT(a, 1); \
+  last_FildeshAT(a) = e; \
+} while (0)
+
+static inline
+  void*
+grow_FildeshAT_(void* p, size_t element_size, size_t difference)
+{
+  FildeshA* const a = fildesh_castup(FildeshA, at, p);
+  const size_t count = a->count + difference;
+  if ((count << 1) > ((size_t)1 << a->allocated_lgcount)) {
+    void* at = realloc_more_FildeshA_(
+        a->at, &a->allocated_lgcount, element_size, count);
+    if (!at) {return NULL;}
+    a->at = at;
+  }
+  a->count = count;
+  return (void*)((uintptr_t)a->at + (count - difference) * element_size);
+}
+
+static inline
+  void
+mpop_FildeshAT_(void* p, size_t element_size, size_t difference)
+{
+  FildeshA* const a = fildesh_castup(FildeshA, at, p);
+  a->count -= difference;
+  if ((a->allocated_lgcount >= 3) && ((a->count >> (a->allocated_lgcount - 3)) == 0)) {
+    a->at = realloc_less_FildeshA_(
+        a->at, &a->allocated_lgcount, element_size, a->count);
+  }
+}
+
+static inline
+  void
+resize_FildeshAT_(void* p, size_t element_size, size_t n)
+{
+  FildeshA* const a = fildesh_castup(FildeshA, at, p);
+  if (n >= a->count) {
+    grow_FildeshAT_(p, element_size, n - a->count);
+  }
+  else {
+    mpop_FildeshAT_(p, element_size, a->count - n);
+  }
 }
 
 static inline

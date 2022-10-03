@@ -1,5 +1,6 @@
 
 add_subdirectory(compat)
+add_subdirectory(lib)
 add_subdirectory(tool)
 add_subdirectory(src)
 add_subdirectory(syntax)
