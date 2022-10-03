@@ -5,7 +5,7 @@
 #ifndef Table_H_
 #define Table_H_
 #ifndef __OPENCL_VERSION__
-#include "def.h"
+#include "src/cx/def.h"
 
 #include <stdlib.h>
 #include <string.h>

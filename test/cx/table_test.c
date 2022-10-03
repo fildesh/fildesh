@@ -3,9 +3,9 @@
  * Tests for dynamic arrays.
  **/
 
-#include "syscx.h"
+#include "src/cx/syscx.h"
 
-#include "alphatab.h"
+#include "table.h"
 
 
 static

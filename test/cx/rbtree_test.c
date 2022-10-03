@@ -6,7 +6,6 @@
 #include "src/cx/syscx.h"
 #include <stdio.h>
 
-#include "src/cx/alphatab.h"
 #include "associa.h"
 #include "lgtable.h"
 #include "rbtree.h"
@@ -166,6 +165,19 @@ remove_TNode (RBTree* t, LgTable* lgt,
   claim_BSTree (&t->bst, *n_expect);
 }
 
+static
+  Sign
+cmp_cstr_loc (const char* const* a, const char* const* b)
+{
+  int ret;
+  if (*a == *b)  return 0;
+  if (!*a)  return -1;
+  if (!*b)  return 1;
+  ret = strcmp(*a, *b);
+  return sign_of(ret);
+}
+
+
 /** \test
  * Rigorously test red-black tree with different combinations of insert
  * and remove operations.
@@ -246,14 +258,14 @@ testfn_Associa ()
   uint n_expect = 1; /* Sentinel node.*/
   uint mi, mj, i;
 
-  InitAssocia( AlphaTab, uint, *map, cmp_AlphaTab );
+  InitAssocia( const char*, uint, *map, cmp_cstr_loc );
 
   Claim2( map->nodes.sz ,==, n_expect );
   UFor( mi, nmuls ) {
     UFor( mj, nmuls ) {
       UFor( i, nkeys ) {
         const uint idx = (muls[mi] * i) % nkeys;
-        const AlphaTab key = dflt1_AlphaTab (keys[idx]);
+        const char* key = keys[idx];
         if (mj % 2 == 0) {
           insert_Associa (map, &key, &idx);
         }
@@ -270,7 +282,7 @@ testfn_Associa ()
 
       UFor( i, nkeys ) {
         const uint idx = (muls[mj] * i) % nkeys;
-        const AlphaTab key = dflt1_AlphaTab (keys[idx]);
+        const char* key = keys[idx];
         Assoc* a;
         if (mj % 2 == 0) {
           a = lookup_Associa (map, &key);

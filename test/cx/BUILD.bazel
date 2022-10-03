@@ -9,6 +9,7 @@ cc_library(
         "lgtable.h",
         "rbtree.c",
         "rbtree.h",
+        "table.h",
     ],
     deps = ["//src/cx:cx_lib"],
     visibility = ["//visibility:public"],
@@ -40,6 +41,13 @@ cc_test(
 cc_test(
     name = "rbtree_test",
     srcs = ["rbtree_test.c"],
+    deps = [":obsolete_cx_lib"],
+    size = "small",
+)
+
+cc_test(
+    name = "table_test",
+    srcs = ["table_test.c"],
     deps = [":obsolete_cx_lib"],
     size = "small",
 )

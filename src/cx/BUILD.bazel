@@ -2,23 +2,13 @@
 cc_library(
     name = "cx_lib",
     srcs = [
-        "alphatab.c",
-        "alphatab.h",
         "def.h",
         "synhax.h",
         "syscx.c",
         "syscx.h",
-        "table.h",
     ],
     deps = [
         "//:fildesh_lib",
     ],
     visibility = ["//visibility:public"],
-)
-
-cc_test(
-    name = "table_test",
-    srcs = ["table_test.c"],
-    deps = [":cx_lib"],
-    size = "small",
 )
