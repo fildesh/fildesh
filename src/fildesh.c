@@ -17,6 +17,7 @@
 
 #include "cx/syscx.h"
 
+#include <assert.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -1205,8 +1206,8 @@ setup_commands(Command** cmds, CommandHookup* cmd_hookup,
         sym->cmd_idx = i;
         sym->as.file_desc = cmd->stdis;
         cmd->stdis = -1;
-        InitDomMax( sym->arg_idx );
-        InitDomMax( sym->ios_idx );
+        sym->arg_idx = UINT_MAX;
+        sym->ios_idx = UINT_MAX;
       }
       else if (kind == ODescVal || kind == IODescVal ||
                kind == ODescStatusVal ||
@@ -1216,8 +1217,8 @@ setup_commands(Command** cmds, CommandHookup* cmd_hookup,
         SymVal* sym = declare_SymVal(add_map, ODescVal, arg, global_alloc);
         if (!sym) {istat = -1; break;}
         sym->cmd_idx = i;
-        InitDomMax( sym->arg_idx );
-        InitDomMax( sym->ios_idx );
+        sym->arg_idx = UINT_MAX;
+        sym->ios_idx = UINT_MAX;
 
         if (0 != fildesh_compat_fd_pipe(&fd[1], &fd[0])) {
           FailBreak(cmd, "Failed to create pipe for variable", arg);
@@ -1244,8 +1245,8 @@ setup_commands(Command** cmds, CommandHookup* cmd_hookup,
         SymVal* sym = declare_SymVal(add_map, IFutureDescVal, arg, global_alloc);
         if (!sym) {istat = -1; break;}
         sym->cmd_idx = i;
-        InitDomMax( sym->arg_idx );
-        InitDomMax( sym->ios_idx );
+        sym->arg_idx = UINT_MAX;
+        sym->ios_idx = UINT_MAX;
 
         if (0 != fildesh_compat_fd_pipe(&fd[1], &fd[0])) {
           FailBreak(cmd, "Failed to create pipe for variable", arg);
@@ -1694,6 +1695,10 @@ add_inheritfd_flags_Command(char*** argv, Command* cmd, bool inprocess) {
 spawn_commands(const char* fildesh_exe, Command** cmds,
                FildeshKV* alias_map, bool forkonly)
 {
+  typedef struct uint2 uint2;
+  struct uint2 {
+    unsigned s[2];
+  };
   DECLARE_FildeshAT(char*, argv);
   DECLARE_FildeshAT(uint2, fdargs);
   unsigned i;
@@ -1793,9 +1798,11 @@ spawn_commands(const char* fildesh_exe, Command** cmds,
     }
 
     if (use_thread) {
-      BuiltinCommandThreadArg* arg = AllocT(BuiltinCommandThreadArg, 1);
+      BuiltinCommandThreadArg* arg = (BuiltinCommandThreadArg*)
+        malloc(sizeof(BuiltinCommandThreadArg));
       arg->command = cmd;
-      arg->argv = DupliT(char*, (*argv), count_of_FildeshAT(argv));
+      arg->argv = (char**)malloc(sizeof(char*) * count_of_FildeshAT(argv));
+      memcpy(arg->argv, (*argv), sizeof(char*) * count_of_FildeshAT(argv));
       cmd->pid = 0;
       istat = pthread_create(
           &cmd->thread, NULL, builtin_command_thread_fn, arg);

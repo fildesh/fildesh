@@ -1,7 +1,6 @@
 
 #include "fildesh_builtin.h"
 #include "fildesh_compat_sh.h"
-#include "cx/syscx.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -12,34 +11,40 @@ main_waitdo(unsigned argc, char** argv)
 {
   const char* ExeName = argv[0];
   FILE* in = stdin;
-  FILE* ErrOut = stderr;
   unsigned argi = 1;
-  DeclLegit( good );
+  int exstatus = 0;
 
-  DoLegitLine( "Need a command!" )
-    argi < argc;
-
-  DoLegitP( in, "File open." )
-  {
-    if (0 == strcmp (argv[argi], "-x"))
-    {
-      ++ argi;
-      if (argi < argc)
-        in = fopen (argv[argi], "rb");
-
-      ++ argi;
+  if (exstatus == 0) {
+    if (argi >= argc) {
+      fildesh_log_error("Need a command!");
+      exstatus = 64;
     }
   }
 
-  DoLegitLine( "Need a command!" )
-    argi < argc;
-
-  DoLegitP( argi < argc, "Need a command!" )
-  {
-    if (0 == strcmp (argv[argi], "--"))  ++ argi;
+  if (exstatus == 0) {
+    if (0 == strcmp(argv[argi], "-x")) {
+      ++ argi;
+      if (argi < argc) {
+        in = fopen(argv[argi], "rb");
+      }
+    }
+    if (!in) {
+      fildesh_log_errorf("No input?");
+      exstatus = 66;
+    }
   }
 
-  if (good)
+  if (exstatus == 0) {
+    if (argi < argc && 0 == strcmp(argv[argi], "--")) {
+      ++ argi;
+    }
+    if (argi >= argc) {
+      fildesh_log_errorf("Need a command!");
+      exstatus = 64;
+    }
+  }
+
+  if (exstatus == 0)
   {
     while (! feof (in) && ! ferror (in))  fgetc (in);
     fclose (in);
@@ -50,11 +55,12 @@ main_waitdo(unsigned argc, char** argv)
     }
     fildesh_compat_sh_exec((const char**)&argv[argi]);
 
-    fprintf (ErrOut, "%s - Failed to execute:%s\n", ExeName, argv[2]);
+    fildesh_log_errorf("%s - Failed to execute:%s\n", ExeName, argv[2]);
+    exstatus = 126;
   }
 
-  fprintf (ErrOut, "Usage: %s [-x IN] [--] COMMAND [ARG...]\n", ExeName);
-  return 1;
+  fildesh_log_errorf("Usage: %s [-x IN] [--] COMMAND [ARG...]\n", ExeName);
+  return exstatus;
 }
 
 #ifndef FILDESH_BUILTIN_LIBRARY

@@ -16,13 +16,14 @@
 # include <io.h>
 #endif
 
-#include <stdio.h>
-#include <stdlib.h>
-
 #include "syscx.h"
+#include "fildesh.h"
 #include "fildesh_compat_sh.h"
 
+#include <assert.h>
 #include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 typedef struct HookFn HookFn;
 struct HookFn { void (*f) (void*); void* x; };

@@ -1,7 +1,5 @@
 
 add_library(cx_lib_obj OBJECT
-  "def.h"
-  "synhax.h"
   "syscx.c"
   "syscx.h"
 )

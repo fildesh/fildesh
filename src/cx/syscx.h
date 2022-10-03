@@ -4,8 +4,6 @@
 #ifndef sysCx_H_
 #define sysCx_H_
 
-#include "def.h"
-
 void
 init_sysCx();
 void
