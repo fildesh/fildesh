@@ -17,16 +17,17 @@
 #endif
 
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "syscx.h"
 #include "fildesh_compat_sh.h"
-#include "alphatab.h"
 
 #include <signal.h>
 
-DeclTableT( HookFn, struct { void (*f) (void*); void* x; } );
+typedef struct HookFn HookFn;
+struct HookFn { void (*f) (void*); void* x; };
 
-static DeclTable( HookFn, LoseFns );
+static DECLARE_FildeshAT(HookFn, LoseFns);
 
 static
   void
@@ -44,6 +45,7 @@ signal_hook_sysCx (int sig)
  **/
 void init_sysCx()
 {
+  init_FildeshAT(LoseFns);
   signal (SIGSEGV, signal_hook_sysCx);
 #ifndef FILDESH_POSIX_SOURCE
   (void) _setmode(_fileno(stdin), _O_BINARY);
@@ -55,7 +57,7 @@ void init_sysCx()
   void
 push_losefn_sysCx (void (*f) (void*), void* x)
 {
-  DeclGrow1Table( HookFn, hook, LoseFns );
+  HookFn* hook = grow1_FildeshAT(LoseFns);
   hook->f = f;
   hook->x = x;
 }
@@ -63,37 +65,16 @@ push_losefn_sysCx (void (*f) (void*), void* x)
   void
 lose_sysCx ()
 {
+  const size_t n = count_of_FildeshAT(LoseFns);
   static bool called = false;
-  unsigned i;
+  size_t i;
   assert(!called);
   called = true;
-  for (i = 0; i < LoseFns.sz; ++i) {
+  for (i = 0; i < n; ++i) {
     /* Do in reverse because it's a stack.*/
-    DeclEltTable( HookFn, hook, LoseFns, LoseFns.sz-i-1 );
+    HookFn* hook = &(*LoseFns)[n-i-1];
     hook->f(hook->x);
   }
-  LoseTable( LoseFns );
-  LoseFns.sz = 0;
+  close_FildeshAT(LoseFns);
 }
 
-  void
-tacenv_sysCx (const char* key, const char* val)
-{
-#ifdef FILDESH_POSIX_SOURCE
-  const char* sep = ":";
-#else
-  const char* sep = ";";
-#endif
-  char* v;
-  DecloStack1( AlphaTab, dec, cons1_AlphaTab (val) );
-
-  v = getenv (key);
-  if (v)
-  {
-    cat_cstr_AlphaTab (dec, sep);
-    cat_cstr_AlphaTab (dec, v);
-  }
-
-  fildesh_compat_sh_setenv(key, cstr_AlphaTab(dec));
-  lose_AlphaTab (dec);
-}

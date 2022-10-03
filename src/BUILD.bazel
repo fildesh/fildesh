@@ -95,7 +95,7 @@ cc_binary(
 cc_binary(
     name = "elastic_aio",
     srcs = ["elastic_aio.c"],
-    deps = ["//src/cx:cx_lib"],
+    deps = ["//:fildesh_lib"],
     linkopts = select({
         "@platforms//os:linux": ["-lrt"],
         "//conditions:default": [],
@@ -109,7 +109,7 @@ cc_binary(
 cc_binary(
     name = "elastic_poll",
     srcs = ["elastic_poll.c"],
-    deps = ["//src/cx:cx_lib"],
+    deps = ["//:fildesh_lib"],
     target_compatible_with = select({
         "@platforms//os:windows": ["@platforms//:incompatible"],
         "//conditions:default": [],

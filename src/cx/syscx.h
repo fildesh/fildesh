@@ -13,8 +13,5 @@ push_losefn_sysCx (void (*f) (void*), void* x);
 void
 lose_sysCx ();
 
-void
-tacenv_sysCx (const char* key, const char* val);
-
 #endif
 

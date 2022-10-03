@@ -5,11 +5,11 @@
 
 #include <aio.h>
 #include <fcntl.h>
+#include <string.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <sys/wait.h>
 
-#include "cx/alphatab.h"
-#include "cx/table.h"
 #include "fildesh.h"
 
 #include <errno.h>
@@ -32,24 +32,36 @@ typedef struct IOState IOState;
 struct IOState
 {
   struct aiocb aio;
-  Bool pending;
-  Bool done;
-  zuint off;
+  bool pending;
+  bool done;
+  size_t off;
 
   /** Buffer being used for asynchronous operations.*/
-  TableT(byte) buf;
+  DECLARE_FildeshAT(unsigned char, buf);
 
   /** Buffer that was read.*/
-  TableT(byte) xbuf;
+  DECLARE_FildeshAT(unsigned char, xbuf);
 };
 
-DeclTableT(IOState, IOState);
-
-Bool all_done (const TableT(IOState)* ios)
+static
+  IOState
+default_IOState()
 {
-  uint i;
-  for (i = 1; i < ios->sz; ++i) {
-    if (!ios->s[i].done) {
+  IOState io;
+  memset(&io.aio, 0, sizeof(io.aio));
+  io.pending = false;
+  io.done = false;
+  io.off = 0;
+  init_FildeshAT(io.buf);
+  init_FildeshAT(io.xbuf);
+  return io;
+}
+
+bool all_done(IOState** ios)
+{
+  unsigned i;
+  for (i = 1; i < count_of_FildeshAT(ios); ++i) {
+    if (!(*ios)[i].done) {
       StateMsg("all done? No");
       return 0;
     }
@@ -75,43 +87,44 @@ main_elastic_aio(unsigned argc, char** argv)
 {
   unsigned argi = 1;
   int istat = 0;
-  DeclTable( IOState, ios );
-  const zuint xbuf_inc = 1024;
+  DECLARE_FildeshAT(IOState, ios);
+  const size_t xbuf_inc = 1024;
   const struct aiocb** aiocb_buf;
   IOState* x; /* Input.*/
-  uint i;
+  unsigned i;
 
   /**** BEGIN ARGUMENT_PARSING ****/
-  GrowTable( ios, 1 );
-  Zeroize( ios.s[0] );
-  ios.s[0].aio.aio_fildes = -1;
+  init_FildeshAT(ios);
+  grow_FildeshAT(ios, 1);
+  (*ios)[0] = default_IOState();
+  (*ios)[0].aio.aio_fildes = -1;
 
   while (argi < argc) {
     const char* arg = argv[argi++];
     IOState* io;
     fildesh_fd_t fd;
 
-    if (eq_cstr (arg, "-x")) {
+    if (0 == strcmp(arg, "-x")) {
       if (argi == argc) {
         fprintf(stderr, "%s: need input file after -x.\n", argv[0]);
         return 1;
       }
       arg = argv[argi++];
       fd = fildesh_arg_open_readonly(arg);
-      io = &ios.s[0];
-    } else if (eq_cstr (arg, "-o")) {
+      io = &(*ios)[0];
+    } else if (0 == strcmp(arg, "-o")) {
       if (argi == argc) {
         fprintf(stderr, "%s: need output file after -o.\n", argv[0]);
         return 1;
       }
       arg = argv[argi++];
       fd = fildesh_arg_open_writeonly(arg);
-      io = Grow1Table( ios );
+      io = grow1_FildeshAT(ios);
     } else {
       fd = fildesh_arg_open_writeonly(arg);
-      io = Grow1Table( ios );
+      io = grow1_FildeshAT(ios);
     }
-    Zeroize( *io );
+    *io = default_IOState();
     io->aio.aio_fildes = fd;
 
     if (fd < 0) {
@@ -125,9 +138,9 @@ main_elastic_aio(unsigned argc, char** argv)
   }
 
   /* Default input is stdin.*/
-  if (ios.s[0].aio.aio_fildes == -1) {
+  if ((*ios)[0].aio.aio_fildes == -1) {
     fildesh_fd_t fd = fildesh_arg_open_readonly("-");
-    IOState* io = &ios.s[0];
+    IOState* io = &(*ios)[0];
     io->aio.aio_fildes = fd;
     if (0 > setfd_async(fd)) {
       StateMsg("setfd_async(stdin)");
@@ -136,10 +149,10 @@ main_elastic_aio(unsigned argc, char** argv)
     }
   }
   /* Default output is stdout.*/
-  if (ios.sz == 1) {
+  if (count_of_FildeshAT(ios) == 1) {
     fildesh_fd_t fd = fildesh_arg_open_writeonly("-");
-    IOState* io = Grow1Table( ios );
-    Zeroize( *io );
+    IOState* io = grow1_FildeshAT(ios);
+    *io = default_IOState();
     io->aio.aio_fildes = fd;
     if (0 > setfd_async(fd)) {
       StateMsg("setfd_async(stdout)");
@@ -150,18 +163,19 @@ main_elastic_aio(unsigned argc, char** argv)
   StateMsg("Done opening files.");
   /**** END ARGUMENT_PARSING ****/
 
-  AllocTo( aiocb_buf, ios.sz );
+  aiocb_buf = (const struct aiocb**) malloc(
+      sizeof(*aiocb_buf) * count_of_FildeshAT(ios));
 
-  x = &ios.s[0];
-  GrowTable( x->buf, xbuf_inc );
+  x = &(*ios)[0];
+  grow_FildeshAT(x->buf, xbuf_inc);
 
-  while (!all_done (&ios)) {
+  while (!all_done(ios)) {
     ssize_t sstat;
 
     /* Initiate read.*/
     if (!x->pending && !x->done) {
-      x->aio.aio_buf = x->buf.s;
-      x->aio.aio_nbytes = x->buf.sz;
+      x->aio.aio_buf = *x->buf;
+      x->aio.aio_nbytes = count_of_FildeshAT(x->buf);
       istat = aio_read(&x->aio);
       if (istat == 0) {
         x->pending = 1;
@@ -169,23 +183,27 @@ main_elastic_aio(unsigned argc, char** argv)
       else {
         StateMsg("aio_read() error");
         x->done = 1;
-        ClearTable( x->buf );
+        clear_FildeshAT(x->buf);
       }
     }
 
     /* Initiate writes.*/
-    for (i = 1; i < ios.sz; ++i) {
-      IOState* o = &ios.s[i];
+    for (i = 1; i < count_of_FildeshAT(ios); ++i) {
+      IOState* o = &(*ios)[i];
+      const size_t buf_size = count_of_FildeshAT(o->buf);
+      const size_t xbuf_size = count_of_FildeshAT(o->xbuf);
       if (o->pending || o->done)  continue;
-      CatTable( o->buf, o->xbuf );
-      ClearTable( o->xbuf );
-      if (o->buf.sz == 0) {
+      /* xbuf >> buf */
+      grow_FildeshAT(o->buf, xbuf_size);
+      memcpy(&(*o->buf)[buf_size], *o->xbuf, xbuf_size);
+      clear_FildeshAT(o->xbuf);
+      if (count_of_FildeshAT(o->buf) == 0) {
         o->done = x->done;
         continue;
       }
 
-      o->aio.aio_buf = o->buf.s;
-      o->aio.aio_nbytes = o->buf.sz;
+      o->aio.aio_buf = *o->buf;
+      o->aio.aio_nbytes = count_of_FildeshAT(o->buf);
       istat = aio_write(&o->aio);
       if (istat == 0) {
         o->pending = 1;
@@ -193,15 +211,15 @@ main_elastic_aio(unsigned argc, char** argv)
       else {
         StateMsg("aio_write() error");
         o->done = 1;
-        ClearTable( o->buf );
+        clear_FildeshAT( o->buf );
       }
     }
 
     /* Wait for read/write.*/
     do {
-      uint n = 0;
-      for (i = 0; i < ios.sz; ++i) {
-        IOState* io = &ios.s[i];
+      unsigned n = 0;
+      for (i = 0; i < count_of_FildeshAT(ios); ++i) {
+        IOState* io = &(*ios)[i];
         if (io->pending) {
           aiocb_buf[n++] = &io->aio;
         }
@@ -217,7 +235,6 @@ main_elastic_aio(unsigned argc, char** argv)
     /* Handle reading.*/
     /* If statement that we break from...*/
     if (x->pending) do {
-      zuint sz;
       istat = aio_error(&x->aio);
 
       if (istat == EINPROGRESS) {
@@ -228,32 +245,32 @@ main_elastic_aio(unsigned argc, char** argv)
       if (istat != 0) {
         StateMsg( "aio_error(read)" );
         x->done = 1;
-        ClearTable( x->buf );
+        clear_FildeshAT( x->buf );
         break;
       }
       sstat = aio_return(&x->aio);
       if (sstat <= 0) {
         x->done = 1;
-        ClearTable( x->buf );
+        clear_FildeshAT( x->buf );
         break;
       }
       StateMsg1("aio_return() -> %d", (int)sstat);
       x->aio.aio_offset += sstat;
 
-      sz = x->buf.sz;
-      x->buf.sz = sstat;
-      for (i = 1; i < ios.sz; ++i) {
-        IOState* o = &ios.s[i];
+      for (i = 1; i < count_of_FildeshAT(ios); ++i) {
+        IOState* o = &(*ios)[i];
+        const size_t o_xbuf_size = count_of_FildeshAT(o->xbuf);
         if (o->done)  continue;
-        CatTable( o->xbuf, x->buf );
+        /* x->buf >> o->xbuf */
+        grow_FildeshAT(o->xbuf, sstat);
+        memcpy(&(*o->xbuf)[o_xbuf_size], *x->buf, sstat);
       }
-      x->buf.sz = sz;
     } while (0);
 
 
     /* Handle some writing.*/
-    for (i = 1; i < ios.sz; ++i) {
-      IOState* o = &ios.s[i];
+    for (i = 1; i < count_of_FildeshAT(ios); ++i) {
+      IOState* o = &(*ios)[i];
 
       if (!o->pending || o->done)  continue;
       istat = aio_error(&o->aio);
@@ -266,8 +283,8 @@ main_elastic_aio(unsigned argc, char** argv)
       if (istat != 0) {
         StateMsg( "aio_error(write)" );
         o->done = 1;
-        ClearTable( o->buf );
-        ClearTable( o->xbuf );
+        clear_FildeshAT( o->buf );
+        clear_FildeshAT( o->xbuf );
         continue;
       }
 
@@ -275,33 +292,33 @@ main_elastic_aio(unsigned argc, char** argv)
       if (sstat < 0) {
         StateMsg( "aio_return(write)" );
         o->done = 1;
-        ClearTable( o->buf );
-        ClearTable( o->xbuf );
+        clear_FildeshAT( o->buf );
+        clear_FildeshAT( o->xbuf );
         continue;
       }
       o->aio.aio_offset += sstat;
 
-      if ((zuint)sstat == o->buf.sz) {
-        ClearTable( o->buf );
+      if ((size_t)sstat == count_of_FildeshAT(o->buf)) {
+        clear_FildeshAT( o->buf );
       }
       else {
-        zuint sz = o->buf.sz - (zuint) sstat;
-        memmove(o->buf.s, &o->buf.s[sstat], sz);
-        ResizeTable( o->buf, sz );
+        size_t sz = count_of_FildeshAT(o->buf) - (size_t) sstat;
+        memmove(*o->buf, &(*o->buf)[sstat], sz);
+        resize_FildeshAT(o->buf, sz);
       }
     }
   }
 
-  UFor( i, ios.sz ) {
-    fildesh_fd_t fd = ios.s[i].aio.aio_fildes;
-    if (ios.s[i].pending) {
-      aio_cancel(fd, &ios.s[i].aio);
+  for (i = 0; i < count_of_FildeshAT(ios); ++i) {
+    fildesh_fd_t fd = (*ios)[i].aio.aio_fildes;
+    if ((*ios)[i].pending) {
+      aio_cancel(fd, &(*ios)[i].aio);
     }
     close(fd);
-    LoseTable( ios.s[i].buf );
-    LoseTable( ios.s[i].xbuf );
+    close_FildeshAT((*ios)[i].buf);
+    close_FildeshAT((*ios)[i].xbuf);
   }
-  LoseTable( ios );
+  close_FildeshAT(ios);
   free(aiocb_buf);
   return 0;
 }

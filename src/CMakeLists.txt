@@ -120,14 +120,14 @@ target_link_libraries(waitdo cx_lib)
 
 if (UNIX)
   add_executable(elastic_poll "elastic_poll.c")
-  target_link_libraries (elastic_poll cx_lib)
+  target_link_libraries (elastic_poll fildesh_lib)
 endif()
 
 if(FILDESH_RELEASING)
   # These don't need to be built during release.
 elseif(UNIX AND NOT APPLE)
   add_executable(elastic_aio "elastic_aio.c")
-  target_link_libraries (elastic_aio cx_lib ${FILDESH_EXTRA_ELASTIC_AIO_LIBS})
+  target_link_libraries (elastic_aio fildesh_lib ${FILDESH_EXTRA_ELASTIC_AIO_LIBS})
   set_property (TARGET elastic_aio
     APPEND PROPERTY COMPILE_DEFINITIONS _POSIX_C_SOURCE=199309L)
 

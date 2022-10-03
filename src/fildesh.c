@@ -16,8 +16,6 @@
 #include "parse_fildesh.h"
 
 #include "cx/syscx.h"
-#include "cx/alphatab.h"
-#include "cx/table.h"
 
 #include <signal.h>
 #include <stdio.h>
@@ -55,10 +53,6 @@ typedef struct Command Command;
 typedef struct CommandHookup CommandHookup;
 typedef struct BuiltinCommandThreadArg BuiltinCommandThreadArg;
 
-DeclTableT( Command, Command );
-DeclTableT( SymVal, SymVal );
-DeclTableT( iargs, struct { int fd; bool scrap_newline; } );
-
 
 static SymValKind parse_sym(char* s, bool firstarg);
 
@@ -67,19 +61,19 @@ struct Command
   char* line;
   unsigned line_num;
   CommandKind kind;
-  TableT(cstr) args;
-  TableT(cstr) tmp_files;
+  DECLARE_FildeshAT(char*, args);
+  DECLARE_FildeshAT(char*, tmp_files);
   pthread_t thread;
   fildesh_compat_pid_t pid;
   int status;
   fildesh_fd_t stdis; /**< Standard input stream.**/
-  TableT( int ) is; /**< Input streams.**/
+  DECLARE_FildeshAT(int, is); /**< Input streams.**/
   fildesh_fd_t stdos; /**< Standard output stream.**/
-  TableT( int ) os; /** Output streams.**/
+  DECLARE_FildeshAT(int, os); /**< Output streams.**/
   /* Exit status stream.**/
   fildesh_fd_t status_fd;
   /** File descriptor to close upon exit.**/
-  TableT( int ) exit_fds;
+  DECLARE_FildeshAT(int, exit_fds);
   /** If >= 0, this is a file descriptor that will
    * close when the program command is safe to run.
    **/
@@ -90,7 +84,7 @@ struct Command
   const char* exec_doc;
 
   /** Use these input streams to fill corresponding (null) arguments.**/
-  TableT( iargs ) iargs;
+  DECLARE_FildeshAT(struct { int fd; bool scrap_newline; }, iargs);
 
   /** Use this if it's a HERE document.**/
   char* doc;
@@ -150,19 +144,19 @@ init_Command(Command* cmd, FildeshAlloc* alloc)
 {
   cmd->kind = NCommandKinds;
   cmd->line_num = 0;
-  InitTable( cmd->args );
-  InitTable( cmd->tmp_files );
+  init_FildeshAT(cmd->args);
+  init_FildeshAT(cmd->tmp_files);
   cmd->pid = -1;
   cmd->stdis = -1;
-  InitTable( cmd->is );
+  init_FildeshAT(cmd->is);
   cmd->stdos = -1;
-  InitTable( cmd->os );
+  init_FildeshAT(cmd->os);
   cmd->status_fd = -1;
-  InitTable( cmd->exit_fds );
+  init_FildeshAT(cmd->exit_fds);
   cmd->exec_fd = -1;
   cmd->exec_fd_has_bytes = false;
   cmd->exec_doc = NULL;
-  InitTable( cmd->iargs );
+  init_FildeshAT(cmd->iargs);
   cmd->alloc = alloc;
 }
 
@@ -178,31 +172,27 @@ close_Command (Command* cmd)
     fildesh_compat_fd_close(cmd->stdos);
     cmd->stdos = -1;
   }
-  for (i = 0; i < cmd->is.sz; ++i) {
-    fildesh_compat_fd_close(cmd->is.s[i]);
+  for (i = 0; i < count_of_FildeshAT(cmd->is); ++i) {
+    fildesh_compat_fd_close((*cmd->is)[i]);
   }
-  LoseTable( cmd->is );
-  InitTable( cmd->is );
+  close_FildeshAT(cmd->is);
 
-  for (i = 0; i < cmd->os.sz; ++i) {
-    fildesh_compat_fd_close(cmd->os.s[i]);
+  for (i = 0; i < count_of_FildeshAT(cmd->os); ++i) {
+    fildesh_compat_fd_close((*cmd->os)[i]);
   }
-  LoseTable( cmd->os );
-  InitTable( cmd->os );
+  close_FildeshAT(cmd->os);
 
   if (cmd->status_fd >= 0) {
     fildesh_compat_fd_close(cmd->status_fd);
     cmd->status_fd = -1;
   }
-  LoseTable( cmd->exit_fds );
-  InitTable( cmd->exit_fds );
+  close_FildeshAT(cmd->exit_fds);
 
   cmd->exec_fd = -1;
   cmd->exec_fd_has_bytes = false;
   cmd->exec_doc = NULL;
 
-  LoseTable( cmd->iargs );
-  InitTable( cmd->iargs );
+  close_FildeshAT(cmd->iargs);
 }
 
 static
@@ -212,19 +202,19 @@ build_fds_to_inherit_Command(Command* cmd)
   size_t i, off;
   fildesh_compat_fd_t* fds = (fildesh_compat_fd_t*)
     malloc(sizeof(fildesh_compat_fd_t) *
-           (cmd->is.sz + cmd->os.sz + 1));
+           (count_of_FildeshAT(cmd->is) +
+            count_of_FildeshAT(cmd->os) +
+            1));
 
   off = 0;
-  for (i = 0; i < cmd->is.sz; ++i) {
-    fds[off++] = cmd->is.s[i];
+  for (i = 0; i < count_of_FildeshAT(cmd->is); ++i) {
+    fds[off++] = (*cmd->is)[i];
   }
-  LoseTable( cmd->is );
-  InitTable( cmd->is );
-  for (i = 0; i < cmd->os.sz; ++i) {
-    fds[off++] = cmd->os.s[i];
+  close_FildeshAT(cmd->is);
+  for (i = 0; i < count_of_FildeshAT(cmd->os); ++i) {
+    fds[off++] = (*cmd->os)[i];
   }
-  LoseTable( cmd->os );
-  InitTable( cmd->os );
+  close_FildeshAT(cmd->os);
   fds[off] = -1;
   return fds;
 }
@@ -239,7 +229,7 @@ lose_Command (Command* cmd)
     case RunCommand:
     case StdinCommand:
     case StdoutCommand:
-      LoseTable( cmd->args );
+      close_FildeshAT(cmd->args);
       break;
     case HereDocCommand:
       break;
@@ -247,25 +237,25 @@ lose_Command (Command* cmd)
       break;
   }
 
-  for (i = 0; i < cmd->tmp_files.sz; ++i) {
-    fildesh_compat_file_rm(cmd->tmp_files.s[i]);
+  for (i = 0; i < count_of_FildeshAT(cmd->tmp_files); ++i) {
+    fildesh_compat_file_rm((*cmd->tmp_files)[i]);
   }
-  LoseTable( cmd->tmp_files );
+  close_FildeshAT(cmd->tmp_files);
   cmd->kind = NCommandKinds;
 }
 
   static void
 lose_Commands (void* arg)
 {
-  TableT(Command)* cmds = (TableT(Command)*) arg;
+  Command** cmds = (Command**) arg;
   unsigned i;
-  for (i = 0; i < cmds->sz; ++i) {
-    if (cmds->s[i].kind == RunCommand && cmds->s[i].pid > 0)
-      fildesh_compat_sh_kill(cmds->s[i].pid);
-    if (cmds->s[i].kind != NCommandKinds)
-      lose_Command (&cmds->s[i]);
+  for (i = 0; i < count_of_FildeshAT(cmds); ++i) {
+    if ((*cmds)[i].kind == RunCommand && (*cmds)[i].pid > 0)
+      fildesh_compat_sh_kill((*cmds)[i].pid);
+    if ((*cmds)[i].kind != NCommandKinds)
+      lose_Command (&(*cmds)[i]);
   }
-  LoseTable (*cmds);
+  close_FildeshAT(cmds);
   free(cmds);
 }
 
@@ -320,6 +310,24 @@ static void free_CommandHookup(CommandHookup* cmd_hookup, int* istat) {
   static void
 close_FildeshAlloc_generic(void* arg)
 { close_FildeshAlloc((FildeshAlloc*) arg); }
+
+static inline
+  bool
+eq_cstr(const char* a, const char* b)
+{
+  if (a == b)  return true;
+  if (!a)  return false;
+  if (!b)  return false;
+  return (0 == strcmp (a, b));
+}
+
+static inline
+  bool
+pfxeq_cstr(const char* pfx, const char* s)
+{
+  if (!s)  return false;
+  return (0 == strncmp(pfx, s, strlen (pfx)));
+}
 
 static char* lace_strdup(const char* s) {
   return fildesh_compat_string_duplicate(s);
@@ -477,7 +485,7 @@ parse_double_quoted_string(FildeshO* out, char* s, FildeshKV* map)
 
 static
   int
-sep_line(TableT(cstr)* args, char* s, FildeshKV* map, FildeshAlloc* alloc, FildeshO* tmp_out)
+sep_line(char*** args, char* s, FildeshKV* map, FildeshAlloc* alloc, FildeshO* tmp_out)
 {
   while (1) {
     s = &s[count_ws (s)];
@@ -486,7 +494,7 @@ sep_line(TableT(cstr)* args, char* s, FildeshKV* map, FildeshAlloc* alloc, Filde
     if (s[0] == '\'') {
       unsigned i;
       s = &s[1];
-      PushTable( *args, s );
+      push_FildeshAT(args, s);
       i = strcspn (s, "'");
       if (s[i] == '\0') {
         fildesh_log_warning("Unterminated single quote.");
@@ -498,7 +506,7 @@ sep_line(TableT(cstr)* args, char* s, FildeshKV* map, FildeshAlloc* alloc, Filde
     else if (s[0] == '"') {
       s = parse_double_quoted_string(tmp_out, &s[1], map);
       if (!s)  break;
-      PushTable( *args, strdup_FildeshO(tmp_out, alloc) );
+      push_FildeshAT(args, strdup_FildeshO(tmp_out, alloc));
     }
     else if (pfxeq_cstr("$(getenv ", s)) {
       FildeshX in[1] = {DEFAULT_FildeshX};
@@ -514,7 +522,7 @@ sep_line(TableT(cstr)* args, char* s, FildeshKV* map, FildeshAlloc* alloc, Filde
         s = &in->at[in->off];
         v = getenv(slice.at);
         if (!v) {v = "";}
-        PushTable( *args, strdup_FildeshAlloc(alloc, v) );
+        push_FildeshAT(args, strdup_FildeshAlloc(alloc, v));
       }
       else {
         s = NULL;
@@ -524,7 +532,7 @@ sep_line(TableT(cstr)* args, char* s, FildeshKV* map, FildeshAlloc* alloc, Filde
     }
     else if (s[0] == '$' && s[1] == '(') {
       unsigned i;
-      PushTable( *args, s );
+      push_FildeshAT(args, s);
       s = &s[2];
       i = strcspn (s, ")");
       if (s[i] == '\0') {
@@ -534,7 +542,7 @@ sep_line(TableT(cstr)* args, char* s, FildeshKV* map, FildeshAlloc* alloc, Filde
       s = &s[i+1];
     }
     else {
-      PushTable( *args, s );
+      push_FildeshAT(args, s);
       s = &s[count_non_ws (s)];
     }
     if (s[0] == '\0')  break;
@@ -548,7 +556,7 @@ static
   int
 parse_file(
     CommandHookup* cmd_hookup,
-    TableT(Command)* cmds,
+    Command** cmds,
     FildeshX* in,
     const char* this_filename,
     FildeshKV* map,
@@ -565,7 +573,7 @@ parse_file(
     if (!line) {
       break;
     }
-    cmd = Grow1Table( *cmds );
+    cmd = grow1_FildeshAT(cmds);
     init_Command(cmd, scope_alloc);
     cmd->line = line;
     cmd->line_num = text_nlines;
@@ -600,16 +608,16 @@ parse_file(
         istat = -1;
         break;
       }
-      lose_Command(TopTable( *cmds ));
-      MPopTable( *cmds, 1 );
+      lose_Command(&last_FildeshAT(cmds));
+      mpop_FildeshAT(cmds, 1);
 
       istat = parse_file(cmd_hookup, cmds, src, filename_FildeshXF(src),
                          map, scope_alloc, global_alloc, tmp_out);
-      if (istat == 0 && cmds->sz > 0 &&
-          cmds->s[cmds->sz-1].kind == BarrierCommand)
+      if (istat == 0 && count_of_FildeshAT(cmds) > 0 &&
+          last_FildeshAT(cmds).kind == BarrierCommand)
       {
         perror_Command(
-            &cmds->s[cmds->sz-1],
+            &last_FildeshAT(cmds),
             "No barrier allowed in included file", filename);
         istat = -1;
       }
@@ -636,16 +644,16 @@ parse_file(
       begline[0] = '\0';
       begline = &begline[1];
 
-      PushTable( cmd->args, (char*) "zec" );
-      PushTable( cmd->args, (char*) "/" );
-      istat = sep_line(&cmd->args, begline, map, scope_alloc, tmp_out);
+      push_FildeshAT(cmd->args, (char*) "zec");
+      push_FildeshAT(cmd->args, (char*) "/");
+      istat = sep_line(cmd->args, begline, map, scope_alloc, tmp_out);
       if (istat != 0) {
         break;
       }
 
       concatenated_args = fildesh_syntax_maybe_concatenate_args(
-          (unsigned) cmd->args.sz-2,
-          (const char* const*)(void*)&cmd->args.s[2],
+          (unsigned) count_of_FildeshAT(cmd->args)-2,
+          (const char* const*)(void*)&(*cmd->args)[2],
           global_alloc);
       if (concatenated_args) {
         SymVal* sym = declare_SymVal(map, HereDocVal, sym_name, global_alloc);
@@ -654,27 +662,26 @@ parse_file(
 
         cmd->kind = HereDocCommand;
         cmd->doc = concatenated_args;
-        cmd->args.sz = 0;
-        PackTable(cmd->args);
+        close_FildeshAT(cmd->args);
         continue;
       }
-      PushTable( cmd->args, (char*) "/" );
+      push_FildeshAT(cmd->args, (char*)"/");
 
       {
         char* buf = fildesh_allocate(char, 6+strlen(sym_name), scope_alloc);
         sprintf(buf, "$(O %s)", sym_name);
-        PushTable( cmd->args, buf );
+        push_FildeshAT(cmd->args, buf);
       }
 
-      cmd = Grow1Table( *cmds );
+      cmd = grow1_FildeshAT(cmds);
       init_Command(cmd, scope_alloc);
       cmd->kind = DefCommand;
       cmd->line_num = text_nlines;
-      PushTable( cmd->args, (char*) "elastic" );
+      push_FildeshAT(cmd->args, (char*)"elastic");
       {
         char* buf = fildesh_allocate(char, 6+strlen(sym_name), scope_alloc);
         sprintf(buf, "$(X %s)", sym_name);
-        PushTable( cmd->args, buf );
+        push_FildeshAT(cmd->args, buf);
       }
       cmd->line = sym_name;
     }
@@ -698,20 +705,19 @@ parse_file(
       sym->as.iofilename = add_tmp_file(cmd_hookup, ".txt", global_alloc);
 
       lose_Command(cmd);
-      MPopTable( *cmds, 1 );
+      mpop_FildeshAT(cmds, 1);
     }
     else
     {
       cmd->kind = RunCommand;
-      istat = sep_line(&cmd->args, cmd->line, map, scope_alloc, tmp_out);
-      if (istat == 0 && 0 == strcmp(cmd->args.s[0], "$(barrier)")) {
-        if (cmd->args.sz != 1) {
+      istat = sep_line(cmd->args, cmd->line, map, scope_alloc, tmp_out);
+      if (istat == 0 && 0 == strcmp((*cmd->args)[0], "$(barrier)")) {
+        if (count_of_FildeshAT(cmd->args) != 1) {
           perror_Command(cmd, "Barrier does not accept args.", 0);
           istat = -1;
         }
         cmd->kind = BarrierCommand;
-        cmd->args.sz = 0;
-        PackTable( cmd->args );
+        close_FildeshAT(cmd->args);
         break;
       }
     }
@@ -830,13 +836,13 @@ add_ios_Command (Command* cmd, int in, int out)
 {
   unsigned idx = UINT_MAX;
   if (in >= 0) {
-    idx = cmd->is.sz;
-    PushTable( cmd->is, in );
+    idx = count_of_FildeshAT(cmd->is);
+    push_FildeshAT(cmd->is, in);
   }
 
   if (out >= 0) {
-    idx = cmd->os.sz;
-    PushTable( cmd->os, out );
+    idx = count_of_FildeshAT(cmd->os);
+    push_FildeshAT(cmd->os, out);
   }
   return idx;
 }
@@ -844,9 +850,9 @@ add_ios_Command (Command* cmd, int in, int out)
   static void
 add_iarg_Command (Command* cmd, int in, bool scrap_newline)
 {
-  GrowTable( cmd->iargs, 1 );
-  TopTable( cmd->iargs )->fd = in;
-  TopTable( cmd->iargs )->scrap_newline = scrap_newline;
+  grow_FildeshAT(cmd->iargs, 1);
+  last_FildeshAT(cmd->iargs).fd = in;
+  last_FildeshAT(cmd->iargs).scrap_newline = scrap_newline;
 }
 
   static char*
@@ -896,8 +902,8 @@ add_tmp_file_Command(Command* cmd,
                      CommandHookup* cmd_hookup,
                      const char* extension)
 {
-  PushTable( cmd->tmp_files, add_tmp_file(cmd_hookup, extension, cmd->alloc) );
-  return cmd->tmp_files.s[cmd->tmp_files.sz - 1];
+  push_FildeshAT(cmd->tmp_files, add_tmp_file(cmd_hookup, extension, cmd->alloc));
+  return (*cmd->tmp_files)[count_of_FildeshAT(cmd->tmp_files) - 1];
 }
 
 static
@@ -924,7 +930,7 @@ pipe_from_elastic(Command* elastic_cmd)
     return -1;
   }
   add_ios_Command(elastic_cmd, -1, fd[1]);
-  PushTable( elastic_cmd->args, add_fd_arg_Command(elastic_cmd, fd[1]) );
+  push_FildeshAT(elastic_cmd->args, add_fd_arg_Command(elastic_cmd, fd[1]));
   return fd[0];
 }
 
@@ -959,7 +965,7 @@ transfer_map_entries(FildeshKV* map, FildeshKV* add_map, const Command* cmd)
 
 static
   int
-setup_commands(TableT(Command)* cmds, CommandHookup* cmd_hookup,
+setup_commands(Command** cmds, CommandHookup* cmd_hookup,
                FildeshAlloc* global_alloc)
 {
   FildeshKV* map = &cmd_hookup->map;
@@ -968,10 +974,10 @@ setup_commands(TableT(Command)* cmds, CommandHookup* cmd_hookup,
   int istat = 0;
   unsigned i;
 
-  for (i = 0; i < cmds->sz && istat == 0; ++i) {
+  for (i = 0; i < count_of_FildeshAT(cmds) && istat == 0; ++i) {
     unsigned arg_q = 0;
     unsigned arg_r = 0;
-    Command* cmd = &cmds->s[i];
+    Command* cmd = &(*cmds)[i];
 
     /* The command defines a HERE document.*/
     if (cmd->kind == HereDocCommand)
@@ -985,11 +991,11 @@ setup_commands(TableT(Command)* cmds, CommandHookup* cmd_hookup,
       sym->as.here_doc = cmd->doc;
 
       /* The loops should not run.*/
-      assert( cmd->args.sz == 0 ); /* Invariant.*/
+      assert( count_of_FildeshAT(cmd->args) == 0 ); /* Invariant.*/
     }
 
-    for (arg_r = 0; arg_r < cmd->args.sz && istat == 0; ++ arg_r) {
-      char* arg = cmd->args.s[arg_r];
+    for (arg_r = 0; arg_r < count_of_FildeshAT(cmd->args) && istat == 0; ++ arg_r) {
+      char* arg = (*cmd->args)[arg_r];
       if (arg_q == 0 && eq_cstr("stdin", arg)) {
         cmd->kind = StdinCommand;
         cmd->stdis = cmd_hookup->stdin_fd;
@@ -1010,9 +1016,9 @@ setup_commands(TableT(Command)* cmds, CommandHookup* cmd_hookup,
       }
     }
 
-    for (arg_r = 0; arg_r < cmd->args.sz && istat == 0; ++ arg_r)
+    for (arg_r = 0; arg_r < count_of_FildeshAT(cmd->args) && istat == 0; ++ arg_r)
     {
-      char* arg = cmd->args.s[arg_r];
+      char* arg = (*cmd->args)[arg_r];
       const SymValKind kind = parse_sym (arg, (arg_r == 0));
 
 
@@ -1027,21 +1033,21 @@ setup_commands(TableT(Command)* cmds, CommandHookup* cmd_hookup,
       {
         SymVal* sym = getf_SymVal(map, arg, global_alloc);
         if (sym->kind == HereDocVal) {
-          cmd->args.s[arg_q] = sym->as.here_doc;
+          (*cmd->args)[arg_q] = sym->as.here_doc;
         }
         else if (sym->kind == ODescVal) {
           fildesh_fd_t fd = sym->as.file_desc;
           sym->kind = NSymValKinds;
           add_iarg_Command (cmd, fd, true);
-          cmd->args.s[arg_q] = NULL;
+          (*cmd->args)[arg_q] = NULL;
         }
         else if (sym->kind == DefVal) {
-          fildesh_fd_t fd = pipe_from_elastic(&cmds->s[sym->cmd_idx]);
+          fildesh_fd_t fd = pipe_from_elastic(&(*cmds)[sym->cmd_idx]);
           if (fd < 0) {
             FailBreak(cmd, "Failed to create pipe for variable", arg);
           }
           add_iarg_Command (cmd, fd, true);
-          cmd->args.s[arg_q] = NULL;
+          (*cmd->args)[arg_q] = NULL;
         }
         else {
           FailBreak(cmd, "Unknown source for argument", arg);
@@ -1051,7 +1057,7 @@ setup_commands(TableT(Command)* cmds, CommandHookup* cmd_hookup,
       else if (cmd->kind == StdoutCommand && kind == IDescVal)
       {
         SymVal* sym = getf_SymVal(map, arg, global_alloc);
-        Command* last = &cmds->s[sym->cmd_idx];
+        Command* last = &(*cmds)[sym->cmd_idx];
 
         if (last->kind != RunCommand) {
           FailBreak(cmd, "Stdout stream not coming from a command?", arg);
@@ -1059,8 +1065,8 @@ setup_commands(TableT(Command)* cmds, CommandHookup* cmd_hookup,
 
         fildesh_compat_fd_close(sym->as.file_desc);
 
-        if (sym->ios_idx < last->os.sz) {
-          fildesh_compat_fd_move_to(last->os.s[sym->ios_idx], cmd->stdos);
+        if (sym->ios_idx < count_of_FildeshAT(last->os)) {
+          fildesh_compat_fd_move_to((*last->os)[sym->ios_idx], cmd->stdos);
         }
         else {
           fildesh_compat_fd_move_to(last->stdos, cmd->stdos);
@@ -1073,7 +1079,7 @@ setup_commands(TableT(Command)* cmds, CommandHookup* cmd_hookup,
         if (sym->kind != IOFileVal) {
           FailBreak(cmd, "Not declared as a file", arg);
         }
-        cmd->args.s[arg_q] = (char*)sym->as.iofilename;
+        (*cmd->args)[arg_q] = (char*)sym->as.iofilename;
         arg_q += 1;
       }
       else if (kind == IDescVal ||
@@ -1089,7 +1095,7 @@ setup_commands(TableT(Command)* cmds, CommandHookup* cmd_hookup,
           sym->kind = NSymValKinds;
         }
         else if (sym->kind == DefVal) {
-          fd = pipe_from_elastic(&cmds->s[sym->cmd_idx]);
+          fd = pipe_from_elastic(&(*cmds)[sym->cmd_idx]);
         }
         else {
           FailBreak(cmd, "Unknown source for", arg);
@@ -1108,7 +1114,7 @@ setup_commands(TableT(Command)* cmds, CommandHookup* cmd_hookup,
             cmd->stdis = fd;
           }
           else {
-            cmd->args.s[arg_q] = filename;
+            (*cmd->args)[arg_q] = filename;
             if (arg_q == 0)
               cmd->exec_doc = sym->as.here_doc;
             ++ arg_q;
@@ -1120,18 +1126,18 @@ setup_commands(TableT(Command)* cmds, CommandHookup* cmd_hookup,
         else if (kind == IDescFileVal) {
           add_ios_Command(cmd, fd, -1);
           if (arg_q > 0) {
-            cmd->args.s[arg_q] = add_fd_arg_Command (cmd, fd);
+            (*cmd->args)[arg_q] = add_fd_arg_Command (cmd, fd);
           } else {
-            cmd->args.s[0] = add_tmp_file_Command(cmd, cmd_hookup, ".exe");
-            if (!cmd->args.s[0]) {
+            (*cmd->args)[0] = add_tmp_file_Command(cmd, cmd_hookup, ".exe");
+            if (!(*cmd->args)[0]) {
               FailBreak(cmd, "Cannot create tmpfile for executable.", NULL);
             }
             if (sym->arg_idx < UINT_MAX) {
               static const char dev_fd_prefix[] = "/dev/fd/";
               static const unsigned dev_fd_prefix_length =
                 sizeof(dev_fd_prefix)-1;
-              Command* src_cmd = &cmds->s[sym->cmd_idx];
-              char* src_fd_filename = src_cmd->args.s[sym->arg_idx];
+              Command* src_cmd = &(*cmds)[sym->cmd_idx];
+              char* src_fd_filename = (*src_cmd->args)[sym->arg_idx];
               int src_fd = -1;
               assert(0 == memcmp(src_fd_filename, dev_fd_prefix,
                                  dev_fd_prefix_length));
@@ -1139,9 +1145,9 @@ setup_commands(TableT(Command)* cmds, CommandHookup* cmd_hookup,
                                 &src_fd_filename[dev_fd_prefix_length]);
               assert(src_fd >= 0);
 
-              PushTable(src_cmd->exit_fds, src_fd);
+              push_FildeshAT(src_cmd->exit_fds, src_fd);
               /* Replace fd path with tmpfile name.*/
-              src_cmd->args.s[sym->arg_idx] = cmd->args.s[0];
+              (*src_cmd->args)[sym->arg_idx] = (*cmd->args)[0];
             } else {
               /* Source command isn't directly creating file.*/
               cmd->exec_fd_has_bytes = true;
@@ -1175,18 +1181,18 @@ setup_commands(TableT(Command)* cmds, CommandHookup* cmd_hookup,
           add_ios_Command (cmd, fd, -1);
           if (sym->arg_idx > 0)
           {
-            cmd->args.s[arg_q] = add_fd_arg_Command (cmd, fd);
+            (*cmd->args)[arg_q] = add_fd_arg_Command(cmd, fd);
           }
           else
           {
             char* s;
-            s = add_tmp_file_Command(&cmds->s[sym->cmd_idx],
+            s = add_tmp_file_Command(&(*cmds)[sym->cmd_idx],
                 cmd_hookup, ".exe");
             if (!s) {
               FailBreak(cmd, "Cannot create tmpfile for executable.", NULL);
             }
-            cmds->s[sym->cmd_idx].args.s[0] = s;
-            cmd->args.s[arg_q] = s;
+            (*(*cmds)[sym->cmd_idx].args)[0] = s;
+            (*cmd->args)[arg_q] = s;
           }
           ++ arg_q;
         }
@@ -1227,7 +1233,7 @@ setup_commands(TableT(Command)* cmds, CommandHookup* cmd_hookup,
           cmd->status_fd = fd[1];
         } else {
           sym->ios_idx = add_ios_Command (cmd, -1, fd[1]);
-          cmd->args.s[arg_q] = add_fd_arg_Command (cmd, fd[1]);
+          (*cmd->args)[arg_q] = add_fd_arg_Command(cmd, fd[1]);
           sym->arg_idx = arg_q;
           ++ arg_q;
         }
@@ -1254,13 +1260,13 @@ setup_commands(TableT(Command)* cmds, CommandHookup* cmd_hookup,
         {
           assert(arg_q > 0 && "executable bytes cannot come from below");
           sym->ios_idx = add_ios_Command (cmd, -1, fd[0]);
-          cmd->args.s[arg_q] = add_fd_arg_Command (cmd, fd[0]);
+          (*cmd->args)[arg_q] = add_fd_arg_Command(cmd, fd[0]);
           ++ arg_q;
         }
       }
 
       if (kind == NSymValKinds) {
-        cmd->args.s[arg_q] = arg;
+        (*cmd->args)[arg_q] = arg;
         ++ arg_q;
       }
     }
@@ -1268,8 +1274,8 @@ setup_commands(TableT(Command)* cmds, CommandHookup* cmd_hookup,
     /* This guard might not be necessary.*/
     if (istat != 0) {break;}
 
-    if (cmd->args.sz > 0)
-      cmd->args.sz = arg_q;
+    if (count_of_FildeshAT(cmd->args) > 0)
+      mpop_FildeshAT(cmd->args, count_of_FildeshAT(cmd->args) - arg_q);
 
     if (cmd->kind == DefCommand) {
       SymVal* sym = declare_SymVal(map, DefVal, cmd->line, global_alloc);
@@ -1289,28 +1295,15 @@ output_Command(FILE* out, const Command* cmd)
   if (cmd->kind != RunCommand)  return;
 
   fputs ("COMMAND: ", out);
-  for (i = 0; i < (unsigned)cmd->args.sz; ++i) {
+  for (i = 0; i < (unsigned)count_of_FildeshAT(cmd->args); ++i) {
     if (i > 0)  fputc(' ', out);
-    if (cmd->args.s[i]) {
-      fputs(cmd->args.s[i], out);
+    if ((*cmd->args)[i]) {
+      fputs((*cmd->args)[i], out);
     } else {
       fputs("NULL", out);
     }
   }
   fputc('\n', out);
-}
-
-/** Add the utility bin directory to the PATH environment variable.**/
-  static void
-add_util_path_env ()
-{
-  static const char k[] = "PATH";
-#ifndef UtilBin
-#define UtilBin "bin"
-#endif
-  static const char path[] = UtilBin;
-#undef UtilBin
-  tacenv_sysCx (k, path);
 }
 
   static void
@@ -1516,7 +1509,7 @@ FILDESH_POSIX_THREAD_CALLBACK(builtin_command_thread_fn, BuiltinCommandThreadArg
   char* name = NULL;
   bool only_argv = false;
 
-  assert(cmd->iargs.sz == 0);
+  assert(count_of_FildeshAT(cmd->iargs) == 0);
   assert(cmd->exec_fd < 0);
 
   for (argc = 0; st->argv[argc]; ++argc) {
@@ -1573,8 +1566,8 @@ FILDESH_POSIX_THREAD_CALLBACK(builtin_command_thread_fn, BuiltinCommandThreadArg
   }
 
   /* `main_fn()` should have closed all files passed to it.*/
-  cmd->is.sz = 0;
-  cmd->os.sz = 0;
+  mpop_FildeshAT(cmd->is, count_of_FildeshAT(cmd->is));
+  mpop_FildeshAT(cmd->os, count_of_FildeshAT(cmd->os));
   for (i = 0; i < argc; ++i) {
     assert(!inputs[i]);
     assert(!outputs[i]);
@@ -1594,37 +1587,37 @@ FILDESH_POSIX_THREAD_CALLBACK(builtin_command_thread_fn, BuiltinCommandThreadArg
 static
   void
 fix_known_flags_Command(Command* cmd, FildeshKV* alias_map) {
-  char* replacement = lookup_strmap(alias_map, cmd->args.s[0]);
+  char* replacement = lookup_strmap(alias_map, (*cmd->args)[0]);
   if (replacement) {
-    cmd->args.s[0] = replacement;
+    (*cmd->args)[0] = replacement;
   }
 
-  if (eq_cstr("sed", cmd->args.s[0])) {
+  if (eq_cstr("sed", (*cmd->args)[0])) {
     unsigned i;
-    for (i = 1; i < cmd->args.sz; ++i) {
-      const char* arg = cmd->args.s[i];
+    for (i = 1; i < count_of_FildeshAT(cmd->args); ++i) {
+      const char* arg = (*cmd->args)[i];
       if (eq_cstr("--line-buffered", arg)) {
 #ifdef __APPLE__
         const char line_buffering_flag[] = "-l";
 #else
         const char line_buffering_flag[] = "-u";
 #endif
-        cmd->args.s[i] = strdup_FildeshAlloc(cmd->alloc, line_buffering_flag);
+        (*cmd->args)[i] = strdup_FildeshAlloc(cmd->alloc, line_buffering_flag);
       }
     }
   }
-  else if (eq_cstr("tr", cmd->args.s[0])) {
-    if (cmd->args.sz == 3 &&
-        1 == strlen(cmd->args.s[1]) &&
-        1 == strlen(cmd->args.s[2])) {
-      cmd->args.s[0] = strdup_FildeshAlloc(cmd->alloc, "replace_string");
+  else if (eq_cstr("tr", (*cmd->args)[0])) {
+    if (count_of_FildeshAT(cmd->args) == 3 &&
+        1 == strlen((*cmd->args)[1]) &&
+        1 == strlen((*cmd->args)[2])) {
+      (*cmd->args)[0] = strdup_FildeshAlloc(cmd->alloc, "replace_string");
     }
   }
 }
 
 static
   void
-add_inheritfd_flags_Command(TableT(cstr)* argv, Command* cmd, bool inprocess) {
+add_inheritfd_flags_Command(char*** argv, Command* cmd, bool inprocess) {
   unsigned i;
 
   if (inprocess) {
@@ -1632,205 +1625,204 @@ add_inheritfd_flags_Command(TableT(cstr)* argv, Command* cmd, bool inprocess) {
      * - The fd providing executable bytes (or signaling that they are ready).
      * - The fds providing input arguments. See inprocess else clause.
      */
-    for (i = 0; i < cmd->is.sz; ++i) {
-      const fildesh_fd_t fd = cmd->is.s[i];
+    for (i = 0; i < count_of_FildeshAT(cmd->is); ++i) {
+      const fildesh_fd_t fd = (*cmd->is)[i];
       if (fd != cmd->exec_fd) {
-        PushTable( *argv, lace_strdup("-inheritfd") );
-        PushTable( *argv, lace_fd_strdup(fd) );
+        push_FildeshAT(argv, lace_strdup("-inheritfd") );
+        push_FildeshAT(argv, lace_fd_strdup(fd) );
       }
     }
     /* Let command inherit all output file descriptors except:
      * - The fds that must be closed on exit.
      */
-    for (i = 0; i < cmd->os.sz; ++i) {
-      const fildesh_fd_t fd = cmd->os.s[i];
+    for (i = 0; i < count_of_FildeshAT(cmd->os); ++i) {
+      const fildesh_fd_t fd = (*cmd->os)[i];
       bool inherit = true;
       unsigned j;
-      for (j = 0; j < cmd->exit_fds.sz && inherit; ++j) {
-        inherit = (fd != cmd->exit_fds.s[j]);
+      for (j = 0; j < count_of_FildeshAT(cmd->exit_fds) && inherit; ++j) {
+        inherit = (fd != (*cmd->exit_fds)[j]);
       }
       if (inherit) {
-        PushTable( *argv, lace_strdup("-inheritfd") );
-        PushTable( *argv, lace_fd_strdup(fd) );
+        push_FildeshAT(argv, lace_strdup("-inheritfd"));
+        push_FildeshAT(argv, lace_fd_strdup(fd));
       }
     }
 
     if (cmd->stdis >= 0) {
-      PushTable( *argv, lace_strdup("-stdin") );
-      PushTable( *argv, lace_fd_path_strdup(cmd->stdis) );
-      PushTable( cmd->is, cmd->stdis );
+      push_FildeshAT(argv, lace_strdup("-stdin"));
+      push_FildeshAT(argv, lace_fd_path_strdup(cmd->stdis));
+      push_FildeshAT(cmd->is, cmd->stdis);
     }
     cmd->stdis = -1;
     if (cmd->stdos >= 0) {
-      PushTable( *argv, lace_strdup("-stdout") );
-      PushTable( *argv, lace_fd_path_strdup(cmd->stdos) );
-      PushTable( cmd->os, cmd->stdos );
+      push_FildeshAT(argv, lace_strdup("-stdout"));
+      push_FildeshAT(argv, lace_fd_path_strdup(cmd->stdos));
+      push_FildeshAT(cmd->os, cmd->stdos);
     }
     cmd->stdos = -1;
   } else {
-    for (i = 0; i < cmd->iargs.sz; ++i) {
-      add_ios_Command(cmd, cmd->iargs.s[i].fd, -1);
+    for (i = 0; i < count_of_FildeshAT(cmd->iargs); ++i) {
+      add_ios_Command(cmd, (*cmd->iargs)[i].fd, -1);
     }
   }
-
-  LoseTable(cmd->iargs);
-  InitTable(cmd->iargs);
+  close_FildeshAT(cmd->iargs);
 
   if (cmd->exec_fd >= 0) {
     if (!cmd->exec_fd_has_bytes) {
-      PushTable( *argv, lace_strdup("-waitfd") );
-      PushTable( *argv, lace_fd_strdup(cmd->exec_fd) );
+      push_FildeshAT(argv, lace_strdup("-waitfd"));
+      push_FildeshAT(argv, lace_fd_strdup(cmd->exec_fd));
     }
     add_ios_Command(cmd, cmd->exec_fd, -1);
   }
   cmd->exec_fd = -1;
 
-  for (i = 0; i < cmd->exit_fds.sz; ++i) {
-    PushTable( *argv, lace_strdup("-exitfd") );
-    PushTable( *argv, lace_fd_strdup(cmd->exit_fds.s[i]) );
+  for (i = 0; i < count_of_FildeshAT(cmd->exit_fds); ++i) {
+    push_FildeshAT(argv, lace_strdup("-exitfd"));
+    push_FildeshAT(argv, lace_fd_strdup((*cmd->exit_fds)[i]));
   }
-  LoseTable(cmd->exit_fds);
-  InitTable(cmd->exit_fds);
+  close_FildeshAT(cmd->exit_fds);
 
   if (cmd->status_fd >= 0) {
-    PushTable( *argv, lace_strdup("-o?") );
-    PushTable( *argv, lace_fd_path_strdup(cmd->status_fd) );
-    PushTable( cmd->os, cmd->status_fd );
+    push_FildeshAT(argv, lace_strdup("-o?"));
+    push_FildeshAT(argv, lace_fd_path_strdup(cmd->status_fd));
+    push_FildeshAT(cmd->os, cmd->status_fd);
   }
   cmd->status_fd = -1;
 }
 
   static int
-spawn_commands(const char* fildesh_exe, TableT(Command) cmds,
+spawn_commands(const char* fildesh_exe, Command** cmds,
                FildeshKV* alias_map, bool forkonly)
 {
-  DeclTable( cstr, argv );
-  DeclTable( uint2, fdargs );
+  DECLARE_FildeshAT(char*, argv);
+  DECLARE_FildeshAT(uint2, fdargs);
   unsigned i;
   int istat = 0;
 
-  for (i = 0; i < cmds.sz && istat == 0; ++i)
+  init_FildeshAT(argv);
+  init_FildeshAT(fdargs);
+
+  for (i = 0; i < count_of_FildeshAT(cmds) && istat == 0; ++i)
   {
-    Command* cmd = &cmds.s[i];
+    Command* cmd = &(*cmds)[i];
     bool use_thread = false;
     unsigned argi, j;
 
     if (cmd->kind != RunCommand && cmd->kind != DefCommand)  continue;
 
-    for (argi = 0; argi < cmd->args.sz; ++argi)
+    for (argi = 0; argi < count_of_FildeshAT(cmd->args); ++argi)
     {
-      if (!cmd->args.s[argi])
-      {
+      if (!(*cmd->args)[argi]) {
         uint2 p;
-        Claim2( fdargs.sz ,<, cmd->iargs.sz );
+        assert(count_of_FildeshAT(fdargs) < count_of_FildeshAT(cmd->iargs));
         p.s[0] = argi;
-        p.s[1] = cmd->iargs.s[fdargs.sz].fd;
-        PushTable( fdargs, p );
+        p.s[1] = (*cmd->iargs)[count_of_FildeshAT(fdargs)].fd;
+        push_FildeshAT(fdargs, p);
       }
     }
-    Claim2( fdargs.sz ,==, cmd->iargs.sz );
+    assert(count_of_FildeshAT(fdargs) == count_of_FildeshAT(cmd->iargs));
 
     fix_known_flags_Command(cmd, alias_map);
 
-    if (cmd->exec_fd >= 0 || fdargs.sz > 0 ||
-        cmd->status_fd >=0 || cmd->exit_fds.sz > 0)
+    if (cmd->exec_fd >= 0 || count_of_FildeshAT(fdargs) > 0 ||
+        cmd->status_fd >=0 || count_of_FildeshAT(cmd->exit_fds) > 0)
     {
       const char* execfd_exe = lookup_strmap(alias_map, "execfd");
       char* execfd_fmt = NULL;
       if (execfd_exe) {
-        PushTable( argv, lace_strdup(execfd_exe) );
+        push_FildeshAT(argv, lace_strdup(execfd_exe));
       } else {
         if (!forkonly) {
           use_thread = true;
         }
-        PushTable( argv, lace_strdup(fildesh_exe) );
-        PushTable( argv, lace_strdup("-as") );
-        PushTable( argv, lace_strdup("execfd") );
+        push_FildeshAT(argv, lace_strdup(fildesh_exe));
+        push_FildeshAT(argv, lace_strdup("-as"));
+        push_FildeshAT(argv, lace_strdup("execfd"));
       }
       if (cmd->exec_fd >= 0) {
-        PushTable( argv, lace_strdup("-exe") );
-        PushTable( argv, lace_strdup(cmd->args.s[0]) );
+        push_FildeshAT(argv, lace_strdup("-exe"));
+        push_FildeshAT(argv, lace_strdup((*cmd->args)[0]));
         if (cmd->exec_fd_has_bytes) {
           uint2 p;
           p.s[0] = 0;
           p.s[1] = cmd->exec_fd;
-          PushTable( fdargs, p );
+          push_FildeshAT(fdargs, p);
         }
       }
 
-      add_inheritfd_flags_Command(&argv, cmd, use_thread);
+      add_inheritfd_flags_Command(argv, cmd, use_thread);
 
-      execfd_fmt = (char*)malloc(2*cmd->args.sz);
-      for (j = 0; j < cmd->args.sz; ++j) {
+      execfd_fmt = (char*)malloc(2*count_of_FildeshAT(cmd->args));
+      for (j = 0; j < count_of_FildeshAT(cmd->args); ++j) {
         execfd_fmt[2*j] = 'a';
         execfd_fmt[2*j+1] = '_';
       }
-      execfd_fmt[2*cmd->args.sz-1] = '\0';
+      execfd_fmt[2*count_of_FildeshAT(cmd->args)-1] = '\0';
 
-      for (j = 0; j < fdargs.sz; ++j) {
-        uint2 p = fdargs.s[j];
-        cmd->args.s[p.s[0]] = strdup_fd_Command(cmd, p.s[1]);
+      for (j = 0; j < count_of_FildeshAT(fdargs); ++j) {
+        uint2 p = (*fdargs)[j];
+        (*cmd->args)[p.s[0]] = strdup_fd_Command(cmd, p.s[1]);
         execfd_fmt[2*p.s[0]] = 'x';
       }
 
-      PushTable( argv, execfd_fmt );
-      PushTable( argv, lace_strdup("--") );
-      PushTable( argv, lace_strdup(cmd->args.s[0]) );
+      push_FildeshAT(argv, execfd_fmt);
+      push_FildeshAT(argv, lace_strdup("--"));
+      push_FildeshAT(argv, lace_strdup((*cmd->args)[0]));
     }
-    else if (fildesh_specific_util (cmd->args.s[0])) {
+    else if (fildesh_specific_util ((*cmd->args)[0])) {
       if (!forkonly) {
-        use_thread = fildesh_builtin_is_threadsafe(cmd->args.s[0]);
+        use_thread = fildesh_builtin_is_threadsafe((*cmd->args)[0]);
       }
-      PushTable( argv, lace_strdup(fildesh_exe) );
-      PushTable( argv, lace_strdup("-as") );
-      PushTable( argv, lace_strdup(cmd->args.s[0]));
+      push_FildeshAT(argv, lace_strdup(fildesh_exe));
+      push_FildeshAT(argv, lace_strdup("-as"));
+      push_FildeshAT(argv, lace_strdup((*cmd->args)[0]));
     }
     else {
-      PushTable( argv, lace_strdup(cmd->args.s[0]));
+      push_FildeshAT(argv, lace_strdup((*cmd->args)[0]));
     }
 
-    for (j = 1; j < cmd->args.sz; ++j)
-      PushTable( argv, lace_strdup(cmd->args.s[j]) );
+    for (j = 1; j < count_of_FildeshAT(cmd->args); ++j)
+      push_FildeshAT(argv, lace_strdup((*cmd->args)[j]));
 
-    PushTable( argv, NULL );
+    push_FildeshAT(argv, NULL);
 
     if (cmd->exec_doc)
     {
       cmd->exec_doc = 0;
-      fildesh_compat_file_chmod_u_rwx(cmd->args.s[0], 1, 1, 1);
+      fildesh_compat_file_chmod_u_rwx((*cmd->args)[0], 1, 1, 1);
     }
 
     if (use_thread) {
       BuiltinCommandThreadArg* arg = AllocT(BuiltinCommandThreadArg, 1);
       arg->command = cmd;
-      arg->argv = DupliT(char*, argv.s, argv.sz);
+      arg->argv = DupliT(char*, (*argv), count_of_FildeshAT(argv));
       cmd->pid = 0;
       istat = pthread_create(
           &cmd->thread, NULL, builtin_command_thread_fn, arg);
       if (istat < 0) {
-        fildesh_log_errorf("Could not pthread_create(). File: %s", argv.s[0]);
+        fildesh_log_errorf("Could not pthread_create(). File: %s", (*argv)[0]);
       }
     } else {
       fildesh_compat_fd_t* fds_to_inherit =
         build_fds_to_inherit_Command(cmd);
       cmd->pid = fildesh_compat_fd_spawnvp(
-          cmd->stdis, cmd->stdos, 2, fds_to_inherit, (const char**)argv.s);
+          cmd->stdis, cmd->stdos, 2, fds_to_inherit, (const char**)(*argv));
       free(fds_to_inherit);
       cmd->stdis = -1;
       cmd->stdos = -1;
       close_Command(cmd);
       if (cmd->pid < 0) {
-        fildesh_log_errorf("Could not spawnvp(). File: %s", argv.s[0]);
+        fildesh_log_errorf("Could not spawnvp(). File: %s", (*argv)[0]);
         istat = -1;
       }
-      for (argi = 0; argi < argv.sz; ++argi)
-        free (argv.s[argi]);
+      for (argi = 0; argi < count_of_FildeshAT(argv); ++argi)
+        free((*argv)[argi]);
     }
-    fdargs.sz = 0;
-    argv.sz = 0;
+    mpop_FildeshAT(fdargs, count_of_FildeshAT(fdargs));
+    mpop_FildeshAT(argv, count_of_FildeshAT(argv));
   }
-  LoseTable( argv );
-  LoseTable( fdargs );
+  close_FildeshAT(argv);
+  close_FildeshAT(fdargs);
   return istat;
 }
 
@@ -1866,8 +1858,8 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
                              FildeshX** inputv, FildeshO** outputv)
 {
   char* fildesh_exe = argv[0];
-  DeclTable( AlphaTab, script_args );
-  TableT(Command)* cmds = NULL;
+  DECLARE_FildeshAT(const char*, script_args);
+  Command** cmds = NULL;
   bool use_stdin = true;
   FildeshX* script_in = NULL;
   FildeshO tmp_out[1] = {DEFAULT_FildeshO};
@@ -1881,6 +1873,8 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
   int exstatus = 0;
   int istat;
 
+  init_FildeshAT(script_args);
+
   /* We shouldn't have an error yet.*/
   fildesh_compat_errno_clear();
 
@@ -1893,9 +1887,6 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
 
   global_alloc = open_FildeshAlloc();
   cmd_hookup = new_CommandHookup(global_alloc);
-
-  /* add_util_path_env (); */
-  (void) add_util_path_env;
 
   signal(SIGINT, lose_sysCx);
   signal(SIGSEGV, lose_sysCx);
@@ -2050,7 +2041,7 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
       }
       use_stdin = false;
       if (!arg) {
-        PushTable( script_args, cons1_AlphaTab("/dev/fd/something") );
+        push_FildeshAT(script_args, "/dev/fd/something");
         script_in = open_arg_FildeshXF(argi-1, argv, inputv);
         if (!script_in) {
           fildesh_log_errorf("Cannot read script from builtin.");
@@ -2058,7 +2049,7 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
         }
         break;
       }
-      PushTable( script_args, cons1_AlphaTab(arg) );
+      push_FildeshAT(script_args, arg);
       script_in = open_arg_FildeshXF(argi-1, argv, inputv);
       if (!script_in) {
         fildesh_compat_errno_trace();
@@ -2070,7 +2061,7 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
   }
 
   if (exiting || exstatus != 0) {
-    LoseTable( script_args );
+    close_FildeshAT(script_args);
     close_FildeshKV(alias_map);
     free_CommandHookup(cmd_hookup, &istat);
     close_FildeshAlloc(global_alloc);
@@ -2078,28 +2069,31 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
   }
   push_losefn_sysCx(close_FildeshAlloc_generic, global_alloc);
 
-  cmds = AllocT(TableT(Command), 1);
-  InitTable(*cmds);
+  {
+    DECLARE_FildeshAT(Command, tmp_cmds);
+    init_FildeshAT(tmp_cmds);
+    cmds = (Command**)malloc(sizeof(tmp_cmds));
+    memcpy(cmds, tmp_cmds, sizeof(tmp_cmds));
+  }
   push_losefn_sysCx(lose_Commands, cmds);
 
   if (use_stdin) {
     script_in = open_arg_FildeshXF(0, argv, inputv);
     cmd_hookup->stdin_fd = -1;
-    PushTable( script_args, cons1_AlphaTab("/dev/stdin") );
+    push_FildeshAT(script_args, "/dev/stdin");
   }
 
   while (argi < argc) {
     const char* arg = argv[argi++];
-    PushTable( script_args, cons1_AlphaTab (arg) );
+    push_FildeshAT(script_args, arg);
   }
 
-  if (script_args.sz > 0)
-  {
+  if (count_of_FildeshAT(script_args) > 0) {
     SymVal* sym;
     SymValKind sym_kind;
-    Command* cmd = Grow1Table( *cmds );
+    Command* cmd = grow1_FildeshAT(cmds);
     truncate_FildeshO(tmp_out);
-    print_int_FildeshO(tmp_out, (int)(script_args.sz-1));
+    print_int_FildeshO(tmp_out, (int)(count_of_FildeshAT(script_args)-1));
 
     init_Command(cmd, global_alloc);
     cmd->kind = HereDocCommand;
@@ -2113,15 +2107,15 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
     assert(sym);
     sym->as.here_doc = cmd->doc;
 
-    while (script_args.sz < 10) {
-      PushTable( script_args, cons1_AlphaTab ("") );
+    while (count_of_FildeshAT(script_args) < 10) {
+      push_FildeshAT(script_args, "");
     }
   }
 
-  for (i = 0; i < script_args.sz; ++i) {
+  for (i = 0; i < count_of_FildeshAT(script_args); ++i) {
     SymVal* sym;
     SymValKind sym_kind;
-    Command* cmd = Grow1Table( *cmds );
+    Command* cmd = grow1_FildeshAT(cmds);
 
     truncate_FildeshO(tmp_out);
     puts_FildeshO(tmp_out, "$(H: ");
@@ -2132,9 +2126,7 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
     cmd->kind = HereDocCommand;
     cmd->line_num = 0;
     cmd->line = strdup_FildeshO(tmp_out, global_alloc);
-    cmd->doc = strdup_FildeshAlloc(
-        global_alloc, ccstr_of_AlphaTab(&script_args.s[i]));
-    lose_AlphaTab(&script_args.s[i]);
+    cmd->doc = strdup_FildeshAlloc(global_alloc, (*script_args)[i]);
 
     sym_kind = parse_sym(cmd->line, false);
     assert(sym_kind == HereDocVal);
@@ -2142,7 +2134,7 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
     assert(sym);
     sym->as.here_doc = cmd->doc;
   }
-  LoseTable( script_args );
+  close_FildeshAT(script_args);
 
   if (cmd_hookup->stdin_fd == 0) {
     cmd_hookup->stdin_fd = fildesh_compat_fd_claim(cmd_hookup->stdin_fd);
@@ -2160,7 +2152,7 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
         cmds, script_in, filename_FildeshXF(script_in),
         &cmd_hookup->map, scope_alloc, global_alloc, tmp_out);
     if (istat != 0 ||
-        (cmds->sz == 0 || cmds->s[cmds->sz-1].kind != BarrierCommand))
+        (count_of_FildeshAT(cmds) == 0 || last_FildeshAT(cmds).kind != BarrierCommand))
     {
       close_FildeshX(script_in);
       fildesh_compat_errno_trace();
@@ -2175,14 +2167,14 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
       exstatus = 65;
     }
     if (false && exstatus == 0) {
-      for (i = 0; i < cmds->sz; ++i) {
-        output_Command (stderr, &cmds->s[i]);
+      for (i = 0; i < count_of_FildeshAT(cmds); ++i) {
+        output_Command (stderr, &(*cmds)[i]);
       }
     }
 
     if (exstatus == 0) {
       fildesh_compat_errno_trace();
-      istat = spawn_commands(fildesh_exe, *cmds, alias_map, forkonly);
+      istat = spawn_commands(fildesh_exe, cmds, alias_map, forkonly);
       fildesh_compat_errno_trace();
     }
     if (exstatus == 0 && istat != 0) {
@@ -2190,8 +2182,8 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
     }
 
     istat = 0;
-    for (i = 0; i < cmds->sz; ++i) {
-      Command* cmd = &cmds->s[i];
+    for (i = 0; i < count_of_FildeshAT(cmds); ++i) {
+      Command* cmd = &(*cmds)[i];
       if (false && exstatus == 0) {
         output_Command(stderr, cmd);
       }
@@ -2214,7 +2206,7 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
 
       lose_Command(cmd);
     }
-    cmds->sz = 0;
+    mpop_FildeshAT(cmds, count_of_FildeshAT(cmds));
     fildesh_compat_errno_trace();
     close_FildeshAlloc(scope_alloc);
 

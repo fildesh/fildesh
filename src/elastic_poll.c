@@ -4,12 +4,12 @@
  **/
 #include "fildesh.h"
 #include "fildesh_compat_fd.h"
-#include "cx/table.h"
 
 #include <errno.h>
 #include <fcntl.h>
 #include <poll.h>
 #include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 
 /* #define DEBUGGING */
@@ -24,13 +24,22 @@ typedef struct IOState IOState;
 
 struct IOState
 {
-  TableT(byte) buf;
+  DECLARE_FildeshAT(unsigned char, buf);
   bool done;
   const char* filename;
 };
 
-DeclTableT(IOState, IOState);
-DeclTableT(pollfd, struct pollfd);
+
+static
+  IOState
+default_IOState()
+{
+  IOState io;
+  init_FildeshAT(io.buf);
+  io.done = false;
+  io.filename = NULL;
+  return io;
+}
 
 static
   void
@@ -40,19 +49,19 @@ close_IOState(IOState* io, struct pollfd* pfd) {
   }
   io->done = 1;
   fildesh_compat_fd_close(pfd->fd);
-  ClearTable( io->buf );
+  close_FildeshAT(io->buf);
 }
 
 static
   bool
-prepare_for_poll(TableT(IOState) ios, TableT(pollfd) pollfds) {
-  uint i;
+prepare_for_poll(IOState** ios, struct pollfd** pollfds) {
+  unsigned i;
   bool still_reading = 0;
 
-  UFor( i, ios.sz ) {
-    IOState* io = &ios.s[i];
-    struct pollfd* pfd = &pollfds.s[i];
-    if (io->buf.sz > 0 && !io->done) {
+  for (i = 0; i < count_of_FildeshAT(ios); ++i) {
+    IOState* io = &(*ios)[i];
+    struct pollfd* pfd = &(*pollfds)[i];
+    if (count_of_FildeshAT(io->buf) > 0 && !io->done) {
       if (i == 0) {
         pfd->events = POLLIN;
         still_reading = 1;
@@ -68,8 +77,8 @@ prepare_for_poll(TableT(IOState) ios, TableT(pollfd) pollfds) {
     pfd->revents = 0;
   }
 
-  for (i = 1; i < ios.sz; ++i) {
-    IOState* io = &ios.s[i];
+  for (i = 1; i < count_of_FildeshAT(ios); ++i) {
+    IOState* io = &(*ios)[i];
     if (!io->done) {
       return 1;
     }
@@ -79,46 +88,47 @@ prepare_for_poll(TableT(IOState) ios, TableT(pollfd) pollfds) {
 
 static
   void
-handle_read_write(TableT(IOState) ios, TableT(pollfd) pollfds) {
-  uint i;
-
-  UFor( i, ios.sz ) {
-    IOState* io = &ios.s[i];
-    struct pollfd* pfd = &pollfds.s[i];
+handle_read_write(IOState** ios, struct pollfd** pollfds) {
+  unsigned i;
+  for (i = 0; i < count_of_FildeshAT(ios); ++i) {
+    IOState* io = &(*ios)[i];
+    struct pollfd* pfd = &(*pollfds)[i];
     int rwerrno = 0;
     long sstat = 0;
 
     if (io->done) {
       /* Nothing.*/
     } else if ((pfd->revents & POLLIN) == POLLIN) {
-      sstat = read(pfd->fd, io->buf.s, io->buf.sz);
+      sstat = read(pfd->fd, (*io->buf), count_of_FildeshAT(io->buf));
       if (sstat < 0) {
         rwerrno = errno;
       } else if (sstat == 0) {
         StateMsg("No input read. Must be done!", 0, 0);
         close_IOState(io, pfd);
       } else /* sstat > 0 */ {
-        size_t tmp_sz = io->buf.sz;
-        uint j;
-        io->buf.sz = sstat;
-        for (j = 1; j < ios.sz; ++j) {
-          if (ios.s[j].done) {
+        unsigned j;
+        for (j = 1; j < count_of_FildeshAT(ios); ++j) {
+          const size_t effective_size = sstat;
+          if ((*ios)[j].done) {
             continue;
           }
-          CatTable( ios.s[j].buf, io->buf );
+          memcpy(
+              grow_FildeshAT((*ios)[j].buf, effective_size),
+              *io->buf,
+              effective_size);
         }
-        io->buf.sz = tmp_sz;
       }
     } else if ((pfd->revents & POLLOUT) == POLLOUT) {
-      sstat = write(pfd->fd, io->buf.s, io->buf.sz);
+      sstat = write(pfd->fd, *io->buf, count_of_FildeshAT(io->buf));
       if (sstat < 0) {
         rwerrno = errno;
       }
       if (sstat > 0) {
-        if ((size_t)sstat < io->buf.sz) {
-          memmove(io->buf.s, &io->buf.s[sstat], io->buf.sz - sstat);
+        if ((size_t)sstat < count_of_FildeshAT(io->buf)) {
+          memmove(*io->buf, &(*io->buf)[sstat],
+                  count_of_FildeshAT(io->buf) - sstat);
         }
-        io->buf.sz -= sstat;
+        mpop_FildeshAT(io->buf, sstat);
       }
     }
 
@@ -163,16 +173,19 @@ main_elastic_poll(unsigned argc, char** argv)
   int istat = 0;
   IOState* io;
   struct pollfd* pfd;
-  DeclTable( IOState, ios );
-  DeclTable( pollfd, pollfds );
-  uint i;
+  DECLARE_FildeshAT(IOState, ios);
+  DECLARE_FildeshAT(struct pollfd, pollfds);
+  unsigned i;
   int exstatus = 0;
 
+  init_FildeshAT(ios);
+  init_FildeshAT(pollfds);
+
   /* Initialize input.*/
-  io = Grow1Table( ios );
-  pfd = Grow1Table( pollfds );
-  Zeroize( *io );
-  GrowTable( io->buf, BUFSIZ );
+  io = grow1_FildeshAT(ios);
+  pfd = grow1_FildeshAT(pollfds);
+  *io = default_IOState();
+  grow_FildeshAT(io->buf, BUFSIZ);
   pfd->fd = -1;
 
   /**** BEGIN ARGUMENT_PARSING ****/
@@ -187,8 +200,8 @@ main_elastic_poll(unsigned argc, char** argv)
       }
       arg = argv[argi++];
 
-      io = &ios.s[0];
-      pfd = &pollfds.s[0];
+      io = &(*ios)[0];
+      pfd = &(*pollfds)[0];
 
       io->filename = arg;
       pfd->fd = fildesh_arg_open_readonly(io->filename);
@@ -206,10 +219,10 @@ main_elastic_poll(unsigned argc, char** argv)
         arg = argv[argi++];
       }
 
-      io = Grow1Table( ios );
-      pfd = Grow1Table( pollfds );
+      io = grow1_FildeshAT(ios);
+      pfd = grow1_FildeshAT(pollfds);
 
-      Zeroize( *io );
+      *io = default_IOState();
       io->filename = arg;
       pfd->fd = fildesh_arg_open_writeonly(io->filename);
       if (pfd->fd < 0) {
@@ -219,27 +232,27 @@ main_elastic_poll(unsigned argc, char** argv)
     }
   }
 
-  if (exstatus == 0 && pollfds.s[0].fd == -1) {
-    io = &ios.s[0];
-    pfd = &pollfds.s[0];
+  if (exstatus == 0 && (*pollfds)[0].fd == -1) {
+    io = &(*ios)[0];
+    pfd = &(*pollfds)[0];
     io->filename = "/dev/stdin";
     pfd->fd = fildesh_arg_open_readonly("-");
     if (pfd->fd < 0) {exstatus = 66;}
   }
 
-  if (exstatus == 0 && pollfds.sz == 1) {
-    io = Grow1Table( ios );
-    pfd = Grow1Table(pollfds);
-    Zeroize( *io );
+  if (exstatus == 0 && count_of_FildeshAT(pollfds) == 1) {
+    io = grow1_FildeshAT(ios);
+    pfd = grow1_FildeshAT(pollfds);
+    *io = default_IOState();
     io->filename = "/dev/stdout";
     pfd->fd = fildesh_arg_open_writeonly("-");
     if (pfd->fd < 0) {exstatus = 73;}
   }
   /**** END ARGUMENT_PARSING ****/
 
-  for (i = 0; i < ios.sz && exstatus == 0; ++i) {
-    io = &ios.s[i];
-    pfd = &pollfds.s[i];
+  for (i = 0; i < count_of_FildeshAT(ios) && exstatus == 0; ++i) {
+    io = &(*ios)[i];
+    pfd = &(*pollfds)[i];
     istat = setfd_nonblock(pfd->fd);
     if (istat < 0) {
       fildesh_log_errorf("failed to set nonblocking: %s\n", io->filename);
@@ -250,7 +263,7 @@ main_elastic_poll(unsigned argc, char** argv)
   while (exstatus == 0 && prepare_for_poll(ios, pollfds)) {
     const int infinite_poll_timeout = -1;
 
-    istat = poll(pollfds.s, pollfds.sz, infinite_poll_timeout);
+    istat = poll(*pollfds, count_of_FildeshAT(pollfds), infinite_poll_timeout);
     if (istat < 0) {
       StateMsg( "poll()", 0, istat );
       break;
@@ -258,14 +271,14 @@ main_elastic_poll(unsigned argc, char** argv)
     handle_read_write(ios, pollfds);
   }
 
-  UFor( i, ios.sz ) {
-    io = &ios.s[i];
-    pfd = &pollfds.s[i];
+  for (i = 0; i < count_of_FildeshAT(ios); ++i) {
+    io = &(*ios)[i];
+    pfd = &(*pollfds)[i];
     close_IOState(io, pfd);
-    LoseTable( io->buf );
+    close_FildeshAT(io->buf);
   }
-  LoseTable( ios );
-  LoseTable( pollfds );
+  close_FildeshAT(ios);
+  close_FildeshAT(pollfds);
   return 0;
 }
 
