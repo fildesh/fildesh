@@ -1,29 +1,6 @@
 
-add_library(fildesh_lib_obj OBJECT
-  "alloc.c"
-  "lib/array.c"
-  "infile.c"
-  "instream.c"
-  "kve.c"
-  "kve.h"
-  "kv_single_list.c"
-  "log.c"
-  "mascii.c"
-  "mascii.h"
-  "outfile.c"
-  "outstream.c"
-  "string.c"
-  "${CMAKE_SOURCE_DIR}/include/fildesh.h"
-  )
-add_library(fildesh_lib STATIC
-  $<TARGET_OBJECTS:fildesh_lib_obj>
-  $<TARGET_OBJECTS:fildesh_compat_lib_obj>
-  )
-target_link_libraries(fildesh_lib ${CMAKE_THREAD_LIBS_INIT})
-set_target_properties(fildesh_lib PROPERTIES OUTPUT_NAME "fildesh")
-set_target_properties(fildesh_lib PROPERTIES PUBLIC_HEADER "${CMAKE_SOURCE_DIR}/include/fildesh.h")
-
-
+include(GNUInstallDirs)
+add_subdirectory(lib)
 add_subdirectory(cx)
 
 
@@ -138,10 +115,5 @@ elseif(UNIX AND NOT APPLE)
 endif()
 
 
-include(GNUInstallDirs)
 install(TARGETS fildesh
   RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}")
-install(TARGETS fildesh_lib
-  ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-  PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
-

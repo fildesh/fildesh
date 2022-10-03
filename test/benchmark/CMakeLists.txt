@@ -40,8 +40,8 @@ add_test(NAME benchmark_map_benchmark COMMAND
 
 add_executable(benchmark_strchr_benchmark
   "strchr_benchmark.cc"
-  "${CMAKE_SOURCE_DIR}/src/mascii.c"
-  "${CMAKE_SOURCE_DIR}/src/mascii.h"
+  "${CMAKE_SOURCE_DIR}/src/lib/mascii.c"
+  "${CMAKE_SOURCE_DIR}/src/lib/mascii.h"
   "${CMAKE_SOURCE_DIR}/include/fildesh.h")
 target_include_directories(benchmark_strchr_benchmark PRIVATE "${CMAKE_SOURCE_DIR}")
 target_link_libraries(benchmark_strchr_benchmark benchmark::benchmark)
@@ -50,8 +50,8 @@ add_test(NAME benchmark_strchr_benchmark COMMAND
 
 add_executable(benchmark_strcspn_benchmark
   "strcspn_benchmark.cc"
-  "${CMAKE_SOURCE_DIR}/src/mascii.c"
-  "${CMAKE_SOURCE_DIR}/src/mascii.h"
+  "${CMAKE_SOURCE_DIR}/src/lib/mascii.c"
+  "${CMAKE_SOURCE_DIR}/src/lib/mascii.h"
   "${CMAKE_SOURCE_DIR}/include/fildesh.h")
 target_include_directories(benchmark_strcspn_benchmark PRIVATE "${CMAKE_SOURCE_DIR}")
 target_link_libraries(benchmark_strcspn_benchmark benchmark::benchmark)

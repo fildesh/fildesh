@@ -1,6 +1,6 @@
 #include <benchmark/benchmark.h>
 #include <cstring>
-#include "src/mascii.h"
+#include "src/lib/mascii.h"
 
 static unsigned expected_index(unsigned n) {
   if (n % 3 == 2) {

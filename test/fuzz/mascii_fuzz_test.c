@@ -3,7 +3,7 @@
 #include <string.h>
 
 #include "fildesh.h"
-#include "src/mascii.h"
+#include "src/lib/mascii.h"
 
   int
 LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)

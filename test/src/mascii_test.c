@@ -1,5 +1,5 @@
 #include "fildesh.h"
-#include "src/mascii.h"
+#include "src/lib/mascii.h"
 #include <assert.h>
 #include <string.h>
 #include <stdio.h>
