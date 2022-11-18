@@ -31,7 +31,7 @@ def fildesh_dev_dependencies():
   maybe(
       http_archive,
       name = "google_benchmark",
-      sha256 = "3aff99169fa8bdee356eaa1f691e835a6e57b1efeadb8a0f9f228531158246ac",
-      strip_prefix = "benchmark-1.7.0",
-      urls = ["https://github.com/google/benchmark/archive/v1.7.0.tar.gz"],
+      sha256 = "6430e4092653380d9dc4ccb45a1e2dc9259d581f4866dc0759713126056bc1d7",
+      strip_prefix = "benchmark-1.7.1",
+      urls = ["https://github.com/google/benchmark/archive/v1.7.1.tar.gz"],
   )
