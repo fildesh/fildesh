@@ -4,8 +4,8 @@ $(> greet) 'Hello! My name is: ' $(XA 0) \
   "\nYou provided " $(XA #) " arguments." \
   "\nThe first two are '" $(XA 1) "' and '" $(XA 2) "'."
 
-$(H: default_beg) 1
-$(H: default_end) 5
+(: default_beg Str "1")
+(: default_end Str "5")
 
 
 $(O beg) zec -unless $(XA 1) / $(XA default_beg) /

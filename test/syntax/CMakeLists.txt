@@ -38,6 +38,11 @@ add_test(NAME syntax_executable_bytes_ofxf_test COMMAND fildesh -f
 add_test(NAME syntax_expect_failure_oxf_test COMMAND fildesh -f
   "${CMAKE_CURRENT_SOURCE_DIR}/expect_failure_oxf_test.fildesh")
 
+add_test(NAME syntax_filename_xofxof_test COMMAND
+  "${CMAKE_COMMAND}" -E env "TEST_TMPDIR=${CMAKE_CURRENT_BINARY_DIR}"
+  "$<TARGET_FILE:fildesh>" -f
+  "${CMAKE_CURRENT_SOURCE_DIR}/filename_xofxof_test.fildesh")
+
 add_test(NAME syntax_pump_ofxf_test COMMAND fildesh -f
   "${CMAKE_CURRENT_SOURCE_DIR}/pump_ofxf_test.fildesh")
 add_test(NAME syntax_pump_oxf_test COMMAND fildesh -f

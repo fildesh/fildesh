@@ -31,9 +31,7 @@
 
 
 # Declare {N} to be 100.
-$(H N)
-100
-$(H N)
+(: N Str "100")
 
 
 # Create a sequence of numbers from 1 to {N}.

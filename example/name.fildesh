@@ -4,15 +4,13 @@
 # A file can be included by:
 #   $(<< filename)
 # A variable is declared/assigned by:
-#   $(> varname) 'The variable' " content."
+#   (: varname Str (++ "The variable" " content."))
 
 $(<< includetest.fildesh)
 
-$(> msg) "Hello there " $(XA username) '!'
-
-$(> passmsg) $(XA msg) "\nYour password is " $(XA password) '!'
-
-$(> greetmsg) $(XA msg) "\nHow are you today?"
+(: msg Str (++ "Hello there " username "!"))
+(: passmsg Str (++ msg "\nYour password is " password "!"))
+(: greetmsg Str (++ msg "\nHow are you today?"))
 
 |< zec / $(XA greetmsg) "\n" /
 |- zec - / $(XA passmsg) "\n" /

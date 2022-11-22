@@ -2,7 +2,7 @@
 
 $(O expect) zec / "hello hello hello" /
 
-$(> hello) "hello"
+(: hello Str "hello")
 
 |< zec $(XF hello) / " " $(XA hello) " " / - $(X hello)
 |- cmp $(XF expect)

@@ -2,7 +2,7 @@
 # This file is made to be included from name.fildesh.
 # It contains some configuration parameters.
 
-$(H: username) grencez
+(: username Str "grencez")
 
-$(H: password) iamr00t
+(: password Str "iamr00t")
 

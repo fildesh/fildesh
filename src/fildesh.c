@@ -455,7 +455,7 @@ parse_double_quoted_string(FildeshO* out, char* s, FildeshKV* map)
           return NULL;
       }
     }
-    else if (s[0] == '$') {
+    else if (map && s[0] == '$') {
       char* name = &s[2];
       SymVal* sym;
       if (s[1] != '{') {
@@ -482,6 +482,49 @@ parse_double_quoted_string(FildeshO* out, char* s, FildeshKV* map)
     }
   }
   return &s[1];
+}
+
+static
+  char*
+parse_double_quoted_string_or_variable(FildeshO* out, char* s, FildeshKV* map)
+{
+  truncate_FildeshO(out);
+  if (s[0] == '"') {
+    return parse_double_quoted_string(out, &s[1], NULL);
+  }
+  if (s[0] != '(') {
+    unsigned n = strcspn(s, ") \t\v\r\n");
+    const char s_n = s[n];
+    SymVal* sym = NULL;
+    if (s_n=='\0') {return NULL;}
+    s[n] = '\0';
+    sym = lookup_SymVal(map, s);
+    if (!sym || sym->kind != HereDocVal) {
+      fildesh_log_errorf("Unknown string variable %s", s);
+      return NULL;
+    }
+    puts_FildeshO(out, sym->as.here_doc);
+    s[n] = s_n;
+    return &s[n];
+  }
+  if (pfxeq_cstr("(++ ", s)) {
+    FildeshO tmp_out[1] = {DEFAULT_FildeshO};
+    s = &s[4];
+    s = &s[count_ws(s)];
+    while (s[0] != '\0' && s[0] != ')') {
+      s = parse_double_quoted_string_or_variable(tmp_out, s, map);
+      if (!s) {
+        close_FildeshO(tmp_out);
+        return NULL;
+      }
+      put_bytestring_FildeshO(out, (unsigned char*)tmp_out->at, tmp_out->size);
+      s = &s[count_ws(s)];
+    }
+    close_FildeshO(tmp_out);
+    if (s[0]=='\0') {return NULL;}
+    return &s[1];
+  }
+  return NULL;
 }
 
 static
@@ -624,8 +667,66 @@ parse_file(
       }
       close_FildeshX(src);
     }
-    else if (pfxeq_cstr ("$(>", line) ||
-        pfxeq_cstr ("$(set", line))
+    else if (pfxeq_cstr("(: ", line)) {
+      char* sym_name = &line[2+count_ws(&line[2])];
+      char* sym_value = NULL;
+      SymValKind kind = HereDocVal;
+      line = &sym_name[count_non_ws(sym_name)];
+      if (line[0] == '\0') {
+        perror_Command(cmd, "Unclosed paren.", 0);
+        istat = -1;
+        break;
+      }
+      line[0] = '\0';
+      line = &line[1];
+      line = &line[count_ws(line)];
+      if (pfxeq_cstr("Filename ", line)) {
+        kind = IOFileVal;
+      }
+      else if (pfxeq_cstr("Str ", line)) {
+        kind = HereDocVal;
+      }
+      else {
+        perror_Command(cmd, "Expected Str type", 0);
+        istat = -1;
+        break;
+      }
+      line = &line[count_non_ws(line)];
+      line = &line[count_ws(line)];
+      line = parse_double_quoted_string_or_variable(tmp_out, line, map);
+      if (!line) {
+        perror_Command(cmd, "Expected a string", 0);
+        istat = -1;
+        break;
+      }
+      line = &line[count_ws(line)];
+      if (line[0] == ')') {
+        SymVal* sym;
+        line = &line[1];
+        line = &line[count_non_ws(line)];
+        if (line[0] == '\0') {
+          sym_value = strdup_FildeshO(tmp_out, global_alloc);
+        }
+
+        sym = declare_SymVal(map, kind, sym_name, global_alloc);
+        if (!sym) {istat = -1; break;}
+        if (kind == HereDocVal) {
+          sym->as.here_doc = sym_value;
+        }
+        else {
+          sym->as.iofilename = sym_value;
+        }
+
+        lose_Command(cmd);
+        mpop_FildeshAT(cmds, 1);
+      }
+      else { 
+        perror_Command(cmd, "Just want a closing paren after string literal", 0);
+        istat = -1;
+        break;
+      }
+    }
+    else if (pfxeq_cstr ("$(> ", line))
     {
       char* begline;
       char* sym_name = line;
