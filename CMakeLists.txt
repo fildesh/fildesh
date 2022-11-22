@@ -83,7 +83,6 @@ find_package(Threads REQUIRED)
 include_directories(include)
 add_subdirectory(compat)
 add_subdirectory(src)
-add_subdirectory(builtin)
 add_subdirectory(tool)
 add_subdirectory(test)
 

@@ -1,6 +1,7 @@
 
 include(GNUInstallDirs)
 add_subdirectory(lib)
+add_subdirectory(builtin)
 
 
 set(FILDESH_EXTRA_ELASTIC_AIO_LIBS)
@@ -27,21 +28,21 @@ add_library(fildesh_builtin_lib_obj OBJECT
   "ssh-all.c"
   "waitdo.c"
   "xpipe.c"
-  "${CMAKE_SOURCE_DIR}/builtin/add.c"
-  "${CMAKE_SOURCE_DIR}/builtin/bestmatch.c"
-  "${CMAKE_SOURCE_DIR}/builtin/cmp.c"
-  "${CMAKE_SOURCE_DIR}/builtin/elastic_pthread.c"
-  "${CMAKE_SOURCE_DIR}/builtin/expect_failure.c"
-  "${CMAKE_SOURCE_DIR}/builtin/replace_string.c"
-  "${CMAKE_SOURCE_DIR}/builtin/seq.c"
-  "${CMAKE_SOURCE_DIR}/builtin/sponge.c"
-  "${CMAKE_SOURCE_DIR}/builtin/time2sec.c"
-  "${CMAKE_SOURCE_DIR}/builtin/transpose.c"
-  "${CMAKE_SOURCE_DIR}/builtin/ujoin.c"
-  "${CMAKE_SOURCE_DIR}/builtin/void.c"
-  "${CMAKE_SOURCE_DIR}/builtin/zec.c"
   "${CMAKE_SOURCE_DIR}/include/fildesh_builtin.h"
   "${CMAKE_SOURCE_DIR}/include/fildesh_posix_thread.h"
+  "${CMAKE_SOURCE_DIR}/src/builtin/add.c"
+  "${CMAKE_SOURCE_DIR}/src/builtin/bestmatch.c"
+  "${CMAKE_SOURCE_DIR}/src/builtin/cmp.c"
+  "${CMAKE_SOURCE_DIR}/src/builtin/elastic_pthread.c"
+  "${CMAKE_SOURCE_DIR}/src/builtin/expect_failure.c"
+  "${CMAKE_SOURCE_DIR}/src/builtin/replace_string.c"
+  "${CMAKE_SOURCE_DIR}/src/builtin/seq.c"
+  "${CMAKE_SOURCE_DIR}/src/builtin/sponge.c"
+  "${CMAKE_SOURCE_DIR}/src/builtin/time2sec.c"
+  "${CMAKE_SOURCE_DIR}/src/builtin/transpose.c"
+  "${CMAKE_SOURCE_DIR}/src/builtin/ujoin.c"
+  "${CMAKE_SOURCE_DIR}/src/builtin/void.c"
+  "${CMAKE_SOURCE_DIR}/src/builtin/zec.c"
   )
 
 set_property(TARGET fildesh_builtin_lib_obj APPEND PROPERTY COMPILE_DEFINITIONS

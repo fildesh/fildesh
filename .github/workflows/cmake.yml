@@ -49,7 +49,6 @@ jobs:
         name: Test Results (${{ matrix.platform }})
         path: |
           ${{runner.workspace}}/bld/Testing/
-          ${{runner.workspace}}/bld/builtin/RelOnHost/
           ${{runner.workspace}}/bld/src/RelOnHost/
           ${{runner.workspace}}/bld/test/*/RelOnHost/
           ${{runner.workspace}}/bld/tool/RelOnHost/

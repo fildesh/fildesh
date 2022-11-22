@@ -42,7 +42,6 @@ jobs:
         name: Test Results (${{ matrix.platform }})
         path: |
           bazel-testlogs*/**/test.log
-          bazel-bin*/builtin/*
           bazel-bin*/src/*
           bazel-bin*/test/*
           bazel-bin*/tool/*

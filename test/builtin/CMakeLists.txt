@@ -11,7 +11,7 @@
 
 #### add
 
-add_executable(builtin_add_float_test "add_float_test.c" "${CMAKE_SOURCE_DIR}/builtin/add.c")
+add_executable(builtin_add_float_test "add_float_test.c" "${CMAKE_SOURCE_DIR}/src/builtin/add.c")
 target_link_libraries(builtin_add_float_test fildesh_lib fildesh_tool_lib)
 set_property(TARGET builtin_add_float_test
   APPEND PROPERTY COMPILE_DEFINITIONS FILDESH_BUILTIN_LIBRARY)
@@ -87,7 +87,7 @@ add_test(NAME builtin_execfd_script_test COMMAND
 #### expect_failure
 
 add_executable(builtin_expect_failure_test "expect_failure_test.c"
-  "${CMAKE_SOURCE_DIR}/builtin/expect_failure.c")
+  "${CMAKE_SOURCE_DIR}/src/builtin/expect_failure.c")
 target_link_libraries(builtin_expect_failure_test fildesh_lib)
 set_property(TARGET builtin_expect_failure_test
   APPEND PROPERTY COMPILE_DEFINITIONS UNIT_TESTING)
@@ -137,7 +137,7 @@ endif()
 
 #### sshall
 
-add_executable(echocat "echocat.c" "${CMAKE_SOURCE_DIR}/builtin/zec.c")
+add_executable(echocat "echocat.c" "${CMAKE_SOURCE_DIR}/src/builtin/zec.c")
 set_property(TARGET echocat
   APPEND PROPERTY COMPILE_DEFINITIONS FILDESH_BUILTIN_LIBRARY)
 target_link_libraries(echocat fildesh_lib)
@@ -153,7 +153,7 @@ add_test(NAME builtin_sshall_test COMMAND
 
 #### time2sec
 
-add_executable(builtin_time2sec_test "time2sec_test.c" "${CMAKE_SOURCE_DIR}/builtin/time2sec.c")
+add_executable(builtin_time2sec_test "time2sec_test.c" "${CMAKE_SOURCE_DIR}/src/builtin/time2sec.c")
 target_link_libraries(builtin_time2sec_test fildesh_lib fildesh_tool_lib)
 set_property(TARGET builtin_time2sec_test
   APPEND PROPERTY COMPILE_DEFINITIONS FILDESH_BUILTIN_LIBRARY)
@@ -162,7 +162,7 @@ add_test(NAME builtin_time2sec_test COMMAND builtin_time2sec_test)
 #### transpose
 
 add_executable(builtin_transpose_test "transpose_test.c"
-  "${CMAKE_SOURCE_DIR}/builtin/transpose.c")
+  "${CMAKE_SOURCE_DIR}/src/builtin/transpose.c")
 target_link_libraries(builtin_transpose_test fildesh_lib fildesh_tool_lib)
 set_property(TARGET builtin_transpose_test
   APPEND PROPERTY COMPILE_DEFINITIONS UNIT_TESTING)
@@ -174,7 +174,7 @@ add_test(NAME builtin_transpose_tab_test COMMAND fildesh -f
 #### ujoin
 
 add_executable(builtin_ujoin_test "ujoin_test.c"
-  "${CMAKE_SOURCE_DIR}/builtin/ujoin.c")
+  "${CMAKE_SOURCE_DIR}/src/builtin/ujoin.c")
 target_link_libraries(builtin_ujoin_test fildesh_lib fildesh_tool_lib)
 set_property(TARGET builtin_ujoin_test
   APPEND PROPERTY COMPILE_DEFINITIONS UNIT_TESTING)

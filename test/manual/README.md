@@ -53,7 +53,7 @@ bazel build //src:fildesh
 ### Lint
 ```shell
 # Casting function pointers is usually unsafe (https://stackoverflow.com/a/559671/5039395).
-grep -E -e '\([^()]*\(\*\) *\([^()]*\)' -R builtin compat src test tool
+grep -E -e '\([^()]*\(\*\) *\([^()]*\)' -R compat src test tool
 ```
 
 ### SIMD Instructions
