@@ -498,12 +498,23 @@ parse_double_quoted_string_or_variable(FildeshO* out, char* s, FildeshKV* map)
     SymVal* sym = NULL;
     if (s_n=='\0') {return NULL;}
     s[n] = '\0';
-    sym = lookup_SymVal(map, s);
-    if (!sym || sym->kind != HereDocVal) {
-      fildesh_log_errorf("Unknown string variable %s", s);
-      return NULL;
+    if (pfxeq_cstr(".env.", s)) {
+      const char* k = &s[5];
+      const char* v = getenv(k);
+      if (!v) {
+        fildesh_log_errorf("Unknown environment variable %s", k);
+        return NULL;
+      }
+      puts_FildeshO(out, v);
     }
-    puts_FildeshO(out, sym->as.here_doc);
+    else {
+      sym = lookup_SymVal(map, s);
+      if (!sym || sym->kind != HereDocVal) {
+        fildesh_log_errorf("Unknown string variable %s", s);
+        return NULL;
+      }
+      puts_FildeshO(out, sym->as.here_doc);
+    }
     s[n] = s_n;
     return &s[n];
   }

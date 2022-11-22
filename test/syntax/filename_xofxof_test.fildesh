@@ -1,6 +1,5 @@
 
-$(> filename_as_string) $(getenv TEST_TMPDIR) "/filename_xofxof_test_file.txt"
-(: f Filename filename_as_string)
+(: f Filename (++ .env.TEST_TMPDIR "/filename_xofxof_test_file.txt"))
 
 zec -o $(XOF f) / "hello there world" /
 
