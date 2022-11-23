@@ -731,7 +731,7 @@ parse_file(
         lose_Command(cmd);
         mpop_FildeshAT(cmds, 1);
       }
-      else { 
+      else {
         perror_Command(cmd, "Just want a closing paren after string literal", 0);
         istat = -1;
         break;
@@ -2159,6 +2159,12 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
           exstatus = 66;
         }
         break;
+      }
+      if (0 == strcmp("-", arg) ||
+          0 == strcmp("/dev/stdin", arg) ||
+          0 == strcmp("/dev/fd/0", arg))
+      {
+        cmd_hookup->stdin_fd = -1;
       }
       push_FildeshAT(script_args, arg);
       script_in = open_arg_FildeshXF(argi-1, argv, inputv);
