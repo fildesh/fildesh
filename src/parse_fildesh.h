@@ -14,4 +14,7 @@ fildesh_syntax_parse_here_doc(
     FildeshX* in, const char* term, size_t* text_nlines,
     FildeshAlloc* alloc, FildeshO* tmp_out);
 
+const char*
+getopt_FildeshO(FildeshO*, const char*, const char*);
+
 #endif

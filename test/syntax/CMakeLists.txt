@@ -6,6 +6,9 @@ if (UNIX)
     -f "${CMAKE_CURRENT_SOURCE_DIR}/alias_ofxf_test.fildesh")
 endif()
 
+add_test(NAME syntax_coalesce_undefined_test COMMAND fildesh -f
+  "${CMAKE_CURRENT_SOURCE_DIR}/coalesce_undefined_test.fildesh")
+
 add_test(NAME syntax_concatenate_axfxax_test COMMAND fildesh -f
   "${CMAKE_CURRENT_SOURCE_DIR}/concatenate_axfxax_test.fildesh")
 add_test(NAME syntax_concatenate_hxfxax_test COMMAND fildesh -f

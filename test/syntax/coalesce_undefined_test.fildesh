@@ -1,0 +1,12 @@
+
+(: x_override Str "overridden")
+
+(: x Str (?? x_override "xxx"))
+(: y Str (?? y_override "yyy"))
+
+
+zec -o $(OF expect) / "overridden yyy\n" /
+
+|< zec / "${x} ${y}\n" /
+|- cmp $(XF expect)
+|> stdout

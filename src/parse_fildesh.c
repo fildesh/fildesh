@@ -1,6 +1,7 @@
 
 #include "parse_fildesh.h"
 
+#include <assert.h>
 #include <string.h>
 #include "fildesh_compat_string.h"
 
@@ -128,5 +129,31 @@ fildesh_syntax_parse_here_doc(
   if (tmp_out->size > 0) {tmp_out->size -= 1;}
 
   return strdup_FildeshO(tmp_out, alloc);
+}
+
+  const char*
+getopt_FildeshO(FildeshO* out, const char* const flag, const char* const arg)
+{
+  const char* s;
+  if (flag[0] != '-') {return flag;}
+  if (flag[1] == '\0') {return flag;}
+
+  s = &flag[1];
+  if (flag[1] == '-') {
+    s = &flag[2];
+  }
+  while (s[0] != '\0') {
+    const size_t n = strcspn(s, "-=");
+    put_bytestring_FildeshO(out, (const unsigned char*)s, n);
+    s = &s[n];
+    if (s[0] == '=') {
+      return &s[1];
+    }
+    if (s[0] == '-') {
+      putc_FildeshO(out, '_');
+      s = &s[1];
+    }
+  }
+  return arg;
 }
 

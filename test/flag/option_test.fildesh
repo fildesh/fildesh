@@ -1,0 +1,17 @@
+
+$(H script)
+(: hello Str (?? .flag.hello_flag "hello"))
+(: the Str (?? .flag.the_flag "the"))
+(: world Str (?? .flag.world_flag "world"))
+|< zec / "${hello} ${the} ${world}\n" /
+|> stdout
+$(H script)
+
+zec -o $(OF expect) / "hello ZA WARUDO\n" /
+
+|< zec / "${script}" /
+|- fildesh -stderr $(OF err) - --the-flag "ZA" --world_flag "World" -world_flag "WARUDO"
+|- cmp $(XF expect)
+|> stdout
+
+cmp /dev/null $(XF err)

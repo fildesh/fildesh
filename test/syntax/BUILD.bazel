@@ -14,6 +14,11 @@ fildesh_test(
 )
 
 fildesh_test(
+    name = "coalesce_undefined_test",
+    srcs = ["coalesce_undefined_test.fildesh"],
+)
+
+fildesh_test(
     name = "concatenate_axfxax_test",
     srcs = ["concatenate_axfxax_test.fildesh"],
 )

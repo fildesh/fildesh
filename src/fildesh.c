@@ -399,6 +399,57 @@ declare_SymVal(FildeshKV* map, SymValKind kind,
   return x;
 }
 
+static
+  char**
+fildesh_syntax_ensure_string_variable(
+    FildeshKV* map, const char* name, FildeshAlloc* alloc)
+{
+  SymVal* x = getf_SymVal(map, name, alloc);
+  if (x->kind == NSymValKinds) {
+    x->kind = HereDocVal;
+    x->as.here_doc = NULL;
+  }
+  if (x->kind == HereDocVal) {
+    return &x->as.here_doc;
+  }
+  fildesh_log_errorf("Cannot overwrite non-string variable: %s", name);
+  return NULL;
+}
+
+static
+  int
+fildesh_syntax_parse_flags(
+    char** args,
+    FildeshKV* map, FildeshAlloc* alloc, FildeshO* tmp_out)
+{
+  unsigned i;
+  for (i = 0; args[i]; ++i) {
+    char** p;
+    const char* k;
+    const char* v;
+    truncate_FildeshO(tmp_out);
+    puts_FildeshO(tmp_out, ".flag.");
+    v = getopt_FildeshO(tmp_out, args[i], args[i+1]);
+    if (!v) {
+      fildesh_log_errorf("Expected a value for flag: %s", args[i]);
+      return 64;
+    }
+    if (tmp_out->size == 6) {
+      assert(v == args[i] || v == args[i+1]);
+      break;
+    }
+    if (v == args[i+1]) {
+      i += 1;
+    }
+
+    k = strdup_FildeshO(tmp_out, alloc);
+    p = fildesh_syntax_ensure_string_variable(map, k, alloc);
+    assert(p);
+    *p = (char*)v;
+  }
+  return 0;
+}
+
   static unsigned
 count_ws (const char* s)
 {
@@ -485,6 +536,23 @@ parse_double_quoted_string(FildeshO* out, char* s, FildeshKV* map)
 }
 
 static
+  const char*
+lookup_string_variable(FildeshKV* map, const char* s)
+{
+  if (pfxeq_cstr(".env.", s)) {
+    const char* k = &s[5];
+    return getenv(k);
+  }
+  else {
+    const SymVal* sym = lookup_SymVal(map, s);
+    if (sym) {
+      return sym->as.here_doc;
+    }
+  }
+  return NULL;
+}
+
+static
   char*
 parse_double_quoted_string_or_variable(FildeshO* out, char* s, FildeshKV* map)
 {
@@ -495,28 +563,38 @@ parse_double_quoted_string_or_variable(FildeshO* out, char* s, FildeshKV* map)
   if (s[0] != '(') {
     unsigned n = strcspn(s, ") \t\v\r\n");
     const char s_n = s[n];
-    SymVal* sym = NULL;
+    const char* v;
     if (s_n=='\0') {return NULL;}
     s[n] = '\0';
-    if (pfxeq_cstr(".env.", s)) {
-      const char* k = &s[5];
-      const char* v = getenv(k);
-      if (!v) {
-        fildesh_log_errorf("Unknown environment variable %s", k);
-        return NULL;
-      }
-      puts_FildeshO(out, v);
+    v = lookup_string_variable(map, s);
+    if (!v) {
+      fildesh_log_errorf("Unknown string variable %s", s);
+      return NULL;
     }
-    else {
-      sym = lookup_SymVal(map, s);
-      if (!sym || sym->kind != HereDocVal) {
-        fildesh_log_errorf("Unknown string variable %s", s);
-        return NULL;
-      }
-      puts_FildeshO(out, sym->as.here_doc);
-    }
+    puts_FildeshO(out, v);
     s[n] = s_n;
     return &s[n];
+  }
+  if (pfxeq_cstr("(?? ", s)) {
+    const char* v;
+    unsigned n;
+    s = &s[4];
+    s = &s[count_ws(s)];
+    n = count_non_ws(s);
+    if (s[n] == '\0') {return NULL;}
+    s[n] = '\0';
+    v = lookup_string_variable(map, s);
+    s = &s[n+1];
+    s = &s[count_ws(s)];
+    s = parse_double_quoted_string_or_variable(out, s, map);
+    if (!s) {return NULL;}
+    s = &s[count_ws(s)];
+    if (s[0] != ')') {return NULL;}
+    if (v) {
+      truncate_FildeshO(out);
+      puts_FildeshO(out, v);
+    }
+    return &s[1];
   }
   if (pfxeq_cstr("(++ ", s)) {
     FildeshO tmp_out[1] = {DEFAULT_FildeshO};
@@ -2177,6 +2255,12 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
     }
   }
 
+  if (!exiting && exstatus == 0) {
+    assert(argi <= argc);
+    assert(!argv[argc]);
+    exstatus = fildesh_syntax_parse_flags(
+        &argv[argi], &cmd_hookup->map, global_alloc, tmp_out);
+  }
   if (exiting || exstatus != 0) {
     close_FildeshAT(script_args);
     close_FildeshKV(alias_map);
