@@ -81,6 +81,8 @@ endif()
 find_package(Threads REQUIRED)
 
 include_directories(include)
+include_directories(include/fildesh)
+include(GNUInstallDirs)
 add_subdirectory(compat)
 add_subdirectory(src)
 add_subdirectory(tool)

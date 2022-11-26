@@ -1,5 +1,4 @@
 
-include(GNUInstallDirs)
 add_subdirectory(lib)
 add_subdirectory(builtin)
 
@@ -115,4 +114,5 @@ endif()
 
 
 install(TARGETS fildesh
+  COMPONENT "bin"
   RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}")

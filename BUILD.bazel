@@ -24,14 +24,14 @@ cc_library(
         "//compat:sh.c",
         "//compat:string.c",
         "//compat:tmpdir.c",
-        "//include:fildesh_compat_errno.h",
-        "//include:fildesh_compat_fd.h",
-        "//include:fildesh_compat_file.h",
-        "//include:fildesh_compat_random.h",
-        "//include:fildesh_compat_sh.h",
-        "//include:fildesh_compat_string.h",
+        "//include/fildesh:fildesh_compat_errno.h",
+        "//include/fildesh:fildesh_compat_fd.h",
+        "//include/fildesh:fildesh_compat_file.h",
+        "//include/fildesh:fildesh_compat_random.h",
+        "//include/fildesh:fildesh_compat_sh.h",
+        "//include/fildesh:fildesh_compat_string.h",
     ],
-    includes = ["include"],
+    includes = ["include", "include/fildesh"],
     linkopts = select({
         "@platforms//os:windows": [
             "-DEFAULTLIB:advapi32.lib",  # For RtlGenRandom().
@@ -44,7 +44,7 @@ cc_library(
 cc_library(
     name = "fildesh_lib",
     srcs = [
-        "//include:fildesh.h",
+        "//include/fildesh:fildesh.h",
         "//src/lib:alloc.c",
         "//src/lib:array.c",
         "//src/lib:infile.c",
@@ -59,7 +59,7 @@ cc_library(
         "//src/lib:outstream.c",
         "//src/lib:string.c",
     ],
-    includes = ["include"],
+    includes = ["include", "include/fildesh"],
     deps = [":fildesh_compat_lib"],
     visibility = ["//visibility:public"],
 )

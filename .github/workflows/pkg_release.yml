@@ -29,7 +29,12 @@ jobs:
     - name: Build
       working-directory: ${{runner.workspace}}/bld
       shell: bash
-      run: cmake --build "." --target "install"
+      run: cmake --build "."
+
+    - name: Install
+      working-directory: ${{runner.workspace}}/bld
+      run: cmake -D "COMPONENT:STRING=bin" -P "cmake_install.cmake"
+      run: cmake -D "COMPONENT:STRING=lib" -P "cmake_install.cmake"
 
     - name: Package deb
       working-directory: ${{runner.workspace}}

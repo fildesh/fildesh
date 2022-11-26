@@ -19,7 +19,13 @@ godo "${bld_dst}" cmake \
   ".."
 
 $(barrier)
-|< godo "${bld_dst}" cmake --build "." --target "install"
+|< godo "${bld_dst}" cmake --build "."
+|> void
+
+$(barrier)
+|< godo "${bld_dst}" cmake -D "COMPONENT:STRING=bin" -P "cmake_install.cmake"
+|> void
+|< godo "${bld_dst}" cmake -D "COMPONENT:STRING=lib" -P "cmake_install.cmake"
 |> void
 
 
