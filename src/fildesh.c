@@ -16,6 +16,7 @@
 #include "parse_fildesh.h"
 
 #include <assert.h>
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -367,6 +368,10 @@ static
   SymVal*
 lookup_SymVal(FildeshKV* map, const char* s)
 {
+  if ((s[0] == '#' || isdigit(s[0])) && s[1] == '\0') {
+    /* TODO(#99): Remove in v0.2.0.*/
+    fildesh_log_warningf("For forward compatibility, please read positional arg %s via a flag.", s);
+  }
   return (SymVal*) lookup_value_FildeshKV(map, s, strlen(s)+1);
 }
 
@@ -376,6 +381,10 @@ getf_SymVal(FildeshKV* map, const char* s, FildeshAlloc* alloc)
 {
   FildeshKV_id_t id = ensure_FildeshKV(map, s, strlen(s)+1);
   SymVal* x = (SymVal*) value_at_FildeshKV(map, id);
+  if ((s[0] == '#' || isdigit(s[0])) && s[1] == '\0') {
+    /* TODO(#99): Remove in v0.2.0.*/
+    fildesh_log_warningf("For forward compatibility, please read positional arg %s via a flag.", s);
+  }
 
   if (!x) {
     x = fildesh_allocate(SymVal, 1, alloc);
@@ -390,8 +399,14 @@ static
 declare_SymVal(FildeshKV* map, SymValKind kind,
                const char* name, FildeshAlloc* alloc)
 {
-  SymVal* x = getf_SymVal(map, name, alloc);
-  if (x->kind == IOFileVal) {
+  FildeshKV_id_t id = ensure_FildeshKV(map, name, strlen(name)+1);
+  SymVal* x = (SymVal*) value_at_FildeshKV(map, id);
+  if (!x) {
+    x = fildesh_allocate(SymVal, 1, alloc);
+    init_SymVal(x);
+    assign_at_FildeshKV(map, id, x, sizeof(*x));
+  }
+  else if (x->kind == IOFileVal) {
     fildesh_log_errorf("Cannot redefine tmpfile symbol: %s", name);
     return NULL;
   }
@@ -942,6 +957,7 @@ parse_sym (char* s, bool firstarg)
   i = count_non_ws (s);
   if (s[i] == '\0') {
     unsigned n = i-1;
+    /* TODO(#98): Remove in v0.2.0.*/
     fildesh_log_warningf("For forward compatibility, please change %s to use the $(XA ...) syntax.", s);
 
     if (s[n] != ')')
@@ -996,8 +1012,14 @@ parse_sym (char* s, bool firstarg)
   else if (s[o] == 'H')
   {
     if (s[o+1] == 'F') {
+      /* TODO(#97): Remove in v0.2.0.*/
       fildesh_log_warning("For forward compatibility, please change $(HF ...) to the $(XF ...) syntax.");
       kind = IDescFileVal;
+    }
+    else if (s[o+1] == ':') {
+      /* TODO(#94): Remove in v0.2.0.*/
+      fildesh_log_warning("For forward compatibility, please change $(H: ...) to the $(> ...) syntax.");
+      kind = HereDocVal;
     }
     else {
       kind = HereDocVal;
@@ -2290,8 +2312,8 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
   }
 
   if (count_of_FildeshAT(script_args) > 0) {
+    /* TODO(#99): Remove in v0.2.0.*/
     SymVal* sym;
-    SymValKind sym_kind;
     Command* cmd = grow1_FildeshAT(cmds);
     truncate_FildeshO(tmp_out);
     print_int_FildeshO(tmp_out, (int)(count_of_FildeshAT(script_args)-1));
@@ -2299,11 +2321,9 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
     init_Command(cmd, global_alloc);
     cmd->kind = HereDocCommand;
     cmd->line_num = 0;
-    cmd->line = strdup_FildeshAlloc(global_alloc, "$(H: #)");
+    cmd->line = strdup_FildeshAlloc(global_alloc, "#");
     cmd->doc = strdup_FildeshO(tmp_out, global_alloc);
 
-    sym_kind = parse_sym(cmd->line, false);
-    assert(sym_kind == HereDocVal);
     sym = declare_SymVal(&cmd_hookup->map, HereDocVal, cmd->line, global_alloc);
     assert(sym);
     sym->as.here_doc = cmd->doc;
@@ -2314,14 +2334,12 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
   }
 
   for (i = 0; i < count_of_FildeshAT(script_args); ++i) {
+    /* TODO(#99): Remove in v0.2.0.*/
     SymVal* sym;
-    SymValKind sym_kind;
     Command* cmd = grow1_FildeshAT(cmds);
 
     truncate_FildeshO(tmp_out);
-    puts_FildeshO(tmp_out, "$(H: ");
     print_int_FildeshO(tmp_out, (int)i);
-    putc_FildeshO(tmp_out, ')');
 
     init_Command(cmd, global_alloc);
     cmd->kind = HereDocCommand;
@@ -2329,8 +2347,6 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
     cmd->line = strdup_FildeshO(tmp_out, global_alloc);
     cmd->doc = strdup_FildeshAlloc(global_alloc, (*script_args)[i]);
 
-    sym_kind = parse_sym(cmd->line, false);
-    assert(sym_kind == HereDocVal);
     sym = declare_SymVal(&cmd_hookup->map, HereDocVal, cmd->line, global_alloc);
     assert(sym);
     sym->as.here_doc = cmd->doc;

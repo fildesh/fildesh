@@ -100,7 +100,9 @@ fildesh_syntax_parse_here_doc(
   FildeshX slice;
   truncate_FildeshO(tmp_out);
 
-  /* Check for the single-line case.*/
+  /* Check for the single-line case.
+   * TODO(#94): Disallow this in the future.
+   */
   if (term[3] == ':')
   {
     char* s;
