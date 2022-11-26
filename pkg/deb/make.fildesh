@@ -4,6 +4,7 @@ $(> source_root) $(getenv PWD)
 $(> bld_dst) "${source_root}/bld"
 $(> pkg_dst) "${bld_dst}/pkg"
 $(> root_dst) "${pkg_dst}/fildesh"
+$(> vim_prefix) "${root_dst}/usr/share/vim/vimfiles"
 $(> pkg_debian) "${root_dst}/DEBIAN"
 $(> architecture) "amd64"
 
@@ -26,6 +27,8 @@ $(barrier)
 |< godo "${bld_dst}" cmake -D "COMPONENT:STRING=bin" -P "cmake_install.cmake"
 |> void
 |< godo "${bld_dst}" cmake -D "COMPONENT:STRING=lib" -P "cmake_install.cmake"
+|> void
+|< godo "${bld_dst}" cmake -D "COMPONENT:STRING=share_vim" -P "cmake_install.cmake"
 |> void
 
 

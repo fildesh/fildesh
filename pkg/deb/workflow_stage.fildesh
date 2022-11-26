@@ -1,7 +1,7 @@
 #!/bin/env fildesh
 
-# source_root
-# pkg_dst
+(: source_root Str .flag.source_root)
+(: pkg_dst Str .flag.pkg_dst)
 
 $(> root_dst) "${pkg_dst}/fildesh"
 $(> pkg_debian) "${root_dst}/DEBIAN"

@@ -1,7 +1,7 @@
 #!/bin/env fildesh
 
-# source_root
-# final_dst
+(: source_root Str .flag.source_root)
+(: final_dst Str .flag.final_dst)
 
 |< grep -m1 -E -e 'version = ' "${source_root}/MODULE.bazel"
 |> sed -E -e 's/.*"(.*)".*/\1/' $(O version)

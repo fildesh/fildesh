@@ -1,0 +1,17 @@
+#!/usr/bin/env fildesh
+
+$(<< common.fildesh)
+
+install -d \
+  "${dst_root}/ftdetect" \
+  "${dst_root}/ftplugin" \
+  "${dst_root}/indent" \
+  "${dst_root}/syntax"
+
+$(barrier)
+
+install --mode=644 -T "${src_root}/${ftdetect_filepath}" "${dst_root}/${ftdetect_filepath}"
+install --mode=644 -T "${src_root}/${ftplugin_filepath}" "${dst_root}/${ftplugin_filepath}"
+install --mode=644 -T "${src_root}/${indent_filepath}" "${dst_root}/${indent_filepath}"
+install --mode=644 -T "${src_root}/${syntax_filepath}" "${dst_root}/${syntax_filepath}"
+

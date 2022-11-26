@@ -1,0 +1,9 @@
+
+# Suggested: --prefix=/usr/share/vim/vimfiles
+(: dst_root Str (?? .flag.prefix (++ .env.HOME "/.vim/after")))
+
+$(> src_root) "pkg/vim"
+$(> ftdetect_filepath) "ftdetect/fildesh.vim"
+$(> ftplugin_filepath) "ftplugin/fildesh.vim"
+$(> indent_filepath) "indent/fildesh.vim"
+$(> syntax_filepath) "syntax/fildesh.vim"

@@ -35,22 +35,23 @@ jobs:
       working-directory: ${{runner.workspace}}/bld
       run: cmake -D "COMPONENT:STRING=bin" -P "cmake_install.cmake"
       run: cmake -D "COMPONENT:STRING=lib" -P "cmake_install.cmake"
+      run: cmake -D "COMPONENT:STRING=share_vim" -P "cmake_install.cmake"
 
     - name: Package deb
       working-directory: ${{runner.workspace}}
       run: >
         ./bld/pkg/fildesh/usr/bin/fildesh
-        -a source_root=$GITHUB_WORKSPACE
-        -a pkg_dst=${{runner.workspace}}/bld/pkg
-        -f $GITHUB_WORKSPACE/pkg/deb/workflow_stage.fildesh
+        $GITHUB_WORKSPACE/pkg/deb/workflow_stage.fildesh
+        --source_root=$GITHUB_WORKSPACE
+        --pkg_dst=${{runner.workspace}}/bld/pkg
 
     - name: Package ebuild
       working-directory: ${{runner.workspace}}
       run: >
         ./bld/pkg/fildesh/usr/bin/fildesh
-        -a source_root=$GITHUB_WORKSPACE
-        -a final_dst=${{runner.workspace}}/bld/pkg/final
-        -f $GITHUB_WORKSPACE/pkg/ebuild/workflow_stage.fildesh
+        $GITHUB_WORKSPACE/pkg/ebuild/workflow_stage.fildesh
+        --source_root=$GITHUB_WORKSPACE
+        --final_dst=${{runner.workspace}}/bld/pkg/final
 
     - name: Upload Package Artifacts
       uses: actions/upload-artifact@v3
