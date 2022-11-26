@@ -33,9 +33,10 @@ jobs:
 
     - name: Install
       working-directory: ${{runner.workspace}}/bld
-      run: cmake -D "COMPONENT:STRING=bin" -P "cmake_install.cmake"
-      run: cmake -D "COMPONENT:STRING=lib" -P "cmake_install.cmake"
-      run: cmake -D "COMPONENT:STRING=share_vim" -P "cmake_install.cmake"
+      run: |
+        cmake -D "COMPONENT:STRING=bin" -P "cmake_install.cmake"
+        cmake -D "COMPONENT:STRING=lib" -P "cmake_install.cmake"
+        cmake -D "COMPONENT:STRING=share_vim" -P "cmake_install.cmake"
 
     - name: Package deb
       working-directory: ${{runner.workspace}}
