@@ -1,6 +1,6 @@
 
 # Suggested: --prefix=/usr/share/vim/vimfiles
-(: dst_root Str (?? .flag.prefix (++ .env.HOME "/.vim/after")))
+(: dst_root Str (?? .self.opt.prefix (++ .self.env.HOME "/.vim/after")))
 
 $(> src_root) "pkg/vim"
 $(> ftdetect_filepath) "ftdetect/fildesh.vim"

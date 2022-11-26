@@ -1,8 +1,8 @@
 
 $(H script)
-(: hello Str (?? .flag.hello_flag "hello"))
-(: the Str (?? .flag.the_flag "the"))
-(: world Str (?? .flag.world_flag "world"))
+(: hello Str (?? .self.opt.hello_flag "hello"))
+(: the Str (?? .self.opt.the_flag "the"))
+(: world Str (?? .self.opt.world_flag "world"))
 |< zec / "${hello} ${the} ${world}\n" /
 |> stdout
 $(H script)

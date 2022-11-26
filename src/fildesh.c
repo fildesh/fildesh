@@ -428,7 +428,7 @@ fildesh_syntax_parse_flags(
     const char* k;
     const char* v;
     truncate_FildeshO(tmp_out);
-    puts_FildeshO(tmp_out, ".flag.");
+    puts_FildeshO(tmp_out, ".self.opt.");
     v = getopt_FildeshO(tmp_out, args[i], args[i+1]);
     if (!v) {
       fildesh_log_errorf("Expected a value for flag: %s", args[i]);
@@ -539,8 +539,8 @@ static
   const char*
 lookup_string_variable(FildeshKV* map, const char* s)
 {
-  if (pfxeq_cstr(".env.", s)) {
-    const char* k = &s[5];
+  if (pfxeq_cstr(".self.env.", s)) {
+    const char* k = &s[10];
     return getenv(k);
   }
   else {
