@@ -1,0 +1,10 @@
+
+$(H expect)
+"this is"
+the expected text
+
+$(H expect)
+
+|< zec / "\"this is\"\nthe expected text\n" /
+|- cmp $(XF expect)
+|> stdout

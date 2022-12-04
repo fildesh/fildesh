@@ -509,6 +509,7 @@ parse_double_quoted_string(FildeshO* out, char* s, FildeshKV* map)
           s = &s[2];
           break;
         case '\\':
+        case '"':
         case '$':
           putc_FildeshO(out, s[1]);
           s = &s[2];

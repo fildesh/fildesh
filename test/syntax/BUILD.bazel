@@ -61,6 +61,11 @@ fildesh_test(
 )
 
 fildesh_test(
+    name = "escape_string_test",
+    srcs = ["escape_string_test.fildesh"],
+)
+
+fildesh_test(
     name = "executable_bytes_oxf_test",
     srcs = ["executable_bytes_oxf_test.fildesh"],
     args = ["$(location //src/builtin:zec)"],
