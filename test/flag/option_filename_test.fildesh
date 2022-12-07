@@ -1,0 +1,17 @@
+
+(: expect Str "something\n")
+
+$(H script)
+(: out Filename .self.opt.out)
+zec -o $(XOF out) / "something\n"
+$(H script)
+
+$(tmpfile f)
+
+fildesh -stderr $(OF err) $(XF script) --out $(XOF f)
+cmp /dev/null $(XF err)
+
+$(barrier)
+|< cmp $(XOF f) $(XF expect)
+|> stdout
+

@@ -233,7 +233,7 @@ struct FildeshKV {
 typedef size_t FildeshKV_id_t;
 #define DEFAULT_FildeshKV_SINGLE_LIST  { NULL, 0, 0 }
 
-FildeshKV_id_t lookup_FildeshKV(const FildeshKV*, const void*, FildeshKV_id_t);
+FildeshKV_id_t lookup_FildeshKV(const FildeshKV*, const void*, size_t);
 FildeshKV_id_t any_id_FildeshKV(const FildeshKV*);
 void* lookup_value_FildeshKV(FildeshKV*, const void*, size_t);
 FildeshKV_id_t ensure_FildeshKV(FildeshKV*, const void*, size_t);

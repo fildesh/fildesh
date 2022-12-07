@@ -5,6 +5,9 @@ add_test(NAME flag_named_arg_test COMMAND fildesh
 add_test(NAME flag_nullary_test COMMAND fildesh -f
   "${CMAKE_CURRENT_SOURCE_DIR}/nullary_test.fildesh")
 
+add_test(NAME flag_filename_option_test COMMAND fildesh -f
+  "${CMAKE_CURRENT_SOURCE_DIR}/option_filename_test.fildesh")
+
 add_test(NAME flag_option_test COMMAND fildesh -f
   "${CMAKE_CURRENT_SOURCE_DIR}/option_test.fildesh")
 

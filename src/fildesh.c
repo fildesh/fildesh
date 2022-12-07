@@ -36,6 +36,7 @@ enum SymValKind
   HereDocVal, IHereDocFileVal,
   DefVal,
   IOFileVal,
+  TmpFileVal,
   NSymValKinds
 };
 
@@ -289,7 +290,7 @@ static void free_CommandHookup(CommandHookup* cmd_hookup, int* istat) {
                          (char*) key_at_FildeshKV(map, id));
       *istat = -1;
     }
-    else if (x->kind == IOFileVal) {
+    else if (x->kind == TmpFileVal) {
       fildesh_compat_file_rm(x->as.iofilename);
     }
     lose_SymVal(x);
@@ -406,7 +407,7 @@ declare_SymVal(FildeshKV* map, SymValKind kind,
     init_SymVal(x);
     assign_at_FildeshKV(map, id, x, sizeof(*x));
   }
-  else if (x->kind == IOFileVal) {
+  else if (x->kind == IOFileVal || x->kind == TmpFileVal) {
     fildesh_log_errorf("Cannot redefine tmpfile symbol: %s", name);
     return NULL;
   }
@@ -907,7 +908,7 @@ parse_file(
         break;
       }
       begline[0] = '\0';
-      sym = declare_SymVal(map, IOFileVal, sym_name, global_alloc);
+      sym = declare_SymVal(map, TmpFileVal, sym_name, global_alloc);
       if (!sym) {istat = -1; break;}
       sym->as.iofilename = add_tmp_file(cmd_hookup, ".txt", global_alloc);
 
@@ -1290,7 +1291,7 @@ setup_commands(Command** cmds, CommandHookup* cmd_hookup,
       }
       else if (kind == IOFileVal) {
         SymVal* sym = getf_SymVal(map, arg, global_alloc);
-        if (sym->kind != IOFileVal) {
+        if (sym->kind != IOFileVal && sym->kind != TmpFileVal) {
           FailBreak(cmd, "Not declared as a file", arg);
         }
         (*cmd->args)[arg_q] = (char*)sym->as.iofilename;
