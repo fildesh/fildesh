@@ -48,6 +48,44 @@ bool splitkdirect_FildeshKVE(const FildeshKVE* e) {
   return splitkdirect_FildeshKVE_size(e->size, ksize);
 }
 
+  void
+assign_v_FildeshKVE(FildeshKVE* e, size_t vsize, const void* v, FildeshAlloc* alloc)
+{
+  assert(0 != get_vexists_bit_FildeshKVE_joint(e->joint));
+  if (v && vsize <= sizeof(e->kv[1])) {
+    set1_vdirect_bit_FildeshKVE(e);
+    memcpy(&e->kv[1], v, vsize);
+  }
+  else if (v && alloc) {
+    void* p = reserve_FildeshAlloc(alloc, vsize, (vsize & -vsize));
+    memcpy(p, v, vsize);
+    e->kv[1] = (uintptr_t)p;
+  }
+  else {
+    set0_vdirect_bit_FildeshKVE(e);
+    e->kv[1] = (uintptr_t) v;
+  }
+}
+
+  void
+assign_splitv_FildeshKVE(FildeshKVE* e, size_t vsize, const void* v, FildeshAlloc* alloc)
+{
+  assert(0 != get_splitvexists_bit_FildeshKVE_size(e->size));
+  if (v && vsize <= sizeof(e->split[1])) {
+    set1_splitvdirect_bit_FildeshKVE(e);
+    memcpy(&e->split[1], v, vsize);
+  }
+  else if (v && alloc) {
+    void* p = reserve_FildeshAlloc(alloc, vsize, (vsize & -vsize));
+    memcpy(p, v, vsize);
+    e->split[1] = (uintptr_t)p;
+  }
+  else {
+    set0_splitvdirect_bit_FildeshKVE(e);
+    e->split[1] = (uintptr_t) v;
+  }
+}
+
 /** Assuming the node is empty, populate it with a key and value.
  *
  * This only overwrites data, leaving the node's connectivity intact.
@@ -55,7 +93,8 @@ bool splitkdirect_FildeshKVE(const FildeshKVE* e) {
   void
 populate_empty_FildeshKVE(FildeshKVE* e,
                           size_t ksize, const void* k,
-                          size_t vsize, const void* v)
+                          size_t vsize, const void* v,
+                          FildeshAlloc* alloc)
 {
   bool kdirect;
   /* Assuming no split data, so we can clear e->size.*/
@@ -63,22 +102,23 @@ populate_empty_FildeshKVE(FildeshKVE* e,
 
   if (vsize > 0) {
     set1_vexists_bit_FildeshKVE(e);
-    if (v && vsize <= sizeof(e->kv[1])) {
-      set1_vdirect_bit_FildeshKVE(e);
-      memcpy(&e->kv[1], v, vsize);
-    } else {
-      set0_vdirect_bit_FildeshKVE(e);
-      e->kv[1] = (uintptr_t) v;
-    }
+    assign_v_FildeshKVE(e, vsize, v, alloc);
     kdirect = (ksize <= sizeof(e->kv[0]));
-  } else {
+  }
+  else {
     set0_vexists_bit_FildeshKVE(e);
     set0_vdirect_bit_FildeshKVE(e);
     kdirect = (ksize <= sizeof(e->kv[0]) + sizeof(e->kv[1]));
   }
   if (kdirect) {
     memcpy(&e->kv[0], k, ksize);
-  } else {
+  }
+  else if (alloc) {
+    void* p = reserve_FildeshAlloc(alloc, ksize, (ksize & -ksize));
+    memcpy(p, k, ksize);
+    e->kv[0] = (uintptr_t)p;
+  }
+  else {
     e->kv[0] = (uintptr_t)k;
   }
 }
@@ -87,7 +127,8 @@ populate_empty_FildeshKVE(FildeshKVE* e,
   bool
 populate_splitkv_FildeshKVE(FildeshKVE* e,
                             size_t ksize, const void* k,
-                            size_t vsize, const void* v)
+                            size_t vsize, const void* v,
+                            FildeshAlloc* alloc)
 {
   const bool vexists = (vsize > 0);
   bool kdirect;
@@ -126,21 +167,22 @@ populate_splitkv_FildeshKVE(FildeshKVE* e,
 
   if (vexists) {
     set1_splitvexists_bit_FildeshKVE(e);
-    if (v && vsize <= sizeof(e->split[1])) {
-      set1_splitvdirect_bit_FildeshKVE(e);
-      memcpy(&e->split[1], v, vsize);
-    } else {
-      set0_splitvdirect_bit_FildeshKVE(e);
-      e->split[1] = (uintptr_t) v;
-    }
+    assign_splitv_FildeshKVE(e, vsize, v, alloc);
     kdirect = (ksize <= sizeof(e->split[0]));
-  } else {
+  }
+  else {
     set0_splitvexists_bit_FildeshKVE(e);
     kdirect = (ksize <= sizeof(e->split[0]) + sizeof(e->split[1]));
   }
   if (kdirect) {
     memcpy(&e->split[0], k, ksize);
-  } else {
+  }
+  else if (alloc) {
+    void* p = reserve_FildeshAlloc(alloc, ksize, (ksize & -ksize));
+    memcpy(p, k, ksize);
+    e->split[0] = (uintptr_t)p;
+  }
+  else {
     e->split[0] = (uintptr_t)k;
   }
   return true;

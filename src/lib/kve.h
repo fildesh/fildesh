@@ -176,20 +176,35 @@ splitvalue_FildeshKVE(const FildeshKVE* e)
   return NULL;
 }
 
+static inline void assign_memref_v_FildeshKVE(FildeshKVE* e, const void* v) {
+  set0_vdirect_bit_FildeshKVE(e);
+  e->kv[1] = (uintptr_t) v;
+}
+static inline void assign_memref_splitv_FildeshKVE(FildeshKVE* e, const void* v) {
+  set0_splitvdirect_bit_FildeshKVE(e);
+  e->split[1] = (uintptr_t) v;
+}
+
 
 size_t ksize_FildeshKVE_size(size_t);
 size_t splitksize_FildeshKVE_size(size_t);
 bool kdirect_FildeshKVE(const FildeshKVE*);
 bool splitkdirect_FildeshKVE(const FildeshKVE*);
+void
+assign_v_FildeshKVE(FildeshKVE*, size_t, const void*, FildeshAlloc*);
+void
+assign_splitv_FildeshKVE(FildeshKVE*, size_t, const void*, FildeshAlloc*);
 
 void
 populate_empty_FildeshKVE(FildeshKVE* e,
                           size_t ksize, const void* k,
-                          size_t vsize, const void* v);
+                          size_t vsize, const void* v,
+                          FildeshAlloc* alloc);
 bool
 populate_splitkv_FildeshKVE(FildeshKVE* e,
                             size_t ksize, const void* k,
-                            size_t vsize, const void* v);
+                            size_t vsize, const void* v,
+                            FildeshAlloc* alloc);
 void
 erase_splitk_FildeshKVE(FildeshKVE* e);
 void

@@ -99,7 +99,7 @@ static void check_setget(size_t ksize, size_t vsize,
   for (i = 0; i < splitksize; ++i) { splitk[i] = b64chars[(i+52) % 64]; }
   for (i = 0; i < splitvsize; ++i) { splitv[i] = b64chars[(i+62) % 64]; }
 
-  populate_empty_FildeshKVE(&e, ksize, k, vsize, v);
+  populate_empty_FildeshKVE(&e, ksize, k, vsize, v, NULL);
   /* Size is preserved.*/
   assert(ksize == ksize_FildeshKVE_size(e.size));
   /* Key is compared properly.*/
@@ -115,7 +115,7 @@ static void check_setget(size_t ksize, size_t vsize,
   }
 
   populated_splitkv =
-    populate_splitkv_FildeshKVE(&e, splitksize, splitk, splitvsize, splitv);
+    populate_splitkv_FildeshKVE(&e, splitksize, splitk, splitvsize, splitv, NULL);
   /* It actually populated data.*/
   assert(populated_splitkv);
   /* Size is preserved.*/
@@ -163,8 +163,8 @@ try_edge_split(FildeshKVE* e, size_t ksize, size_t splitksize, size_t splitvsize
   static const uintptr_t data[2] = { 0, 0 };
   bool populated;
   *e = default_FildeshKVE();
-  populate_empty_FildeshKVE(e, ksize, data, 1, data);
-  populated = populate_splitkv_FildeshKVE(e, splitksize, data, splitvsize, data);
+  populate_empty_FildeshKVE(e, ksize, data, 1, data, NULL);
+  populated = populate_splitkv_FildeshKVE(e, splitksize, data, splitvsize, data, NULL);
 
   assert(ksize == ksize_FildeshKVE_size(e->size));
   assert(value_FildeshKVE(e));
@@ -212,13 +212,13 @@ static void zero_length_key_test() {
   char value[1] = {'h'};
   char splitvalue[2] = {'w', 'o'};
 
-  populate_empty_FildeshKVE(e, 0, dummy, sizeof(value), value);
+  populate_empty_FildeshKVE(e, 0, dummy, sizeof(value), value, NULL);
   assert(e->kv[0] == 0);
   assert(e->kv[1] != 0);
   assert(0 == ksize_FildeshKVE_size(e->size));
   assert(0 == memcmp(value_FildeshKVE(e), value, sizeof(value)));
 
-  populate_splitkv_FildeshKVE(e, 0, dummy, sizeof(splitvalue), splitvalue);
+  populate_splitkv_FildeshKVE(e, 0, dummy, sizeof(splitvalue), splitvalue, NULL);
   assert(e->split[0] == 0);
   assert(e->split[1] != 0);
   assert(0 == ksize_FildeshKVE_size(e->size));

@@ -1,13 +1,8 @@
 
-#include "kve.h"
-#include <assert.h>
+#include "kv.h"
 #include <stdlib.h>
 #include <string.h>
 
-static const FildeshKV_id_t FildeshKV_NULL_ID = ~(size_t)0;
-static const FildeshKV_id_t FildeshKV_NULL_INDEX = ~(size_t)0 >> 3;
-
-#define assert_trivial_joint(joint)  assert(joint == get_index_FildeshKVE_joint(joint))
 
   FildeshKV_id_t
 lookup_FildeshKV(const FildeshKV* map, const void* k, size_t ksize)
@@ -60,13 +55,14 @@ lookup_value_FildeshKV(FildeshKV* map, const void* k, size_t ksize)
 
 static
   FildeshKV_id_t
-add_FildeshKV(FildeshKV* map, const void* k, size_t ksize)
+add_FildeshKV(FildeshKV* map, const void* k, size_t ksize, FildeshAlloc* alloc)
 {
   size_t allocated_count = fildesh_size_of_lgcount(1, map->allocated_lgcount);
   if (map->freelist_head > 0 &&
       0 == get_splitkexists_bit_FildeshKVE_size(map->at[0].size))
   {
-    if (populate_splitkv_FildeshKVE(&map->at[0], ksize, k, 1, NULL)) {
+    if (populate_splitkv_FildeshKVE(
+            &map->at[0], ksize, k, 1, NULL, alloc)) {
       return 1;
     }
   }
@@ -101,7 +97,7 @@ add_FildeshKV(FildeshKV* map, const void* k, size_t ksize)
     map->at[0] = default_FildeshKVE();
     map->at[0].joint = i;
   }
-  populate_empty_FildeshKVE(&map->at[0], ksize, k, 1, 0);
+  populate_empty_FildeshKVE(&map->at[0], ksize, k, 1, 0, alloc);
   return 0;
 }
 
@@ -110,71 +106,15 @@ ensure_FildeshKV(FildeshKV* map, const void* k, size_t ksize)
 {
   FildeshKV_id_t id = lookup_FildeshKV(map, k, ksize);
   if (!fildesh_nullid(id)) {return id;}
-  return add_FildeshKV(map, k, ksize);
+  return add_FildeshKV(map, k, ksize, map->alloc);
 }
 
-size_t size_of_key_at_FildeshKV(const FildeshKV* map, FildeshKV_id_t id) {
-  const FildeshKVE* e;
-  if (fildesh_nullid(id)) {return 0;}
-  e = &map->at[id/2];
-  if (0 == (id & 1)) {
-    return ksize_FildeshKVE_size(e->size);
-  }
-  return splitksize_FildeshKVE_size(e->size);
-}
-
-const void* key_at_FildeshKV(const FildeshKV* map, FildeshKV_id_t id) {
-  const FildeshKVE* e;
-  if (fildesh_nullid(id)) {return NULL;}
-  e = &map->at[id/2];
-  if (0 == (id & 1)) {
-    if (kdirect_FildeshKVE(e)) {
-      return direct_k_FildeshKVE_kv(e->kv);
-    }
-    return indirect_k_FildeshKVE_kv(e->kv);
-  }
-  if (splitkdirect_FildeshKVE(e)) {
-    return direct_splitk_FildeshKVE_split(e->split);
-  }
-  return indirect_splitk_FildeshKVE_split(e->split);
-}
-
-const void* value_at_FildeshKV(const FildeshKV* map, FildeshKV_id_t id) {
-  const FildeshKVE* e;
-  if (fildesh_nullid(id)) {return NULL;}
-  e = &map->at[id/2];
-  if (0 == (id & 1)) {
-    return value_FildeshKVE(e);
-  }
-  return splitvalue_FildeshKVE(e);
-}
-
-  void
-assign_at_FildeshKV(FildeshKV* map, FildeshKV_id_t id, const void* v, size_t vsize)
+  FildeshKV_id_t
+ensuref_FildeshKV(FildeshKV* map, const void* k, size_t ksize)
 {
-  FildeshKVE* e;
-  assert(!fildesh_nullid(id));
-  e = &map->at[id/2];
-  if (0 == (id & 1)) {
-    assert(0 != get_vexists_bit_FildeshKVE_joint(e->joint));
-    if (v && vsize <= sizeof(e->kv[1])) {
-      set1_vdirect_bit_FildeshKVE(e);
-      memcpy(&e->kv[1], v, vsize);
-    } else {
-      set0_vdirect_bit_FildeshKVE(e);
-      e->kv[1] = (uintptr_t) v;
-    }
-  }
-  else {
-    assert(0 != get_splitvexists_bit_FildeshKVE_size(e->size));
-    if (v && vsize <= sizeof(e->split[1])) {
-      set1_splitvdirect_bit_FildeshKVE(e);
-      memcpy(&e->split[1], v, vsize);
-    } else {
-      set0_splitvdirect_bit_FildeshKVE(e);
-      e->split[1] = (uintptr_t) v;
-    }
-  }
+  FildeshKV_id_t id = lookup_FildeshKV(map, k, ksize);
+  if (!fildesh_nullid(id)) {return id;}
+  return add_FildeshKV(map, k, ksize, NULL);
 }
 
 static void reclaim_element_FildeshKV(FildeshKV* map, size_t di) {

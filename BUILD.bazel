@@ -51,6 +51,8 @@ cc_library(
         "//src/lib:instream.c",
         "//src/lib:kve.c",
         "//src/lib:kve.h",
+        "//src/lib:kv.c",
+        "//src/lib:kv.h",
         "//src/lib:kv_single_list.c",
         "//src/lib:log.c",
         "//src/lib:mascii.c",

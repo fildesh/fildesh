@@ -227,20 +227,23 @@ char* strdup_FildeshO(const FildeshO*, FildeshAlloc*);
 
 struct FildeshKV {
   FildeshKVE* at;
+  FildeshAlloc* alloc;
   size_t freelist_head;
   fildesh_lgsize_t allocated_lgcount;
 };
 typedef size_t FildeshKV_id_t;
-#define DEFAULT_FildeshKV_SINGLE_LIST  { NULL, 0, 0 }
+#define DEFAULT_FildeshKV_SINGLE_LIST  { NULL, NULL, 0, 0 }
 
 FildeshKV_id_t lookup_FildeshKV(const FildeshKV*, const void*, size_t);
 FildeshKV_id_t any_id_FildeshKV(const FildeshKV*);
 void* lookup_value_FildeshKV(FildeshKV*, const void*, size_t);
 FildeshKV_id_t ensure_FildeshKV(FildeshKV*, const void*, size_t);
+FildeshKV_id_t ensuref_FildeshKV(FildeshKV*, const void*, size_t);
 size_t size_of_key_at_FildeshKV(const FildeshKV*, FildeshKV_id_t);
 const void* key_at_FildeshKV(const FildeshKV*, FildeshKV_id_t);
 const void* value_at_FildeshKV(const FildeshKV*, FildeshKV_id_t);
 void assign_at_FildeshKV(FildeshKV*, FildeshKV_id_t, const void*, size_t);
+void assign_memref_at_FildeshKV(FildeshKV*, FildeshKV_id_t, const void*);
 void remove_at_FildeshKV(FildeshKV*, FildeshKV_id_t);
 void close_FildeshKV(FildeshKV*);
 

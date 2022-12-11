@@ -6,6 +6,8 @@ add_library(fildesh_lib_obj OBJECT
   "instream.c"
   "kve.c"
   "kve.h"
+  "kv.c"
+  "kv.h"
   "kv_single_list.c"
   "log.c"
   "mascii.c"

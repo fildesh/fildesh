@@ -268,7 +268,9 @@ new_CommandHookup(FildeshAlloc* alloc)
   const FildeshKV empty_map = DEFAULT_FildeshKV_SINGLE_LIST;
   CommandHookup* cmd_hookup = fildesh_allocate(CommandHookup, 1, alloc);
   cmd_hookup->map = empty_map;
+  cmd_hookup->map.alloc = alloc;
   cmd_hookup->add_map = empty_map;
+  cmd_hookup->add_map.alloc = alloc;
   cmd_hookup->temporary_directory = NULL;
   cmd_hookup->tmpfile_count = 0;
   cmd_hookup->stdin_fd = 0;
@@ -378,9 +380,9 @@ lookup_SymVal(FildeshKV* map, const char* s)
 
 static
   SymVal*
-getf_SymVal(FildeshKV* map, const char* s, FildeshAlloc* alloc)
+getf_SymVal(FildeshKV* map, const char* s)
 {
-  FildeshKV_id_t id = ensure_FildeshKV(map, s, strlen(s)+1);
+  FildeshKV_id_t id = ensuref_FildeshKV(map, s, strlen(s)+1);
   SymVal* x = (SymVal*) value_at_FildeshKV(map, id);
   if ((s[0] == '#' || isdigit(s[0])) && s[1] == '\0') {
     /* TODO(#99): Remove in v0.2.0.*/
@@ -388,24 +390,23 @@ getf_SymVal(FildeshKV* map, const char* s, FildeshAlloc* alloc)
   }
 
   if (!x) {
-    x = fildesh_allocate(SymVal, 1, alloc);
+    x = fildesh_allocate(SymVal, 1, map->alloc);
     init_SymVal(x);
-    assign_at_FildeshKV(map, id, x, sizeof(*x));
+    assign_memref_at_FildeshKV(map, id, x);
   }
   return x;
 }
 
 static
   SymVal*
-declare_SymVal(FildeshKV* map, SymValKind kind,
-               const char* name, FildeshAlloc* alloc)
+declare_SymVal(FildeshKV* map, SymValKind kind, const char* name)
 {
-  FildeshKV_id_t id = ensure_FildeshKV(map, name, strlen(name)+1);
+  FildeshKV_id_t id = ensuref_FildeshKV(map, name, strlen(name)+1);
   SymVal* x = (SymVal*) value_at_FildeshKV(map, id);
   if (!x) {
-    x = fildesh_allocate(SymVal, 1, alloc);
+    x = fildesh_allocate(SymVal, 1, map->alloc);
     init_SymVal(x);
-    assign_at_FildeshKV(map, id, x, sizeof(*x));
+    assign_memref_at_FildeshKV(map, id, x);
   }
   else if (x->kind == IOFileVal || x->kind == TmpFileVal) {
     fildesh_log_errorf("Cannot redefine tmpfile symbol: %s", name);
@@ -417,10 +418,9 @@ declare_SymVal(FildeshKV* map, SymValKind kind,
 
 static
   char**
-fildesh_syntax_ensure_string_variable(
-    FildeshKV* map, const char* name, FildeshAlloc* alloc)
+fildesh_syntax_ensure_string_variable(FildeshKV* map, const char* name)
 {
-  SymVal* x = getf_SymVal(map, name, alloc);
+  SymVal* x = getf_SymVal(map, name);
   if (x->kind == NSymValKinds) {
     x->kind = HereDocVal;
     x->as.here_doc = NULL;
@@ -434,9 +434,7 @@ fildesh_syntax_ensure_string_variable(
 
 static
   int
-fildesh_syntax_parse_flags(
-    char** args,
-    FildeshKV* map, FildeshAlloc* alloc, FildeshO* tmp_out)
+fildesh_syntax_parse_flags(char** args, FildeshKV* map, FildeshO* tmp_out)
 {
   unsigned i;
   for (i = 0; args[i]; ++i) {
@@ -458,8 +456,8 @@ fildesh_syntax_parse_flags(
       i += 1;
     }
 
-    k = strdup_FildeshO(tmp_out, alloc);
-    p = fildesh_syntax_ensure_string_variable(map, k, alloc);
+    k = strdup_FildeshO(tmp_out, map->alloc);
+    p = fildesh_syntax_ensure_string_variable(map, k);
     assert(p);
     *p = (char*)v;
   }
@@ -740,7 +738,7 @@ parse_file(
 
       sym_kind = parse_sym(cmd->line, false);
       assert(sym_kind == HereDocVal);
-      sym = declare_SymVal(map, HereDocVal, cmd->line, global_alloc);
+      sym = declare_SymVal(map, HereDocVal, cmd->line);
       if (!sym) {istat = -1; break;}
       sym->as.here_doc = cmd->doc;
     }
@@ -814,7 +812,7 @@ parse_file(
           sym_value = strdup_FildeshO(tmp_out, global_alloc);
         }
 
-        sym = declare_SymVal(map, kind, sym_name, global_alloc);
+        sym = declare_SymVal(map, kind, sym_name);
         if (!sym) {istat = -1; break;}
         if (kind == HereDocVal) {
           sym->as.here_doc = sym_value;
@@ -864,7 +862,7 @@ parse_file(
           (const char* const*)(void*)&(*cmd->args)[2],
           global_alloc);
       if (concatenated_args) {
-        SymVal* sym = declare_SymVal(map, HereDocVal, sym_name, global_alloc);
+        SymVal* sym = declare_SymVal(map, HereDocVal, sym_name);
         if (!sym) {istat = -1; break;}
         sym->as.here_doc = concatenated_args;
 
@@ -908,7 +906,7 @@ parse_file(
         break;
       }
       begline[0] = '\0';
-      sym = declare_SymVal(map, TmpFileVal, sym_name, global_alloc);
+      sym = declare_SymVal(map, TmpFileVal, sym_name);
       if (!sym) {istat = -1; break;}
       sym->as.iofilename = add_tmp_file(cmd_hookup, ".txt", global_alloc);
 
@@ -1180,8 +1178,7 @@ transfer_map_entries(FildeshKV* map, FildeshKV* add_map, const Command* cmd)
 
 static
   int
-setup_commands(Command** cmds, CommandHookup* cmd_hookup,
-               FildeshAlloc* global_alloc)
+setup_commands(Command** cmds, CommandHookup* cmd_hookup)
 {
   FildeshKV* map = &cmd_hookup->map;
   /* Temporarily hold new symbols for the current line.*/
@@ -1201,7 +1198,7 @@ setup_commands(Command** cmds, CommandHookup* cmd_hookup,
        * but we need to overwrite the symbol
        * just in case there are multiple occurrences.
        */
-      SymVal* sym = declare_SymVal(map, HereDocVal, cmd->line, global_alloc);
+      SymVal* sym = declare_SymVal(map, HereDocVal, cmd->line);
       if (!sym) {istat = -1; break;}
       sym->as.here_doc = cmd->doc;
 
@@ -1246,7 +1243,7 @@ setup_commands(Command** cmds, CommandHookup* cmd_hookup,
       }
       else if (kind == HereDocVal || kind == IDescArgVal)
       {
-        SymVal* sym = getf_SymVal(map, arg, global_alloc);
+        SymVal* sym = getf_SymVal(map, arg);
         if (sym->kind == HereDocVal) {
           (*cmd->args)[arg_q] = sym->as.here_doc;
         }
@@ -1271,7 +1268,7 @@ setup_commands(Command** cmds, CommandHookup* cmd_hookup,
       }
       else if (cmd->kind == StdoutCommand && kind == IDescVal)
       {
-        SymVal* sym = getf_SymVal(map, arg, global_alloc);
+        SymVal* sym = getf_SymVal(map, arg);
         Command* last = &(*cmds)[sym->cmd_idx];
 
         if (last->kind != RunCommand) {
@@ -1290,7 +1287,7 @@ setup_commands(Command** cmds, CommandHookup* cmd_hookup,
         cmd->stdos = -1;
       }
       else if (kind == IOFileVal) {
-        SymVal* sym = getf_SymVal(map, arg, global_alloc);
+        SymVal* sym = getf_SymVal(map, arg);
         if (sym->kind != IOFileVal && sym->kind != TmpFileVal) {
           FailBreak(cmd, "Not declared as a file", arg);
         }
@@ -1301,7 +1298,7 @@ setup_commands(Command** cmds, CommandHookup* cmd_hookup,
                kind == IDescFileVal ||
                kind == IODescVal)
       {
-        SymVal* sym = getf_SymVal(map, arg, global_alloc);
+        SymVal* sym = getf_SymVal(map, arg);
         int fd = sym->as.file_desc;
         if (sym->kind == HereDocVal) {
           /* Do nothing.*/
@@ -1377,7 +1374,7 @@ setup_commands(Command** cmds, CommandHookup* cmd_hookup,
       }
       else if (kind == OFutureDescVal || kind == OFutureDescFileVal)
       {
-        SymVal* sym = getf_SymVal(map, arg, global_alloc);
+        SymVal* sym = getf_SymVal(map, arg);
         int fd;
 
         if (sym->kind != IFutureDescVal) {
@@ -1415,7 +1412,7 @@ setup_commands(Command** cmds, CommandHookup* cmd_hookup,
 
       if (cmd->kind == StdinCommand && kind == ODescVal)
       {
-        SymVal* sym = declare_SymVal(add_map, ODescVal, arg, global_alloc);
+        SymVal* sym = declare_SymVal(add_map, ODescVal, arg);
         if (!sym) {istat = -1; break;}
         sym->cmd_idx = i;
         sym->as.file_desc = cmd->stdis;
@@ -1428,7 +1425,7 @@ setup_commands(Command** cmds, CommandHookup* cmd_hookup,
                kind == ODescFileVal)
       {
         fildesh_fd_t fd[2];
-        SymVal* sym = declare_SymVal(add_map, ODescVal, arg, global_alloc);
+        SymVal* sym = declare_SymVal(add_map, ODescVal, arg);
         if (!sym) {istat = -1; break;}
         sym->cmd_idx = i;
         sym->arg_idx = UINT_MAX;
@@ -1456,7 +1453,7 @@ setup_commands(Command** cmds, CommandHookup* cmd_hookup,
       else if (kind == IFutureDescVal || kind == IFutureDescFileVal)
       {
         fildesh_fd_t fd[2];
-        SymVal* sym = declare_SymVal(add_map, IFutureDescVal, arg, global_alloc);
+        SymVal* sym = declare_SymVal(add_map, IFutureDescVal, arg);
         if (!sym) {istat = -1; break;}
         sym->cmd_idx = i;
         sym->arg_idx = UINT_MAX;
@@ -1493,7 +1490,7 @@ setup_commands(Command** cmds, CommandHookup* cmd_hookup,
       mpop_FildeshAT(cmd->args, count_of_FildeshAT(cmd->args) - arg_q);
 
     if (cmd->kind == DefCommand) {
-      SymVal* sym = declare_SymVal(map, DefVal, cmd->line, global_alloc);
+      SymVal* sym = declare_SymVal(map, DefVal, cmd->line);
       if (!sym) {istat = -1; break;}
       sym->cmd_idx = i;
     }
@@ -2164,7 +2161,7 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
        SymVal* sym;
        v[0] = '\0';
        v = &v[1];
-       sym = declare_SymVal(&cmd_hookup->map, HereDocVal, k, global_alloc);
+       sym = declare_SymVal(&cmd_hookup->map, HereDocVal, k);
        if (!sym) {istat = -1; break;}
        sym->as.here_doc = v;
      } else {
@@ -2283,7 +2280,7 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
     assert(argi <= argc);
     assert(!argv[argc]);
     exstatus = fildesh_syntax_parse_flags(
-        &argv[argi], &cmd_hookup->map, global_alloc, tmp_out);
+        &argv[argi], &cmd_hookup->map, tmp_out);
   }
   if (exiting || exstatus != 0) {
     close_FildeshAT(script_args);
@@ -2326,7 +2323,7 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
     cmd->line = strdup_FildeshAlloc(global_alloc, "#");
     cmd->doc = strdup_FildeshO(tmp_out, global_alloc);
 
-    sym = declare_SymVal(&cmd_hookup->map, HereDocVal, cmd->line, global_alloc);
+    sym = declare_SymVal(&cmd_hookup->map, HereDocVal, cmd->line);
     assert(sym);
     sym->as.here_doc = cmd->doc;
 
@@ -2349,7 +2346,7 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
     cmd->line = strdup_FildeshO(tmp_out, global_alloc);
     cmd->doc = strdup_FildeshAlloc(global_alloc, (*script_args)[i]);
 
-    sym = declare_SymVal(&cmd_hookup->map, HereDocVal, cmd->line, global_alloc);
+    sym = declare_SymVal(&cmd_hookup->map, HereDocVal, cmd->line);
     assert(sym);
     sym->as.here_doc = cmd->doc;
   }
@@ -2379,7 +2376,7 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
     }
     if (istat == 0) {
       fildesh_compat_errno_trace();
-      istat = setup_commands(cmds, cmd_hookup, global_alloc);
+      istat = setup_commands(cmds, cmd_hookup);
       fildesh_compat_errno_trace();
     }
     if (exstatus == 0 && istat != 0) {
