@@ -5,11 +5,13 @@ Automate everything, but remember how it actually works.
 ## Quick Reference
 
 ### Benchmark
+Exercised in `.github/workflows/test_bazel.yaml`.
 ```shell
 bazel test --config=benchmark //test/benchmark/...
 ```
 
 ### Coverage
+Exercised in `.github/workflows/test_bazel.yaml`.
 ```shell
 bazel coverage --instrument_test_targets --instrumentation_filter="^//..." --combined_report=lcov //...
 genhtml bazel-out/_coverage/_coverage_report.dat --output-directory coverage
@@ -17,6 +19,7 @@ chromium coverage/index.html
 ```
 
 ### Fuzz Test
+Exercised in `.github/workflows/test_bazel.yaml` with guess limit.
 ```shell
 bazel run --config=asan-libfuzzer //test/fuzz:grow_mpop_fuzz_test_full
 # Full fuzz tests never terminate.
@@ -51,9 +54,10 @@ bazel build //src:fildesh
 ```
 
 ### Lint
+Exercised in `.github/workflows/lint_manual.yaml`.
 ```shell
-# Casting function pointers is usually unsafe (https://stackoverflow.com/a/559671/5039395).
-grep -E -e '\([^()]*\(\*\) *\([^()]*\)' -R compat src test tool
+bazel build //src:fildesh
+./bazel-bin/src/fildesh test/manual/lint.fildesh
 ```
 
 ### SIMD Instructions
@@ -62,6 +66,7 @@ objdump -M intel --disassemble=find_FildeshMascii bld/test/benchmark/strcspn_ben
 ```
 
 ### TinyCC Compilation
+Exercised in `.github/workflows/lint_manual.yaml`.
 ```shell
 mkdir -p bld
 cd bld

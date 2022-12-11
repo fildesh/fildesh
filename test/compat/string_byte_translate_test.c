@@ -12,7 +12,7 @@ int main() {
     "&amp;", "&lt;", "&gt;", "&quot;", "&apos;",
   };
   s = fildesh_compat_string_byte_translate(
-      "Student's code: \"x > z && x < y\"", 
+      "Student's code: \"x > z && x < y\"",
       xml_needles, xml_replacements,
       "<example>", "</example>");
   fprintf(stderr, "Got: %s\n", s);

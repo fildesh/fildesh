@@ -1,3 +1,4 @@
+---
 name: Bazel
 on: [push, pull_request]
 

@@ -27,7 +27,7 @@ fildesh_builtin_replace_string_main(unsigned argc, char** argv,
 
   in = open_arg_FildeshXF(0, argv, inputv);
   out = open_arg_FildeshOF(0, argv, outputv);
-  
+
   if (exstatus == 0 && !in) {
     fildesh_log_error("Cannot open stdin");
     exstatus = 66;

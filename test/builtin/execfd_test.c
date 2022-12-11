@@ -41,7 +41,7 @@ FILDESH_TOOL_PIPEM_CALLBACK(run_execfd, in_fd, out_fd, PipemFnArg*, st) {
     fildesh_tool_pipem(
         strlen("world"), "world",
         run_execfd, st,
-        NULL);                                                                                                                                                                         
+        NULL);
   } else {
     unsigned i;
     st->argv[13] = buf;

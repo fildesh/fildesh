@@ -14,7 +14,7 @@ llo
 $(H low)
 
 # Concatenate the above
-$(O echo) zec / "hello\nup\njello " $(XA heredoc) \
+$(O echo) zec / "hello\nup\njello" $(XA heredoc) \
   " d e\nyel" $(XA low) \
   "\nfel" $(XA low) '\no' "break\nyesbreak" /
 

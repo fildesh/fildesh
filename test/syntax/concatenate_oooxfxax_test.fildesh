@@ -1,5 +1,5 @@
 # Mixing many inputs should be valid.
-# but forced to inherit a file descriptor. 
+# but forced to inherit a file descriptor.
 
 $(O expect) zec / "hello there world" /
 
