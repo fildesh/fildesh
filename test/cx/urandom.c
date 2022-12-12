@@ -1,6 +1,6 @@
 /** TODO: Move to src/ and wrap in a FildeshX.**/
 
-#include "fildesh_compat_random.h"
+#include "include/fildesh/fildesh_compat_random.h"
 #include "urandom.h"
 
 /** If our uint32 type is more than 32 bits, then this mask

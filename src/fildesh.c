@@ -4,13 +4,13 @@
  * It uses the ISC license (see the LICENSE file in the top-level directory).
  **/
 
-#include "fildesh.h"
+#include <fildesh/fildesh.h>
 #include "fildesh_builtin.h"
-#include "fildesh_compat_errno.h"
-#include "fildesh_compat_fd.h"
-#include "fildesh_compat_file.h"
-#include "fildesh_compat_sh.h"
-#include "fildesh_compat_string.h"
+#include "include/fildesh/fildesh_compat_errno.h"
+#include "include/fildesh/fildesh_compat_fd.h"
+#include "include/fildesh/fildesh_compat_file.h"
+#include "include/fildesh/fildesh_compat_sh.h"
+#include "include/fildesh/fildesh_compat_string.h"
 #include "fildesh_posix_thread.h"
 
 #include "parse_fildesh.h"

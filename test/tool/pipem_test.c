@@ -1,6 +1,6 @@
 
 #include "fildesh_tool.h"
-#include "fildesh_compat_fd.h"
+#include "include/fildesh/fildesh_compat_fd.h"
 
 #include <assert.h>
 #include <stdlib.h>

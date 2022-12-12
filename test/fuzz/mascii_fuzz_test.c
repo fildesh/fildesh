@@ -2,7 +2,7 @@
 #include <assert.h>
 #include <string.h>
 
-#include "fildesh.h"
+#include <fildesh/fildesh.h>
 #include "src/lib/mascii.h"
 
   int

@@ -1,6 +1,6 @@
-#include "fildesh.h"
+#include <fildesh/fildesh.h>
 #include "fildesh_builtin.h"
-#include "fildesh_compat_file.h"
+#include "include/fildesh/fildesh_compat_file.h"
 
 #include <assert.h>
 #include <stdarg.h>

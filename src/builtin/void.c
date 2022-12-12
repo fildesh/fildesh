@@ -1,5 +1,5 @@
 /** Simple utility to gobble a stream.**/
-#include "fildesh.h"
+#include <fildesh/fildesh.h>
 
   int
 fildesh_builtin_void_main(unsigned argc, char** argv,

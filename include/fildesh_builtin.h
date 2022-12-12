@@ -2,7 +2,7 @@
 #define FILDESH_BUILTIN_H_
 
 #ifndef FILDESH_H_
-#include "fildesh.h"
+#include <fildesh/fildesh.h>
 #endif
 
 int fildesh_builtin_add_main(unsigned, char**, FildeshX**, FildeshO**);

@@ -1,6 +1,6 @@
 
-#include "fildesh.h"
-#include "fildesh_compat_errno.h"
+#include <fildesh/fildesh.h>
+#include "include/fildesh/fildesh_compat_errno.h"
 
 #include <assert.h>
 #include <ctype.h>

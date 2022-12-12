@@ -1,7 +1,7 @@
 #ifndef FILDESH_MASCII_H_
 #define FILDESH_MASCII_H_
 
-#include "fildesh.h"
+#include <fildesh/fildesh.h>
 
 #if defined(__SSSE3__) || defined(__AVX__) || defined(__AVX2__)
 #include <tmmintrin.h>

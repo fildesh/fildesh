@@ -1,6 +1,6 @@
 
 #include <string.h>
-#include "fildesh_compat_fd.h"
+#include "include/fildesh/fildesh_compat_fd.h"
 
 int fildesh_tool_spawn_main(unsigned argc, char** argv) {
   static const char stdin_open_pfx[] = "stdin=open_readonly:";

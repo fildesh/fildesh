@@ -1,4 +1,4 @@
-#include "fildesh.h"
+#include <fildesh/fildesh.h>
 #include <stdlib.h>
 
 int fildesh_builtin_zec_main(

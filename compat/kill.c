@@ -9,8 +9,8 @@
 # include <signal.h>
 #endif
 
-#include "fildesh_compat_errno.h"
-#include "fildesh_compat_sh.h"
+#include "include/fildesh/fildesh_compat_errno.h"
+#include "include/fildesh/fildesh_compat_sh.h"
 
   int
 fildesh_compat_sh_kill(fildesh_compat_pid_t pid)

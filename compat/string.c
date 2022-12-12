@@ -1,4 +1,4 @@
-#include "fildesh_compat_string.h"
+#include "include/fildesh/fildesh_compat_string.h"
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>

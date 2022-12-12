@@ -2,8 +2,8 @@
  * \file elastic_poll.c
  * Echo stdin to stdout with an arbitrary sized buffer.
  **/
-#include "fildesh.h"
-#include "fildesh_compat_fd.h"
+#include <fildesh/fildesh.h>
+#include "include/fildesh/fildesh_compat_fd.h"
 
 #include <errno.h>
 #include <fcntl.h>

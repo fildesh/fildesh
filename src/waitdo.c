@@ -1,6 +1,6 @@
 
 #include "fildesh_builtin.h"
-#include "fildesh_compat_sh.h"
+#include "include/fildesh/fildesh_compat_sh.h"
 
 #include <stdio.h>
 #include <string.h>

@@ -1,9 +1,9 @@
 
-#include "fildesh.h"
-#include "fildesh_compat_errno.h"
-#include "fildesh_compat_fd.h"
-#include "fildesh_compat_sh.h"
-#include "fildesh_compat_string.h"
+#include <fildesh/fildesh.h>
+#include "include/fildesh/fildesh_compat_errno.h"
+#include "include/fildesh/fildesh_compat_fd.h"
+#include "include/fildesh/fildesh_compat_sh.h"
+#include "include/fildesh/fildesh_compat_string.h"
 
 #include <assert.h>
 #include <stdio.h>

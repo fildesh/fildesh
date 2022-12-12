@@ -1,6 +1,6 @@
 /** Simple utility to replace all instances of a string.**/
 
-#include "fildesh.h"
+#include <fildesh/fildesh.h>
 
 #include <string.h>
 

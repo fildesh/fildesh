@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "fildesh.h"
+#include <fildesh/fildesh.h>
 
 
   int

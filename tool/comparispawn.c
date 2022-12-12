@@ -5,8 +5,8 @@
  *   comparispawn expected-output.txt ./bin/myprog arg1 arg2
  **/
 
-#include "fildesh.h"
-#include "fildesh_compat_fd.h"
+#include <fildesh/fildesh.h>
+#include "include/fildesh/fildesh_compat_fd.h"
 #include "fildesh_tool.h"
 #include <stdio.h>
 #include <stdlib.h>

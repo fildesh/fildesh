@@ -9,10 +9,10 @@
  **/
 #define FILDESH_POSIX_SOURCE
 
-#include "fildesh.h"
-#include "fildesh_compat_errno.h"
-#include "fildesh_compat_fd.h"
-#include "fildesh_compat_sh.h"
+#include <fildesh/fildesh.h>
+#include "include/fildesh/fildesh_compat_errno.h"
+#include "include/fildesh/fildesh_compat_fd.h"
+#include "include/fildesh/fildesh_compat_sh.h"
 
 #include <aio.h>
 #include <errno.h>

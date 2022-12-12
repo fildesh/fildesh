@@ -3,7 +3,7 @@
 
 #include <assert.h>
 #include <string.h>
-#include "fildesh_compat_string.h"
+#include "include/fildesh/fildesh_compat_string.h"
 
 
   static unsigned

@@ -10,7 +10,7 @@
 #include <unistd.h>
 #include <sys/wait.h>
 
-#include "fildesh.h"
+#include <fildesh/fildesh.h>
 
 #include <errno.h>
 #include <fcntl.h>

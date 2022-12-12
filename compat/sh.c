@@ -1,6 +1,6 @@
-#include "fildesh_compat_sh.h"
-#include "fildesh_compat_errno.h"
-#include "fildesh_compat_string.h"
+#include "include/fildesh/fildesh_compat_sh.h"
+#include "include/fildesh/fildesh_compat_errno.h"
+#include "include/fildesh/fildesh_compat_string.h"
 
 #ifdef _MSC_VER
 /* For _chdir().*/

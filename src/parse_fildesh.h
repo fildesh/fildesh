@@ -1,6 +1,6 @@
 #ifndef _PARSE_FILDESH_H_
 #define _PARSE_FILDESH_H_
-#include "fildesh.h"
+#include <fildesh/fildesh.h>
 
 char*
 fildesh_syntax_parse_line(FildeshX* xf, size_t* text_nlines,

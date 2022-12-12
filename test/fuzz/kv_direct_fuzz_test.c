@@ -10,7 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "fildesh.h"
+#include <fildesh/fildesh.h>
 
 static const uint8_t NULL_VALUE = 255;
 

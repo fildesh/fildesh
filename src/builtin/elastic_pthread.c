@@ -2,7 +2,7 @@
  * \file elastic_pthread.c
  * Echo stdin to stdout with an arbitrary sized buffer.
  **/
-#include "fildesh.h"
+#include <fildesh/fildesh.h>
 #include "fildesh_posix_thread.h"
 
 #include <assert.h>

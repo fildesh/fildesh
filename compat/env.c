@@ -6,8 +6,8 @@
 #endif
 #include <stdlib.h>
 
-#include "fildesh_compat_errno.h"
-#include "fildesh_compat_sh.h"
+#include "include/fildesh/fildesh_compat_errno.h"
+#include "include/fildesh/fildesh_compat_sh.h"
 
   int
 fildesh_compat_sh_setenv(const char* key, const char* value)

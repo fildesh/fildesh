@@ -31,7 +31,7 @@ cc_library(
         "//include/fildesh:fildesh_compat_sh.h",
         "//include/fildesh:fildesh_compat_string.h",
     ],
-    includes = ["include", "include/fildesh"],
+    includes = ["include"],
     linkopts = select({
         "@platforms//os:windows": [
             "-DEFAULTLIB:advapi32.lib",  # For RtlGenRandom().
@@ -61,7 +61,7 @@ cc_library(
         "//src/lib:outstream.c",
         "//src/lib:string.c",
     ],
-    includes = ["include", "include/fildesh"],
+    includes = ["include"],
     deps = [":fildesh_compat_lib"],
     visibility = ["//visibility:public"],
 )

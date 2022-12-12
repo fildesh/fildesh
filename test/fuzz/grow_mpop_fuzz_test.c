@@ -2,7 +2,7 @@
 #include <assert.h>
 #include <stdlib.h>
 
-#include "fildesh.h"
+#include <fildesh/fildesh.h>
 
 
 static

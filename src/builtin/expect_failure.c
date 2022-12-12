@@ -2,7 +2,7 @@
  * Compare two files.
  **/
 
-#include "fildesh.h"
+#include <fildesh/fildesh.h>
 #include <string.h>
 
   int

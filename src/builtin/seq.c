@@ -1,5 +1,5 @@
 /** Simple version of `seq`.**/
-#include "fildesh.h"
+#include <fildesh/fildesh.h>
 #include <limits.h>
 
   int

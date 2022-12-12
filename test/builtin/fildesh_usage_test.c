@@ -1,6 +1,6 @@
 /** Ensure that builtins return bad statuses for invalid usage.**/
-#include "fildesh_compat_fd.h"
-#include "fildesh_compat_file.h"
+#include "include/fildesh/fildesh_compat_fd.h"
+#include "include/fildesh/fildesh_compat_file.h"
 #include <assert.h>
 #include <stdlib.h>
 

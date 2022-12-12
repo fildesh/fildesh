@@ -5,11 +5,11 @@
  * and just work from there.
  *
  **/
-#include "fildesh_compat_file.h"
-#include "fildesh_compat_errno.h"
-#include "fildesh_compat_random.h"
-#include "fildesh_compat_sh.h"
-#include "fildesh_compat_string.h"
+#include "include/fildesh/fildesh_compat_file.h"
+#include "include/fildesh/fildesh_compat_errno.h"
+#include "include/fildesh/fildesh_compat_random.h"
+#include "include/fildesh/fildesh_compat_sh.h"
+#include "include/fildesh/fildesh_compat_string.h"
 
 #include <assert.h>
 #include <stdlib.h>

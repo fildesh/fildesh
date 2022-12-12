@@ -1,5 +1,5 @@
-#include "fildesh_compat_random.h"
-#include "fildesh_compat_string.h"
+#include "include/fildesh/fildesh_compat_random.h"
+#include "include/fildesh/fildesh_compat_string.h"
 
 
 #if defined(__linux__)

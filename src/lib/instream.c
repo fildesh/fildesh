@@ -1,6 +1,6 @@
 
-#include "fildesh.h"
-#include "fildesh_compat_string.h"
+#include <fildesh/fildesh.h>
+#include "include/fildesh/fildesh_compat_string.h"
 #include "mascii.h"
 
 #include <assert.h>

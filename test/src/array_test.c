@@ -1,5 +1,5 @@
 #include <assert.h>
-#include "fildesh.h"
+#include <fildesh/fildesh.h>
 
 int main() {
   FildeshA a[1] = {{NULL, 0, 0}};

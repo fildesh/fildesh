@@ -1,5 +1,5 @@
-#include "fildesh_compat_errno.h"
-#include "fildesh_compat_file.h"
+#include "include/fildesh/fildesh_compat_errno.h"
+#include "include/fildesh/fildesh_compat_file.h"
 #include <errno.h>
 #include <stdio.h>
 

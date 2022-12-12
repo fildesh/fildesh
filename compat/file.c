@@ -1,4 +1,4 @@
-#include "fildesh_compat_file.h"
+#include "include/fildesh/fildesh_compat_file.h"
 
 #ifndef _MSC_VER
 /* For stdlib.h to provide realpath() on Debian.*/

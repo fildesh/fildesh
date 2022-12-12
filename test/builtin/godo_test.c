@@ -1,5 +1,5 @@
-#include "fildesh.h"
-#include "fildesh_compat_file.h"
+#include <fildesh/fildesh.h>
+#include "include/fildesh/fildesh_compat_file.h"
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>

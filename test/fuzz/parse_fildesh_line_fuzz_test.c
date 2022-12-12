@@ -3,7 +3,7 @@
 
 #include <assert.h>
 #include <string.h>
-#include "fildesh.h"
+#include <fildesh/fildesh.h>
 
 
 /** Test that line parsing doesn't crash.

@@ -80,8 +80,8 @@ endif()
 
 find_package(Threads REQUIRED)
 
-include_directories(include)
-include_directories(include/fildesh)
+include_directories("${CMAKE_SOURCE_DIR}")
+include_directories("${CMAKE_SOURCE_DIR}/include")
 include(GNUInstallDirs)
 add_subdirectory(compat)
 add_subdirectory(src)

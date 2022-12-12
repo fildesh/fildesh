@@ -1,8 +1,8 @@
 
 /** Simple utility to transpose based on a delimiter.**/
 
-#include "fildesh.h"
-#include "fildesh_compat_string.h"
+#include <fildesh/fildesh.h>
+#include "include/fildesh/fildesh_compat_string.h"
 
 #include <assert.h>
 #include <stdlib.h>

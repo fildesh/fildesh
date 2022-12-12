@@ -1,5 +1,5 @@
 /** Test that runs until it generates 256 uniquue byte values randomly.**/
-#include "fildesh.h"
+#include <fildesh/fildesh.h>
 #include <assert.h>
 #include <string.h>
 
