@@ -26,6 +26,7 @@ cc_library(
         "ssh-all.c",
         "waitdo.c",
         "xpipe.c",
+        "//src/bin:version.h",
         "//include:fildesh_builtin.h",
         "//include:fildesh_posix_thread.h",
         "//src/builtin:add.c",

@@ -37,3 +37,10 @@ fildesh_test(
     name = "stdio_test",
     srcs = ["stdio_test.fildesh"],
 )
+
+fildesh_test(
+    name = "version_test",
+    srcs = ["version_test.fildesh"],
+    args = ["--bazel_module_file=$(location //:MODULE.bazel)"],
+    data = ["//:MODULE.bazel"],
+)

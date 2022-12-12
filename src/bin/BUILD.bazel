@@ -1,0 +1,5 @@
+exports_files([
+    "version.h",
+], visibility = [
+    "//src:__pkg__",
+])

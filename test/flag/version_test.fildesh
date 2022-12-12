@@ -1,0 +1,10 @@
+
+(: bazel_module_file Filename .self.opt.bazel_module_file)
+
+
+$(O expect) grep -m 1 -o -E -e 'version = .*' $(XOF bazel_module_file)
+
+$(O version) fildesh --version
+|< zec / "version = \"" $(XA version) "\",\n" /
+|- cmp $(XF expect)
+|> stdout

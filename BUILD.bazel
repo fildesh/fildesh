@@ -78,3 +78,9 @@ cc_library(
     deps = [":fildesh_compat_lib"],
     visibility = ["//visibility:public"],
 )
+
+exports_files([
+    "MODULE.bazel",
+], visibility = [
+    "//test/flag:__pkg__",
+])

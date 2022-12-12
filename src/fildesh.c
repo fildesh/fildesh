@@ -14,6 +14,7 @@
 #include "fildesh_posix_thread.h"
 
 #include "parse_fildesh.h"
+#include "src/bin/version.h"
 
 #include <assert.h>
 #include <ctype.h>
@@ -2109,6 +2110,9 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
   while (argi < argc && exstatus == 0 && !exiting) {
     const char* arg;
     arg = argv[argi++];
+    if (arg[0] == '-' && arg[1] == '-' && arg[2] != '\0') {
+      arg = &arg[1];
+    }
     if (eq_cstr (arg, "--")) {
       use_stdin = false;
       if (argi >= argc) {
@@ -2126,6 +2130,13 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
         memcpy(grow_FildeshX(script_in, sz), arg, sz);
         *grow_FildeshX(script_in, 1) = '\n';
       }
+    }
+    else if (eq_cstr (arg, "-version")) {
+      FildeshO* out = open_FildeshOF("/dev/stdout");
+      puts_FildeshO(out, fildesh_bin_version);
+      putc_FildeshO(out, '\n');
+      close_FildeshO(out);
+      exiting = true;
     }
     else if (eq_cstr (arg, "-as")) {
       const char* builtin_name = argv[argi];
