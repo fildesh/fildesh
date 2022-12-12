@@ -1,5 +1,5 @@
-[![Bazel](https://github.com/fildesh/fildesh/actions/workflows/bazel.yml/badge.svg)](https://github.com/fildesh/fildesh/actions/workflows/bazel.yml)
-[![CMake](https://github.com/fildesh/fildesh/actions/workflows/cmake.yml/badge.svg)](https://github.com/fildesh/fildesh/actions/workflows/cmake.yml)
+[![Bazel](https://github.com/fildesh/fildesh/actions/workflows/test_bazel.yaml/badge.svg)](https://github.com/fildesh/fildesh/actions/workflows/test_bazel.yaml)
+[![CMake](https://github.com/fildesh/fildesh/actions/workflows/test_cmake.yaml/badge.svg)](https://github.com/fildesh/fildesh/actions/workflows/test_cmake.yaml)
 \
 [![Coverage Status](https://coveralls.io/repos/github/fildesh/fildesh/badge.svg?branch=trunk)](https://coveralls.io/github/fildesh/fildesh?branch=trunk)
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/6377/badge)](https://bestpractices.coreinfrastructure.org/projects/6377)
