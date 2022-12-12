@@ -1,13 +1,13 @@
 #!/usr/bin/env fildesh
 
 # Casting function pointers is usually unsafe (https://stackoverflow.com/a/559671/5039395).
-|< $(O? status) grep -E -e '\([^()]*\(\*\) *\([^()]*\)' -R compat src test tool
+|< $(O? status) grep -E -e '\([^()]*\(\*\) *\([^()]*\)' -R compat include src test tool
 |> zec -o /dev/stderr
 expect_failure -x? $(XF status)
 
 $(barrier)
 # No line ending with space.
-|< $(O? status) grep -E -e ' $' -R compat src test tool
+|< $(O? status) grep -E -e ' $' -R compat include src test tool
 |> zec -o /dev/stderr
 expect_failure -x? $(XF status)
 

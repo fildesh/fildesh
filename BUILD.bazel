@@ -66,6 +66,16 @@ cc_library(
     visibility = ["//visibility:public"],
 )
 
+cc_library(
+    name = "fildesh_cc_lib",
+    srcs = [
+        "//include/fildesh:ifstream.hh",
+        "//include/fildesh:ofstream.hh",
+    ],
+    includes = ["include"],
+    deps = [":fildesh_lib"],
+    visibility = ["//visibility:public"],
+)
 
 cc_library(
     name = "fildesh_tool_lib",

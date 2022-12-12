@@ -5,10 +5,15 @@
 #include <string>
 #include <vector>
 
-extern "C" {
 #include <fildesh/fildesh.h>
+#include <fildesh/ifstream.hh>
+#include <fildesh/ofstream.hh>
+extern "C" {
 #include "include/fildesh/fildesh_compat_file.h"
 }
+
+#define THIS_BENCHMARK_RANGE \
+  Args({1<<18})  /* 1.7 MiB file */
 
 static std::string temporary_file_name(const std::string& basename, int n) {
   const char* output_directory = getenv("TEST_TMPDIR");
@@ -37,13 +42,25 @@ static void BM_FileWriteIntegers_FildeshOF(benchmark::State& state) {
   fildesh_compat_file_rm(filename.c_str());
 }
 // Register the function as a benchmark
-BENCHMARK(BM_FileWriteIntegers_FildeshOF)
-  /* 1.7 MiB file */
-  ->Args({1<<18});
+BENCHMARK(BM_FileWriteIntegers_FildeshOF)->THIS_BENCHMARK_RANGE;
 
 
-static void BM_FileWriteIntegers_ofstream(benchmark::State& state) {
-  const std::string& filename = temporary_file_name("WriteIntegers_ofstream", state.range(0));
+static void BM_FileWriteIntegers_fildesh_ofstream(benchmark::State& state) {
+  const std::string& filename = temporary_file_name("WriteIntegers_fildesh_ofstream", state.range(0));
+  for (auto _ : state) {
+    fildesh::ofstream out(filename);
+		for (int i = 0; i < state.range(0); ++i) {
+      out << i << '\n';
+		}
+  }
+  fildesh_compat_file_rm(filename.c_str());
+}
+// Register the function as a benchmark
+BENCHMARK(BM_FileWriteIntegers_fildesh_ofstream)->THIS_BENCHMARK_RANGE;
+
+
+static void BM_FileWriteIntegers_std_ofstream(benchmark::State& state) {
+  const std::string& filename = temporary_file_name("WriteIntegers_std_ofstream", state.range(0));
   for (auto _ : state) {
     std::ios_base::openmode mode = (
         std::ios_base::out | std::ios_base::trunc);
@@ -55,9 +72,7 @@ static void BM_FileWriteIntegers_ofstream(benchmark::State& state) {
   fildesh_compat_file_rm(filename.c_str());
 }
 // Register the function as a benchmark
-BENCHMARK(BM_FileWriteIntegers_ofstream)
-  /* 1.7 MiB file */
-  ->Args({1<<18});
+BENCHMARK(BM_FileWriteIntegers_std_ofstream)->THIS_BENCHMARK_RANGE;
 
 
 static void BM_FileWriteIntegers_fprintf(benchmark::State& state) {
@@ -72,9 +87,7 @@ static void BM_FileWriteIntegers_fprintf(benchmark::State& state) {
   fildesh_compat_file_rm(filename.c_str());
 }
 // Register the function as a benchmark
-BENCHMARK(BM_FileWriteIntegers_fprintf)
-  /* 1.7 MiB file */
-  ->Args({1<<18});
+BENCHMARK(BM_FileWriteIntegers_fprintf)->THIS_BENCHMARK_RANGE;
 
 
 static void BM_FileReadIntegers_FildeshXF(benchmark::State& state) {
@@ -92,13 +105,28 @@ static void BM_FileReadIntegers_FildeshXF(benchmark::State& state) {
   }
   fildesh_compat_file_rm(filename.c_str());
 }
-BENCHMARK(BM_FileReadIntegers_FildeshXF)
-  /* 1.7 MiB file */
-  ->Args({1<<18});
+BENCHMARK(BM_FileReadIntegers_FildeshXF)->THIS_BENCHMARK_RANGE;
 
 
-static void BM_FileReadIntegers_ifstream(benchmark::State& state) {
-  const std::string& filename = temporary_file_name("ReadIntegers_ifstream", state.range(0));
+static void BM_FileReadIntegers_fildesh_ifstream(benchmark::State& state) {
+  const std::string& filename = temporary_file_name("ReadIntegers_fildesh_ifstream", state.range(0));
+  write_seq_file(filename, state.range(0));
+  for (auto _ : state) {
+    fildesh::ifstream in(filename);
+		for (int i = 0; i < state.range(0); ++i) {
+      int x = -1;
+      in >> x;
+      assert(x == i);
+      benchmark::DoNotOptimize(x);
+		}
+  }
+  fildesh_compat_file_rm(filename.c_str());
+}
+BENCHMARK(BM_FileReadIntegers_fildesh_ifstream)->THIS_BENCHMARK_RANGE;
+
+
+static void BM_FileReadIntegers_std_ifstream(benchmark::State& state) {
+  const std::string& filename = temporary_file_name("ReadIntegers_std_ifstream", state.range(0));
   write_seq_file(filename, state.range(0));
   for (auto _ : state) {
     std::ifstream in(filename);
@@ -111,9 +139,7 @@ static void BM_FileReadIntegers_ifstream(benchmark::State& state) {
   }
   fildesh_compat_file_rm(filename.c_str());
 }
-BENCHMARK(BM_FileReadIntegers_ifstream)
-  /* 1.7 MiB file */
-  ->Args({1<<18});
+BENCHMARK(BM_FileReadIntegers_std_ifstream)->THIS_BENCHMARK_RANGE;
 
 
 static void BM_FileReadIntegers_fscanf(benchmark::State& state) {
@@ -131,9 +157,7 @@ static void BM_FileReadIntegers_fscanf(benchmark::State& state) {
   }
   fildesh_compat_file_rm(filename.c_str());
 }
-BENCHMARK(BM_FileReadIntegers_fscanf)
-  /* 1.7 MiB file */
-  ->Args({1<<18});
+BENCHMARK(BM_FileReadIntegers_fscanf)->THIS_BENCHMARK_RANGE;
 
 
 static void BM_FileReadLines_FildeshXF(benchmark::State& state) {
@@ -149,13 +173,27 @@ static void BM_FileReadLines_FildeshXF(benchmark::State& state) {
   }
   fildesh_compat_file_rm(filename.c_str());
 }
-BENCHMARK(BM_FileReadLines_FildeshXF)
-  /* 1.7 MiB file */
-  ->Args({1<<18});
+BENCHMARK(BM_FileReadLines_FildeshXF)->THIS_BENCHMARK_RANGE;
 
 
-static void BM_FileReadLines_ifstream(benchmark::State& state) {
-  const std::string& filename = temporary_file_name("ReadLines_ifstream", state.range(0));
+static void BM_FileReadLines_fildesh_ifstream(benchmark::State& state) {
+  const std::string& filename = temporary_file_name("ReadLines_fildesh_ifstream", state.range(0));
+  write_seq_file(filename, state.range(0));
+  for (auto _ : state) {
+    fildesh::ifstream in(filename);
+    std::string line;
+		for (int i = 1; i < state.range(0); ++i) {
+      std::getline(in, line, '\n');
+      assert(!line.empty());
+		}
+  }
+  fildesh_compat_file_rm(filename.c_str());
+}
+BENCHMARK(BM_FileReadLines_fildesh_ifstream)->THIS_BENCHMARK_RANGE;
+
+
+static void BM_FileReadLines_std_ifstream(benchmark::State& state) {
+  const std::string& filename = temporary_file_name("ReadLines_std_ifstream", state.range(0));
   write_seq_file(filename, state.range(0));
   for (auto _ : state) {
     std::ifstream in(filename);
@@ -167,9 +205,7 @@ static void BM_FileReadLines_ifstream(benchmark::State& state) {
   }
   fildesh_compat_file_rm(filename.c_str());
 }
-BENCHMARK(BM_FileReadLines_ifstream)
-  /* 1.7 MiB file */
-  ->Args({1<<18});
+BENCHMARK(BM_FileReadLines_std_ifstream)->THIS_BENCHMARK_RANGE;
 
 
 static void BM_FileReadLines_fgets(benchmark::State& state) {
@@ -187,11 +223,8 @@ static void BM_FileReadLines_fgets(benchmark::State& state) {
   }
   fildesh_compat_file_rm(filename.c_str());
 }
-BENCHMARK(BM_FileReadLines_fgets)
-  /* 1.7 MiB file */
-  ->Args({1<<18});
+BENCHMARK(BM_FileReadLines_fgets)->THIS_BENCHMARK_RANGE;
 
 
 // Run the benchmark
 BENCHMARK_MAIN();
-

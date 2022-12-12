@@ -1,0 +1,15 @@
+cc_test(
+    name = "ifstream_test",
+    srcs = ["ifstream_test.cc"],
+    deps = ["//:fildesh_cc_lib"],
+    args = [
+        "$(location //test/expect:literal_hello.txt)",
+        "$(location //test/expect:literal_127.txt)",
+    ],
+    data = [
+        "//test/expect:literal_hello.txt",
+        "//test/expect:literal_127.txt",
+    ],
+    size = "small",
+)
+

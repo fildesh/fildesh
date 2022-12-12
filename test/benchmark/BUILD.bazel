@@ -11,7 +11,7 @@ config_setting(
 cc_benchmark(
     name = "file_write_read_benchmark",
     srcs = ["file_write_read_benchmark.cc"],
-    deps = ["//:fildesh_lib"],
+    deps = ["//:fildesh_cc_lib"],
 )
 
 cc_benchmark(
