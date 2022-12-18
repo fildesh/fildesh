@@ -20,7 +20,7 @@ zec -o "${pkg_debian}/control" / \
   /
 
 $(barrier)
-dpkg-deb --root-owner-group --build "${root_dst}"
+dpkg-deb -Zxz --root-owner-group --build "${root_dst}"
 
 $(barrier)
 mv "${pkg_dst}/fildesh.deb" "${final_dst}/fildesh.deb"
