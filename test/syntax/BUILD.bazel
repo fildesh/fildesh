@@ -89,6 +89,11 @@ fildesh_test(
 )
 
 fildesh_test(
+    name = "multiline_string_test",
+    srcs = ["multiline_string_test.fildesh"],
+)
+
+fildesh_test(
     name = "pump_ofxf_test",
     srcs = ["pump_ofxf_test.fildesh"],
 )

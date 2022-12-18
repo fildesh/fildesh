@@ -13,8 +13,11 @@
 #include "include/fildesh/fildesh_compat_string.h"
 #include "fildesh_posix_thread.h"
 
-#include "parse_fildesh.h"
 #include "src/bin/version.h"
+#include "src/syntax/defstr.h"
+#include "src/syntax/line.h"
+#include "src/syntax/opt.h"
+#include "src/syntax/symval.h"
 
 #include <assert.h>
 #include <ctype.h>
@@ -26,21 +29,6 @@
 void push_fildesh_exit_callback(void (*f) (void*), void* x);
 
 
-enum SymValKind
-{
-  IDescVal, ODescVal, IODescVal,
-  ODescStatusVal,
-  IDescArgVal,
-  IDescFileVal, ODescFileVal,
-  IFutureDescVal, OFutureDescVal,
-  IFutureDescFileVal, OFutureDescFileVal,
-  HereDocVal, IHereDocFileVal,
-  DefVal,
-  IOFileVal,
-  TmpFileVal,
-  NSymValKinds
-};
-
 enum CommandKind {
   RunCommand, HereDocCommand,
   StdinCommand, StdoutCommand,
@@ -50,15 +38,11 @@ enum CommandKind {
 };
 
 
-typedef enum SymValKind SymValKind;
 typedef enum CommandKind CommandKind;
-typedef struct SymVal SymVal;
 typedef struct Command Command;
 typedef struct CommandHookup CommandHookup;
 typedef struct BuiltinCommandThreadArg BuiltinCommandThreadArg;
 
-
-static SymValKind parse_sym(char* s, bool firstarg);
 
 struct Command
 {
@@ -110,32 +94,12 @@ struct CommandHookup {
   bool stderr_fd_opened;
 };
 
-struct SymVal
-{
-  SymValKind kind;
-  unsigned arg_idx;  /**< If a file.**/
-  unsigned ios_idx;
-  unsigned cmd_idx;
-  union SymVal_union
-  {
-    int file_desc;
-    char* here_doc;
-    const char* iofilename;  /* IOFileVal only.*/
-  } as;
-};
-
 struct BuiltinCommandThreadArg {
   Command* command;  /* Cleanup but don't free.*/
   char** argv;  /* Free nested.*/
 };
 
 static char* add_tmp_file(CommandHookup*, const char*, FildeshAlloc*);
-
-  static void
-init_SymVal (SymVal* v)
-{
-  v->kind = NSymValKinds;
-}
 
   static void
 lose_SymVal (SymVal* v)
@@ -368,103 +332,6 @@ static char* lookup_strmap(FildeshKV* map, const char* k) {
   return (char*) lookup_value_FildeshKV(map, k, strlen(k)+1);
 }
 
-static
-  SymVal*
-lookup_SymVal(FildeshKV* map, const char* s)
-{
-  if ((s[0] == '#' || isdigit(s[0])) && s[1] == '\0') {
-    /* TODO(#99): Remove in v0.2.0.*/
-    fildesh_log_warningf("For forward compatibility, please read positional arg %s via a flag.", s);
-  }
-  return (SymVal*) lookup_value_FildeshKV(map, s, strlen(s)+1);
-}
-
-static
-  SymVal*
-getf_SymVal(FildeshKV* map, const char* s)
-{
-  FildeshKV_id_t id = ensuref_FildeshKV(map, s, strlen(s)+1);
-  SymVal* x = (SymVal*) value_at_FildeshKV(map, id);
-  if ((s[0] == '#' || isdigit(s[0])) && s[1] == '\0') {
-    /* TODO(#99): Remove in v0.2.0.*/
-    fildesh_log_warningf("For forward compatibility, please read positional arg %s via a flag.", s);
-  }
-
-  if (!x) {
-    x = fildesh_allocate(SymVal, 1, map->alloc);
-    init_SymVal(x);
-    assign_memref_at_FildeshKV(map, id, x);
-  }
-  return x;
-}
-
-static
-  SymVal*
-declare_SymVal(FildeshKV* map, SymValKind kind, const char* name)
-{
-  FildeshKV_id_t id = ensuref_FildeshKV(map, name, strlen(name)+1);
-  SymVal* x = (SymVal*) value_at_FildeshKV(map, id);
-  if (!x) {
-    x = fildesh_allocate(SymVal, 1, map->alloc);
-    init_SymVal(x);
-    assign_memref_at_FildeshKV(map, id, x);
-  }
-  else if (x->kind == IOFileVal || x->kind == TmpFileVal) {
-    fildesh_log_errorf("Cannot redefine tmpfile symbol: %s", name);
-    return NULL;
-  }
-  x->kind = kind;
-  return x;
-}
-
-static
-  char**
-fildesh_syntax_ensure_string_variable(FildeshKV* map, const char* name)
-{
-  SymVal* x = getf_SymVal(map, name);
-  if (x->kind == NSymValKinds) {
-    x->kind = HereDocVal;
-    x->as.here_doc = NULL;
-  }
-  if (x->kind == HereDocVal) {
-    return &x->as.here_doc;
-  }
-  fildesh_log_errorf("Cannot overwrite non-string variable: %s", name);
-  return NULL;
-}
-
-static
-  int
-fildesh_syntax_parse_flags(char** args, FildeshKV* map, FildeshO* tmp_out)
-{
-  unsigned i;
-  for (i = 0; args[i]; ++i) {
-    char** p;
-    const char* k;
-    const char* v;
-    truncate_FildeshO(tmp_out);
-    puts_FildeshO(tmp_out, ".self.opt.");
-    v = getopt_FildeshO(tmp_out, args[i], args[i+1]);
-    if (!v) {
-      fildesh_log_errorf("Expected a value for flag: %s", args[i]);
-      return 64;
-    }
-    if (tmp_out->size == 6) {
-      assert(v == args[i] || v == args[i+1]);
-      break;
-    }
-    if (v == args[i+1]) {
-      i += 1;
-    }
-
-    k = strdup_FildeshO(tmp_out, map->alloc);
-    p = fildesh_syntax_ensure_string_variable(map, k);
-    assert(p);
-    *p = (char*)v;
-  }
-  return 0;
-}
-
   static unsigned
 count_ws (const char* s)
 {
@@ -489,219 +356,6 @@ perror_Command(const Command* cmd, const char* msg, const char* msg2)
 }
 
 static
-  char*
-parse_double_quoted_string(FildeshO* out, char* s, FildeshKV* map)
-{
-  truncate_FildeshO(out);
-  while (s[0] != '"') {
-    if (s[0] == '\0') {
-      fildesh_log_error("Unterminated double quote.");
-      return NULL;
-    }
-    else if (s[0] == '\\') {
-      switch(s[1]) {
-        case 'n':
-          putc_FildeshO(out, '\n');
-          s = &s[2];
-          break;
-        case 't':
-          putc_FildeshO(out, '\t');
-          s = &s[2];
-          break;
-        case '\\':
-        case '"':
-        case '$':
-          putc_FildeshO(out, s[1]);
-          s = &s[2];
-          break;
-        case '\0':
-          fildesh_log_error("Unterminated double quote.");
-          return NULL;
-        default:
-          fildesh_log_error("Unrecognized escape charactor.");
-          return NULL;
-      }
-    }
-    else if (map && s[0] == '$') {
-      char* name = &s[2];
-      SymVal* sym;
-      if (s[1] != '{') {
-        fildesh_log_error("Please wrap varible name in curly braces when it is part of a string.");
-        return NULL;
-      }
-      s = strchr(name, '}');
-      if (!s) {
-        fildesh_log_error("Missing closing curly brace.");
-        return NULL;
-      }
-      s[0] = '\0';
-      s = &s[1];
-      sym = lookup_SymVal(map, name);
-      if (!sym || sym->kind != HereDocVal) {
-        fildesh_log_errorf("${%s} variable not known at parse time.", name);
-        return NULL;
-      }
-      puts_FildeshO(out, sym->as.here_doc);
-    }
-    else {
-      putc_FildeshO(out, s[0]);
-      s = &s[1];
-    }
-  }
-  return &s[1];
-}
-
-static
-  const char*
-lookup_string_variable(FildeshKV* map, const char* s)
-{
-  if (pfxeq_cstr(".self.env.", s)) {
-    const char* k = &s[10];
-    return getenv(k);
-  }
-  else {
-    const SymVal* sym = lookup_SymVal(map, s);
-    if (sym) {
-      return sym->as.here_doc;
-    }
-  }
-  return NULL;
-}
-
-static
-  char*
-parse_double_quoted_string_or_variable(FildeshO* out, char* s, FildeshKV* map)
-{
-  truncate_FildeshO(out);
-  if (s[0] == '"') {
-    return parse_double_quoted_string(out, &s[1], NULL);
-  }
-  if (s[0] != '(') {
-    unsigned n = strcspn(s, ") \t\v\r\n");
-    const char s_n = s[n];
-    const char* v;
-    if (s_n=='\0') {return NULL;}
-    s[n] = '\0';
-    v = lookup_string_variable(map, s);
-    if (!v) {
-      fildesh_log_errorf("Unknown string variable %s", s);
-      return NULL;
-    }
-    puts_FildeshO(out, v);
-    s[n] = s_n;
-    return &s[n];
-  }
-  if (pfxeq_cstr("(?? ", s)) {
-    const char* v;
-    unsigned n;
-    s = &s[4];
-    s = &s[count_ws(s)];
-    n = count_non_ws(s);
-    if (s[n] == '\0') {return NULL;}
-    s[n] = '\0';
-    v = lookup_string_variable(map, s);
-    s = &s[n+1];
-    s = &s[count_ws(s)];
-    s = parse_double_quoted_string_or_variable(out, s, map);
-    if (!s) {return NULL;}
-    s = &s[count_ws(s)];
-    if (s[0] != ')') {return NULL;}
-    if (v) {
-      truncate_FildeshO(out);
-      puts_FildeshO(out, v);
-    }
-    return &s[1];
-  }
-  if (pfxeq_cstr("(++ ", s)) {
-    FildeshO tmp_out[1] = {DEFAULT_FildeshO};
-    s = &s[4];
-    s = &s[count_ws(s)];
-    while (s[0] != '\0' && s[0] != ')') {
-      s = parse_double_quoted_string_or_variable(tmp_out, s, map);
-      if (!s) {
-        close_FildeshO(tmp_out);
-        return NULL;
-      }
-      put_bytestring_FildeshO(out, (unsigned char*)tmp_out->at, tmp_out->size);
-      s = &s[count_ws(s)];
-    }
-    close_FildeshO(tmp_out);
-    if (s[0]=='\0') {return NULL;}
-    return &s[1];
-  }
-  return NULL;
-}
-
-static
-  int
-sep_line(char*** args, char* s, FildeshKV* map, FildeshAlloc* alloc, FildeshO* tmp_out)
-{
-  while (1) {
-    s = &s[count_ws (s)];
-    if (s[0] == '\0')  break;
-
-    if (s[0] == '\'') {
-      unsigned i;
-      s = &s[1];
-      push_FildeshAT(args, s);
-      i = strcspn (s, "'");
-      if (s[i] == '\0') {
-        fildesh_log_warning("Unterminated single quote.");
-        s = NULL;
-        break;
-      }
-      s = &s[i];
-    }
-    else if (s[0] == '"') {
-      s = parse_double_quoted_string(tmp_out, &s[1], map);
-      if (!s)  break;
-      push_FildeshAT(args, strdup_FildeshO(tmp_out, alloc));
-    }
-    else if (pfxeq_cstr("$(getenv ", s)) {
-      FildeshX in[1] = {DEFAULT_FildeshX};
-      FildeshX slice;
-      in->at = s;
-      in->size = strlen(s);
-      in->off = strlen("$(getenv ");
-      while_chars_FildeshX(in, " ");
-      slice = until_char_FildeshX(in, ')');
-      if (slice.at) {
-        const char* v;
-        in->at[in->off++] = '\0';
-        s = &in->at[in->off];
-        v = getenv(slice.at);
-        if (!v) {v = "";}
-        push_FildeshAT(args, strdup_FildeshAlloc(alloc, v));
-      }
-      else {
-        s = NULL;
-        fildesh_log_error("Unterminated environment variable.");
-        break;
-      }
-    }
-    else if (s[0] == '$' && s[1] == '(') {
-      unsigned i;
-      push_FildeshAT(args, s);
-      s = &s[2];
-      i = strcspn (s, ")");
-      if (s[i] == '\0') {
-        fildesh_log_warning("Unterminated variable.");
-        break;
-      }
-      s = &s[i+1];
-    }
-    else {
-      push_FildeshAT(args, s);
-      s = &s[count_non_ws (s)];
-    }
-    if (s[0] == '\0')  break;
-    s[0] = '\0';
-    s = &s[1];
-  }
-  return s ? 0 : -1;
-}
-
-static
   int
 parse_file(
     CommandHookup* cmd_hookup,
@@ -718,6 +372,16 @@ parse_file(
   while (istat == 0) {
     char* line;
     Command* cmd;
+    const char* emsg = parse_fildesh_string_definition(
+        in, &text_nlines, map, global_alloc, tmp_out);
+    if (!emsg) {continue;}
+    if (emsg[0]) {
+      istat = -1;
+      fildesh_log_errorf(
+          "In %s, line %u: %s",
+          this_filename, (unsigned)text_nlines, emsg);
+      break;
+    }
     line = fildesh_syntax_parse_line(in, &text_nlines, global_alloc, tmp_out);
     if (!line) {
       break;
@@ -737,9 +401,9 @@ parse_file(
       cmd->doc = fildesh_syntax_parse_here_doc(
           in, line, &text_nlines, global_alloc, tmp_out);
 
-      sym_kind = parse_sym(cmd->line, false);
+      sym_kind = parse_fildesh_SymVal_arg(cmd->line, false);
       assert(sym_kind == HereDocVal);
-      sym = declare_SymVal(map, HereDocVal, cmd->line);
+      sym = declare_fildesh_SymVal(map, HereDocVal, cmd->line);
       if (!sym) {istat = -1; break;}
       sym->as.here_doc = cmd->doc;
     }
@@ -772,70 +436,12 @@ parse_file(
       }
       close_FildeshX(src);
     }
-    else if (pfxeq_cstr("(: ", line)) {
-      char* sym_name = &line[2+count_ws(&line[2])];
-      char* sym_value = NULL;
-      SymValKind kind = HereDocVal;
-      line = &sym_name[count_non_ws(sym_name)];
-      if (line[0] == '\0') {
-        perror_Command(cmd, "Unclosed paren.", 0);
-        istat = -1;
-        break;
-      }
-      line[0] = '\0';
-      line = &line[1];
-      line = &line[count_ws(line)];
-      if (pfxeq_cstr("Filename ", line)) {
-        kind = IOFileVal;
-      }
-      else if (pfxeq_cstr("Str ", line)) {
-        kind = HereDocVal;
-      }
-      else {
-        perror_Command(cmd, "Expected Str type", 0);
-        istat = -1;
-        break;
-      }
-      line = &line[count_non_ws(line)];
-      line = &line[count_ws(line)];
-      line = parse_double_quoted_string_or_variable(tmp_out, line, map);
-      if (!line) {
-        perror_Command(cmd, "Expected a string", 0);
-        istat = -1;
-        break;
-      }
-      line = &line[count_ws(line)];
-      if (line[0] == ')') {
-        SymVal* sym;
-        line = &line[1];
-        line = &line[count_non_ws(line)];
-        if (line[0] == '\0') {
-          sym_value = strdup_FildeshO(tmp_out, global_alloc);
-        }
-
-        sym = declare_SymVal(map, kind, sym_name);
-        if (!sym) {istat = -1; break;}
-        if (kind == HereDocVal) {
-          sym->as.here_doc = sym_value;
-        }
-        else {
-          sym->as.iofilename = sym_value;
-        }
-
-        lose_Command(cmd);
-        mpop_FildeshAT(cmds, 1);
-      }
-      else {
-        perror_Command(cmd, "Just want a closing paren after string literal", 0);
-        istat = -1;
-        break;
-      }
-    }
     else if (pfxeq_cstr ("$(> ", line))
     {
       char* begline;
       char* sym_name = line;
       char* concatenated_args = NULL;
+      const char* emsg;
 
       cmd->kind = RunCommand;
 
@@ -853,17 +459,16 @@ parse_file(
 
       push_FildeshAT(cmd->args, (char*) "zec");
       push_FildeshAT(cmd->args, (char*) "/");
-      istat = sep_line(cmd->args, begline, map, scope_alloc, tmp_out);
-      if (istat != 0) {
-        break;
-      }
+      emsg = fildesh_syntax_sep_line(
+          cmd->args, begline, map, scope_alloc, tmp_out);
+      if (emsg) {fildesh_log_error(emsg); break;}
 
       concatenated_args = fildesh_syntax_maybe_concatenate_args(
           (unsigned) count_of_FildeshAT(cmd->args)-2,
           (const char* const*)(void*)&(*cmd->args)[2],
           global_alloc);
       if (concatenated_args) {
-        SymVal* sym = declare_SymVal(map, HereDocVal, sym_name);
+        SymVal* sym = declare_fildesh_SymVal(map, HereDocVal, sym_name);
         if (!sym) {istat = -1; break;}
         sym->as.here_doc = concatenated_args;
 
@@ -907,7 +512,7 @@ parse_file(
         break;
       }
       begline[0] = '\0';
-      sym = declare_SymVal(map, TmpFileVal, sym_name);
+      sym = declare_fildesh_SymVal(map, TmpFileVal, sym_name);
       if (!sym) {istat = -1; break;}
       sym->as.iofilename = add_tmp_file(cmd_hookup, ".txt", global_alloc);
 
@@ -916,9 +521,16 @@ parse_file(
     }
     else
     {
+      const char* emsg;
       cmd->kind = RunCommand;
-      istat = sep_line(cmd->args, cmd->line, map, scope_alloc, tmp_out);
-      if (istat == 0 && 0 == strcmp((*cmd->args)[0], "$(barrier)")) {
+      emsg = fildesh_syntax_sep_line(
+          cmd->args, cmd->line, map, scope_alloc, tmp_out);
+      if (emsg) {
+        perror_Command(cmd, emsg, 0);
+        istat = -1;
+        break;
+      }
+      else if (0 == strcmp((*cmd->args)[0], "$(barrier)")) {
         if (count_of_FildeshAT(cmd->args) != 1) {
           perror_Command(cmd, "Barrier does not accept args.", 0);
           istat = -1;
@@ -930,119 +542,6 @@ parse_file(
     }
   }
   return istat;
-}
-
-  SymValKind
-parse_sym (char* s, bool firstarg)
-{
-  unsigned i, o;
-  SymValKind kind = NSymValKinds;
-
-  if (firstarg && s[0] == '|') {
-    if (s[1] == '-')
-      kind = IODescVal;
-    else if (s[1] == '<')
-      kind = ODescVal;
-    else if (s[1] == '>')
-      kind = IDescVal;
-
-    if (kind != NSymValKinds) {
-      s[0] = '-';
-      s[1] = '\0';
-    }
-    return kind;
-  }
-
-  if (!(s[0] == '$' && s[1] == '('))  return NSymValKinds;
-
-  i = count_non_ws (s);
-  if (s[i] == '\0') {
-    unsigned n = i-1;
-    /* TODO(#98): Remove in v0.2.0.*/
-    fildesh_log_warningf("For forward compatibility, please change %s to use the $(XA ...) syntax.", s);
-
-    if (s[n] != ')')
-      return NSymValKinds;
-
-    i = 2;
-    n -= 2;
-    memmove (s, &s[i], n);
-    s[n] = '\0';
-    return HereDocVal;
-  }
-
-  /* Offset into string.*/
-  o = 2;
-
-  if (s[o] == 'X')
-  {
-    if (s[o+1] == 'O')
-    {
-      if (s[o+2] == 'F')  kind = IOFileVal;
-      else                kind = IODescVal;
-    }
-    else if (s[o+1] == 'A')
-    {
-      kind = IDescArgVal;
-    }
-    else if (s[o+1] == 'F')
-    {
-      if (s[o+2] == 'v')  kind = IFutureDescFileVal;
-      else                kind = IDescFileVal;
-    }
-    else
-    {
-      if (s[o+1] == 'v')  kind = IFutureDescVal;
-      else                kind = IDescVal;
-    }
-  }
-  else if (s[o] == 'O')
-  {
-    if (s[o+1] == '?') {
-      kind = ODescStatusVal;
-    }
-    else if (s[o+1] == 'F') {
-      if (s[o+2] == '^')  kind = OFutureDescFileVal;
-      else                kind = ODescFileVal;
-    }
-    else {
-      if (s[o+1] == '^')  kind = OFutureDescVal;
-      else                kind = ODescVal;
-    }
-  }
-  else if (s[o] == 'H')
-  {
-    if (s[o+1] == 'F') {
-      /* TODO(#97): Remove in v0.2.0.*/
-      fildesh_log_warning("For forward compatibility, please change $(HF ...) to the $(XF ...) syntax.");
-      kind = IDescFileVal;
-    }
-    else if (s[o+1] == ':') {
-      /* TODO(#94): Remove in v0.2.0.*/
-      fildesh_log_warning("For forward compatibility, please change $(H: ...) to the $(> ...) syntax.");
-      kind = HereDocVal;
-    }
-    else {
-      kind = HereDocVal;
-    }
-  }
-
-  if (kind != NSymValKinds)
-  {
-    unsigned n;
-    i += count_ws (&s[i]);
-    n = strcspn (&s[i], ")");
-    if (s[i+n] == ')')
-    {
-      memmove (s, &s[i], n * sizeof (char));
-      s[n] = '\0';
-    }
-    else
-    {
-      kind = NSymValKinds;
-    }
-  }
-  return kind;
 }
 
   static unsigned
@@ -1199,7 +698,7 @@ setup_commands(Command** cmds, CommandHookup* cmd_hookup)
        * but we need to overwrite the symbol
        * just in case there are multiple occurrences.
        */
-      SymVal* sym = declare_SymVal(map, HereDocVal, cmd->line);
+      SymVal* sym = declare_fildesh_SymVal(map, HereDocVal, cmd->line);
       if (!sym) {istat = -1; break;}
       sym->as.here_doc = cmd->doc;
 
@@ -1232,7 +731,7 @@ setup_commands(Command** cmds, CommandHookup* cmd_hookup)
     for (arg_r = 0; arg_r < count_of_FildeshAT(cmd->args) && istat == 0; ++ arg_r)
     {
       char* arg = (*cmd->args)[arg_r];
-      const SymValKind kind = parse_sym (arg, (arg_r == 0));
+      const SymValKind kind = parse_fildesh_SymVal_arg(arg, (arg_r == 0));
 
 
       if (arg_q == 0 && (kind == ODescFileVal || kind == OFutureDescFileVal)) {
@@ -1244,7 +743,7 @@ setup_commands(Command** cmds, CommandHookup* cmd_hookup)
       }
       else if (kind == HereDocVal || kind == IDescArgVal)
       {
-        SymVal* sym = getf_SymVal(map, arg);
+        SymVal* sym = getf_fildesh_SymVal(map, arg);
         if (sym->kind == HereDocVal) {
           (*cmd->args)[arg_q] = sym->as.here_doc;
         }
@@ -1269,7 +768,7 @@ setup_commands(Command** cmds, CommandHookup* cmd_hookup)
       }
       else if (cmd->kind == StdoutCommand && kind == IDescVal)
       {
-        SymVal* sym = getf_SymVal(map, arg);
+        SymVal* sym = getf_fildesh_SymVal(map, arg);
         Command* last = &(*cmds)[sym->cmd_idx];
 
         if (last->kind != RunCommand) {
@@ -1288,7 +787,7 @@ setup_commands(Command** cmds, CommandHookup* cmd_hookup)
         cmd->stdos = -1;
       }
       else if (kind == IOFileVal) {
-        SymVal* sym = getf_SymVal(map, arg);
+        SymVal* sym = getf_fildesh_SymVal(map, arg);
         if (sym->kind != IOFileVal && sym->kind != TmpFileVal) {
           FailBreak(cmd, "Not declared as a file", arg);
         }
@@ -1299,7 +798,7 @@ setup_commands(Command** cmds, CommandHookup* cmd_hookup)
                kind == IDescFileVal ||
                kind == IODescVal)
       {
-        SymVal* sym = getf_SymVal(map, arg);
+        SymVal* sym = getf_fildesh_SymVal(map, arg);
         int fd = sym->as.file_desc;
         if (sym->kind == HereDocVal) {
           /* Do nothing.*/
@@ -1375,7 +874,7 @@ setup_commands(Command** cmds, CommandHookup* cmd_hookup)
       }
       else if (kind == OFutureDescVal || kind == OFutureDescFileVal)
       {
-        SymVal* sym = getf_SymVal(map, arg);
+        SymVal* sym = getf_fildesh_SymVal(map, arg);
         int fd;
 
         if (sym->kind != IFutureDescVal) {
@@ -1413,7 +912,7 @@ setup_commands(Command** cmds, CommandHookup* cmd_hookup)
 
       if (cmd->kind == StdinCommand && kind == ODescVal)
       {
-        SymVal* sym = declare_SymVal(add_map, ODescVal, arg);
+        SymVal* sym = declare_fildesh_SymVal(add_map, ODescVal, arg);
         if (!sym) {istat = -1; break;}
         sym->cmd_idx = i;
         sym->as.file_desc = cmd->stdis;
@@ -1426,7 +925,7 @@ setup_commands(Command** cmds, CommandHookup* cmd_hookup)
                kind == ODescFileVal)
       {
         fildesh_fd_t fd[2];
-        SymVal* sym = declare_SymVal(add_map, ODescVal, arg);
+        SymVal* sym = declare_fildesh_SymVal(add_map, ODescVal, arg);
         if (!sym) {istat = -1; break;}
         sym->cmd_idx = i;
         sym->arg_idx = UINT_MAX;
@@ -1454,7 +953,7 @@ setup_commands(Command** cmds, CommandHookup* cmd_hookup)
       else if (kind == IFutureDescVal || kind == IFutureDescFileVal)
       {
         fildesh_fd_t fd[2];
-        SymVal* sym = declare_SymVal(add_map, IFutureDescVal, arg);
+        SymVal* sym = declare_fildesh_SymVal(add_map, IFutureDescVal, arg);
         if (!sym) {istat = -1; break;}
         sym->cmd_idx = i;
         sym->arg_idx = UINT_MAX;
@@ -1491,7 +990,7 @@ setup_commands(Command** cmds, CommandHookup* cmd_hookup)
       mpop_FildeshAT(cmd->args, count_of_FildeshAT(cmd->args) - arg_q);
 
     if (cmd->kind == DefCommand) {
-      SymVal* sym = declare_SymVal(map, DefVal, cmd->line);
+      SymVal* sym = declare_fildesh_SymVal(map, DefVal, cmd->line);
       if (!sym) {istat = -1; break;}
       sym->cmd_idx = i;
     }
@@ -2172,7 +1671,7 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
        SymVal* sym;
        v[0] = '\0';
        v = &v[1];
-       sym = declare_SymVal(&cmd_hookup->map, HereDocVal, k);
+       sym = declare_fildesh_SymVal(&cmd_hookup->map, HereDocVal, k);
        if (!sym) {istat = -1; break;}
        sym->as.here_doc = v;
      } else {
@@ -2334,7 +1833,7 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
     cmd->line = strdup_FildeshAlloc(global_alloc, "#");
     cmd->doc = strdup_FildeshO(tmp_out, global_alloc);
 
-    sym = declare_SymVal(&cmd_hookup->map, HereDocVal, cmd->line);
+    sym = declare_fildesh_SymVal(&cmd_hookup->map, HereDocVal, cmd->line);
     assert(sym);
     sym->as.here_doc = cmd->doc;
 
@@ -2357,7 +1856,7 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
     cmd->line = strdup_FildeshO(tmp_out, global_alloc);
     cmd->doc = strdup_FildeshAlloc(global_alloc, (*script_args)[i]);
 
-    sym = declare_SymVal(&cmd_hookup->map, HereDocVal, cmd->line);
+    sym = declare_fildesh_SymVal(&cmd_hookup->map, HereDocVal, cmd->line);
     assert(sym);
     sym->as.here_doc = cmd->doc;
   }

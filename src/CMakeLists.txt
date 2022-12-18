@@ -22,11 +22,10 @@ add_library(fildesh_builtin_lib_obj OBJECT
   ${FILDESH_EXTRA_ELASTIC_SOURCES}
   "execfd.c"
   "godo.c"
-  "parse_fildesh.c"
-  "parse_fildesh.h"
   "ssh-all.c"
   "waitdo.c"
   "xpipe.c"
+  "${CMAKE_SOURCE_DIR}/src/bin/version.h"
   "${CMAKE_SOURCE_DIR}/include/fildesh_builtin.h"
   "${CMAKE_SOURCE_DIR}/include/fildesh_posix_thread.h"
   "${CMAKE_SOURCE_DIR}/src/builtin/add.c"
@@ -42,6 +41,14 @@ add_library(fildesh_builtin_lib_obj OBJECT
   "${CMAKE_SOURCE_DIR}/src/builtin/ujoin.c"
   "${CMAKE_SOURCE_DIR}/src/builtin/void.c"
   "${CMAKE_SOURCE_DIR}/src/builtin/zec.c"
+  "${CMAKE_SOURCE_DIR}/src/syntax/defstr.c"
+  "${CMAKE_SOURCE_DIR}/src/syntax/defstr.h"
+  "${CMAKE_SOURCE_DIR}/src/syntax/line.c"
+  "${CMAKE_SOURCE_DIR}/src/syntax/line.h"
+  "${CMAKE_SOURCE_DIR}/src/syntax/opt.c"
+  "${CMAKE_SOURCE_DIR}/src/syntax/opt.h"
+  "${CMAKE_SOURCE_DIR}/src/syntax/symval.c"
+  "${CMAKE_SOURCE_DIR}/src/syntax/symval.h"
   )
 
 set_property(TARGET fildesh_builtin_lib_obj APPEND PROPERTY COMPILE_DEFINITIONS

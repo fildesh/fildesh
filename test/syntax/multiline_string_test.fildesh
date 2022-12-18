@@ -1,0 +1,23 @@
+
+(: expect Str
+ (++
+  "1 2 3\n"
+  "\"4 5 6\"\n"
+  "7 8 9\n"
+  "a b c\n"
+  "\"d e f\"\n"
+  "g h i\n"))
+
+(: a Str """1 2 3
+"4 5 6"
+7 8 9
+""")
+
+(: b Str (++ """a b c"""
+             """
+\"d e f\
+\"\ng h i\n"""))
+
+|< zec  / "${a}${b}" /
+|- cmp $(XF expect)
+|> stdout

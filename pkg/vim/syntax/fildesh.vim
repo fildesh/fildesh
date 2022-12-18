@@ -12,11 +12,13 @@ syn case match
 syn match   fildeshComment /#.*$/
 syn match   fildeshInclude /\$(<< [^)]*)/
 syn match   fildeshKeyword "$(barrier)"
-syn region  fildeshString start=/"/ skip=/\\"/ end=/"/
+syn match   fildeshStringEscape display contained "\\\([\"\\ntr]\)"
+syn region  fildeshString start=/"/ skip=/\\"/ end=/"/ contains=fildeshStringEscape
 
 hi def link fildeshComment Comment
 hi def link fildeshInclude Include
 hi def link fildeshKeyword Keyword
 hi def link fildeshString String
+hi def link fildeshStringEscape SpecialChar
 
 let b:current_syntax = "fildesh"

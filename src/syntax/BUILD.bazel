@@ -1,0 +1,13 @@
+exports_files([
+    "defstr.c",
+    "defstr.h",
+    "line.c",
+    "line.h",
+    "opt.c",
+    "opt.h",
+    "symval.c",
+    "symval.h",
+], visibility = [
+    "//src:__pkg__",
+    "//test/fuzz:__pkg__",
+])

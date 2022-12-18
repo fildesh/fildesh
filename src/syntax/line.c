@@ -1,15 +1,29 @@
 
-#include "parse_fildesh.h"
+#include "line.h"
 
 #include <assert.h>
+#include <stdlib.h>
 #include <string.h>
+#include "defstr.h"
 #include "include/fildesh/fildesh_compat_string.h"
 
 
+static
+  bool
+pfxeq_cstr(const char* pfx, const char* s)
+{
+  if (!s)  return false;
+  return (0 == strncmp(pfx, s, strlen (pfx)));
+}
   static unsigned
 count_ws(const char* s)
 {
   return strspn (s, fildesh_compat_string_blank_bytes);
+}
+  static unsigned
+count_non_ws (const char* s)
+{
+  return strcspn (s, fildesh_compat_string_blank_bytes);
 }
   static unsigned
 trim_trailing_ws (char* s)
@@ -134,28 +148,75 @@ fildesh_syntax_parse_here_doc(
 }
 
   const char*
-getopt_FildeshO(FildeshO* out, const char* const flag, const char* const arg)
+fildesh_syntax_sep_line(
+    char*** args, char* s, FildeshKV* map,
+    FildeshAlloc* alloc, FildeshO* tmp_out)
 {
-  const char* s;
-  if (flag[0] != '-') {return flag;}
-  if (flag[1] == '\0') {return flag;}
+  while (1) {
+    s = &s[count_ws (s)];
+    if (s[0] == '\0')  break;
 
-  s = &flag[1];
-  if (flag[1] == '-') {
-    s = &flag[2];
-  }
-  while (s[0] != '\0') {
-    const size_t n = strcspn(s, "-=");
-    put_bytestring_FildeshO(out, (const unsigned char*)s, n);
-    s = &s[n];
-    if (s[0] == '=') {
-      return &s[1];
-    }
-    if (s[0] == '-') {
-      putc_FildeshO(out, '_');
+    if (s[0] == '\'') {
+      unsigned i;
       s = &s[1];
+      push_FildeshAT(args, s);
+      i = strcspn (s, "'");
+      if (s[i] == '\0') {
+        return "Unterminated single quote.";
+      }
+      s = &s[i];
     }
+    else if (s[0] == '"') {
+      FildeshX slice = DEFAULT_FildeshX;
+      const char* emsg;
+      slice.size = strlen(s);
+      slice.at = s;
+      slice.off = 1;
+      truncate_FildeshO(tmp_out);
+      emsg = parse_double_quoted_fildesh_string(&slice, tmp_out, map);
+      if (emsg) {return emsg;}
+      s = &s[slice.off];
+      push_FildeshAT(args, strdup_FildeshO(tmp_out, alloc));
+      truncate_FildeshO(tmp_out);
+    }
+    else if (pfxeq_cstr("$(getenv ", s)) {
+      FildeshX in[1] = {DEFAULT_FildeshX};
+      FildeshX slice;
+      in->at = s;
+      in->size = strlen(s);
+      in->off = strlen("$(getenv ");
+      while_chars_FildeshX(in, " ");
+      slice = until_char_FildeshX(in, ')');
+      if (slice.at) {
+        const char* v;
+        in->at[in->off++] = '\0';
+        s = &in->at[in->off];
+        v = getenv(slice.at);
+        if (!v) {v = "";}
+        push_FildeshAT(args, strdup_FildeshAlloc(alloc, v));
+      }
+      else {
+        return "Unterminated environment variable.";
+      }
+    }
+    else if (s[0] == '$' && s[1] == '(') {
+      unsigned i;
+      push_FildeshAT(args, s);
+      s = &s[2];
+      i = strcspn (s, ")");
+      if (s[i] == '\0') {
+        return "Unterminated variable.";
+      }
+      s = &s[i+1];
+    }
+    else {
+      push_FildeshAT(args, s);
+      s = &s[count_non_ws (s)];
+    }
+    if (s[0] == '\0')  break;
+    s[0] = '\0';
+    s = &s[1];
   }
-  return arg;
+  return NULL;
 }
 

@@ -8,27 +8,18 @@ exports_files([
     "//test/builtin:__pkg__",
 ])
 
-exports_files([
-    "parse_fildesh.c",
-    "parse_fildesh.h",
-], visibility = [
-    "//test/fuzz:__pkg__",
-])
-
 cc_library(
     name = "fildesh_builtin_lib",
     srcs = [
         "fildesh.c",
         "execfd.c",
         "godo.c",
-        "parse_fildesh.c",
-        "parse_fildesh.h",
         "ssh-all.c",
         "waitdo.c",
         "xpipe.c",
-        "//src/bin:version.h",
         "//include:fildesh_builtin.h",
         "//include:fildesh_posix_thread.h",
+        "//src/bin:version.h",
         "//src/builtin:add.c",
         "//src/builtin:bestmatch.c",
         "//src/builtin:cmp.c",
@@ -42,12 +33,23 @@ cc_library(
         "//src/builtin:ujoin.c",
         "//src/builtin:void.c",
         "//src/builtin:zec.c",
+        "//src/syntax:defstr.c",
+        "//src/syntax:defstr.h",
+        "//src/syntax:line.c",
+        "//src/syntax:line.h",
+        "//src/syntax:opt.c",
+        "//src/syntax:opt.h",
+        "//src/syntax:symval.c",
+        "//src/syntax:symval.h",
     ],
     defines = [
         "FILDESH_BUILTIN_LIBRARY",
     ],
     deps = [
         "//:fildesh_lib",
+    ],
+    visibility = [
+        "//test/fuzz:__pkg__",
     ],
 )
 

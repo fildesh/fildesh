@@ -1,5 +1,5 @@
-#ifndef _PARSE_FILDESH_H_
-#define _PARSE_FILDESH_H_
+#ifndef _FILDESH_SYNTAX_LINE_H_
+#define _FILDESH_SYNTAX_LINE_H_
 #include <fildesh/fildesh.h>
 
 char*
@@ -13,8 +13,9 @@ char*
 fildesh_syntax_parse_here_doc(
     FildeshX* in, const char* term, size_t* text_nlines,
     FildeshAlloc* alloc, FildeshO* tmp_out);
-
 const char*
-getopt_FildeshO(FildeshO*, const char*, const char*);
+fildesh_syntax_sep_line(
+    char*** args, char* s, FildeshKV* map,
+    FildeshAlloc* alloc, FildeshO* tmp_out);
 
 #endif

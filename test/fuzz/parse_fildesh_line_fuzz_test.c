@@ -1,5 +1,5 @@
 #include "fuzz_common.h"
-#include "src/parse_fildesh.h"
+#include "src/syntax/line.h"
 
 #include <assert.h>
 #include <string.h>
