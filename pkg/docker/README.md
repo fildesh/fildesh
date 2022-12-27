@@ -14,6 +14,6 @@ The process is basically:
 
 ```shell
 bazel build -c opt //...
-docker copose build
+docker compose build
 docker run --rm -i fildesh < ../../example/hello.fildesh
 ```

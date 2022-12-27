@@ -51,13 +51,13 @@ bazel run //:fildesh -- $PWD/example/hello.fildesh
 ### CMake
 If you have CMake, try:
 ```shell
-make && ./bld/src/fildesh example/hello.fildesh
+make && ./bld/src/bin/fildesh example/hello.fildesh
 ```
 Or if you must use CMake directly:
 ```shell
 mkdir -p bld; cd bld
 cmake .. && cmake --build .
 cd ..
-./bld/src/fildesh example/hello.fildesh
+./bld/src/bin/fildesh example/hello.fildesh
 ```
 

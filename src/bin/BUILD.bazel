@@ -3,3 +3,10 @@ exports_files([
 ], visibility = [
     "//src:__pkg__",
 ])
+
+cc_binary(
+    name = "fildesh",
+    srcs = ["main.c"],
+    deps = ["//src:fildesh_builtin_lib"],
+    visibility = ["//:__pkg__"],
+)

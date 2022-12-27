@@ -48,16 +48,16 @@ bazel test -c dbg --test_output=all --cache_test_results=no --run_under='valgrin
 
 ### Leak Check
 ```shell
-bazel build //src:fildesh
-./bazel-bin/src/fildesh test/manual/leak_check.fildesh
+bazel build //src/bin:fildesh
+./bazel-bin/src/bin/fildesh test/manual/leak_check.fildesh
 # Don't worry if the `xargs ... grep ...` command fails.
 ```
 
 ### Lint
 Exercised in `.github/workflows/lint_manual.yaml`.
 ```shell
-bazel build //src:fildesh
-./bazel-bin/src/fildesh test/manual/lint.fildesh
+bazel build //src/bin:fildesh
+./bazel-bin/src/bin/fildesh test/manual/lint.fildesh
 ```
 
 ### SIMD Instructions

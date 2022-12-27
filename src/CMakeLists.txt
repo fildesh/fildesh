@@ -81,9 +81,7 @@ else()
     ${FILDESH_EXTRA_ELASTIC_AIO_LIBS})
 endif()
 
-add_executable(fildesh "main_fildesh.c")
-target_link_libraries(fildesh fildesh_builtin_lib)
-
+add_subdirectory(bin)
 
 add_executable(execfd "execfd.c"
   "${CMAKE_SOURCE_DIR}/include/fildesh_builtin.h")
@@ -119,7 +117,3 @@ elseif(UNIX AND NOT APPLE)
     APPEND PROPERTY COMPILE_DEFINITIONS _POSIX_C_SOURCE=201112L)
 endif()
 
-
-install(TARGETS fildesh
-  COMPONENT "bin"
-  RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}")

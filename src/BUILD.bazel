@@ -49,15 +49,9 @@ cc_library(
         "//:fildesh_lib",
     ],
     visibility = [
+        "//src/bin:__pkg__",
         "//test/fuzz:__pkg__",
     ],
-)
-
-cc_binary(
-    name = "fildesh",
-    srcs = ["main_fildesh.c"],
-    deps = [":fildesh_builtin_lib"],
-    visibility = ["//:__pkg__"],
 )
 
 cc_binary(

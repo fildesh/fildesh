@@ -1,7 +1,7 @@
 
 alias(
     name = "fildesh",
-    actual = "//src:fildesh",
+    actual = "//src/bin:fildesh",
     visibility = ["//visibility:public"],
 )
 
