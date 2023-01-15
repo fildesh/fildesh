@@ -3,9 +3,39 @@
 #include <stdlib.h>
 #include <string.h>
 
+static FildeshKV_id_t
+any_id_FildeshKV_SINGLE_LIST(const FildeshKV*);
+static FildeshKV_id_t
+lookup_FildeshKV_SINGLE_LIST(const FildeshKV*, const void*, size_t);
+static FildeshKV_id_t
+ensure_FildeshKV_SINGLE_LIST(FildeshKV*, const void*, size_t, FildeshAlloc*);
+static void
+remove_FildeshKV_SINGLE_LIST(FildeshKV*, FildeshKV_id_t);
+
+const FildeshKV_VTable DEFAULT_FildeshKV_VTable = {
+  any_id_FildeshKV_SINGLE_LIST,
+  lookup_FildeshKV_SINGLE_LIST,
+  ensure_FildeshKV_SINGLE_LIST,
+  remove_FildeshKV_SINGLE_LIST,
+};
+
+const FildeshKV_VTable DEFAULT_SINGLE_LIST_FildeshKV_VTable = {
+  any_id_FildeshKV_SINGLE_LIST,
+  lookup_FildeshKV_SINGLE_LIST,
+  ensure_FildeshKV_SINGLE_LIST,
+  remove_FildeshKV_SINGLE_LIST,
+};
 
   FildeshKV_id_t
-lookup_FildeshKV(const FildeshKV* map, const void* k, size_t ksize)
+any_id_FildeshKV_SINGLE_LIST(const FildeshKV* map) {
+  if (map->freelist_head == 0) {
+    return FildeshKV_NULL_ID;
+  }
+  return 0;
+}
+
+  FildeshKV_id_t
+lookup_FildeshKV_SINGLE_LIST(const FildeshKV* map, const void* k, size_t ksize)
 {
   size_t d = 1+fildesh_size_of_lgcount(1, map->allocated_lgcount);
   size_t i;
@@ -32,30 +62,10 @@ lookup_FildeshKV(const FildeshKV* map, const void* k, size_t ksize)
   return FildeshKV_NULL_ID;
 }
 
-FildeshKV_id_t any_id_FildeshKV(const FildeshKV* map) {
-  if (map->freelist_head == 0) {
-    return FildeshKV_NULL_ID;
-  }
-  return 0;
-}
-
-  void*
-lookup_value_FildeshKV(FildeshKV* map, const void* k, size_t ksize)
-{
-  FildeshKV_id_t id = lookup_FildeshKV(map, k, ksize);
-  FildeshKVE* e;
-  if (id == FildeshKV_NULL_ID) {return NULL;}
-  e = &map->at[id/2];
-  if (0 == (id & 1)) {
-    return (void*) value_FildeshKVE(e);
-  }
-  return (void*) splitvalue_FildeshKVE(e);
-}
-
-
 static
   FildeshKV_id_t
-add_FildeshKV(FildeshKV* map, const void* k, size_t ksize, FildeshAlloc* alloc)
+add_FildeshKV_SINLGE_LIST(
+    FildeshKV* map, const void* k, size_t ksize, FildeshAlloc* alloc)
 {
   size_t allocated_count = fildesh_size_of_lgcount(1, map->allocated_lgcount);
   if (map->freelist_head > 0 &&
@@ -102,19 +112,12 @@ add_FildeshKV(FildeshKV* map, const void* k, size_t ksize, FildeshAlloc* alloc)
 }
 
   FildeshKV_id_t
-ensure_FildeshKV(FildeshKV* map, const void* k, size_t ksize)
+ensure_FildeshKV_SINGLE_LIST(
+    FildeshKV* map, const void* k, size_t ksize, FildeshAlloc* alloc)
 {
-  FildeshKV_id_t id = lookup_FildeshKV(map, k, ksize);
+  FildeshKV_id_t id = lookup_FildeshKV_SINGLE_LIST(map, k, ksize);
   if (!fildesh_nullid(id)) {return id;}
-  return add_FildeshKV(map, k, ksize, map->alloc);
-}
-
-  FildeshKV_id_t
-ensuref_FildeshKV(FildeshKV* map, const void* k, size_t ksize)
-{
-  FildeshKV_id_t id = lookup_FildeshKV(map, k, ksize);
-  if (!fildesh_nullid(id)) {return id;}
-  return add_FildeshKV(map, k, ksize, NULL);
+  return add_FildeshKV_SINLGE_LIST(map, k, ksize, alloc);
 }
 
 static void reclaim_element_FildeshKV(FildeshKV* map, size_t di) {
@@ -124,7 +127,7 @@ static void reclaim_element_FildeshKV(FildeshKV* map, size_t di) {
   map->freelist_head = di;
 }
 
-void remove_at_FildeshKV(FildeshKV* map, FildeshKV_id_t id) {
+void remove_FildeshKV_SINGLE_LIST(FildeshKV* map, FildeshKV_id_t id) {
   const size_t allocated_count =
     fildesh_size_of_lgcount(1, map->allocated_lgcount);
   const size_t ei = id/2;  /* Element index.*/
@@ -180,10 +183,5 @@ void remove_at_FildeshKV(FildeshKV* map, FildeshKV_id_t id) {
   set_joint_index_FildeshKVE(&map->at[i], FildeshKV_NULL_INDEX);
   *e = map->at[i];
   reclaim_element_FildeshKV(map, i);
-}
-
-void close_FildeshKV(FildeshKV* map)
-{
-  if (map->at) {free(map->at);}
 }
 

@@ -23,6 +23,7 @@ typedef char bool;
 typedef int fildesh_fd_t;
 typedef uint8_t fildesh_lgsize_t;
 #define FILDESH_LGSIZE_MAX UCHAR_MAX
+typedef size_t FildeshKV_id_t;
 
 #ifdef __cplusplus
 extern "C" {
@@ -33,6 +34,7 @@ typedef struct FildeshX FildeshX;
 typedef struct FildeshO_VTable FildeshO_VTable;
 typedef struct FildeshO FildeshO;
 typedef struct FildeshAlloc FildeshAlloc;
+typedef struct FildeshKV_VTable FildeshKV_VTable;
 typedef struct FildeshKV FildeshKV;
 typedef struct FildeshKVE FildeshKVE;
 typedef struct FildeshA FildeshA;
@@ -225,27 +227,44 @@ char* strdup_FildeshAlloc(FildeshAlloc*, const char*);
 char* strdup_FildeshX(const FildeshX*, FildeshAlloc*);
 char* strdup_FildeshO(const FildeshO*, FildeshAlloc*);
 
+
 struct FildeshKV {
   FildeshKVE* at;
   FildeshAlloc* alloc;
   size_t freelist_head;
   fildesh_lgsize_t allocated_lgcount;
+  const FildeshKV_VTable* vt;
 };
-typedef size_t FildeshKV_id_t;
-#define DEFAULT_FildeshKV_SINGLE_LIST  { NULL, NULL, 0, 0 }
+#define DEFAULT_FildeshKV { NULL, NULL, 0, 0, &DEFAULT_FildeshKV_VTable }
+/** Implementation-specific maintenance functions.
+ *
+ * Prefer to use the inline wrappers:
+ * - any_id_FildeshKV()
+ * - lookup_FildeshKV()
+ * - ensure_FildeshKV() and ensuref_FildeshKV()
+ * - remove_at_FildeshKV()
+ **/
+struct FildeshKV_VTable {
+  FildeshKV_id_t (*any_id_fn)(const FildeshKV*);
+  FildeshKV_id_t (*lookup_fn)(const FildeshKV*, const void*, size_t);
+  FildeshKV_id_t (*ensure_fn)(FildeshKV*, const void*, size_t, FildeshAlloc*);
+  void           (*remove_fn)(FildeshKV*, FildeshKV_id_t);
+};
+extern const FildeshKV_VTable DEFAULT_FildeshKV_VTable;
 
-FildeshKV_id_t lookup_FildeshKV(const FildeshKV*, const void*, size_t);
-FildeshKV_id_t any_id_FildeshKV(const FildeshKV*);
 void* lookup_value_FildeshKV(FildeshKV*, const void*, size_t);
-FildeshKV_id_t ensure_FildeshKV(FildeshKV*, const void*, size_t);
-FildeshKV_id_t ensuref_FildeshKV(FildeshKV*, const void*, size_t);
 size_t size_of_key_at_FildeshKV(const FildeshKV*, FildeshKV_id_t);
 const void* key_at_FildeshKV(const FildeshKV*, FildeshKV_id_t);
 const void* value_at_FildeshKV(const FildeshKV*, FildeshKV_id_t);
 void assign_at_FildeshKV(FildeshKV*, FildeshKV_id_t, const void*, size_t);
 void assign_memref_at_FildeshKV(FildeshKV*, FildeshKV_id_t, const void*);
-void remove_at_FildeshKV(FildeshKV*, FildeshKV_id_t);
 void close_FildeshKV(FildeshKV*);
+
+/* Deprecated. Use DEFAULT_FildeshKV_VTable.*/
+extern const FildeshKV_VTable DEFAULT_SINGLE_LIST_FildeshKV_VTable;
+/* Deprecated. Use DEFAULT_FildeshKV.*/
+#define DEFAULT_FildeshKV_SINGLE_LIST \
+{ NULL, NULL, 0, 0, &DEFAULT_SINGLE_LIST_FildeshKV_VTable }
 
 
 struct FildeshA {
@@ -281,6 +300,22 @@ static inline bool peek_byte_FildeshX(FildeshX* in, unsigned char guess) {
 }
 static inline FildeshX until_byte_FildeshX(FildeshX* in, unsigned char delim) {
   return until_char_FildeshX(in, (char)delim);
+}
+
+static inline FildeshKV_id_t any_id_FildeshKV(const FildeshKV* map) {
+  return map->vt->any_id_fn(map);
+}
+static inline FildeshKV_id_t lookup_FildeshKV(const FildeshKV* map, const void* k, size_t ksize) {
+  return map->vt->lookup_fn(map, k, ksize);
+}
+static inline FildeshKV_id_t ensure_FildeshKV(FildeshKV* map, const void* k, size_t ksize) {
+  return map->vt->ensure_fn(map, k, ksize, map->alloc);
+}
+static inline FildeshKV_id_t ensuref_FildeshKV(FildeshKV* map, const void* k, size_t ksize) {
+  return map->vt->ensure_fn(map, k, ksize, NULL);
+}
+static inline void remove_at_FildeshKV(FildeshKV* map, FildeshKV_id_t id) {
+  map->vt->remove_fn(map, id);
 }
 
 #define fildesh_allocate(T, n, alloc) \
