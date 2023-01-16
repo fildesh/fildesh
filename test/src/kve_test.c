@@ -26,9 +26,9 @@ static void trivial_setget_bit_test() {
   set1_vexists_bit_FildeshKVE(&e);
   assert(0 != get_vexists_bit_FildeshKVE_joint(e.joint));
 
-  assert(0 == get_vdirect_bit_FildeshKVE_joint(e.joint));
-  set1_vdirect_bit_FildeshKVE(&e);
-  assert(0 != get_vdirect_bit_FildeshKVE_joint(e.joint));
+  assert(0 == get_vrefers_bit_FildeshKVE_joint(e.joint));
+  set1_vrefers_bit_FildeshKVE(&e);
+  assert(0 != get_vrefers_bit_FildeshKVE_joint(e.joint));
 
   assert(0 == get_splitkexists_bit_FildeshKVE_size(e.size));
   set1_splitkexists_bit_FildeshKVE(&e);
@@ -38,9 +38,9 @@ static void trivial_setget_bit_test() {
   set1_splitvexists_bit_FildeshKVE(&e);
   assert(0 != get_splitvexists_bit_FildeshKVE_size(e.size));
 
-  assert(0 == get_splitvdirect_bit_FildeshKVE_size(e.size));
-  set1_splitvdirect_bit_FildeshKVE(&e);
-  assert(0 != get_splitvdirect_bit_FildeshKVE_size(e.size));
+  assert(0 == get_splitvrefers_bit_FildeshKVE_size(e.size));
+  set1_splitvrefers_bit_FildeshKVE(&e);
+  assert(0 != get_splitvrefers_bit_FildeshKVE_size(e.size));
 
   assert(e.joint == hi3);
   assert(e.size == hi3);
@@ -56,9 +56,9 @@ static void trivial_setget_bit_test() {
   set0_vexists_bit_FildeshKVE(&e);
   assert(0 == get_vexists_bit_FildeshKVE_joint(e.joint));
 
-  assert(0 != get_vdirect_bit_FildeshKVE_joint(e.joint));
-  set0_vdirect_bit_FildeshKVE(&e);
-  assert(0 == get_vdirect_bit_FildeshKVE_joint(e.joint));
+  assert(0 != get_vrefers_bit_FildeshKVE_joint(e.joint));
+  set0_vrefers_bit_FildeshKVE(&e);
+  assert(0 == get_vrefers_bit_FildeshKVE_joint(e.joint));
 
   assert(0 != get_splitkexists_bit_FildeshKVE_size(e.size));
   set0_splitkexists_bit_FildeshKVE(&e);
@@ -68,9 +68,9 @@ static void trivial_setget_bit_test() {
   set0_splitvexists_bit_FildeshKVE(&e);
   assert(0 == get_splitvexists_bit_FildeshKVE_size(e.size));
 
-  assert(0 != get_splitvdirect_bit_FildeshKVE_size(e.size));
-  set0_splitvdirect_bit_FildeshKVE(&e);
-  assert(0 == get_splitvdirect_bit_FildeshKVE_size(e.size));
+  assert(0 != get_splitvrefers_bit_FildeshKVE_size(e.size));
+  set0_splitvrefers_bit_FildeshKVE(&e);
+  assert(0 == get_splitvrefers_bit_FildeshKVE_size(e.size));
 
   assert(e.joint == ~hi3);
   assert(e.size == ~hi3);
@@ -103,8 +103,8 @@ static void check_setget(size_t ksize, size_t vsize,
   /* Size is preserved.*/
   assert(ksize == ksize_FildeshKVE_size(e.size));
   /* Key is compared properly.*/
-  assert(0 == cmp_FildeshKVE_(ksize, k, e.joint, e.size, e.kv));
-  assert(0 != cmp_FildeshKVE_(vsize, v, e.joint, e.size, e.kv));
+  assert(0 == cmp_k_FildeshKVE(&e, ksize, k));
+  assert(0 != cmp_k_FildeshKVE(&e, vsize, v));
   /* Get the value.*/
   assert(0 == memcmp(v, value_FildeshKVE(&e), vsize));
   /* No splitkey has been set, so that size should be zero.*/
@@ -122,8 +122,8 @@ static void check_setget(size_t ksize, size_t vsize,
   assert(ksize == ksize_FildeshKVE_size(e.size));
   assert(splitksize == splitksize_FildeshKVE_size(e.size));
   /* Key is compared properly.*/
-  assert(0 == cmp_split_FildeshKVE_(splitksize, splitk, e.size, e.split));
-  assert(0 != cmp_split_FildeshKVE_(splitvsize, splitv, e.size, e.split));
+  assert(0 == cmp_splitk_FildeshKVE(&e, splitksize, splitk));
+  assert(0 != cmp_splitk_FildeshKVE(&e, splitvsize, splitv));
   /* Get the value.*/
   assert(0 == memcmp(splitv, splitvalue_FildeshKVE(&e), splitvsize));
 }

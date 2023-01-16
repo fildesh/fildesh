@@ -43,8 +43,6 @@ void
 insert_BSTree (BSTree* t, BSTNode* x);
 BSTNode*
 ensure_BSTree (BSTree* t, BSTNode* x);
-BSTNode*
-setf_BSTree (BSTree* t, BSTNode* x);
 void
 remove_BSTNode (BSTNode* y);
 #endif  /* #ifndef __OPENCL_VERSION__ */
@@ -62,7 +60,7 @@ dflt_BSTNode ()
 }
 
 qual_inline
-  Bit
+  unsigned
 side_of_BSTNode (const BSTNode* x)
 {
   return (x && x == x->joint->split[1]) ? 1 : 0;

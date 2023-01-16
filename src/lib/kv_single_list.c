@@ -48,11 +48,11 @@ lookup_FildeshKV_SINGLE_LIST(const FildeshKV* map, const void* k, size_t ksize)
        i = get_index_FildeshKVE_joint(map->at[i].joint))
   {
     const FildeshKVE* const e = &map->at[i];
-    if (0 == cmp_FildeshKVE_(ksize, k, e->joint, e->size, e->kv)) {
+    if (0 == cmp_k_FildeshKVE(e, ksize, k)) {
       return 2*i;
     }
     if (0 != get_splitkexists_bit_FildeshKVE_size(e->size)) {
-      if (0 == cmp_split_FildeshKVE_(ksize, k, e->size, e->split)) {
+      if (0 == cmp_splitk_FildeshKVE(e, ksize, k)) {
         return 2*i+1;
       }
     }

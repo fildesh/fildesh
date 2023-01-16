@@ -28,8 +28,6 @@ void
 insert_RBTree (RBTree* t, RBTNode* x);
 RBTNode*
 ensure_RBTree (RBTree* t, RBTNode* x);
-RBTNode*
-setf_RBTree (RBTree* t, RBTNode* x);
 void
 remove_RBTree (RBTree* t, RBTNode* y);
 

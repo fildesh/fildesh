@@ -8,6 +8,15 @@
 
 #define positive_bit( x )  ((x) > 0 ? 1 : 0)
 
+#define Nullish(x)  !(x)
+#define JointOf(x)  ((x)->joint)
+#define AssignJoint(x, y)  (x)->joint = (y)
+#define SplitOf(x, side)  ((x)->split[side])
+#define AssignSplit(y, side, x)  (y)->split[side] = (x)
+#define NullifySplit(y, side)  (y)->split[side] = NULL
+#define Join(y, side, x)  join_BSTNode(y, x, side)
+#define SideOf(x)  side_of_BSTNode(x)
+
   BSTree
 dflt2_BSTree (BSTNode* sentinel, PosetCmp cmp)
 {
@@ -58,7 +67,7 @@ lose_BSTree (BSTree* t, void (* lose) (BSTNode*))
 
 /**
  * Preorder, postorder, and inorder traversals are supported by
- * values of Nil, Yes, and May for /postorder/ respectively.
+ * values of Nil, Yes, and May for {postorder} respectively.
  **/
   void
 walk_BSTree (BSTree* t, Trit postorder,
@@ -99,11 +108,10 @@ find_BSTree (BSTree* t, const void* key)
 {
   BSTNode* y = root_of_BSTree (t);
 
-  while (y)
-  {
+  while (!Nullish(y)) {
     Sign si = poset_cmp_lhs (t->cmp, key, y);
-    if (si == 0)  return y;
-    y = y->split[positive_bit (si)];
+    if (si == 0) {return y;}
+    y = SplitOf(y, positive_bit(si));
   }
   return 0;
 }
@@ -128,48 +136,29 @@ insert_BSTree (BSTree* t, BSTNode* x)
   x->split[1] = 0;
 }
 
-/** If a node matching /x/ exists, return that node.
- * Otherwise, add /x/ to the tree and return it.
+/** If a node matching {x} exists, return that node.
+ * Otherwise, add {x} to the tree and return it.
  **/
   BSTNode*
 ensure_BSTree (BSTree* t, BSTNode* x)
 {
   BSTNode* a = t->sentinel;
   BSTNode* y = root_of_BSTree (t);
-  Bit side = side_of_BSTNode (y);
+  unsigned side = SideOf(y);
 
-  while (y)
-  {
+  while (!Nullish(y)) {
     Sign si = poset_cmp (t->cmp, x, y);
     if (si == 0)  return y;
     side = positive_bit (si);
     a = y;
-    y = y->split[side];
+    y = SplitOf(y, side);
   }
 
-  a->split[side] = x;
-  x->joint = a;
-  x->split[0] = 0;
-  x->split[1] = 0;
+  AssignSplit(a, side, x);
+  AssignJoint(x, a);
+  NullifySplit(x, 0);
+  NullifySplit(x, 1);
   return x;
-}
-
-/**
- * Ensure /x/ exists in the tree.
- * It replaces a matching node if one exists.
- * The matching node (which was replaced) is returned.
- * If no matching node was replaced, 0 is returned.
- **/
-  BSTNode*
-setf_BSTree (BSTree* t, BSTNode* x)
-{
-  BSTNode* y = ensure_BSTree (t, x);
-  if (y == x)  return 0;
-  x->joint = y->joint;
-  x->joint->split[side_of_BSTNode (y)] = x;
-  join_BSTNode (x, y->split[0], 0);
-  join_BSTNode (x, y->split[1], 1);
-  return y;
 }
 
 /** Remove a given node {y} from the tree.
@@ -182,12 +171,11 @@ setf_BSTree (BSTree* t, BSTNode* x)
   void
 remove_BSTNode (BSTNode* y)
 {
-  Bit side_y = side_of_BSTNode (y);
-  Bit side;
-#define oside (!side)
+  unsigned side_y = SideOf(y);
+  unsigned side;
+#define oside (1-side)
   BSTNode* b;
   BSTNode* x;
-  uint i;
 
   /* This is the only case that leaves {y->joint} unchanged.
    * {x} can be Nil.
@@ -198,16 +186,15 @@ remove_BSTNode (BSTNode* y)
    *      /                     \
    *    x*                       *x
    */
-  for (i = 0; i < 2; ++i) {
-    side = (Bit) i;
+  for (side = 0; side < 2; ++side) {
     if (!y->split[oside])
-    {
-      x = y->split[side];
-      join_BSTNode (y->joint, x, side_y);
+    if (Nullish(SplitOf(y, oside))) {
+      x = SplitOf(y, side);
+      Join(JointOf(y), side_y, x);
       /* b = y->joint; */
       /* y->joint = b; */
-      y->split[side_y] = x;
-      y->split[!side_y] = 0;
+      AssignSplit(y, side_y, x);
+      NullifySplit(y, 1-side_y);
       return;
     }
   }
@@ -220,17 +207,15 @@ remove_BSTNode (BSTNode* y)
    *    /                        /
    *  0*                       0*
    */
-  for (i = 0; i < 2; ++i) {
-    side = (Bit) i;
-    b = y->split[side];
+  for (side = 0; side < 2; ++side) {
+    b = SplitOf(y, side);
 
-    if (!b->split[oside])
-    {
-      join_BSTNode (y->joint, b, side_y);
-      join_BSTNode (b, y->split[oside], oside);
-      y->joint = b;
-      y->split[side] = b->split[side];
-      y->split[oside] = 0;
+    if (Nullish(SplitOf(b, oside))) {
+      Join(JointOf(y), side_y, b);
+      Join(b, oside, SplitOf(y, oside));
+      AssignJoint(y, b);
+      AssignSplit(y, side, SplitOf(b, side));
+      NullifySplit(y, oside);
       return;
     }
   }
@@ -250,27 +235,26 @@ remove_BSTNode (BSTNode* y)
    *    2*
    */
   side = 0;  /* Arbitrary side.*/
-  b = y->split[side];
-  x = b->split[oside];
-  do
-  {
+  b = SplitOf(y, side);
+  x = SplitOf(b, oside);
+  do {
     b = x;
-    x = b->split[oside];
-  } while (x);
+    x = SplitOf(b, oside);
+  } while (!Nullish(x));
   x = b;
-  b = x->joint;
+  b = JointOf(x);
 
-  Claim2( oside ,==, side_of_BSTNode (x) );
-  join_BSTNode (b, x->split[side], oside);
+  assert(oside == SideOf(x));
+  Join(b, oside, SplitOf(x, side));
 
-  x->joint = y->joint;
-  x->joint->split[side_y] = x;
-  join_BSTNode (x, y->split[0], 0);
-  join_BSTNode (x, y->split[1], 1);
+  AssignJoint(x, JointOf(y));
+  AssignSplit(JointOf(x), side_y, x);
+  Join(x, 0, SplitOf(y, 0));
+  Join(x, 1, SplitOf(y, 1));
 
-  y->joint = b;
-  y->split[side] = 0;
-  y->split[oside] = b->split[oside];
+  AssignJoint(y, b);
+  NullifySplit(y, side);
+  AssignSplit(y, oside, SplitOf(b, oside));
 #undef oside
 }
 
@@ -282,20 +266,20 @@ remove_BSTNode (BSTNode* y)
  *    / \               / \
  *  x*   *y           y*   *z
  *
- * When /side/ is 1, opposite direction when 0.
- * (/b/ always starts as /a/'s joint)
+ * When {side} is 1, opposite direction when 0.
+ * ({b} always starts as {a}'s joint)
  **/
   void
 rotate_BSTNode (BSTNode* b, Bit side)
 {
-  const int p = side ? 0 : 1;
-  const int q = side ? 1 : 0;
+  const unsigned p = 1-side;
+  const unsigned q = side;
   BSTNode* a = b->split[p];
   BSTNode* y = a->split[q];
 
-  join_BSTNode (b->joint, a, side_of_BSTNode (b));
-  join_BSTNode (a, b, q);
-  join_BSTNode (b, y, p);
+  Join(JointOf(b), SideOf(b), a);
+  Join(a, q, b);
+  Join(b, p, y);
 }
 
 #endif  /* #ifndef __OPENCL_VERSION__ */

@@ -5,27 +5,37 @@
 #include "rbtree.h"
 #include <stdlib.h>
 
-  static Bit
-root (const RBTree* t, const RBTNode* x)
-{
-  return root_ck_BSTree (&t->bst, &x->bst);
-}
+#define Nullish(x)  !(x)
+#define IsRoot(x)  root_ck_BSTree(&t->bst, &(x)->bst)
 
-  static RBTNode*
-joint (RBTNode* x)
-{
+static inline RBTNode* JointOf(RBTNode* x) {
   return CastUp( RBTNode, bst, x->bst.joint );
 }
 
-  static RBTNode*
-split (RBTNode* x, Bit side)
-{
+static inline RBTNode* SplitOf(RBTNode* x, Bit side) {
   BSTNode* y = x->bst.split[side];
   return y ? CastUp( RBTNode, bst, y ) : 0;
 }
 
+static inline unsigned SideOf(RBTNode* x) {
+  return side_of_BSTNode(&x->bst);
+}
+
+static inline bool RedColorOf(const RBTNode* x) {
+  return x->red;
+}
+static inline void AssignColor(RBTNode* x, unsigned c) {
+  x->red = c;
+}
+static inline void ColorRed(RBTNode* x) {
+  AssignColor(x, 1);
+}
+static inline void ColorBlack(RBTNode* x) {
+  AssignColor(x, 0);
+}
+
   static void
-rotate (RBTNode* x, Bit lowup)
+Rotate(RBTNode* x, Bit lowup)
 {
   rotate_BSTNode (&x->bst, lowup);
 }
@@ -53,21 +63,20 @@ fixup_insert (RBTNode* x, RBTree* t)
   {
     RBTNode* b;
     RBTNode* a;
-    Bit xside;
+    unsigned xside;
 
     /* /x/ is root, just set to black!*/
-    if (root (t, x))
-    {
-      x->red = Nil;
+    if (IsRoot(x)) {
+      ColorBlack(x);
       break;
     }
-    b = joint (x);
+    b = JointOf(x);
 
-    /* /b/ is black, /x/ is safe to be red!*/
-    if (!b->red)  break;
+    /* {b} is black, {x} is safe to be red!*/
+    if (!RedColorOf(b))  break;
 
-    a = joint (b);
-    xside = side_of_BSTNode (&x->bst);
+    a = JointOf(b);
+    xside = SideOf(x);
 
     /* Case 1.         (continue)
      *
@@ -79,10 +88,9 @@ fixup_insert (RBTNode* x, RBTree* t)
      *        / \
      *      3#   #4
      */
-    if (xside == side_of_BSTNode (&b->bst))
-    {
-      rotate (a, !xside);
-      x->red = Nil;
+    if (xside == SideOf(b)) {
+      Rotate(a, 1-xside);
+      ColorBlack(x);
       x = b;
     }
     /* Case 2.                       (continue)
@@ -95,11 +103,10 @@ fixup_insert (RBTNode* x, RBTree* t)
      *       / \        / \
      *     2#   #3    1#   #2
      */
-    else
-    {
-      rotate (b, !xside);
-      b->red = Nil;
-      rotate (a, xside);
+    else {
+      Rotate(b, 1-xside);
+      ColorBlack(b);
+      Rotate(a, xside);
     }
   }
 }
@@ -108,12 +115,12 @@ fixup_insert (RBTNode* x, RBTree* t)
 insert_RBTree (RBTree* t, RBTNode* x)
 {
   insert_BSTree (&t->bst, &x->bst);
-  x->red = Yes;
+  ColorRed(x);
   fixup_insert (x, t);
 }
 
-/** If a node matching /x/ exists, return that node.
- * Otherwise, add /x/ to the tree and return it.
+/** If a node matching {x} exists, return that node.
+ * Otherwise, add {x} to the tree and return it.
  **/
   RBTNode*
 ensure_RBTree (RBTree* t, RBTNode* x)
@@ -121,7 +128,7 @@ ensure_RBTree (RBTree* t, RBTNode* x)
   BSTNode* y = ensure_BSTree (&t->bst, &x->bst);
   if (y == &x->bst)
   {
-    x->red = Yes;
+    ColorRed(x);
     fixup_insert (x, t);
   }
   else
@@ -132,22 +139,6 @@ ensure_RBTree (RBTree* t, RBTNode* x)
 }
 
 /**
- * Ensure /x/ exists in the tree.
- * It replaces a matching node if one exists.
- * The matching node (which was replaced) is returned.
- * If no matching node was replaced, 0 is returned.
- **/
-  RBTNode*
-setf_RBTree (RBTree* t, RBTNode* x)
-{
-  BSTNode* y = setf_BSTree (&t->bst, &x->bst);
-  if (!y)  return 0;
-  x->red = Yes;
-  fixup_insert (x, t);
-  return CastUp( RBTNode, bst, y );
-}
-
-/**
  * This function is called with {y} removed from the tree,
  * but {y->joint} points to a node whose {side} is one level
  * short on black nodes.
@@ -155,18 +146,17 @@ setf_RBTree (RBTree* t, RBTNode* x)
   static void
 fixup_remove (RBTNode* y, RBTree* t, Bit side)
 {
-  if (y->red)
-  {
-    y->red = 0;
+  if (RedColorOf(y)) {
+    ColorBlack(y);
     return;
   }
 
-  while (!root (t, y))
-  {
-    RBTNode* b = joint (y);
-    RBTNode* a = split (b, !side);
-    RBTNode* w = split (a, !side);
-    RBTNode* x = split (a, side);
+  while (!IsRoot(y)) {
+    RBTNode* b; RBTNode* a; RBTNode* w; RBTNode* x;
+    b = JointOf(y);
+    a = SplitOf(b, 1-side);
+    w = SplitOf(a, 1-side);
+    x = SplitOf(a, side);
 
     /* Case 1.                         (done)
      *
@@ -178,12 +168,15 @@ fixup_remove (RBTNode* y, RBTree* t, Bit side)
      *       / \       / \
      *     1#   #2   w*   #1
      */
-    if (x && x->red)
-    {
-      rotate (a, !side);
-      rotate (b, side);
-      if (b->red)  b->red = 0;
-      else         x->red = 0;
+    if (!Nullish(x) && RedColorOf(x)) {
+      Rotate(a, 1-side);
+      Rotate(b, side);
+      if (RedColorOf(b)) {
+        ColorBlack(b);
+      }
+      else {
+        ColorBlack(x);
+      }
       break;
     }
 
@@ -195,9 +188,8 @@ fixup_remove (RBTNode* y, RBTree* t, Bit side)
      *    / \                / \
      *  w*   #x            x#   #y
      */
-    if (b->red)
-    {
-      rotate (b, side);
+    if (RedColorOf(b)) {
+      Rotate(b, side);
       break;
     }
 
@@ -209,11 +201,10 @@ fixup_remove (RBTNode* y, RBTree* t, Bit side)
      *    / \                / \
      *  w#   #x            x#   #'y
      */
-    if (a->red)
-    {
-      rotate (b, side);
-      a->red = 0;
-      b->red = 1;
+    if (RedColorOf(a)) {
+      Rotate(b, side);
+      ColorBlack(a);
+      ColorRed(b);
       continue;  /* Match case 1 or 2.*/
     }
 
@@ -225,10 +216,9 @@ fixup_remove (RBTNode* y, RBTree* t, Bit side)
      *    / \                / \
      *  w+   *x            x*   #y
      */
-    if (w && w->red)
-    {
-      rotate (b, side);
-      w->red = 0;
+    if (!Nullish(w) && RedColorOf(w)) {
+      Rotate(b, side);
+      ColorBlack(w);
       break;
     }
 
@@ -240,37 +230,40 @@ fixup_remove (RBTNode* y, RBTree* t, Bit side)
      *    / \            / \
      *  w#   #x        w#   #x
      */
-    a->red = 1;
+    ColorRed(a);
     y = b;
-    side = side_of_BSTNode (&y->bst);
+    side = SideOf(y);
   }
 }
 
   void
 remove_RBTree (RBTree* t, RBTNode* y)
 {
-  RBTNode* b = joint (y);
+  RBTNode* b = JointOf(y);
   RBTNode* z;
-  Bit side = side_of_BSTNode (&y->bst);
+  const unsigned side = SideOf(y);
   remove_BSTNode (&y->bst);
-  z = split (b, side);
+  z = SplitOf(b, side);
   if (z) {
     /* Recolor the node that replaced {y}.*/
-    SwapT( uint, y->red, z->red );
+    unsigned y_color = RedColorOf(y);
+    AssignColor(y, RedColorOf(z));
+    AssignColor(z, y_color);
   }
 
   /* If the removed color is red, then it is still a red-black tree.*/
-  if (y->red)  return;
+  if (RedColorOf(y)) {return;}
 
-  if (y->bst.split[0]) {
-    fixup_remove (split (y, 0), t, 0);
+  if (!Nullish(SplitOf(y, 0))) {
+    fixup_remove(SplitOf(y, 0), t, 0);
   }
-  else if (y->bst.split[1]) {
-    fixup_remove (split (y, 1), t, 1);
+  else if (!Nullish(SplitOf(y, 1))) {
+    fixup_remove(SplitOf(y, 1), t, 1);
   }
   else {
     /* Assume {y} is a leaf in the tree to simplify fixup.*/
-    fixup_remove (y, t, !y->bst.joint->split[1]);
+    unsigned side = Nullish(SplitOf(JointOf(y), 1)) ? 1 : 0;
+    fixup_remove(y, t, side);
   }
 }
 

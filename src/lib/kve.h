@@ -7,18 +7,18 @@
 struct FildeshKVE {
   /** Index of "parent" or "previous" node with extra data in high 3 bits.
    *
-   * High bits: red, vexists, vdirect.
+   * High bits: red, vexists, vrefers.
    * We can use these 3 bits because size_t is at least 2 bytes
    * and this struct is at least 12 bytes.
-   * Setting vexists==0 && vdirect==1 means the node is unoccupied.
+   * Setting vexists==0 && vrefers==0 means the node is unoccupied.
    **/
   size_t joint;
   /** The primary key size with the split key size packed in.
    *
-   * High bits: splitkexists, splitvexists, splitvdirect.
+   * High bits: splitkexists, splitvexists, splitvrefers.
    * We assume 1 bit can be used because key sizes are generally small.
    * The splitvexists bit is conditional on splitkexists.
-   * The splitvdirect bit is conditional on splitvexists.
+   * The splitvrefers bit is conditional on splitvexists.
    **/
   size_t size;
   /** Stores indices of "child" nodes or possibly a kv-pair.**/
@@ -48,10 +48,10 @@ shiftmaskhi_size(size_t size, unsigned bigbitpos, unsigned bitcount) {
 
 static inline size_t red_bit_FildeshKVE_joint() { return high_size_bit(0); }
 static inline size_t vexists_bit_FildeshKVE_joint() { return high_size_bit(1); }
-static inline size_t vdirect_bit_FildeshKVE_joint() { return high_size_bit(2); }
+static inline size_t vrefers_bit_FildeshKVE_joint() { return high_size_bit(2); }
 static inline size_t splitkexists_bit_FildeshKVE_size() { return high_size_bit(0); }
 static inline size_t splitvexists_bit_FildeshKVE_size() { return high_size_bit(1); }
-static inline size_t splitvdirect_bit_FildeshKVE_size() { return high_size_bit(2); }
+static inline size_t splitvrefers_bit_FildeshKVE_size() { return high_size_bit(2); }
 
 static inline size_t get_red_bit_FildeshKVE_joint(size_t x) {
   return x & red_bit_FildeshKVE_joint();
@@ -59,8 +59,8 @@ static inline size_t get_red_bit_FildeshKVE_joint(size_t x) {
 static inline size_t get_vexists_bit_FildeshKVE_joint(size_t x) {
   return x & vexists_bit_FildeshKVE_joint();
 }
-static inline size_t get_vdirect_bit_FildeshKVE_joint(size_t x) {
-  return x & vdirect_bit_FildeshKVE_joint();
+static inline size_t get_vrefers_bit_FildeshKVE_joint(size_t x) {
+  return x & vrefers_bit_FildeshKVE_joint();
 }
 static inline size_t get_index_FildeshKVE_joint(size_t x) {
   return x & (~(size_t)0 >> 3);
@@ -71,12 +71,19 @@ static inline size_t get_splitkexists_bit_FildeshKVE_size(size_t x) {
 static inline size_t get_splitvexists_bit_FildeshKVE_size(size_t x) {
   return x & splitvexists_bit_FildeshKVE_size();
 }
-static inline size_t get_splitvdirect_bit_FildeshKVE_size(size_t x) {
-  return x & splitvdirect_bit_FildeshKVE_size();
+static inline size_t get_splitvrefers_bit_FildeshKVE_size(size_t x) {
+  return x & splitvrefers_bit_FildeshKVE_size();
 }
 
-static inline size_t red_FildeshKVE(const FildeshKVE* e) {
+static inline bool red_FildeshKVE(const FildeshKVE* e) {
   return 0 != get_red_bit_FildeshKVE_joint(e->joint);
+}
+static inline bool kexists_FildeshKVE(const FildeshKVE* e) {
+  return (0 != get_vexists_bit_FildeshKVE_joint(e->joint) ||
+          0 != get_vrefers_bit_FildeshKVE_joint(e->joint));
+}
+static inline bool splitkexists_FildeshKVE(const FildeshKVE* e) {
+  return 0 != get_splitkexists_bit_FildeshKVE_size(e->size);
 }
 
 static inline void set0_red_bit_FildeshKVE(FildeshKVE* e) {
@@ -91,11 +98,11 @@ static inline void set0_vexists_bit_FildeshKVE(FildeshKVE* e) {
 static inline void set1_vexists_bit_FildeshKVE(FildeshKVE* e) {
   e->joint |= vexists_bit_FildeshKVE_joint();
 }
-static inline void set0_vdirect_bit_FildeshKVE(FildeshKVE* e) {
-  e->joint &= ~vdirect_bit_FildeshKVE_joint();
+static inline void set0_vrefers_bit_FildeshKVE(FildeshKVE* e) {
+  e->joint &= ~vrefers_bit_FildeshKVE_joint();
 }
-static inline void set1_vdirect_bit_FildeshKVE(FildeshKVE* e) {
-  e->joint |= vdirect_bit_FildeshKVE_joint();
+static inline void set1_vrefers_bit_FildeshKVE(FildeshKVE* e) {
+  e->joint |= vrefers_bit_FildeshKVE_joint();
 }
 static inline void set0_splitkexists_bit_FildeshKVE(FildeshKVE* e) {
   e->size &= ~splitkexists_bit_FildeshKVE_size();
@@ -109,11 +116,11 @@ static inline void set0_splitvexists_bit_FildeshKVE(FildeshKVE* e) {
 static inline void set1_splitvexists_bit_FildeshKVE(FildeshKVE* e) {
   e->size |= splitvexists_bit_FildeshKVE_size();
 }
-static inline void set0_splitvdirect_bit_FildeshKVE(FildeshKVE* e) {
-  e->size &= ~splitvdirect_bit_FildeshKVE_size();
+static inline void set0_splitvrefers_bit_FildeshKVE(FildeshKVE* e) {
+  e->size &= ~splitvrefers_bit_FildeshKVE_size();
 }
-static inline void set1_splitvdirect_bit_FildeshKVE(FildeshKVE* e) {
-  e->size |= splitvdirect_bit_FildeshKVE_size();
+static inline void set1_splitvrefers_bit_FildeshKVE(FildeshKVE* e) {
+  e->size |= splitvrefers_bit_FildeshKVE_size();
 }
 static inline void set_joint_index_FildeshKVE(FildeshKVE* e, size_t index) {
   e->joint ^= get_index_FildeshKVE_joint(e->joint);
@@ -151,10 +158,10 @@ static inline
 value_FildeshKVE(const FildeshKVE* e)
 {
   if (0 != get_vexists_bit_FildeshKVE_joint(e->joint)) {
-    if (0 != get_vdirect_bit_FildeshKVE_joint(e->joint)) {
-      return (const void*)&e->kv[1];
-    } else {
+    if (0 != get_vrefers_bit_FildeshKVE_joint(e->joint)) {
       return (const void*)e->kv[1];
+    } else {
+      return (const void*)&e->kv[1];
     }
   }
   return NULL;
@@ -166,10 +173,10 @@ splitvalue_FildeshKVE(const FildeshKVE* e)
 {
   if (0 != get_splitkexists_bit_FildeshKVE_size(e->size)) {
     if (0 != get_splitvexists_bit_FildeshKVE_size(e->size)) {
-      if (0 != get_splitvdirect_bit_FildeshKVE_size(e->size)) {
-        return (const void*)&e->split[1];
-      } else {
+      if (0 != get_splitvrefers_bit_FildeshKVE_size(e->size)) {
         return (const void*)e->split[1];
+      } else {
+        return (const void*)&e->split[1];
       }
     }
   }
@@ -177,11 +184,11 @@ splitvalue_FildeshKVE(const FildeshKVE* e)
 }
 
 static inline void assign_memref_v_FildeshKVE(FildeshKVE* e, const void* v) {
-  set0_vdirect_bit_FildeshKVE(e);
+  set1_vrefers_bit_FildeshKVE(e);
   e->kv[1] = (uintptr_t) v;
 }
 static inline void assign_memref_splitv_FildeshKVE(FildeshKVE* e, const void* v) {
-  set0_splitvdirect_bit_FildeshKVE(e);
+  set1_splitvrefers_bit_FildeshKVE(e);
   e->split[1] = (uintptr_t) v;
 }
 
@@ -206,14 +213,14 @@ populate_splitkv_FildeshKVE(FildeshKVE* e,
                             size_t vsize, const void* v,
                             FildeshAlloc* alloc);
 void
+erase_k_FildeshKVE(FildeshKVE* e);
+void
 erase_splitk_FildeshKVE(FildeshKVE* e);
 void
 promote_splitk_FildeshKVE(FildeshKVE* e);
 int
-cmp_FildeshKVE_(size_t keysize, const void* key,
-                size_t ejoint, size_t esize, const uintptr_t ekv[2]);
+cmp_k_FildeshKVE(const FildeshKVE* e, size_t keysize, const void* key);
 int
-cmp_split_FildeshKVE_(size_t keysize, const void* key,
-                      size_t esize, const uintptr_t esplit[2]);
+cmp_splitk_FildeshKVE(const FildeshKVE* e, size_t keysize, const void* key);
 
 #endif

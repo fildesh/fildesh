@@ -53,7 +53,7 @@ assign_v_FildeshKVE(FildeshKVE* e, size_t vsize, const void* v, FildeshAlloc* al
 {
   assert(0 != get_vexists_bit_FildeshKVE_joint(e->joint));
   if (v && vsize <= sizeof(e->kv[1])) {
-    set1_vdirect_bit_FildeshKVE(e);
+    set0_vrefers_bit_FildeshKVE(e);
     memcpy(&e->kv[1], v, vsize);
   }
   else if (v && alloc) {
@@ -62,7 +62,7 @@ assign_v_FildeshKVE(FildeshKVE* e, size_t vsize, const void* v, FildeshAlloc* al
     e->kv[1] = (uintptr_t)p;
   }
   else {
-    set0_vdirect_bit_FildeshKVE(e);
+    set1_vrefers_bit_FildeshKVE(e);
     e->kv[1] = (uintptr_t) v;
   }
 }
@@ -72,7 +72,7 @@ assign_splitv_FildeshKVE(FildeshKVE* e, size_t vsize, const void* v, FildeshAllo
 {
   assert(0 != get_splitvexists_bit_FildeshKVE_size(e->size));
   if (v && vsize <= sizeof(e->split[1])) {
-    set1_splitvdirect_bit_FildeshKVE(e);
+    set0_splitvrefers_bit_FildeshKVE(e);
     memcpy(&e->split[1], v, vsize);
   }
   else if (v && alloc) {
@@ -81,7 +81,7 @@ assign_splitv_FildeshKVE(FildeshKVE* e, size_t vsize, const void* v, FildeshAllo
     e->split[1] = (uintptr_t)p;
   }
   else {
-    set0_splitvdirect_bit_FildeshKVE(e);
+    set1_splitvrefers_bit_FildeshKVE(e);
     e->split[1] = (uintptr_t) v;
   }
 }
@@ -107,7 +107,7 @@ populate_empty_FildeshKVE(FildeshKVE* e,
   }
   else {
     set0_vexists_bit_FildeshKVE(e);
-    set0_vdirect_bit_FildeshKVE(e);
+    set1_vrefers_bit_FildeshKVE(e);
     kdirect = (ksize <= sizeof(e->kv[0]) + sizeof(e->kv[1]));
   }
   if (kdirect) {
@@ -189,6 +189,16 @@ populate_splitkv_FildeshKVE(FildeshKVE* e,
 }
 
   void
+erase_k_FildeshKVE(FildeshKVE* e)
+{
+  assert(kexists_FildeshKVE(e));
+  assert(0 == get_splitkexists_bit_FildeshKVE_size(e->size));
+  e->kv[0] = 0;
+  e->kv[1] = 0;
+  e->joint = get_index_FildeshKVE_joint(e->joint);
+}
+
+  void
 erase_splitk_FildeshKVE(FildeshKVE* e)
 {
   assert(0 != get_splitkexists_bit_FildeshKVE_size(e->size));
@@ -204,7 +214,7 @@ promote_splitk_FildeshKVE(FildeshKVE* e)
   {
     /* The exists and direct bits are consistent across `joint` and `size`.*/
     const size_t splitvbits = (splitvexists_bit_FildeshKVE_size() |
-                               splitvdirect_bit_FildeshKVE_size());
+                               splitvrefers_bit_FildeshKVE_size());
     e->joint &= ~splitvbits;
     e->joint |= (splitvbits & e->size);
   }
@@ -216,32 +226,27 @@ promote_splitk_FildeshKVE(FildeshKVE* e)
 }
 
   int
-cmp_FildeshKVE_(size_t keysize, const void* key,
-                size_t ejoint, size_t esize,
-                const uintptr_t ekv[2])
+cmp_k_FildeshKVE(const FildeshKVE* e, size_t keysize, const void* key)
 {
-  const size_t actual_size = ksize_FildeshKVE_size(esize);
+  const size_t actual_size = ksize_FildeshKVE_size(e->size);
   if (keysize != actual_size) {
-    return (keysize < actual_size ? -1 : 1);
+    return (actual_size < keysize ? -1 : 1);
   }
-  if (kdirect_FildeshKVE_joint(ejoint, actual_size)) {
-    return memcmp(key, direct_k_FildeshKVE_kv(ekv), actual_size);
-  } else {
-    return memcmp(key, indirect_k_FildeshKVE_kv(ekv), actual_size);
+  if (kdirect_FildeshKVE_joint(e->joint, actual_size)) {
+    return memcmp(direct_k_FildeshKVE_kv(e->kv), key, actual_size);
   }
+  return memcmp(indirect_k_FildeshKVE_kv(e->kv), key, actual_size);
 }
 
   int
-cmp_split_FildeshKVE_(size_t keysize, const void* key,
-                   size_t esize, const uintptr_t esplit[2])
+cmp_splitk_FildeshKVE(const FildeshKVE* e, size_t keysize, const void* key)
 {
-  const size_t actual_size = splitksize_FildeshKVE_size(esize);
+  const size_t actual_size = splitksize_FildeshKVE_size(e->size);
   if (keysize != actual_size) {
-    return (keysize < actual_size ? -1 : 1);
+    return (actual_size < keysize ? -1 : 1);
   }
-  if (splitkdirect_FildeshKVE_size(esize, actual_size)) {
-    return memcmp(key, direct_splitk_FildeshKVE_split(esplit), actual_size);
-  } else {
-    return memcmp(key, indirect_splitk_FildeshKVE_split(esplit), actual_size);
+  if (splitkdirect_FildeshKVE_size(e->size, actual_size)) {
+    return memcmp(direct_splitk_FildeshKVE_split(e->split), key, actual_size);
   }
+  return memcmp(indirect_splitk_FildeshKVE_split(e->split), key, actual_size);
 }
