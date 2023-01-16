@@ -12,10 +12,17 @@ jobs:
     runs-on: ${{ matrix.platform }}
 
     steps:
-    - name: Setup bazel
+    - name: Cache Setup
+      uses: actions/cache@v3
+      id: cache-bazel
+      with:
+        path: ~/.cache/bazel
+        key: ${{ runner.os }}-bazel
+
+    - name: Bazel Setup
       uses: jwlawson/actions-setup-bazel@v1
       with:
-        bazel-version: '5'
+        bazel-version: '6'
 
     - name: Checkout
       uses: actions/checkout@v3
@@ -58,10 +65,16 @@ jobs:
     strategy:
       fail-fast: false
     steps:
-    - name: Setup bazel
+    - name: Cache Setup
+      uses: actions/cache@v3
+      id: cache-bazel
+      with:
+        path: ~/.cache/bazel
+        key: ${{ runner.os }}-bazel
+    - name: Bazel Setup
       uses: jwlawson/actions-setup-bazel@v1
       with:
-        bazel-version: '5'
+        bazel-version: '6'
     - name: Checkout
       uses: actions/checkout@v3
     - name: Build
@@ -80,10 +93,16 @@ jobs:
     strategy:
       fail-fast: false
     steps:
+    - name: Cache Setup
+      uses: actions/cache@v3
+      id: cache-bazel
+      with:
+        path: ~/.cache/bazel
+        key: ${{ runner.os }}-bazel
     - name: Setup bazel
       uses: jwlawson/actions-setup-bazel@v1
       with:
-        bazel-version: '5'
+        bazel-version: '6'
     - name: Checkout
       uses: actions/checkout@v3
     - name: Coverage
@@ -106,10 +125,16 @@ jobs:
     strategy:
       fail-fast: false
     steps:
-    - name: Setup bazel
+    - name: Cache Setup
+      uses: actions/cache@v3
+      id: cache-bazel
+      with:
+        path: ~/.cache/bazel
+        key: ${{ runner.os }}-bazel
+    - name: Bazel Setup
       uses: jwlawson/actions-setup-bazel@v1
       with:
-        bazel-version: '5'
+        bazel-version: '6'
     - name: Checkout
       uses: actions/checkout@v3
     - name: Fuzz
@@ -124,7 +149,7 @@ jobs:
     strategy:
       fail-fast: false
     steps:
-    - name: Setup bazel
+    - name: Bazel Setup
       uses: jwlawson/actions-setup-bazel@v1
       with:
         bazel-version: '4.2.2'
