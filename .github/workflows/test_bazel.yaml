@@ -125,12 +125,6 @@ jobs:
     strategy:
       fail-fast: false
     steps:
-    - name: Cache Setup
-      uses: actions/cache@v3
-      id: cache-bazel
-      with:
-        path: ~/.cache/bazel
-        key: ${{ runner.os }}-bazel
     - name: Bazel Setup
       uses: jwlawson/actions-setup-bazel@v1
       with:

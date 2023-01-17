@@ -2,7 +2,6 @@
  * \file bstree.c
  * Binary search tree.
  **/
-#ifndef __OPENCL_VERSION__
 #include "bstree.h"
 #include <assert.h>
 
@@ -11,8 +10,10 @@
 #define Nullish(x)  !(x)
 #define JointOf(x)  ((x)->joint)
 #define AssignJoint(x, y)  (x)->joint = (y)
+#define MaybeAssignJoint(x, y)  if (x)  AssignJoint(x, y)
 #define SplitOf(x, side)  ((x)->split[side])
 #define AssignSplit(y, side, x)  (y)->split[side] = (x)
+#define MaybeAssignSplit(y, side, x)  if (y)  AssignSplit(y, side, x)
 #define NullifySplit(y, side)  (y)->split[side] = NULL
 #define Join(y, side, x)  join_BSTNode(y, x, side)
 #define SideOf(x)  side_of_BSTNode(x)
@@ -111,7 +112,7 @@ find_BSTree (BSTree* t, const void* key)
   while (!Nullish(y)) {
     Sign si = poset_cmp_lhs (t->cmp, key, y);
     if (si == 0) {return y;}
-    y = SplitOf(y, positive_bit(si));
+    y = SplitOf(y, (si < 0 ? 0 : 1));
   }
   return 0;
 }
@@ -149,12 +150,12 @@ ensure_BSTree (BSTree* t, BSTNode* x)
   while (!Nullish(y)) {
     Sign si = poset_cmp (t->cmp, x, y);
     if (si == 0)  return y;
-    side = positive_bit (si);
+    side = (si < 0 ? 0 : 1);
     a = y;
     y = SplitOf(y, side);
   }
 
-  AssignSplit(a, side, x);
+  MaybeAssignSplit(a, side, x);
   AssignJoint(x, a);
   NullifySplit(x, 0);
   NullifySplit(x, 1);
@@ -178,21 +179,29 @@ remove_BSTNode (BSTNode* y)
   BSTNode* x;
 
   /* This is the only case that leaves {y->joint} unchanged.
-   * {x} can be Nil.
+   * {y} can be the root.
+   * {x} can be null.
    **** OLD ********* NEW *** AUX ***
-   *     b             b       b
+   *     b*            b*      b*
    *    / \           / \      |
    *  0*   y'  -->  0*   *x    y
    *      /                     \
    *    x*                       *x
    */
   for (side = 0; side < 2; ++side) {
-    if (!y->split[oside])
+    b = JointOf(y);
+
     if (Nullish(SplitOf(y, oside))) {
       x = SplitOf(y, side);
-      Join(JointOf(y), side_y, x);
-      /* b = y->joint; */
-      /* y->joint = b; */
+      if (Nullish(x)) {
+        MaybeAssignSplit(b, side_y, x);
+        return;
+      }
+      AssignJoint(x, b);
+      /* Update {x} neighbors.*/
+      AssignSplit(b, side_y, x);
+      /* Populate {y} for return.*/
+      /* noop: AssignJoint(y, b); */
       AssignSplit(y, side_y, x);
       NullifySplit(y, 1-side_y);
       return;
@@ -211,8 +220,12 @@ remove_BSTNode (BSTNode* y)
     b = SplitOf(y, side);
 
     if (Nullish(SplitOf(b, oside))) {
-      Join(JointOf(y), side_y, b);
-      Join(b, oside, SplitOf(y, oside));
+      AssignJoint(b, JointOf(y));
+      AssignSplit(b, oside, SplitOf(y, oside));
+      /* Update {b} neighbors.*/
+      MaybeAssignSplit(JointOf(y), side_y, b);
+      AssignJoint(SplitOf(y, oside), b);
+      /* Populate {y} for return.*/
       AssignJoint(y, b);
       AssignSplit(y, side, SplitOf(b, side));
       NullifySplit(y, oside);
@@ -223,14 +236,14 @@ remove_BSTNode (BSTNode* y)
   /* We know both {0} and {3} exist.
    * {x} descends from {0} or {3} to be closest in value to {y}.
    * {b} follows one step behind {x}.
-   **** OLD ********* NEW **** AUX ***
-   *     y'            x        b
-   *    / \           / \       |
-   *   0   3         0   3      y
-   *   .\.     -->   .\.         \
-   *     b             b          *2
-   *    / \           / \
-   *  1*   x        1*   *2
+   **** OLD ******** NEW **** AUX ***
+   *     y'           x        b
+   *    / \          / \       |
+   *  0*   3       0*   3      y
+   *   .\.    -->   .\.         \
+   *     b            b          *2
+   *    / \          / \
+   *  1*   x       1*   *2
    *      /
    *    2*
    */
@@ -248,10 +261,11 @@ remove_BSTNode (BSTNode* y)
   Join(b, oside, SplitOf(x, side));
 
   AssignJoint(x, JointOf(y));
-  AssignSplit(JointOf(x), side_y, x);
+  AssignSplit(JointOf(y), side_y, x);
   Join(x, 0, SplitOf(y, 0));
   Join(x, 1, SplitOf(y, 1));
 
+  /* Populate {y} for return.*/
   AssignJoint(y, b);
   NullifySplit(y, side);
   AssignSplit(y, oside, SplitOf(b, oside));
@@ -270,17 +284,15 @@ remove_BSTNode (BSTNode* y)
  * ({b} always starts as {a}'s joint)
  **/
   void
-rotate_BSTNode (BSTNode* b, Bit side)
+rotate_up_BSTNode(BSTNode* a)
 {
-  const unsigned p = 1-side;
-  const unsigned q = side;
-  BSTNode* a = b->split[p];
-  BSTNode* y = a->split[q];
+  BSTNode* b = JointOf(a);
+  const unsigned side = SideOf(a);
+  const unsigned oside = 1-side;
+  BSTNode* y = SplitOf(a, oside);
 
   Join(JointOf(b), SideOf(b), a);
-  Join(a, q, b);
-  Join(b, p, y);
+  Join(a, oside, b);
+  Join(b, side, y);
 }
-
-#endif  /* #ifndef __OPENCL_VERSION__ */
 

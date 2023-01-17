@@ -9,7 +9,7 @@ BEGIN_FUZZ_DATA
   1, 20,
 }
 NEXT_FUZZ_DATA
-/* Map 1->10, 2->20, 3->30, then remove 2->10.*/
+/* Map 1->10, 2->20, 3->30, then remove 2->20.*/
 { 1, 10,
   2, 20,
   3, 30,

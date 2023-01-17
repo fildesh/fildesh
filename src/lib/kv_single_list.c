@@ -62,20 +62,10 @@ lookup_FildeshKV_SINGLE_LIST(const FildeshKV* map, const void* k, size_t ksize)
   return FildeshKV_NULL_ID;
 }
 
-static
-  FildeshKV_id_t
-add_FildeshKV_SINLGE_LIST(
-    FildeshKV* map, const void* k, size_t ksize, FildeshAlloc* alloc)
+  void
+maybe_grow_FildeshKV_SINGLE_LIST(FildeshKV* map)
 {
   size_t allocated_count = fildesh_size_of_lgcount(1, map->allocated_lgcount);
-  if (map->freelist_head > 0 &&
-      0 == get_splitkexists_bit_FildeshKVE_size(map->at[0].size))
-  {
-    if (populate_splitkv_FildeshKVE(
-            &map->at[0], ksize, k, 1, NULL, alloc)) {
-      return 1;
-    }
-  }
   assert(map->freelist_head <= allocated_count);
   if (map->freelist_head == allocated_count) {
     size_t i;
@@ -91,6 +81,23 @@ add_FildeshKV_SINLGE_LIST(
       map->at[i].joint = i+1;
     }
   }
+}
+
+static
+  FildeshKV_id_t
+add_FildeshKV_SINLGE_LIST(
+    FildeshKV* map, const void* k, size_t ksize, FildeshAlloc* alloc)
+{
+  if (map->freelist_head > 0 &&
+      0 == get_splitkexists_bit_FildeshKVE_size(map->at[0].size))
+  {
+    if (populate_splitkv_FildeshKVE(
+            &map->at[0], ksize, k, 1, NULL, alloc)) {
+      return 1;
+    }
+  }
+
+  maybe_grow_FildeshKV_SINGLE_LIST(map);
 
   if (map->freelist_head == 0) {
     assert_trivial_joint(map->at[0].joint);
@@ -120,7 +127,9 @@ ensure_FildeshKV_SINGLE_LIST(
   return add_FildeshKV_SINLGE_LIST(map, k, ksize, alloc);
 }
 
-static void reclaim_element_FildeshKV(FildeshKV* map, size_t di) {
+  void
+reclaim_element_FildeshKV_SINGLE_LIST(FildeshKV* map, size_t di)
+{
   assert_trivial_joint(map->freelist_head);
   map->at[di] = default_FildeshKVE();
   map->at[di].joint = map->freelist_head;
@@ -152,13 +161,13 @@ void remove_FildeshKV_SINGLE_LIST(FildeshKV* map, FildeshKV_id_t id) {
   di = get_index_FildeshKVE_joint(e->joint);
   if (di != FildeshKV_NULL_INDEX) {
     *e = map->at[di];
-    reclaim_element_FildeshKV(map, di);
+    reclaim_element_FildeshKV_SINGLE_LIST(map, di);
     return;
   }
 
   /* Case: Removing first element in map.*/
   if (ei == 0) {
-    reclaim_element_FildeshKV(map, 0);
+    reclaim_element_FildeshKV_SINGLE_LIST(map, 0);
     return;
   }
 
@@ -166,7 +175,7 @@ void remove_FildeshKV_SINGLE_LIST(FildeshKV* map, FildeshKV_id_t id) {
   i = get_index_FildeshKVE_joint(map->at[0].joint);
   if (ei == i) {
     set_joint_index_FildeshKVE(&map->at[0], FildeshKV_NULL_INDEX);
-    reclaim_element_FildeshKV(map, ei);
+    reclaim_element_FildeshKV_SINGLE_LIST(map, ei);
     return;
   }
 
@@ -174,7 +183,7 @@ void remove_FildeshKV_SINGLE_LIST(FildeshKV* map, FildeshKV_id_t id) {
   j = get_index_FildeshKVE_joint(map->at[i].joint);
   if (ei == j) {
     set_joint_index_FildeshKVE(&map->at[i], FildeshKV_NULL_INDEX);
-    reclaim_element_FildeshKV(map, ei);
+    reclaim_element_FildeshKV_SINGLE_LIST(map, ei);
     return;
   }
 
@@ -182,6 +191,6 @@ void remove_FildeshKV_SINGLE_LIST(FildeshKV* map, FildeshKV_id_t id) {
   set_joint_index_FildeshKVE(&map->at[0], j);
   set_joint_index_FildeshKVE(&map->at[i], FildeshKV_NULL_INDEX);
   *e = map->at[i];
-  reclaim_element_FildeshKV(map, i);
+  reclaim_element_FildeshKV_SINGLE_LIST(map, i);
 }
 

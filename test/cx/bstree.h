@@ -48,7 +48,7 @@ remove_BSTNode (BSTNode* y);
 #endif  /* #ifndef __OPENCL_VERSION__ */
 
 void
-rotate_BSTNode (BSTNode* b, Bit side);
+rotate_up_BSTNode(BSTNode* a);
 
 qual_inline
   BSTNode

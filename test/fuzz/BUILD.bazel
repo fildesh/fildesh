@@ -17,21 +17,6 @@ cc_fuzz_test(
 )
 
 cc_fuzz_test(
-    name = "kv_direct_fuzz_test",
-    srcs = ["kv_direct_fuzz_test.c"],
-    deps = ["//:fildesh_lib"],
-    max_guesses = 50000,
-)
-cc_smoke_test(
-    name = "kv_direct_smoke_test",
-    srcs = [
-        "kv_direct_smoke_test.c",
-        "kv_direct_fuzz_test.c",
-    ],
-    deps = ["//:fildesh_lib"],
-)
-
-cc_fuzz_test(
     name = "kv_ensure_fuzz_test",
     srcs = ["kv_ensure_fuzz_test.c"],
     deps = ["//:fildesh_lib"],
@@ -42,6 +27,27 @@ cc_smoke_test(
     srcs = [
         "kv_ensure_smoke_test.c",
         "kv_ensure_fuzz_test.c",
+    ],
+    deps = ["//:fildesh_lib"],
+)
+
+cc_fuzz_test(
+    name = "kv_single_list_fuzz_test",
+    srcs = [
+        "kv_single_list_fuzz_test.c",
+        "kv_fuzz_common.c",
+        "kv_fuzz_common.h",
+    ],
+    deps = ["//:fildesh_lib"],
+    max_guesses = 50000,
+)
+cc_smoke_test(
+    name = "kv_single_list_smoke_test",
+    srcs = [
+        "kv_single_list_smoke_test.c",
+        "kv_single_list_fuzz_test.c",
+        "kv_fuzz_common.c",
+        "kv_fuzz_common.h",
     ],
     deps = ["//:fildesh_lib"],
 )

@@ -4,7 +4,6 @@
  * This approach gives better coverage, but can only be used when testing the
  * `ensure` function, not the `replace` function.
  **/
-#define HAVE_FUZZ_DATA
 #include "fuzz_common.h"
 #include <assert.h>
 #include <stdlib.h>
@@ -15,9 +14,9 @@
 static const uint8_t NULL_VALUE = 255;
 
   int
-LLVMFuzzerTestOneInput(const uint8_t data[], size_t size) {
+kv_fuzz_common(FildeshKV* map, const uint8_t data[], size_t size)
+{
   uint8_t a[256];
-  FildeshKV map[1] = {DEFAULT_FildeshKV_SINGLE_LIST};
   size_t i;
 
   memset(a, NULL_VALUE, sizeof(a));
@@ -41,11 +40,13 @@ LLVMFuzzerTestOneInput(const uint8_t data[], size_t size) {
     if (v == NULL_VALUE) {
       if (a[k] != NULL_VALUE) {
         remove_at_FildeshKV(map, id);
+        assert(fildesh_nullid(lookup_FildeshKV(map, &k, 1)));
       }
     }
     else {
       id = ensure_FildeshKV(map, &k, 1);
       assign_at_FildeshKV(map, id, &v, 1);
+      assert(id == lookup_FildeshKV(map, &k, 1));
     }
     a[k] = v;
   }
