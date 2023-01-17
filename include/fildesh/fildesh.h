@@ -113,23 +113,30 @@ unsigned fildesh_encode_int_base10(char*, fildesh_fd_t);
 unsigned fildesh_encode_fd_path(char*, fildesh_fd_t);
 
 
+#ifndef _MSC_VER
+# define FILDESH_LOG_ARGS  __FILE__,__extension__ __func__,__LINE__
+#else
+# define FILDESH_LOG_ARGS  __FILE__,__FUNCTION__,__LINE__
+#endif
+
 void fildesh_log_errorf(const char*, ...);
-void fildesh_log_warningf(const char*, ...);
-void fildesh_log_tracef(const char*, ...);
 void fildesh_log_error_(
     const char* file, const char* func, unsigned line, const char* msg);
+#define fildesh_log_error(s)  fildesh_log_error_(FILDESH_LOG_ARGS,s)
+
+void fildesh_log_warningf(const char*, ...);
 void fildesh_log_warning_(
     const char* file, const char* func, unsigned line, const char* msg);
+#define fildesh_log_warning(s)  fildesh_log_warning_(FILDESH_LOG_ARGS,s)
+
+#ifdef FILDESH_LOG_TRACE_ON
+void fildesh_log_tracef(const char*, ...);
 void fildesh_log_trace_(
     const char* file, const char* func, unsigned line, const char* msg);
-#ifndef _MSC_VER
-#define fildesh_log_error(s)  fildesh_log_error_(__FILE__,__extension__ __func__,__LINE__, s)
-#define fildesh_log_warning(s)  fildesh_log_warning_(__FILE__,__extension__ __func__,__LINE__, s)
-#define fildesh_log_trace(s)  fildesh_log_trace_(__FILE__,__extension__ __func__,__LINE__, s)
+# define fildesh_log_trace(s)  fildesh_log_trace_(FILDESH_LOG_ARGS,s)
 #else
-#define fildesh_log_error(s)  fildesh_log_error_(__FILE__,__FUNCTION__,__LINE__,s)
-#define fildesh_log_warning(s)  fildesh_log_warning_(__FILE__,__FUNCTION__,__LINE__,s)
-#define fildesh_log_trace(s)  fildesh_log_trace_(__FILE__,__FUNCTION__,__LINE__,s)
+static inline void fildesh_log_tracef(const char* s, ...) {(void)s;}
+# define fildesh_log_trace(s)
 #endif
 
 
