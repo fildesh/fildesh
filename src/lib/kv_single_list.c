@@ -4,7 +4,9 @@
 #include <string.h>
 
 static FildeshKV_id_t
-any_id_FildeshKV_SINGLE_LIST(const FildeshKV*);
+first_id_FildeshKV_SINGLE_LIST(const FildeshKV*);
+static FildeshKV_id_t
+next_id_FildeshKV_SINGLE_LIST(const FildeshKV*, FildeshKV_id_t);
 static FildeshKV_id_t
 lookup_FildeshKV_SINGLE_LIST(const FildeshKV*, const void*, size_t);
 static FildeshKV_id_t
@@ -13,25 +15,41 @@ static void
 remove_FildeshKV_SINGLE_LIST(FildeshKV*, FildeshKV_id_t);
 
 const FildeshKV_VTable DEFAULT_FildeshKV_VTable = {
-  any_id_FildeshKV_SINGLE_LIST,
+  first_id_FildeshKV_SINGLE_LIST,
+  next_id_FildeshKV_SINGLE_LIST,
   lookup_FildeshKV_SINGLE_LIST,
   ensure_FildeshKV_SINGLE_LIST,
   remove_FildeshKV_SINGLE_LIST,
 };
 
 const FildeshKV_VTable DEFAULT_SINGLE_LIST_FildeshKV_VTable = {
-  any_id_FildeshKV_SINGLE_LIST,
+  first_id_FildeshKV_SINGLE_LIST,
+  next_id_FildeshKV_SINGLE_LIST,
   lookup_FildeshKV_SINGLE_LIST,
   ensure_FildeshKV_SINGLE_LIST,
   remove_FildeshKV_SINGLE_LIST,
 };
 
   FildeshKV_id_t
-any_id_FildeshKV_SINGLE_LIST(const FildeshKV* map) {
+first_id_FildeshKV_SINGLE_LIST(const FildeshKV* map) {
   if (map->freelist_head == 0) {
     return FildeshKV_NULL_ID;
   }
   return 0;
+}
+
+  FildeshKV_id_t
+next_id_FildeshKV_SINGLE_LIST(const FildeshKV* map, FildeshKV_id_t id) {
+  size_t i = id/2;
+  assert(!fildesh_nullid(id));
+  if (((id & 1) == 0) && splitkexists_FildeshKVE(&map->at[i])) {
+    return id + 1;
+  }
+  i = get_index_FildeshKVE_joint(map->at[i].joint);
+  if (i == FildeshKV_NULL_INDEX) {
+    return FildeshKV_NULL_ID;
+  }
+  return 2*i;
 }
 
   FildeshKV_id_t
@@ -137,14 +155,12 @@ reclaim_element_FildeshKV_SINGLE_LIST(FildeshKV* map, size_t di)
 }
 
 void remove_FildeshKV_SINGLE_LIST(FildeshKV* map, FildeshKV_id_t id) {
-  const size_t allocated_count =
-    fildesh_size_of_lgcount(1, map->allocated_lgcount);
   const size_t ei = id/2;  /* Element index.*/
   FildeshKVE* const e = &map->at[ei];
   size_t i, j, di;
 
   assert(!fildesh_nullid(id));
-  assert(ei < allocated_count);
+  assert(ei < fildesh_size_of_lgcount(1, map->allocated_lgcount));
   assert(0 != get_index_FildeshKVE_joint(e->joint));
 
   /* Cases: Element holds 2 entries. No need to delete.*/

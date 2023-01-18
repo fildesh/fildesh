@@ -25,9 +25,16 @@ typedef uint8_t fildesh_lgsize_t;
 #define FILDESH_LGSIZE_MAX UCHAR_MAX
 typedef size_t FildeshKV_id_t;
 
-#ifdef __cplusplus
-extern "C" {
+#ifndef BEGIN_EXTERN_C
+# ifdef __cplusplus
+#  define BEGIN_EXTERN_C extern "C" {
+#  define END_EXTERN_C }
+# else
+#  define BEGIN_EXTERN_C
+#  define END_EXTERN_C
+# endif
 #endif
+BEGIN_EXTERN_C
 
 typedef struct FildeshX_VTable FildeshX_VTable;
 typedef struct FildeshX FildeshX;
@@ -252,7 +259,8 @@ struct FildeshKV {
  * - remove_at_FildeshKV()
  **/
 struct FildeshKV_VTable {
-  FildeshKV_id_t (*any_id_fn)(const FildeshKV*);
+  FildeshKV_id_t (*first_fn)(const FildeshKV*);
+  FildeshKV_id_t (*next_fn)(const FildeshKV*, FildeshKV_id_t);
   FildeshKV_id_t (*lookup_fn)(const FildeshKV*, const void*, size_t);
   FildeshKV_id_t (*ensure_fn)(FildeshKV*, const void*, size_t, FildeshAlloc*);
   void           (*remove_fn)(FildeshKV*, FildeshKV_id_t);
@@ -310,7 +318,13 @@ static inline FildeshX until_byte_FildeshX(FildeshX* in, unsigned char delim) {
 }
 
 static inline FildeshKV_id_t any_id_FildeshKV(const FildeshKV* map) {
-  return map->vt->any_id_fn(map);
+  return map->vt->first_fn(map);
+}
+static inline FildeshKV_id_t first_FildeshKV(const FildeshKV* map) {
+  return map->vt->first_fn(map);
+}
+static inline FildeshKV_id_t next_at_FildeshKV(const FildeshKV* map, FildeshKV_id_t id) {
+  return map->vt->next_fn(map, id);
 }
 static inline FildeshKV_id_t lookup_FildeshKV(const FildeshKV* map, const void* k, size_t ksize) {
   return map->vt->lookup_fn(map, k, ksize);
@@ -436,7 +450,5 @@ mpop_FildeshA_(void** p_at, size_t* p_count,
   }
 }
 
-#ifdef __cplusplus
-} /* extern "C" */
-#endif
+END_EXTERN_C
 #endif

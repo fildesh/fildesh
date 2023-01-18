@@ -177,18 +177,19 @@ cmp_cstr_loc (const char* const* a, const char* const* b)
 }
 
 
-/** \test
+/**
  * Rigorously test red-black tree with different combinations of insert
  * and remove operations.
  * Set up and tear down a tree of 26 strings (ascii letters) in many different
  * orders. To ensure many orders, use sequential multiples of coprimes with 26
  * to index the array of keys.
  *
- * Ex: The following sequence is generated from the first 26 multiples of 3.\n
+ * Ex: The following sequence is generated from the first 26 multiples of 3.
  * 0 3 6 9 12 15 18 21 24 1 4 7 10 13 16 19 22 25 2 5 8 11 14 17 20 23
  **/
+static
   void
-testfn_RBTree ()
+combination_test()
 {
   static const char* const keys[] = {
     "a", "b", "c", "d", "e", "f", "g",
@@ -196,11 +197,12 @@ testfn_RBTree ()
     "o", "p", "q", "r", "s", "t", "u",
     "v", "w", "x", "y", "z"
   };
-  static const uint muls[] = {
+  static const unsigned muls[] = {
     1, 3, 5, 7, 9, 11, 15, 17, 19, 21
   };
-  const uint nkeys = ArraySz( keys );
-  const uint nmuls = ArraySz( muls );
+  const unsigned nkeys = sizeof(keys) / sizeof(*keys);
+  const unsigned nmuls = sizeof(muls) / sizeof(*muls);
+  unsigned mi, mj, i;
   TNode sentinel;
   PosetCmp cmp =
     dflt3_PosetCmp (offsetof( TNode, rbt ),
@@ -209,22 +211,21 @@ testfn_RBTree ()
   DecloStack1( RBTree, t, dflt2_RBTree (&sentinel.rbt, cmp) );
   DecloStack1( LgTable, lgt, dflt1_LgTable (sizeof(TNode)) );
   uint n_expect = 0;
-  uint mi, mj, i;
 
   sentinel.key = "sentinel";
   sentinel.val = nkeys;
 
-  UFor( mi, nmuls ) {
-    UFor( mj, nmuls ) {
-      UFor( i, nkeys ) {
-        const uint idx = (muls[mi] * i) % nkeys;
+  for (mi = 0; mi < nmuls; ++mi) {
+    for (mj = 0; mj < nmuls; ++mj) {
+      for (i = 0; i < nkeys; ++i) {
+        const unsigned idx = (muls[mi] * i) % nkeys;
         insert_TNode (t, lgt, keys[idx], idx, &n_expect);
       }
 #if 0
       output_dot (&t->bst);
 #endif
-      UFor( i, nkeys ) {
-        const uint idx = (muls[mj] * i) % nkeys;
+      for (i = 0; i < nkeys; ++i) {
+        const unsigned idx = (muls[mj] * i) % nkeys;
         remove_TNode (t, lgt, keys[idx], &n_expect);
       }
     }
@@ -309,13 +310,8 @@ testfn_Associa ()
   lose_Associa (map);
 }
 
-int main(int argc, char** argv)
-{
-  (void) argc;
-  (void) argv;
-
-  testfn_RBTree();
+int main() {
+  combination_test();
   testfn_Associa();
-
   return 0;
 }

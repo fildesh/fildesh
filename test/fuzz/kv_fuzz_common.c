@@ -65,6 +65,5 @@ kv_fuzz_common(FildeshKV* map, const uint8_t data[], size_t size)
       assert(*p == a[k]);
     }
   }
-  close_FildeshKV(map);
   return 0;
 }
