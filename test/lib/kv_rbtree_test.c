@@ -1,181 +1,8 @@
-/**
- * \file rbtree_test.c
- * Tests for red-black tree.
- **/
+#include <assert.h>
+#include <string.h>
 
-#include <stdio.h>
-
-#include "associa.h"
-#include "lgtable.h"
-#include "rbtree.h"
-
-
-typedef struct TNode TNode;
-struct TNode
-{
-  RBTNode rbt;
-  const char* key;
-  uint val;
-};
-
-  void
-lose_TNode (BSTNode* x)
-{
-  TNode* a = CastUp( TNode, rbt, CastUp( RBTNode, bst, x ) );
-  a->key = 0;
-}
-
-static
-  uint
-countup_black_RBTNode (const RBTNode* x)
-{
-  uint n = 0;
-  Claim( x->bst.joint );
-  do {
-    n += (x->red ? 0 : 1);
-    x = CastUp( RBTNode, bst, x->bst.joint );
-  } while (x->bst.joint);
-  return n;
-}
-
-static
-  void
-claim_TNode (BSTNode* x, void* args)
-{
-  RBTNode* b = CastUp( RBTNode, bst, x );
-  uint* n = (uint*)((void**)args)[0];
-  uint* nblack = (uint*)((void**)args)[1];
-  *n += 1;
-
-  Claim( x->joint );
-
-  Claim( x->joint );
-  Claim2( x ,==, x->joint->split[side_of_BSTNode (x)]);
-
-  if (x->split[0])
-    Claim2( x ,==, x->split[0]->joint );
-  if (x->split[1])
-    Claim2( x ,==, x->split[1]->joint );
-
-  if (b->red) {
-    b = CastUp( RBTNode, bst, x->joint );
-    Claim( !b->red );
-  }
-  if (!x->split[0] || !x->split[1]) {
-    uint c = countup_black_RBTNode (b);
-    if (*nblack == UINT_MAX)
-      *nblack = c;
-    else
-      Claim2( *nblack ,==, c );
-  }
-}
-
-static
-  void
-claim_BSTree (BSTree* t, uint n_expect)
-{
-  uint n_result;
-  uint nblack = UINT_MAX;
-  void* args[2];
-  args[0] = &n_result;
-  args[1] = &nblack;
-
-  n_result = 0;
-  walk_BSTree (t, Yes, claim_TNode, args);
-  Claim2( n_expect ,==, n_result );
-  n_result = 0;
-  walk_BSTree (t, Nil, claim_TNode, args);
-  Claim2( n_expect ,==, n_result );
-  n_result = 0;
-  walk_BSTree (t, May, claim_TNode, args);
-  Claim2( n_expect ,==, n_result );
-}
-
-static
-  void
-insert_TNode (RBTree* t, LgTable* lgt,
-    const char* key, uint val, uint* n_expect)
-{
-  TNode* a = (TNode*) take_LgTable (lgt);
-  a->key = key;
-  a->val = val;
-  insert_RBTree (t, &a->rbt);
-  *n_expect += 1;
-  claim_BSTree (&t->bst, *n_expect);
-}
-
-  void
-output_dot_fn (BSTNode* x, void* args)
-{
-  TNode* a = CastUp( TNode, rbt, CastUp( RBTNode, bst, x ) );
-  FILE* out = (FILE*) ((void**)args)[0];
-
-  fprintf(
-      out, "q%u [label = \"%s\", color = \"%s\"];\n",
-      a->val, a->key,
-      (a->rbt.red) ? "red" : "black");
-
-  if (x->joint) {
-    TNode* b = CastUp( TNode, rbt, CastUp( RBTNode, bst, x->joint ) );
-    fprintf(out, "q%u -> q%u;\n", b->val, a->val);
-  }
-  fflush(out);
-}
-
-  void
-output_dot (BSTree* t)
-{
-  void* args[1];
-  FILE* out;
-
-  out = fopen("out.dot", "wb");
-  if (!out) {
-    fildesh_log_error("Cannot open out.dot for writing");
-  }
-  args[0] = out;
-
-  fputs("digraph tree {\n", out);
-  output_dot_fn (t->sentinel, args);
-  walk_BSTree (t, Yes, output_dot_fn, args);
-  fputs("}\n", out);
-  fclose(out);
-}
-
-static
-  TNode*
-find_TNode (RBTree* t, const char* s)
-{
-  BSTNode* x = find_BSTree (&t->bst, &s);
-  if (!x)  return 0;
-  return CastUp( TNode, rbt, CastUp( RBTNode, bst, x ) );
-}
-
-static
-  void
-remove_TNode (RBTree* t, LgTable* lgt,
-    const char* key, uint* n_expect)
-{
-  TNode* a = find_TNode (t, key);
-  Claim( a );
-  remove_RBTree (t, &a->rbt);
-  lose_TNode (&a->rbt.bst);
-  give_LgTable (lgt, a);
-  *n_expect -= 1;
-  claim_BSTree (&t->bst, *n_expect);
-}
-
-static
-  Sign
-cmp_cstr_loc (const char* const* a, const char* const* b)
-{
-  int ret;
-  if (*a == *b)  return 0;
-  if (!*a)  return -1;
-  if (!*b)  return 1;
-  ret = strcmp(*a, *b);
-  return sign_of(ret);
-}
-
+#include "src/lib/kv.h"
+#include "test/lib/kv_rbtree_validation.h"
 
 /**
  * Rigorously test red-black tree with different combinations of insert
@@ -203,115 +30,85 @@ combination_test()
   const unsigned nkeys = sizeof(keys) / sizeof(*keys);
   const unsigned nmuls = sizeof(muls) / sizeof(*muls);
   unsigned mi, mj, i;
-  TNode sentinel;
-  PosetCmp cmp =
-    dflt3_PosetCmp (offsetof( TNode, rbt ),
-        offsetof( TNode, key ),
-        (PosetCmpFn) cmp_cstr_loc);
-  DecloStack1( RBTree, t, dflt2_RBTree (&sentinel.rbt, cmp) );
-  DecloStack1( LgTable, lgt, dflt1_LgTable (sizeof(TNode)) );
-  uint n_expect = 0;
-
-  sentinel.key = "sentinel";
-  sentinel.val = nkeys;
+  FildeshKV map[1] = {DEFAULT_FildeshKV_RBTREE};
 
   for (mi = 0; mi < nmuls; ++mi) {
     for (mj = 0; mj < nmuls; ++mj) {
       for (i = 0; i < nkeys; ++i) {
         const unsigned idx = (muls[mi] * i) % nkeys;
-        insert_TNode (t, lgt, keys[idx], idx, &n_expect);
+        FildeshKV_id_t id = ensure_FildeshKV(map, keys[idx], 1);
+        assert(!value_at_FildeshKV(map, id));
+        assign_at_FildeshKV(map, id, &idx, sizeof(unsigned));
+        assert(validate_FildeshKV_RBTREE(map));
       }
-#if 0
-      output_dot (&t->bst);
-#endif
       for (i = 0; i < nkeys; ++i) {
         const unsigned idx = (muls[mj] * i) % nkeys;
-        remove_TNode (t, lgt, keys[idx], &n_expect);
+        FildeshKV_id_t id = lookup_FildeshKV(map, keys[idx], 1);
+        assert(!fildesh_nullid(id));
+        remove_at_FildeshKV(map, id);
+        assert(validate_FildeshKV_RBTREE(map));
       }
     }
   }
 
-  lose_BSTree (&t->bst, lose_TNode);
-  lose_LgTable (lgt);
+  close_FildeshKV(map);
 }
 
-/** \test
- * Test Associa structure.
- * \sa testfn_RBTree()
- **/
 static
   void
-testfn_Associa ()
+print_debug_test()
 {
-  static const char* const keys[] = {
-    "a", "b", "c", "d", "e", "f", "g",
-    "h", "i", "j", "k", "l", "m", "n",
-    "o", "p", "q", "r", "s", "t", "u",
-    "v", "w", "x", "y", "z"
-  };
-  static const uint muls[] = {
-    1, 3, 5, 7, 9, 11, 15, 17, 19, 21
-  };
-  const uint nkeys = ArraySz( keys );
-  const uint nmuls = ArraySz( muls );
-  Associa map[1];
-  uint n_expect = 1; /* Sentinel node.*/
-  uint mi, mj, i;
+  FildeshO out[1] = {DEFAULT_FildeshO};
+  const char expect_content[] =
+    "10: red 1 -> 0\n"
+    "12: red 2 -> 0\n"
+    "11: black 0 -> NULL\n"
+    ;
+  FildeshKV map[1] = {DEFAULT_FildeshKV_RBTREE};
 
-  InitAssocia( const char*, uint, *map, cmp_cstr_loc );
+  ensure_FildeshKV(map, "\x0b", 1);
+  ensure_FildeshKV(map, "\x0a", 1);
+  ensure_FildeshKV(map, "\x0c", 1);
+  print_debug_FildeshKV_RBTREE(map, out);
 
-  Claim2( map->nodes.sz ,==, n_expect );
-  UFor( mi, nmuls ) {
-    UFor( mj, nmuls ) {
-      UFor( i, nkeys ) {
-        const uint idx = (muls[mi] * i) % nkeys;
-        const char* key = keys[idx];
-        if (mj % 2 == 0) {
-          insert_Associa (map, &key, &idx);
-        }
-        else {
-          bool added = false;
-          Assoc* assoc = ensure1_Associa (map, &key, &added);
-          Claim( added );
-          val_fo_Assoc (map, assoc, &idx);
-        }
-        ++ n_expect;
-        Claim2( map->nodes.sz ,==, n_expect );
-      }
+  assert(strlen(expect_content) == out->size);
+  assert(0 == memcmp(expect_content, out->at, out->size));
 
+  close_FildeshKV(map);
+  close_FildeshO(out);
+}
 
-      UFor( i, nkeys ) {
-        const uint idx = (muls[mj] * i) % nkeys;
-        const char* key = keys[idx];
-        Assoc* a;
-        if (mj % 2 == 0) {
-          a = lookup_Associa (map, &key);
-        }
-        else {
-          bool added = true;
-          a = ensure1_Associa (map, &key, &added);
-          Claim( !added );
-        }
-        Claim( a );
-        {
-          uint val = *(uint*) val_of_Assoc (map, a);
-          Claim2( idx ,==, val );
-        }
-        give_Associa (map, a);
-        -- n_expect;
-        Claim2( map->nodes.sz ,==, n_expect );
-      }
-    }
-  }
+static
+  void
+print_graphviz_test()
+{
+  const char expect_content[] =
+    "digraph tree {\n"
+    "q1 [label = \"10\", color = \"red\"];\n"
+    "q2 [label = \"12\", color = \"red\"];\n"
+    "q0 [label = \"11\", color = \"black\"];\n"
+    "q1 -> q0;\n"
+    "q2 -> q0;\n"
+    "}\n"
+    ;
+  FildeshO out[1] = {DEFAULT_FildeshO};
+  FildeshKV map[1] = {DEFAULT_FildeshKV_RBTREE};
 
-  /* Claim the sentinel still exists.*/
-  Claim2( map->nodes.sz ,==, 1 );
-  Claim2( n_expect ,==, 1 );
-  lose_Associa (map);
+  ensure_FildeshKV(map, "\x0b", 1);
+  ensure_FildeshKV(map, "\x0a", 1);
+  ensure_FildeshKV(map, "\x0c", 1);
+  print_graphviz_FildeshKV_RBTREE(map, out);
+
+  assert(strlen(expect_content) == out->size);
+  assert(0 == memcmp(expect_content, out->at, out->size));
+
+  close_FildeshKV(map);
+  close_FildeshO(out);
 }
 
 int main() {
   combination_test();
-  testfn_Associa();
+  print_debug_test();
+  print_graphviz_test();
   return 0;
 }

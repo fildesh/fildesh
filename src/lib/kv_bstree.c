@@ -1,165 +1,111 @@
-/**
- * \file bstree.c
- * Binary search tree.
- **/
-#include "bstree.h"
-#include <assert.h>
+#include "kv_bstree.h"
 
-#define positive_bit( x )  ((x) > 0 ? 1 : 0)
-
-#define Nullish(x)  !(x)
-#define JointOf(x)  ((x)->joint)
-#define AssignJoint(x, y)  (x)->joint = (y)
-#define MaybeAssignJoint(x, y)  if (x)  AssignJoint(x, y)
-#define SplitOf(x, side)  ((x)->split[side])
-#define AssignSplit(y, side, x)  (y)->split[side] = (x)
-#define MaybeAssignSplit(y, side, x)  if (y)  AssignSplit(y, side, x)
-#define NullifySplit(y, side)  (y)->split[side] = NULL
-#define Join(y, side, x)  join_BSTNode(y, x, side)
-#define SideOf(x)  side_of_BSTNode(x)
-
-  BSTree
-dflt2_BSTree (BSTNode* sentinel, PosetCmp cmp)
-{
-  BSTree t;
-  sentinel->joint = 0;
-  sentinel->split[0] = 0;
-  sentinel->split[1] = 0;
-  t.sentinel = sentinel;
-  t.cmp = cmp;
-  return t;
+static inline void assign_replacement_info(FildeshKV* map, size_t y, size_t x) {
+  map->at[y].size = x;
 }
+#define AssignReplacementInfo(y, x)  assign_replacement_info(map, y, x)
 
-  void
-init_BSTree (BSTree* t, BSTNode* sentinel, PosetCmp cmp)
-{
-  *t = dflt2_BSTree (sentinel, cmp);
-}
 
-  void
-lose_BSTree (BSTree* t, void (* lose) (BSTNode*))
-{
-  BSTNode* y = root_of_BSTree (t);
+static void remove_FildeshKV_BSTREE(FildeshKV*, FildeshKV_id_t);
 
-  while (y)
-  {
-    BSTNode* x = y;
-    Bit side = 0;
+const FildeshKV_VTable DEFAULT_BSTREE_FildeshKV_VTable = {
+  first_id_FildeshKV_BSTREE,
+  next_id_FildeshKV_BSTREE,
+  lookup_FildeshKV_BSTREE,
+  ensure_FildeshKV_BSTREE,
+  remove_FildeshKV_BSTREE,
+};
 
-    /* Descend to the lo side.*/
-    do
-    {
+static
+  FildeshKV_id_t
+first_id_from_index(const FildeshKV* map, size_t x) {
+  size_t y;
+  do {
+    do {
       y = x;
-      x = x->split[0];
-    } while (x);
-
-    /* Ascend until we can descend to the hi side.*/
-    if (!y->split[1])  do
-    {
-      x = y;
-      y = x->joint;
-      side = side_of_BSTNode (x);
-      lose (x);
-    } while (y->joint && (side == 1 || !y->split[1]));
-
-    y = (y->joint ? y->split[1] : 0);
-  }
+      x = SplitOf(y, 0);
+    } while (!Nullish(x));
+    x = SplitOf(y, 1);
+  } while (!Nullish(x));
+  return 2*y;
 }
 
-/**
- * Preorder, postorder, and inorder traversals are supported by
- * values of Nil, Yes, and May for {postorder} respectively.
- **/
-  void
-walk_BSTree (BSTree* t, Trit postorder,
-    void (* f) (BSTNode*, void*), void* dat)
-{
-  BSTNode* y = root_of_BSTree (t);
-
-  while (y)
-  {
-    BSTNode* x = y;
-    Bit side = 0;
-
-    /* Descend to the lo side.*/
-    do
-    {
-      if (postorder == Nil)  f (x, dat);
-      y = x;
-      x = x->split[0];
-    } while (x);
-
-    /* Ascend until we can descend to the hi side.*/
-    if (!y->split[1])  do
-    {
-      if (postorder == May && side == 0)  f (y, dat);
-      x = y;
-      y = x->joint;
-      side = side_of_BSTNode (x);
-      if (postorder == Yes)  f (x, dat);
-    } while (y->joint && (side == 1 || !y->split[1]));
-
-    if (postorder == May && y->joint)  f (y, dat);
-    y = (y->joint ? y->split[1] : 0);
+  FildeshKV_id_t
+first_id_FildeshKV_BSTREE(const FildeshKV* map) {
+  if (map->freelist_head == 0) {
+    return FildeshKV_NULL_ID;
   }
+  return first_id_from_index(map, 0);
 }
 
-  BSTNode*
-find_BSTree (BSTree* t, const void* key)
+  FildeshKV_id_t
+next_id_FildeshKV_BSTREE(const FildeshKV* map, FildeshKV_id_t id) {
+  const size_t x = id/2;
+  assert(!fildesh_nullid(id));
+  if (((id & 1) == 0) && splitkexists_FildeshKVE(&map->at[x])) {
+    return id + 1;
+  }
+  if (!IsRoot(x)) {
+    const size_t y = JointOf(x);
+    if (SplitOf(y, 0) == x && !Nullish(SplitOf(y, 1))) {
+      return first_id_from_index(map, SplitOf(y, 1));
+    }
+    return 2*y;
+  }
+  return FildeshKV_NULL_ID;
+}
+
+  FildeshKV_id_t
+lookup_FildeshKV_BSTREE(const FildeshKV* map, const void* k, size_t ksize)
 {
-  BSTNode* y = root_of_BSTree (t);
+  size_t y = (map->freelist_head > 0 ? 0 : FildeshKV_NULL_INDEX);
 
   while (!Nullish(y)) {
-    Sign si = poset_cmp_lhs (t->cmp, key, y);
-    if (si == 0) {return y;}
+    int si = - cmp_k_FildeshKVE(&map->at[y], ksize, k);
+    if (si == 0) {return 2*y;}
+    if (splitkexists_FildeshKVE(&map->at[y])) {
+      if (0 == cmp_splitk_FildeshKVE(&map->at[y], ksize, k)) {
+        return 2*y+1;
+      }
+      return FildeshKV_NULL_ID;
+    }
     y = SplitOf(y, (si < 0 ? 0 : 1));
   }
-  return 0;
-}
-
-  void
-insert_BSTree (BSTree* t, BSTNode* x)
-{
-  BSTNode* a = t->sentinel;
-  BSTNode* y = root_of_BSTree (t);
-  Bit side = side_of_BSTNode (y);
-
-  while (y)
-  {
-    side = positive_bit (poset_cmp (t->cmp, x, y));
-    a = y;
-    y = y->split[side];
-  }
-
-  a->split[side] = x;
-  x->joint = a;
-  x->split[0] = 0;
-  x->split[1] = 0;
+  return FildeshKV_NULL_ID;
 }
 
 /** If a node matching {x} exists, return that node.
  * Otherwise, add {x} to the tree and return it.
  **/
-  BSTNode*
-ensure_BSTree (BSTree* t, BSTNode* x)
+  FildeshKV_id_t
+ensure_FildeshKV_BSTREE(
+    FildeshKV* map, const void* k, size_t ksize, FildeshAlloc* alloc)
 {
-  BSTNode* a = t->sentinel;
-  BSTNode* y = root_of_BSTree (t);
-  unsigned side = SideOf(y);
+  size_t a = FildeshKV_NULL_INDEX;
+  size_t y = (map->freelist_head > 0 ? 0 : FildeshKV_NULL_INDEX);
+  size_t x;
+  unsigned side = 0;
 
   while (!Nullish(y)) {
-    Sign si = poset_cmp (t->cmp, x, y);
-    if (si == 0)  return y;
+    int si = - cmp_k_FildeshKVE(&map->at[y], ksize, k);
+    if (si == 0) {return 2*y;}
     side = (si < 0 ? 0 : 1);
     a = y;
     y = SplitOf(y, side);
   }
 
+  maybe_grow_FildeshKV_SINGLE_LIST(map);
+  x = map->freelist_head;
+  assert_trivial_joint(map->at[x].joint);
+  map->freelist_head = map->at[x].joint;
+  map->at[x] = default_FildeshKVE();
+  populate_empty_FildeshKVE(&map->at[x], ksize, k, 1, 0, alloc);
+
   MaybeAssignSplit(a, side, x);
   AssignJoint(x, a);
   NullifySplit(x, 0);
   NullifySplit(x, 1);
-  return x;
+  return 2*x;
 }
 
 /** Remove a given node {y} from the tree.
@@ -169,14 +115,14 @@ ensure_BSTree (BSTree* t, BSTNode* x)
  * {y->joint} will hold {b} in the diagrams below.
  * {y->split} will hold the new split of {b} that changed depth.
  **/
-  void
-remove_BSTNode (BSTNode* y)
+  size_t
+premove_FildeshKV_BSTREE(FildeshKV* map, size_t y)
 {
   unsigned side_y = SideOf(y);
   unsigned side;
 #define oside (1-side)
-  BSTNode* b;
-  BSTNode* x;
+  FildeshKV_id_t b;
+  FildeshKV_id_t x;
 
   /* This is the only case that leaves {y->joint} unchanged.
    * {y} can be the root.
@@ -195,16 +141,20 @@ remove_BSTNode (BSTNode* y)
       x = SplitOf(y, side);
       if (Nullish(x)) {
         MaybeAssignSplit(b, side_y, x);
-        return;
+        AssignReplacementInfo(y, x);
+        return y;
       }
       AssignJoint(x, b);
+      LocalSwap(&y, &x);
       /* Update {x} neighbors.*/
-      AssignSplit(b, side_y, x);
+      MaybeAssignJoint(SplitOf(x, 0), x);
+      MaybeAssignJoint(SplitOf(x, 1), x);
       /* Populate {y} for return.*/
       /* noop: AssignJoint(y, b); */
       AssignSplit(y, side_y, x);
       NullifySplit(y, 1-side_y);
-      return;
+      AssignReplacementInfo(y, x);
+      return y;
     }
   }
 
@@ -222,14 +172,15 @@ remove_BSTNode (BSTNode* y)
     if (Nullish(SplitOf(b, oside))) {
       AssignJoint(b, JointOf(y));
       AssignSplit(b, oside, SplitOf(y, oside));
+      LocalSwap(&y, &b);
       /* Update {b} neighbors.*/
-      MaybeAssignSplit(JointOf(y), side_y, b);
-      AssignJoint(SplitOf(y, oside), b);
+      MaybeAssignJoint(SplitOf(b, side), b);
       /* Populate {y} for return.*/
       AssignJoint(y, b);
       AssignSplit(y, side, SplitOf(b, side));
       NullifySplit(y, oside);
-      return;
+      AssignReplacementInfo(y, b);
+      return y;
     }
   }
 
@@ -261,7 +212,13 @@ remove_BSTNode (BSTNode* y)
   Join(b, oside, SplitOf(x, side));
 
   AssignJoint(x, JointOf(y));
-  AssignSplit(JointOf(y), side_y, x);
+  if (Nullish(JointOf(y))) {
+    LocalSwap(&y, &x);
+  }
+  else {
+    AssignSplit(JointOf(y), side_y, x);
+  }
+  /* Update {x} and neighbors.*/
   Join(x, 0, SplitOf(y, 0));
   Join(x, 1, SplitOf(y, 1));
 
@@ -269,10 +226,20 @@ remove_BSTNode (BSTNode* y)
   AssignJoint(y, b);
   NullifySplit(y, side);
   AssignSplit(y, oside, SplitOf(b, oside));
+  AssignReplacementInfo(y, x);
+  return y;
 #undef oside
 }
 
-/** Do a tree rotation,
+  void
+remove_FildeshKV_BSTREE(FildeshKV* map, FildeshKV_id_t y_id)
+{
+  size_t y = y_id/2;
+  y = premove_FildeshKV_BSTREE(map, y);
+  reclaim_element_FildeshKV_SINGLE_LIST(map, y);
+}
+
+/** Do a tree rotation:
  *
  *       b             a
  *      / \           / \
@@ -280,19 +247,29 @@ remove_BSTNode (BSTNode* y)
  *    / \               / \
  *  x*   *y           y*   *z
  *
- * When {side} is 1, opposite direction when 0.
- * ({b} always starts as {a}'s joint)
+ * {b} always starts as {a}'s joint.
  **/
   void
-rotate_up_BSTNode(BSTNode* a)
+rotate_up_FildeshKV_BSTREE(FildeshKV* map, size_t* p_a)
 {
-  BSTNode* b = JointOf(a);
+  size_t a = *p_a;
+  size_t b = JointOf(a);
   const unsigned side = SideOf(a);
   const unsigned oside = 1-side;
-  BSTNode* y = SplitOf(a, oside);
+  size_t y = SplitOf(a, oside);
 
-  Join(JointOf(b), SideOf(b), a);
+  if (IsRoot(b)) {
+    AssignJoint(a, FildeshKV_NULL_INDEX);
+    LocalSwap(&b, &a);
+    /* Update {a} and {b} outer neighbors (they don't change below).*/
+    MaybeAssignJoint(SplitOf(a, side), a);
+    MaybeAssignJoint(SplitOf(b, oside), b);
+  }
+  else {
+    Join(JointOf(b), SideOf(b), a);
+  }
   Join(a, oside, b);
   Join(b, side, y);
+  *p_a = a;
 }
 

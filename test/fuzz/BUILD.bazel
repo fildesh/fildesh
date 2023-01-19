@@ -32,6 +32,48 @@ cc_smoke_test(
 )
 
 cc_fuzz_test(
+    name = "kv_bstree_fuzz_test",
+    srcs = [
+        "kv_bstree_fuzz_test.c",
+        "kv_fuzz_common.c",
+        "kv_fuzz_common.h",
+    ],
+    deps = ["//:fildesh_lib"],
+    max_guesses = 50000,
+)
+cc_smoke_test(
+    name = "kv_bstree_smoke_test",
+    srcs = [
+        "kv_bstree_smoke_test.c",
+        "kv_bstree_fuzz_test.c",
+        "kv_fuzz_common.c",
+        "kv_fuzz_common.h",
+    ],
+    deps = ["//:fildesh_lib"],
+)
+
+cc_fuzz_test(
+    name = "kv_rbtree_fuzz_test",
+    srcs = [
+        "kv_rbtree_fuzz_test.c",
+        "kv_fuzz_common.c",
+        "kv_fuzz_common.h",
+    ],
+    deps = ["//test/lib:kv_rbtree_validation_lib"],
+    max_guesses = 50000,
+)
+cc_smoke_test(
+    name = "kv_rbtree_smoke_test",
+    srcs = [
+        "kv_rbtree_smoke_test.c",
+        "kv_rbtree_fuzz_test.c",
+        "kv_fuzz_common.c",
+        "kv_fuzz_common.h",
+    ],
+    deps = ["//test/lib:kv_rbtree_validation_lib"],
+)
+
+cc_fuzz_test(
     name = "kv_single_list_fuzz_test",
     srcs = [
         "kv_single_list_fuzz_test.c",

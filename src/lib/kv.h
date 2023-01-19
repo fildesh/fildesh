@@ -8,7 +8,13 @@ static const FildeshKV_id_t FildeshKV_NULL_INDEX = ~(size_t)0 >> 3;
 
 BEGIN_EXTERN_C
 
+extern const FildeshKV_VTable DEFAULT_BSTREE_FildeshKV_VTable;
+#define DEFAULT_FildeshKV_BSTREE { NULL, NULL, 0, 0, &DEFAULT_BSTREE_FildeshKV_VTable }
+extern const FildeshKV_VTable DEFAULT_RBTREE_FildeshKV_VTable;
+#define DEFAULT_FildeshKV_RBTREE { NULL, NULL, 0, 0, &DEFAULT_RBTREE_FildeshKV_VTable }
+
 void maybe_grow_FildeshKV_SINGLE_LIST(FildeshKV*);
 void reclaim_element_FildeshKV_SINGLE_LIST(FildeshKV*, size_t);
+bool validate_FildeshKV_RBTREE(const FildeshKV*);
 
 END_EXTERN_C

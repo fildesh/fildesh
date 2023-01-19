@@ -3,6 +3,7 @@
 #include <vector>
 #include <fildesh/fildesh.h>
 
+#include "src/lib/kv.h"
 
 #define LINEAR_BENCHMARK_RANGE \
   Args({100, 3, 200}) \
@@ -21,6 +22,24 @@ static inline int calculate_key(int i, int off, int mul, int count) {
 static inline int calculate_value(int i, int off, int mul, int count) {
   return (off + i*mul);
 }
+
+
+/* The red-black tree version of FildeshKV can match std::map<int,int>
+ * performance if its comparison function is specialized and inlined.
+ * To see this, define cmp_k_FildeshKVE() in src/lib/kve.h as follows.
+ */
+#if 0
+static inline
+  int
+cmp_k_FildeshKVE(const FildeshKVE* e, size_t keysize, const void* key)
+{
+  int x = (int)e->kv[0];
+  int y = *(const int*) key;
+  if (x < y) {return -1;}
+  if (x > y) {return  1;}
+  return 0;
+}
+#endif
 
 
 static inline
@@ -58,6 +77,36 @@ static void BM_MapAddIntegers_FildeshKV_SINGLE_LIST(benchmark::State& state) {
   }
 }
 BENCHMARK(BM_MapAddIntegers_FildeshKV_SINGLE_LIST)->LINEAR_BENCHMARK_RANGE;
+
+
+static void BM_MapAddIntegers_FildeshKV_BSTREE(benchmark::State& state) {
+  const int off = state.range(0);
+  const int mul = state.range(1);
+  const int count = state.range(2);
+  assert(off < count);
+  assert(mul < count);
+
+  for (auto _ : state) {
+    FildeshKV map[1] = {DEFAULT_FildeshKV_BSTREE};
+    MapAddIntegers_FildeshKV_common(map, off, mul, count);
+  }
+}
+BENCHMARK(BM_MapAddIntegers_FildeshKV_BSTREE)->LINEAR_BENCHMARK_RANGE;
+
+
+static void BM_MapAddIntegers_FildeshKV_RBTREE(benchmark::State& state) {
+  const int off = state.range(0);
+  const int mul = state.range(1);
+  const int count = state.range(2);
+  assert(off < count);
+  assert(mul < count);
+
+  for (auto _ : state) {
+    FildeshKV map[1] = {DEFAULT_FildeshKV_RBTREE};
+    MapAddIntegers_FildeshKV_common(map, off, mul, count);
+  }
+}
+BENCHMARK(BM_MapAddIntegers_FildeshKV_RBTREE)->THIS_BENCHMARK_RANGE;
 
 
 static void BM_MapAddIntegers_StdMap(benchmark::State& state) {

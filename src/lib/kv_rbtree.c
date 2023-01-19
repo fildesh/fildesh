@@ -1,69 +1,38 @@
-/**
- * \file rbtree.c
- * Red-black tree.
- **/
-#include "rbtree.h"
-#include <stdlib.h>
+#include "kv_bstree.h"
 
-#define Nullish(x)  !(x)
-#define IsRoot(x)  root_ck_BSTree(&map->bst, &(x)->bst)
+#define ColorBlack(x)  set0_red_bit_FildeshKVE(&map->at[x])
+#define ColorRed(x)  set1_red_bit_FildeshKVE(&map->at[x])
+static inline void assign_color(FildeshKV* map, size_t x, bool c) {
+  if (c) {ColorRed(x);}
+  else   {ColorBlack(x);}
+}
+#define AssignColor(x, c)  assign_color(map, x, c)
+#define RotateUp(p_a)  rotate_up_FildeshKV_BSTREE(map, p_a)
 
-static inline RBTNode* JointOf(RBTNode* x) {
-  return CastUp( RBTNode, bst, x->bst.joint );
-}
 
-static inline RBTNode* SplitOf(RBTNode* x, Bit side) {
-  BSTNode* y = x->bst.split[side];
-  return y ? CastUp( RBTNode, bst, y ) : 0;
-}
+static FildeshKV_id_t ensure_FildeshKV_RBTREE(FildeshKV*, const void*, size_t, FildeshAlloc*);
+static void remove_FildeshKV_RBTREE(FildeshKV*, FildeshKV_id_t);
 
-static inline unsigned SideOf(RBTNode* x) {
-  return side_of_BSTNode(&x->bst);
-}
-
-static inline bool RedColorOf(const RBTNode* x) {
-  return x->red;
-}
-static inline void AssignColor(RBTNode* x, unsigned c) {
-  x->red = c;
-}
-static inline void ColorRed(RBTNode* x) {
-  AssignColor(x, 1);
-}
-static inline void ColorBlack(RBTNode* x) {
-  AssignColor(x, 0);
-}
-
-static inline void RotateUp(RBTNode* const* p_x) {
-  rotate_up_BSTNode(&(*p_x)->bst);
-}
-
-  RBTree
-dflt2_RBTree (RBTNode* sentinel, PosetCmp cmp)
-{
-  RBTree t;
-  sentinel->red = 0;
-  cmp = dflt3_PosetCmp (offsetof(RBTNode, bst), cmp.off, cmp.fn);
-  t.bst = dflt2_BSTree (&sentinel->bst, cmp);
-  return t;
-}
-
-  void
-init_RBTree (RBTree* t, RBTNode* sentinel, PosetCmp cmp)
-{
-  *t = dflt2_RBTree (sentinel, cmp);
-}
+const FildeshKV_VTable DEFAULT_RBTREE_FildeshKV_VTable = {
+  first_id_FildeshKV_BSTREE,
+  next_id_FildeshKV_BSTREE,
+  lookup_FildeshKV_BSTREE,
+  ensure_FildeshKV_RBTREE,
+  remove_FildeshKV_RBTREE,
+};
 
 static
-  void
-fixup_insert(RBTree* map, RBTNode* x)
+  size_t
+fixup_insert(FildeshKV* map, size_t x)
 {
-  while (1)
-  {
-    RBTNode* b;
+  size_t insertion_index = x;
+  bool bubbling_insertion = true;
+  while (1) {
+    size_t b;
 
     /* {x} is root, just set to black!*/
     if (IsRoot(x)) {
+      fildesh_log_trace("Paint it black.");
       ColorBlack(x);
       break;
     }
@@ -71,6 +40,7 @@ fixup_insert(RBTree* map, RBTNode* x)
     b = JointOf(x);
     /* {b} is black, {x} is safe to be red!*/
     if (!RedColorOf(b)) {
+      fildesh_log_trace("Keep it red.");
       break;
     }
 
@@ -85,9 +55,11 @@ fixup_insert(RBTree* map, RBTNode* x)
      *      3#   #4
      */
     if (SideOf(x) == SideOf(b)) {
+      fildesh_log_trace("Case 1.");
       ColorBlack(x);
       RotateUp(&b);
       x = b;
+      bubbling_insertion = false;
     }
     /* Case 2.                        (continue)
      *
@@ -100,38 +72,31 @@ fixup_insert(RBTree* map, RBTNode* x)
      *     2#   #3    1#   #2
      */
     else {
+      fildesh_log_trace("Case 2.");
       ColorBlack(b);
       RotateUp(&x);
       RotateUp(&x);
+      if (bubbling_insertion) {
+        insertion_index = x;
+      }
     }
   }
+  return insertion_index;
 }
 
-  void
-insert_RBTree (RBTree* map, RBTNode* x)
+  FildeshKV_id_t
+ensure_FildeshKV_RBTREE(
+    FildeshKV* map, const void* k, size_t ksize, FildeshAlloc* alloc)
 {
-  insert_BSTree(&map->bst, &x->bst);
-  ColorRed(x);
-  fixup_insert(map, x);
-}
-
-/** If a node matching {x} exists, return that node.
- * Otherwise, add {x} to the tree and return it.
- **/
-  RBTNode*
-ensure_RBTree (RBTree* t, RBTNode* x)
-{
-  BSTNode* y = ensure_BSTree (&t->bst, &x->bst);
-  if (y == &x->bst)
-  {
+  const size_t old_freelist_head = map->freelist_head;
+  FildeshKV_id_t x_id = ensure_FildeshKV_BSTREE(map, k, ksize, alloc);
+  size_t x = x_id/2;
+  if (old_freelist_head != map->freelist_head) {
     ColorRed(x);
-    fixup_insert(t, x);
+    x = fixup_insert(map, x);
+    x_id = (2*x) | (x_id & 1);
   }
-  else
-  {
-    x = CastUp( RBTNode, bst, y );
-  }
-  return x;
+  return x_id;
 }
 
 /**
@@ -141,15 +106,16 @@ ensure_RBTree (RBTree* t, RBTNode* x)
  **/
 static
   void
-fixup_remove (RBTree* map, RBTNode* y, Bit side)
+fixup_remove(FildeshKV* map, size_t y, unsigned side)
 {
   if (RedColorOf(y)) {
+    fildesh_log_trace("Paint it black.");
     ColorBlack(y);
     return;
   }
 
   while (!IsRoot(y)) {
-    RBTNode* b; RBTNode* a; RBTNode* w; RBTNode* x;
+    size_t b, a, w, x;
     b = JointOf(y);
     a = SplitOf(b, 1-side);
     w = SplitOf(a, 1-side);
@@ -166,6 +132,7 @@ fixup_remove (RBTree* map, RBTNode* y, Bit side)
      *     1#   #2   w*   #1
      */
     if (!Nullish(x) && RedColorOf(x)) {
+      fildesh_log_trace("Case 1.");
       if (RedColorOf(b)) {
         ColorBlack(b);
       }
@@ -186,6 +153,7 @@ fixup_remove (RBTree* map, RBTNode* y, Bit side)
      *  w*   #x            x#   #y
      */
     if (RedColorOf(b)) {
+      fildesh_log_trace("Case 2.");
       RotateUp(&a);
       break;
     }
@@ -199,9 +167,14 @@ fixup_remove (RBTree* map, RBTNode* y, Bit side)
      *  w#   #x            x#   #'y
      */
     if (RedColorOf(a)) {
+      fildesh_log_trace("Case 3.");
       ColorBlack(a);
       ColorRed(b);
       RotateUp(&a);
+      b = SplitOf(a, side);
+      if (Nullish(SplitOf(b, side))) {
+        AssignJoint(y, b);
+      }
       continue;  /* Match case 1 or 2.*/
     }
 
@@ -214,6 +187,7 @@ fixup_remove (RBTree* map, RBTNode* y, Bit side)
      *  w+   *x            x*   #y
      */
     if (!Nullish(w) && RedColorOf(w)) {
+      fildesh_log_trace("Case 4.");
       ColorBlack(w);
       RotateUp(&a);
       break;
@@ -227,6 +201,7 @@ fixup_remove (RBTree* map, RBTNode* y, Bit side)
      *    / \            / \
      *  w#   #x        w#   #x
      */
+    fildesh_log_trace("Case 5.");
     ColorRed(a);
     y = b;
     side = SideOf(y);
@@ -234,13 +209,14 @@ fixup_remove (RBTree* map, RBTNode* y, Bit side)
 }
 
   void
-remove_RBTree (RBTree* map, RBTNode* y)
+remove_FildeshKV_RBTREE(FildeshKV* map, FildeshKV_id_t y_id)
 {
-  RBTNode* b = JointOf(y);
-  RBTNode* z;
-  const unsigned side = SideOf(y);
-  remove_BSTNode (&y->bst);
-  z = SplitOf(b, side);
+  size_t y, z;
+
+  y = premove_FildeshKV_BSTREE(map, y_id/2);
+#define ReplacementOf(y)  map->at[y].size
+  z = ReplacementOf(y);
+#undef ReplacementOf
 
   if (!Nullish(z)) {
     /* Recolor the node that replaced {y}.*/
@@ -251,6 +227,7 @@ remove_RBTree (RBTree* map, RBTNode* y)
 
   if (RedColorOf(y)) {
     /* If the removed color is red, then it is still a red-black tree.*/
+    fildesh_log_trace("Removed red.");
   }
   else if (!Nullish(SplitOf(y, 0))) {
     fixup_remove(map, SplitOf(y, 0), 0);
@@ -261,8 +238,12 @@ remove_RBTree (RBTree* map, RBTNode* y)
   else if (!Nullish(JointOf(y))) {
     /* Assume {y} is a leaf in the tree to simplify fixup.*/
     unsigned side = Nullish(SplitOf(JointOf(y), 1)) ? 1 : 0;
-    assert(Nullish(SplitOf(JointOf(y), side)));
+    assert(!Nullish(SplitOf(JointOf(y), 1-side)));
     fixup_remove(map, y, side);
   }
+  else {
+    fildesh_log_trace("JointOf(y) is null.");
+  }
+  reclaim_element_FildeshKV_SINGLE_LIST(map, y);
 }
 
