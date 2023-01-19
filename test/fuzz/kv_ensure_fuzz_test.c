@@ -3,12 +3,31 @@
  * We allow the keys and values to have zero-length.
  **/
 #include "fuzz_common.h"
+
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include <fildesh/fildesh.h>
 
+#include "src/lib/kv.h"
+
+static inline
+  FildeshKV
+initial_map(uint8_t map_selection)
+{
+  const FildeshKV a[] = {
+    DEFAULT_FildeshKV,
+    DEFAULT_FildeshKV_SINGLE_LIST,
+    DEFAULT_FildeshKV_BSTREE,
+    DEFAULT_FildeshKV_RBTREE,
+  };
+  const uint8_t n = (uint8_t)(sizeof(a) / sizeof(a[0]));
+  if (map_selection < n) {
+    return a[map_selection];
+  }
+  return a[0];
+}
 
   int
 LLVMFuzzerTestOneInput(const uint8_t data[], size_t size) {
@@ -16,9 +35,13 @@ LLVMFuzzerTestOneInput(const uint8_t data[], size_t size) {
   size_t k_size = 0;
   size_t v_index = 0;
   size_t v_size = 0;
-  FildeshKV map[1] = {DEFAULT_FildeshKV_SINGLE_LIST};
+  FildeshKV map[1];
   size_t i;
-  for (i = 0; i < size; ++i) {
+
+  /* First byte determines what kind of FildeshKV we use.*/
+  *map = initial_map(size > 0 ? data[0] : 0);
+
+  for (i = 1; i < size; ++i) {
     const uint8_t b = data[i];
     if (i+1 == size || (v_index > k_index && b == 0)) {
       const FildeshKV_id_t id = ensure_FildeshKV(map, &data[k_index], k_size);

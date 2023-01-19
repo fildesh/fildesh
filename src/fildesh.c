@@ -230,7 +230,7 @@ lose_Commands (void* arg)
   static CommandHookup*
 new_CommandHookup(FildeshAlloc* alloc)
 {
-  const FildeshKV empty_map = DEFAULT_FildeshKV_SINGLE_LIST;
+  const FildeshKV empty_map = DEFAULT_FildeshKV;
   CommandHookup* cmd_hookup = fildesh_allocate(CommandHookup, 1, alloc);
   cmd_hookup->map = empty_map;
   cmd_hookup->map.alloc = alloc;
@@ -247,9 +247,9 @@ new_CommandHookup(FildeshAlloc* alloc)
 static void free_CommandHookup(CommandHookup* cmd_hookup, int* istat) {
   FildeshKV_id_t id;
   FildeshKV* map = &cmd_hookup->map;
-  for (id = any_id_FildeshKV(map);
+  for (id = first_FildeshKV(map);
        !fildesh_nullid(id);
-       id = any_id_FildeshKV(map))
+       id = next_at_FildeshKV(map, id))
   {
     SymVal* x = (SymVal*) value_at_FildeshKV(map, id);
     if (x->kind == ODescVal && *istat == 0) {
@@ -261,7 +261,6 @@ static void free_CommandHookup(CommandHookup* cmd_hookup, int* istat) {
       fildesh_compat_file_rm(x->as.iofilename);
     }
     lose_SymVal(x);
-    remove_at_FildeshKV(map, id);
   }
   close_FildeshKV(&cmd_hookup->map);
   close_FildeshKV(&cmd_hookup->add_map);
@@ -1585,7 +1584,7 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
   CommandHookup* cmd_hookup;
   unsigned argi = 1;
   unsigned i;
-  FildeshKV alias_map[1] = {DEFAULT_FildeshKV_SINGLE_LIST};
+  FildeshKV alias_map[1] = {DEFAULT_FildeshKV};
   bool forkonly = false;
   bool exiting = false;
   int exstatus = 0;

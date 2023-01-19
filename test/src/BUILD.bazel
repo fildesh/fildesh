@@ -44,13 +44,6 @@ cc_test(
 )
 
 cc_test(
-    name = "kv_test",
-    srcs = ["kv_test.c"],
-    deps = ["//:fildesh_lib"],
-    size = "small",
-)
-
-cc_test(
     name = "mascii_test",
     srcs = ["mascii_test.c"],
     deps = ["//:fildesh_lib"],

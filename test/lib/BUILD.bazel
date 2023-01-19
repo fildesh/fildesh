@@ -22,3 +22,10 @@ cc_test(
     size = "small",
 )
 
+cc_test(
+    name = "kv_single_list_test",
+    srcs = ["kv_single_list_test.c"],
+    deps = ["//:fildesh_lib"],
+    size = "small",
+)
+

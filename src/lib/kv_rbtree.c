@@ -21,6 +21,14 @@ const FildeshKV_VTable DEFAULT_RBTREE_FildeshKV_VTable = {
   remove_FildeshKV_RBTREE,
 };
 
+const FildeshKV_VTable DEFAULT_FildeshKV_VTable = {
+  first_id_FildeshKV_BSTREE,
+  next_id_FildeshKV_BSTREE,
+  lookup_FildeshKV_BSTREE,
+  ensure_FildeshKV_RBTREE,
+  remove_FildeshKV_RBTREE,
+};
+
 static
   size_t
 fixup_insert(FildeshKV* map, size_t x)

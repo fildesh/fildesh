@@ -14,14 +14,6 @@ ensure_FildeshKV_SINGLE_LIST(FildeshKV*, const void*, size_t, FildeshAlloc*);
 static void
 remove_FildeshKV_SINGLE_LIST(FildeshKV*, FildeshKV_id_t);
 
-const FildeshKV_VTable DEFAULT_FildeshKV_VTable = {
-  first_id_FildeshKV_SINGLE_LIST,
-  next_id_FildeshKV_SINGLE_LIST,
-  lookup_FildeshKV_SINGLE_LIST,
-  ensure_FildeshKV_SINGLE_LIST,
-  remove_FildeshKV_SINGLE_LIST,
-};
-
 const FildeshKV_VTable DEFAULT_SINGLE_LIST_FildeshKV_VTable = {
   first_id_FildeshKV_SINGLE_LIST,
   next_id_FildeshKV_SINGLE_LIST,
