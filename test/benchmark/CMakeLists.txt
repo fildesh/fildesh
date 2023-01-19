@@ -33,7 +33,7 @@ add_test(NAME benchmark_grow_mpop_benchmark COMMAND
 
 add_executable(benchmark_map_benchmark
   "map_benchmark.cc")
-target_link_libraries(benchmark_map_benchmark cx_int_int_map_lib benchmark::benchmark)
+target_link_libraries(benchmark_map_benchmark fildesh_lib benchmark::benchmark)
 add_test(NAME benchmark_map_benchmark COMMAND
   benchmark_map_benchmark "${FILDESH_BENCHMARK_TEST_ARG}")
 

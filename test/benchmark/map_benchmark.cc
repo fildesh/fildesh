@@ -14,15 +14,6 @@
   ->Args({0, 3, 50000})
 
 
-extern "C" {
-  void* make_FildeshLegacyIntIntMap();
-  void set_FildeshLegacyIntIntMap(void*, int, int);
-  int* get_FildeshLegacyIntIntMap(void*, int);
-  void remove_FildeshLegacyIntIntMap(void*, int);
-  void free_FildeshLegacyIntIntMap(void*);
-}
-
-
 static inline int calculate_key(int i, int off, int mul, int count) {
   return (off + i*mul) % count;
 }
@@ -30,33 +21,6 @@ static inline int calculate_key(int i, int off, int mul, int count) {
 static inline int calculate_value(int i, int off, int mul, int count) {
   return (off + i*mul);
 }
-
-
-static void BM_MapAddIntegers_FildeshLegacy(benchmark::State& state) {
-  const int off = state.range(0);
-  const int mul = state.range(1);
-  const int count = state.range(2);
-  assert(off < count);
-  assert(mul < count);
-
-  for (auto _ : state) {
-    void* map = make_FildeshLegacyIntIntMap();
-		for (int i = 0; i < count; ++i) {
-      const int k = calculate_key(i, off, mul, count);
-      const int v = calculate_value(i, off, mul, count);
-      set_FildeshLegacyIntIntMap(map, k, v);
-    }
-		for (int i = 0; i < count; ++i) {
-      const int k = calculate_key(i, off, mul, count);
-      const int* v = get_FildeshLegacyIntIntMap(map, k);
-      assert(v);
-      assert(*v == calculate_value(i, off, mul, count));
-      benchmark::DoNotOptimize(*v);
-    }
-    free_FildeshLegacyIntIntMap(map);
-  }
-}
-BENCHMARK(BM_MapAddIntegers_FildeshLegacy)->THIS_BENCHMARK_RANGE;
 
 
 static inline

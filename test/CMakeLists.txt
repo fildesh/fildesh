@@ -9,7 +9,6 @@ add_subdirectory(syntax)
 set (fildesh_exe "$<TARGET_FILE:fildesh>")
 set (zec_exe "$<TARGET_FILE:zec>")
 
-add_subdirectory(cx)
 add_subdirectory(benchmark)
 add_subdirectory(builtin)
 add_subdirectory(example)
