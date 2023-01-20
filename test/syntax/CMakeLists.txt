@@ -27,6 +27,8 @@ add_test(NAME syntax_concatenate_inline_named_arg_test COMMAND fildesh -f
 
 add_test(NAME syntax_dev_null_o_test COMMAND fildesh -f
   "${CMAKE_CURRENT_SOURCE_DIR}/dev_null_o_test.fildesh")
+add_test(NAME syntax_dev_stderr_ox_test COMMAND fildesh -f
+  "${CMAKE_CURRENT_SOURCE_DIR}/dev_stderr_ox_test.fildesh")
 
 add_test(NAME syntax_environment_variable_xaxa_test COMMAND
   "${CMAKE_COMMAND}" -E env "VARIABLE_A=hello" "VARIABLE_B=world"
@@ -65,6 +67,9 @@ add_test(NAME syntax_redefine_hhxhhx_test COMMAND fildesh -f
   "${CMAKE_CURRENT_SOURCE_DIR}/redefine_hhxhhx_test.fildesh")
 add_test(NAME syntax_redefine_hxahxfhxh_test COMMAND fildesh -f
   "${CMAKE_CURRENT_SOURCE_DIR}/redefine_hxahxfhxh_test.fildesh")
+
+add_test(NAME syntax_stderr_ooox_test COMMAND fildesh -f
+  "${CMAKE_CURRENT_SOURCE_DIR}/stderr_ooox_test.fildesh")
 
 add_test(NAME syntax_tmpfile_xofxof_test COMMAND fildesh -f
   "${CMAKE_CURRENT_SOURCE_DIR}/tmpfile_xofxof_test.fildesh")

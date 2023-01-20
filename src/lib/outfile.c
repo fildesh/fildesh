@@ -15,12 +15,18 @@ struct FildeshOF {
 };
 
 
+static inline
+  void
+fd_write_FildeshO(FildeshO* o, fildesh_fd_t fd)
+{
+  o->off += fildesh_compat_fd_write(fd, &o->at[o->off], o->size - o->off);
+}
+
 static
   void
 write_FildeshOF(FildeshOF* of)
 {
-  FildeshO* o = &of->base;
-  o->off += fildesh_compat_fd_write(of->fd, &o->at[o->off], o->size - o->off);
+  fd_write_FildeshO(&of->base, of->fd);
 }
 
 static
@@ -47,20 +53,38 @@ free_FildeshOF(FildeshOF* of)
 DEFINE_FildeshO_VTable(FildeshOF, base);
 
 
-typedef struct FildeshVoidO FildeshVoidO;
-struct FildeshVoidO {FildeshO base;};
-static void write_FildeshVoidO(FildeshVoidO* o) {o->base.off = o->base.size;}
-static void close_FildeshVoidO(FildeshVoidO* o) {(void) o;}
-static void free_FildeshVoidO(FildeshVoidO* o) {free(o);}
-DEFINE_FildeshO_VTable(FildeshVoidO, base);
-
-
 static inline FildeshOF default_FildeshOF() {
   FildeshOF tmp = {DEFAULT_FildeshO, -1, NULL};
   tmp.base.vt = DEFAULT_FildeshOF_FildeshO_VTable;
   return tmp;
 }
 
+/* Specialization for /dev/stderr, which we avoid closing.*/
+typedef struct FildeshStderrO FildeshStderrO;
+struct FildeshStderrO {FildeshO base;};
+static inline void write_FildeshStderrO(FildeshStderrO* o) {
+  fd_write_FildeshO(&o->base, 2);
+}
+static inline void close_FildeshStderrO(FildeshStderrO* o) {(void) o;}
+static inline void free_FildeshStderrO(FildeshStderrO* o) {free(o);}
+DEFINE_FildeshO_VTable(FildeshStderrO, base);
+static FildeshO* open_stderr_FildeshO() {
+  FildeshStderrO* o = (FildeshStderrO*) malloc(sizeof(FildeshStderrO));
+  if (!o) {return NULL;}
+  o->base = default_FildeshO();
+  o->base.vt = DEFAULT_FildeshStderrO_FildeshO_VTable;
+  return &o->base;
+}
+
+/* Specialization for /dev/null, which we avoid writing to.*/
+typedef struct FildeshVoidO FildeshVoidO;
+struct FildeshVoidO {FildeshO base;};
+static inline void write_FildeshVoidO(FildeshVoidO* o) {
+  o->base.off = o->base.size;
+}
+static inline void close_FildeshVoidO(FildeshVoidO* o) {(void) o;}
+static inline void free_FildeshVoidO(FildeshVoidO* o) {free(o);}
+DEFINE_FildeshO_VTable(FildeshVoidO, base);
 static FildeshO* open_null_FildeshO() {
   FildeshVoidO* o = (FildeshVoidO*) malloc(sizeof(FildeshVoidO));
   if (!o) {return NULL;}
@@ -80,6 +104,7 @@ open_FildeshOF(const char* filename)
 open_sibling_FildeshOF(const char* sibling, const char* filename)
 {
   static const char dev_stdout[] = "/dev/stdout";
+  static const char dev_stderr[] = "/dev/stderr";
   static const char dev_null[] = "/dev/null";
   static const char dev_fd_prefix[] = "/dev/fd/";
   static const unsigned dev_fd_prefix_length = sizeof(dev_fd_prefix)-1;
@@ -90,6 +115,9 @@ open_sibling_FildeshOF(const char* sibling, const char* filename)
 
   if (0 == strcmp("-", filename) || 0 == strcmp(dev_stdout, filename)) {
     return open_fd_FildeshO(1);
+  }
+  if (0 == strcmp(dev_stderr, filename)) {
+    return open_stderr_FildeshO();
   }
   if (0 == strcmp(dev_null, filename)) {
     return open_null_FildeshO();
@@ -141,6 +169,7 @@ open_sibling_FildeshOF(const char* sibling, const char* filename)
 fildesh_arg_open_writeonly(const char* filename)
 {
   static const char dev_stdout[] = "/dev/stdout";
+  static const char dev_stderr[] = "/dev/stderr";
   static const char dev_fd_prefix[] = "/dev/fd/";
   static const unsigned dev_fd_prefix_length = sizeof(dev_fd_prefix)-1;
 
@@ -148,6 +177,9 @@ fildesh_arg_open_writeonly(const char* filename)
 
   if (0 == strcmp("-", filename) || 0 == strcmp(dev_stdout, filename)) {
     return fildesh_compat_fd_claim(1);
+  }
+  if (0 == strcmp(dev_stderr, filename)) {
+    return 2;
   }
   if (0 == strncmp(dev_fd_prefix, filename, dev_fd_prefix_length)) {
     int fd = -1;

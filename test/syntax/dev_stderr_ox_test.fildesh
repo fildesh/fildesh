@@ -1,0 +1,5 @@
+
+zec -o $(OF expect) / "This is content." /
+fildesh -stderr $(OF err) -as zec -o /dev/stderr / "This is content." /
+|< cmp $(XF expect) $(XF err)
+|> stdout

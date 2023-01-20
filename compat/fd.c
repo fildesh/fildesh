@@ -38,6 +38,16 @@ static void invalid_parameter_noop_handler(
 #include "fd_exclusive.h"
 
 
+/** Uncomment to assert that /dev/stderr stays as fd 2.*/
+/* #define STRICT_STDERR_PLACEMENT */
+
+#ifdef STRICT_STDERR_PLACEMENT
+#define MAYBE_ASSERT_NOT_STDERR(fd)  assert(fd != 2)
+#else
+#define MAYBE_ASSERT_NOT_STDERR(fd)
+#endif
+
+
 static
   int
 fildesh_compat_fd_cloexec(int fd)
@@ -141,6 +151,7 @@ fildesh_compat_fd_move_to(fildesh_compat_fd_t dst, fildesh_compat_fd_t oldfd)
   int istat = 0;
   assert(dst >= 0);
   if (dst == oldfd) {return 0;}
+  MAYBE_ASSERT_NOT_STDERR(oldfd);
   /* Acquire exclusive lock because there could be stdio.*/
   FILDESH_COMPAT_FD_ENTER_EXCLUSIVE;
 
@@ -172,6 +183,7 @@ fildesh_compat_fd_move_off_stdio(fildesh_compat_fd_t fd)
   unsigned i;
   int e = 0;
   fildesh_compat_fd_t fds[4] = {-1, -1, -1, -1};
+  MAYBE_ASSERT_NOT_STDERR(fd);
   if (fd < 0 || fd > 2) {return fd;}
   fds[0] = fd;
   for (i = 1; i < 4; ++i) {

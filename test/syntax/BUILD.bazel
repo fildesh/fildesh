@@ -52,6 +52,11 @@ fildesh_test(
 )
 
 fildesh_test(
+    name = "dev_stderr_ox_test",
+    srcs = ["dev_stderr_ox_test.fildesh"],
+)
+
+fildesh_test(
     name = "environment_variable_xaxa_test",
     srcs = ["environment_variable_xaxa_test.fildesh"],
     env = {
@@ -117,6 +122,11 @@ fildesh_test(
 fildesh_test(
     name = "redefine_hxahxfhxh_test",
     srcs = ["redefine_hxahxfhxh_test.fildesh"],
+)
+
+fildesh_test(
+    name = "stderr_ooox_test",
+    srcs = ["stderr_ooox_test.fildesh"],
 )
 
 fildesh_test(

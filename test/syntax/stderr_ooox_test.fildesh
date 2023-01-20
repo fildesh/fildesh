@@ -1,0 +1,17 @@
+(: script Str """
+|< zec / "hello" /
+|> stderr
+$(barrier)
+|< zec -o - / " there " /
+|> stderr
+$(barrier)
+zec -o $(OF err) / "world" /
+stderr $(X err)
+""")
+
+zec -o $(OF expect) / "hello there world" /
+
+|< zec / "${script}" /
+|- fildesh -stderr - -f -
+|- cmp $(XF expect)
+|> stdout
