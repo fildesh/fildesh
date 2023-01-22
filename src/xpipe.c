@@ -25,6 +25,7 @@ run_with_line(const char* fildesh_exe, unsigned argc, const char** argv,
   int istat;
   unsigned offset = 0;
   unsigned argi = 0;
+  const char* spawned_exe_name = "/dev/null";
   FildeshO* to_spawned = NULL;
   fildesh_compat_pid_t pid;
 
@@ -41,6 +42,7 @@ run_with_line(const char* fildesh_exe, unsigned argc, const char** argv,
     actual_argv[offset++] = fildesh_exe;
     actual_argv[offset++] = "-as";
   }
+  if (argi < argc) {spawned_exe_name = argv[argi];}
   while (argi < argc) {
     actual_argv[offset++] = argv[argi++];
   }
@@ -59,7 +61,8 @@ run_with_line(const char* fildesh_exe, unsigned argc, const char** argv,
     istat = fildesh_compat_sh_wait(pid);
     if (istat != 0) {
       fildesh_compat_errno_trace();
-      fildesh_log_errorf("Child (%s) exited with status: %d", actual_argv[0], istat);
+      fildesh_log_errorf(
+          "Child (%s) exited with status: %d", spawned_exe_name, istat);
     }
   }
 }
