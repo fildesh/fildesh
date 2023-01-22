@@ -136,6 +136,11 @@ void fildesh_log_warning_(
     const char* file, const char* func, unsigned line, const char* msg);
 #define fildesh_log_warning(s)  fildesh_log_warning_(FILDESH_LOG_ARGS,s)
 
+void fildesh_log_infof(const char*, ...);
+void fildesh_log_info_(
+    const char* file, const char* func, unsigned line, const char* msg);
+#define fildesh_log_info(s)  fildesh_log_info_(FILDESH_LOG_ARGS,s)
+
 #ifdef FILDESH_LOG_TRACE_ON
 void fildesh_log_tracef(const char*, ...);
 void fildesh_log_trace_(

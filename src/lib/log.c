@@ -27,6 +27,17 @@ fildesh_log_warningf(const char* fmt, ...)
 }
 
   void
+fildesh_log_infof(const char* fmt, ...)
+{
+  va_list argp;
+  fputs("INFO: ", stderr);
+  va_start(argp, fmt);
+  vfprintf(stderr, fmt, argp);
+  va_end(argp);
+  fputc('\n', stderr);
+}
+
+  void
 fildesh_log_tracef(const char* fmt, ...)
 {
   va_list argp;
@@ -45,8 +56,7 @@ static const char* filename_to_print(const char* file) {
   return file;
 }
 
-
-void
+  void
 fildesh_log_error_(
     const char* file, const char* func, unsigned line, const char* msg)
 {
@@ -57,7 +67,7 @@ fildesh_log_error_(
       line, func, msg);
 }
 
-void
+  void
 fildesh_log_warning_(
     const char* file, const char* func, unsigned line, const char* msg)
 {
@@ -68,7 +78,18 @@ fildesh_log_warning_(
       line, func, msg);
 }
 
-void
+  void
+fildesh_log_info_(
+    const char* file, const char* func, unsigned line, const char* msg)
+{
+  fprintf(
+      stderr,
+      "INFO %s(%u) in %s: %s\n",
+      filename_to_print(file),
+      line, func, msg);
+}
+
+  void
 fildesh_log_trace_(
     const char* file, const char* func, unsigned line, const char* msg)
 {

@@ -87,6 +87,10 @@ fildesh_test(
     name = "expect_failure_oxf_test",
     srcs = ["expect_failure_oxf_test.fildesh"],
 )
+fildesh_test(
+    name = "expect_failure_message_oxoxoxox_test",
+    srcs = ["expect_failure_message_oxoxoxox_test.fildesh"],
+)
 
 fildesh_test(
     name = "filename_xofxof_test",

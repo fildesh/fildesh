@@ -1,0 +1,25 @@
+
+$(H script)
+(: status Str .self.opt.status)
+|< zec / "${status}"
+|- expect_failure -status 0 -x? - -info "success" -o? -
+|- expect_failure -status 75 -x? - -trace "retry" -o? -
+|- expect_failure -status 65 -x? - -warning "bad format" -o? -
+|> expect_failure -status 0 -x? -
+$(H script)
+
+fildesh -stderr $(OF err) -f $(XF script) --status=65
+|< zec / "WARNING: bad format\n" /
+|> cmp - $(XF err)
+
+fildesh -stderr $(OF err) -f $(XF script) --status=75
+|< zec / "TRACE: retry\n" /
+|> cmp - $(XF err)
+
+fildesh -stderr $(OF err) -f $(XF script) --status=0
+|< zec / "INFO: success\n" /
+|> cmp - $(XF err)
+
+$(O? status) fildesh -f $(XF script) --status=100
+expect_failure -x? $(XF status)
+

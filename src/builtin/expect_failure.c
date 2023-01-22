@@ -1,9 +1,12 @@
 /**
- * Compare two files.
+ * Compare exit status with expectation.
  **/
 
-#include <fildesh/fildesh.h>
+#include <assert.h>
 #include <string.h>
+
+#define FILDESH_LOG_TRACE_ON 1
+#include <fildesh/fildesh.h>
 
   int
 fildesh_builtin_expect_failure_main(
@@ -15,7 +18,9 @@ fildesh_builtin_expect_failure_main(
   int result_status = -1;
   int expect_status = -1;
   int exstatus = 0;
-  (void) outputv;  /* Not used.*/
+  FildeshO* out = NULL;
+  char custom_message_logtype = '\0';
+  const char* custom_message = NULL;
 
   for (argi = 1; argi < argc && exstatus == 0; ++argi) {
     if (0 == strcmp(argv[argi], "-x?")) {
@@ -32,41 +37,94 @@ fildesh_builtin_expect_failure_main(
         }
         close_FildeshX(in);
       } else {
-        fildesh_log_errorf("Cannot open -x?: %s", argv[argi]);
+        fildesh_log_errorf("Failed to open for reading: %s", argv[argi]);
         exstatus = 66;
       }
-    } else if (0 == strcmp(argv[argi], "-status")) {
+    }
+    else if (0 == strcmp(argv[argi], "-propagate")) {
+      propagating_exit_status = true;
+    }
+    else if (0 == strcmp(argv[argi], "-o?")) {
+      out = open_arg_FildeshOF(++argi, argv, outputv);
+      if (!out) {
+        fildesh_log_errorf("Failed to open for writing: %s", argv[argi]);
+        exstatus = 73;
+      }
+    }
+    else if (0 == strcmp(argv[argi], "-status")) {
       const char* arg = argv[++argi];
       if (!arg || !fildesh_parse_int(&expect_status, arg)) {
         fildesh_log_error("Cannot parse expected status from -status flag.");
         exstatus = 65;
       }
-    } else if (0 == strcmp(argv[argi], "-propagate")) {
-      propagating_exit_status = true;
-    } else {
+    }
+    else if (0 == strcmp(argv[argi], "-error") ||
+             0 == strcmp(argv[argi], "-warning") ||
+             0 == strcmp(argv[argi], "-info") ||
+             0 == strcmp(argv[argi], "-trace"))
+    {
+      custom_message_logtype = argv[argi][1];
+      argi += 1;
+      custom_message = argv[argi];
+      if (!custom_message) {
+        fildesh_log_errorf("Provide a message after %s flag.", argv[argi-1]);
+        exstatus = 64;
+      }
+    }
+    else {
       fildesh_log_errorf("Unknown arg: ", argv[argi]);
       exstatus = 64;
     }
   }
 
-  if (exstatus == 0 && propagating_exit_status) {
-    if (expect_status >= 0 && result_status >= 0) {
+  if (exstatus != 0) {
+  }
+  else if (custom_message && !out) {
+    fildesh_log_error("Custom status message must be paired with -o? fallthru output flag.");
+    exstatus = 64;
+  }
+  else if (propagating_exit_status) {
+    if (out) {
+      fildesh_log_error("-propagate and -o? cannot be used together.");
+      exstatus = 64;
+    }
+    else if (expect_status >= 0 && result_status >= 0) {
       fildesh_log_error("Can only -propagate one -status or -x? value.");
       exstatus = 64;
-    } else if (expect_status >= 0) {
+    }
+    else if (expect_status >= 0) {
       exstatus = expect_status;
-    } else if (result_status >= 0) {
+    }
+    else if (result_status >= 0) {
       exstatus = result_status;
-    } else {
+    }
+    else {
       fildesh_log_error("Need a -status or -x? value to -propagate.");
       exstatus = 64;
     }
-  } else if (exstatus == 0 && result_status < 0) {
+  }
+  else if (result_status < 0) {
     fildesh_log_error("Missing -x? input argument.");
     exstatus = 64;
   }
-
-  if (exstatus == 0 && !propagating_exit_status) {
+  else if (out) {
+    if (expect_status == result_status ||
+        (expect_status < 0 && result_status > 0))
+    {
+      switch (custom_message_logtype) {
+        case 'e': {fildesh_log_errorf("%s", custom_message); break;}
+        case 'w': {fildesh_log_warningf("%s", custom_message); break;}
+        case 'i': {fildesh_log_infof("%s", custom_message); break;}
+        case 't': {fildesh_log_tracef("%s", custom_message); break;}
+        default: {assert(custom_message_logtype == '\0'); break;}
+      }
+      putc_FildeshO(out, '0');
+    }
+    else {
+      print_int_FildeshO(out, result_status);
+    }
+  }
+  else {
     if (expect_status < 0) {
       if (result_status == 0) {
         fildesh_log_error("Expected failure but got exit status: 0");
@@ -80,6 +138,7 @@ fildesh_builtin_expect_failure_main(
       }
     }
   }
+  close_FildeshO(out);
   return exstatus;
 }
 

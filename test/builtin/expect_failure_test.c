@@ -1,10 +1,12 @@
-#include <fildesh/fildesh.h>
-#include "fildesh_builtin.h"
-#include "include/fildesh/fildesh_compat_file.h"
-
 #include <assert.h>
 #include <stdarg.h>
 #include <stdlib.h>
+
+#define FILDESH_LOG_TRACE_ON 1
+#include <fildesh/fildesh.h>
+
+#include "fildesh_builtin.h"
+#include "include/fildesh/fildesh_compat_file.h"
 
 static int call_sut_main(const char* name, ...)
 {
@@ -37,6 +39,12 @@ int main(int argc, char** argv) {
   bad_filename = fildesh_compat_file_catpath(
       literal_0_filename, "no_file_here");
 
+  fildesh_log_info("Testing failure cases. Expect lots of error messages.");
+
+
+
+  fildesh_log_trace("Testing obvious usage errors.");
+
   /* No args.*/
   istat = call_sut_main("expect_failure", NULL);
   assert(istat == 64);
@@ -60,6 +68,14 @@ int main(int argc, char** argv) {
   /* Empty file.*/
   istat = call_sut_main("expect_failure", "-x?", "/dev/null", NULL);
   assert(istat == 65);
+
+  /* Cannot open fallthru output status file.*/
+  istat = call_sut_main("expect_failure", "-o?", bad_filename, NULL);
+  assert(istat == 73);
+
+
+
+  fildesh_log_trace("Testing -propagate flag.");
 
   /* Propagating status without a given status.*/
   istat = call_sut_main("expect_failure", "-propagate", NULL);
@@ -87,6 +103,46 @@ int main(int argc, char** argv) {
       "expect_failure", "-x?", literal_0_filename, "-propagate", NULL);
   assert(istat == 0);
 
+
+
+  fildesh_log_trace("Testing fallthru output flag (-o?).");
+
+  /* Fallthru output returns success if used properly.*/
+  istat = call_sut_main(
+      "expect_failure", "-error", "Generic error.",
+      "-x?", literal_127_filename, "-o?", "/dev/null", NULL);
+  assert(istat == 0);
+
+  istat = call_sut_main(
+      "expect_failure", "-x?", literal_0_filename, "-o?", "/dev/null", NULL);
+  assert(istat == 0);
+
+  istat = call_sut_main(
+      "expect_failure", "-status", "127",
+      "-x?", literal_0_filename, "-o?", "/dev/null", NULL);
+  assert(istat == 0);
+
+  istat = call_sut_main(
+      "expect_failure", "-status", "127",  "-error", "Exit code too large!",
+      "-x?", literal_127_filename, "-o?", "/dev/null", NULL);
+  assert(istat == 0);
+
+  /* Fallthru output is incompatible with status propagation.*/
+  istat = call_sut_main(
+      "expect_failure", "-x?", literal_127_filename, "-propagate",
+      "-o?", "/dev/null", NULL);
+  assert(istat == 64);
+
+  /* Fallthru output is required for custom error message.*/
+  istat = call_sut_main(
+      "expect_failure", "-x?", literal_127_filename,
+      "-error", "Exit code too large!", NULL);
+  assert(istat == 64);
+
+
+
+  fildesh_log_trace("Testing expectations.");
+
   /* Expecting failure and getting it.*/
   istat = call_sut_main("expect_failure", "-x?", literal_127_filename, NULL);
   assert(istat == 0);
@@ -113,6 +169,7 @@ int main(int argc, char** argv) {
   istat = call_sut_main(
       "expect_failure", "-status", "126", "-x?", literal_127_filename, NULL);
   assert(istat == 1);
+
 
   free(bad_filename);
   return 0;
