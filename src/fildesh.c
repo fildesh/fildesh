@@ -1089,6 +1089,9 @@ static int fildesh_main_bestmatch(unsigned argc, char** argv) {
 static int fildesh_main_cmp(unsigned argc, char** argv) {
   return fildesh_builtin_cmp_main(argc, argv, NULL, NULL);
 }
+static int fildesh_main_delimend(unsigned argc, char** argv) {
+  return fildesh_builtin_delimend_main(argc, argv, NULL, NULL);
+}
 static int fildesh_main_elastic_pthread(unsigned argc, char** argv) {
   return fildesh_builtin_elastic_pthread_main(argc, argv, NULL, NULL);
 }
@@ -1142,6 +1145,7 @@ bool fildesh_builtin_is_threadsafe(const char* name)
     "add",
     "bestmatch",
     "cmp",
+    "delimend",
 #if !defined(FILDESH_BUILTIN_PERMIT_ELASTIC_AIO) && !defined(FILDESH_BUILTIN_PERMIT_ELASTIC_POLL)
     "elastic",
 #endif
@@ -1179,6 +1183,7 @@ int (*fildesh_specific_util (const char* arg)) (unsigned, char**)
     {"best-match", fildesh_main_bestmatch},
     {"bestmatch", fildesh_main_bestmatch},
     {"cmp", fildesh_main_cmp},
+    {"delimend", fildesh_main_delimend},
     {"elastic", fildesh_main_elastic},
     {"elastic_pthread", fildesh_main_elastic_pthread},
 #ifdef FILDESH_BUILTIN_PERMIT_ELASTIC_AIO
@@ -1236,6 +1241,7 @@ FILDESH_POSIX_THREAD_CALLBACK(builtin_command_thread_fn, BuiltinCommandThreadArg
     {"add", fildesh_builtin_add_main},
     {"bestmatch", fildesh_builtin_bestmatch_main},
     {"cmp", fildesh_builtin_cmp_main},
+    {"delimend", fildesh_builtin_delimend_main},
 #if !defined(FILDESH_BUILTIN_PERMIT_ELASTIC_AIO) && !defined(FILDESH_BUILTIN_PERMIT_ELASTIC_POLL)
     {"elastic", fildesh_builtin_elastic_pthread_main},
 #endif

@@ -31,6 +31,7 @@ add_library(fildesh_builtin_lib_obj OBJECT
   "${CMAKE_SOURCE_DIR}/src/builtin/add.c"
   "${CMAKE_SOURCE_DIR}/src/builtin/bestmatch.c"
   "${CMAKE_SOURCE_DIR}/src/builtin/cmp.c"
+  "${CMAKE_SOURCE_DIR}/src/builtin/delimend.c"
   "${CMAKE_SOURCE_DIR}/src/builtin/elastic_pthread.c"
   "${CMAKE_SOURCE_DIR}/src/builtin/expect_failure.c"
   "${CMAKE_SOURCE_DIR}/src/builtin/replace_string.c"

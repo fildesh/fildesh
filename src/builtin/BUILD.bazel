@@ -3,6 +3,7 @@ exports_files([
     "add.c",
     "bestmatch.c",
     "cmp.c",
+    "delimend.c",
     "elastic_pthread.c",
     "expect_failure.c",
     "replace_string.c",

@@ -23,16 +23,14 @@
 
 
 # Initialize the number {N}.
-$(H N)
-10
-$(H N)
+(: N Str "10")
 
 ## Begin pipeline.
 
 # Start at {N} and read subsequent values from {pump}.
-|< zec / $(XA N) "\n" / -   $(Xv pump)
+|< zec / "${N}\n" / -   $(Xv pump)
 # Loop until we hit 1.
-|- sed --line-buffered -e '/^1$/q'
+|- delimend "\n" "1"
 |- elastic - $(OF i)
 |- zec -paste - / ' -1' /
 |- add
@@ -41,8 +39,18 @@ $(H N)
 
 # Sum up all the numbers we encounter in the loop.
 |< zec $(X i)
-|- tr '\n' ' '
+|- replace_string "\n" " "
 |- add
-|- zec / 'The sum of 1 to ' $(XA N) ' is ' / -
+|- zec / "The sum of 1 to ${N} is " / -
 |> stdout
 
+# Notes.
+# - `zec` is `cat` that interprets literal string content between the slashes.
+# - `delimend` reads delimited strings until it hits a terminating case.
+#   - Equivalent commands:
+#     - delimend "\n" "1"
+#     - sed --line-buffered -e '/^1$/q'
+# - `replace_string` replaces instances of the first stringg with the second one.
+#   - Equivalent commands:
+#     - replace_string "\n" " "
+#     - tr '\n' ' '
