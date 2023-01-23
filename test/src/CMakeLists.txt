@@ -1,5 +1,5 @@
 
-if (UNIX AND NOT APPLE AND NOT FILDESH_RELEASING)
+if (FILDESH_BUILTIN_ELASTIC_AIO_ON)
   add_test(NAME chatty_test COMMAND chatty)
 endif()
 

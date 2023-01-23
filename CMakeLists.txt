@@ -9,21 +9,21 @@ enable_testing()
 
 
 if (NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE RelOnHost)
-endif()
-
-set(FILDESH_TESTING_RELEASE FALSE)
-set(FILDESH_RELEASING FALSE)
-if (CMAKE_BUILD_TYPE MATCHES "Release.*")
-  set(FILDESH_RELEASING TRUE)
-elseif(CMAKE_BUILD_TYPE MATCHES "RelOnHost.*")
-  set(FILDESH_TESTING_RELEASE TRUE)
+  set(CMAKE_BUILD_TYPE Release)
 endif()
 
 set(C_ARCH_FLAGS "")
-if (FILDESH_TESTING_RELEASE)
-  # Not referenced on Windows.
-  set(C_ARCH_FLAGS "-march=native")
+if(CMAKE_BUILD_TYPE MATCHES "RelOnHost.*")
+  if (APPLE)
+    set(C_ARCH_FLAGS "-march=native")
+    set (FILDESH_PREFER_POLL TRUE)
+  elseif(UNIX)
+    set(C_ARCH_FLAGS "-march=native")
+    set (FILDESH_PREFER_AIO TRUE)
+    set (FILDESH_BUILTIN_ELASTIC_POLL_ON TRUE)
+  else()
+    set (FILDESH_PREFER_PTHREAD TRUE)
+  endif()
 endif()
 
 
@@ -37,7 +37,7 @@ set(CMAKE_C_FLAGS_RELONHOST "${CMAKE_C_FLAGS_RELEASE}")
 set(CMAKE_CXX_FLAGS_RELONHOST "${CMAKE_CXX_FLAGS_RELEASE}")
 set(CMAKE_CXX_FLAGS_RELONHOST "${CMAKE_CXX_FLAGS_RELEASE}")
 
-message("INFO: CMAKE_C_COMPILER_ID is ${CMAKE_C_COMPILER_ID}")
+message(STATUS "CMAKE_C_COMPILER_ID is ${CMAKE_C_COMPILER_ID}")
 
 set(GCC_COMPILER_ID "GNU")
 set(CLANG_COMPILER_ID "Clang")
@@ -66,8 +66,8 @@ elseif (CMAKE_C_COMPILER_ID STREQUAL MSVC_COMPILER_ID)
   set (CMAKE_CXX_FLAGS "/favor:ATOM")
   # Disable warning: 'fopen' unsafe, use fopen_s instead
   add_definitions ("-D_CRT_SECURE_NO_WARNINGS")
-  # See src/cx/def.h for how to disable other warnings via #pragmas.
 endif()
+message(STATUS "CMAKE_C_FLAGS is ${CMAKE_C_FLAGS}")
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL GCC_COMPILER_ID)
   set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -ansi -pedantic -Werror")
@@ -77,6 +77,7 @@ elseif (CMAKE_CXX_COMPILER_ID STREQUAL CLANG_COMPILER_ID)
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
   endif()
 endif()
+message(STATUS "CMAKE_CXX_FLAGS is ${CMAKE_CXX_FLAGS}")
 
 find_package(Threads REQUIRED)
 

@@ -25,6 +25,20 @@
 #include <stdlib.h>
 #include <string.h>
 
+#if defined(FILDESH_PREFER_AIO)
+# if !defined(FILDESH_BUILTIN_ELASTIC_AIO_ON)
+#  define FILDESH_BUILTIN_ELASTIC_AIO_ON
+# endif
+#elif defined(FILDESH_PREFER_POLL)
+# if !defined(FILDESH_BUILTIN_ELASTIC_POLL_ON)
+#  define FILDESH_BUILTIN_ELASTIC_POLL_ON
+# endif
+#else
+# if !defined(FILDESH_PREFER_PTHREAD)
+#  define FILDESH_PREFER_PTHREAD
+# endif
+#endif
+
 /* Defined in main_fildesh.c.*/
 void push_fildesh_exit_callback(void (*f) (void*), void* x);
 
@@ -1069,10 +1083,10 @@ show_usage()
 }
 
 
-#ifdef FILDESH_BUILTIN_PERMIT_ELASTIC_AIO
+#ifdef FILDESH_BUILTIN_ELASTIC_AIO_ON
 int main_elastic_aio(unsigned argc, char** argv);
 #endif
-#ifdef FILDESH_BUILTIN_PERMIT_ELASTIC_POLL
+#ifdef FILDESH_BUILTIN_ELASTIC_POLL_ON
 int main_elastic_poll(unsigned argc, char** argv);
 #endif
 int main_godo(unsigned argc, char** argv);
@@ -1130,12 +1144,17 @@ static int fildesh_main_zec(unsigned argc, char** argv) {
 }
 
 static int fildesh_main_elastic(unsigned argc, char** argv) {
-#if defined(FILDESH_BUILTIN_PERMIT_ELASTIC_AIO)
-  return main_elastic_aio(argc, argv);
-#elif defined(FILDESH_BUILTIN_PERMIT_ELASTIC_POLL)
-  return main_elastic_poll(argc, argv);
-#else
+  /* Ensure that exactly one default for elastic is defined
+   * by otherwise throwing a syntax error for zero/multiple returns.
+   */
+#if defined(FILDESH_PREFER_PTHREAD)
   return fildesh_main_elastic_pthread(argc, argv);
+#endif
+#if defined(FILDESH_PREFER_AIO)
+  return main_elastic_aio(argc, argv);
+#endif
+#if defined(FILDESH_PREFER_POLL)
+  return main_elastic_poll(argc, argv);
 #endif
 }
 
@@ -1146,7 +1165,7 @@ bool fildesh_builtin_is_threadsafe(const char* name)
     "bestmatch",
     "cmp",
     "delimend",
-#if !defined(FILDESH_BUILTIN_PERMIT_ELASTIC_AIO) && !defined(FILDESH_BUILTIN_PERMIT_ELASTIC_POLL)
+#if defined(FILDESH_PREFER_PTHREAD)
     "elastic",
 #endif
     "elastic_pthread",
@@ -1186,10 +1205,10 @@ int (*fildesh_specific_util (const char* arg)) (unsigned, char**)
     {"delimend", fildesh_main_delimend},
     {"elastic", fildesh_main_elastic},
     {"elastic_pthread", fildesh_main_elastic_pthread},
-#ifdef FILDESH_BUILTIN_PERMIT_ELASTIC_AIO
+#ifdef FILDESH_BUILTIN_ELASTIC_AIO_ON
     {"elastic_aio", main_elastic_aio},
 #endif
-#ifdef FILDESH_BUILTIN_PERMIT_ELASTIC_POLL
+#ifdef FILDESH_BUILTIN_ELASTIC_POLL_ON
     {"elastic_poll", main_elastic_poll},
 #endif
     {"execfd", main_execfd},
@@ -1242,7 +1261,7 @@ FILDESH_POSIX_THREAD_CALLBACK(builtin_command_thread_fn, BuiltinCommandThreadArg
     {"bestmatch", fildesh_builtin_bestmatch_main},
     {"cmp", fildesh_builtin_cmp_main},
     {"delimend", fildesh_builtin_delimend_main},
-#if !defined(FILDESH_BUILTIN_PERMIT_ELASTIC_AIO) && !defined(FILDESH_BUILTIN_PERMIT_ELASTIC_POLL)
+#ifdef FILDESH_PREFER_PTHREAD
     {"elastic", fildesh_builtin_elastic_pthread_main},
 #endif
     {"elastic_pthread", fildesh_builtin_elastic_pthread_main},

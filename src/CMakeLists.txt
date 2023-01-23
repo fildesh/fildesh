@@ -3,19 +3,42 @@ add_subdirectory(lib)
 add_subdirectory(builtin)
 
 
-set(FILDESH_EXTRA_ELASTIC_AIO_LIBS)
-set(FILDESH_EXTRA_ELASTIC_SOURCES)
-if (FILDESH_RELEASING)
-  # No extra stuff during release.
-elseif(UNIX)
-  if (APPLE)
-    list(APPEND FILDESH_EXTRA_ELASTIC_SOURCES "elastic_poll.c")
-    list(APPEND FILDESH_EXTRA_ELASTIC_AIO_LIBS "c")
-  else()
-    list(APPEND FILDESH_EXTRA_ELASTIC_SOURCES "elastic_aio.c" "elastic_poll.c")
-    list(APPEND FILDESH_EXTRA_ELASTIC_AIO_LIBS "rt")
-  endif()
+# Conditionally referenced.
+set(FILDESH_AIO_LIBS)
+set(FILDESH_POLL_LIBS)
+list(APPEND FILDESH_AIO_LIBS "rt")
+if (APPLE)
+  list(APPEND FILDESH_POLL_LIBS "c")
 endif()
+
+# Always referenced.
+set(FILDESH_EXTRA_ELASTIC_DEFS)
+set(FILDESH_EXTRA_ELASTIC_SOURCES)
+set(FILDESH_EXTRA_ELASTIC_LIBS)
+
+if (FILDESH_PREFER_PTHREAD)
+  list(APPEND FILDESH_EXTRA_ELASTIC_DEFS "FILDESH_PREFER_PTHREAD")
+endif()
+if (FILDESH_PREFER_AIO)
+  set(FILDESH_BUILTIN_ELASTIC_AIO_ON TRUE)
+  list(APPEND FILDESH_EXTRA_ELASTIC_DEFS "FILDESH_PREFER_AIO")
+endif()
+if (FILDESH_PREFER_POLL)
+  set(FILDESH_BUILTIN_ELASTIC_POLL_ON TRUE)
+  list(APPEND FILDESH_EXTRA_ELASTIC_DEFS "FILDESH_PREFER_POLL")
+endif()
+
+if (FILDESH_BUILTIN_ELASTIC_AIO_ON)
+  list(APPEND FILDESH_EXTRA_ELASTIC_DEFS "FILDESH_BUILTIN_ELASTIC_AIO_ON")
+  list(APPEND FILDESH_EXTRA_ELASTIC_SOURCES "elastic_aio.c")
+  list(APPEND FILDESH_EXTRA_ELASTIC_LIBS ${FILDESH_AIO_LIBS})
+endif()
+if (FILDESH_BUILTIN_ELASTIC_POLL_ON)
+  list(APPEND FILDESH_EXTRA_ELASTIC_DEFS "FILDESH_BUILTIN_ELASTIC_POLL_ON")
+  list(APPEND FILDESH_EXTRA_ELASTIC_SOURCES "elastic_poll.c")
+  list(APPEND FILDESH_EXTRA_ELASTIC_LIBS ${FILDESH_POLL_LIBS})
+endif()
+
 
 add_library(fildesh_builtin_lib_obj OBJECT
   "fildesh.c"
@@ -53,34 +76,16 @@ add_library(fildesh_builtin_lib_obj OBJECT
   )
 
 set_property(TARGET fildesh_builtin_lib_obj APPEND PROPERTY COMPILE_DEFINITIONS
-  FILDESH_BUILTIN_LIBRARY)
-
-if (WIN32)
-  # Nothing special.
-elseif(FILDESH_RELEASING)
-  # Nothing special.
-elseif(APPLE)
-  set_property(TARGET fildesh_builtin_lib_obj APPEND PROPERTY COMPILE_DEFINITIONS
-    FILDESH_BUILTIN_PERMIT_ELASTIC_POLL)
-else()
-  set_property(TARGET fildesh_builtin_lib_obj
-    APPEND PROPERTY COMPILE_DEFINITIONS
-    FILDESH_BUILTIN_PERMIT_ELASTIC_AIO
-    FILDESH_BUILTIN_PERMIT_ELASTIC_POLL)
-endif()
+  FILDESH_BUILTIN_LIBRARY ${FILDESH_EXTRA_ELASTIC_DEFS})
 
 add_library(fildesh_builtin_lib STATIC
   $<TARGET_OBJECTS:fildesh_builtin_lib_obj>
   $<TARGET_OBJECTS:fildesh_lib_obj>
   $<TARGET_OBJECTS:fildesh_compat_lib_obj>
   )
-if (FILDESH_RELEASING)
-  target_link_libraries(fildesh_builtin_lib ${CMAKE_THREAD_LIBS_INIT})
-else()
-  target_link_libraries(fildesh_builtin_lib
-    ${CMAKE_THREAD_LIBS_INIT}
-    ${FILDESH_EXTRA_ELASTIC_AIO_LIBS})
-endif()
+target_link_libraries(fildesh_builtin_lib
+  ${CMAKE_THREAD_LIBS_INIT}
+  ${FILDESH_EXTRA_ELASTIC_LIBS})
 
 add_subdirectory(bin)
 
@@ -99,22 +104,19 @@ add_executable(waitdo "waitdo.c"
   "${CMAKE_SOURCE_DIR}/include/fildesh_builtin.h")
 target_link_libraries(waitdo fildesh_lib)
 
-if (UNIX)
-  add_executable(elastic_poll "elastic_poll.c")
-  target_link_libraries (elastic_poll fildesh_lib)
-endif()
-
-if(FILDESH_RELEASING)
-  # These don't need to be built during release.
-elseif(UNIX AND NOT APPLE)
+if (FILDESH_BUILTIN_ELASTIC_AIO_ON)
   add_executable(elastic_aio "elastic_aio.c")
-  target_link_libraries (elastic_aio fildesh_lib ${FILDESH_EXTRA_ELASTIC_AIO_LIBS})
+  target_link_libraries (elastic_aio fildesh_lib ${FILDESH_AIO_LIBS})
   set_property (TARGET elastic_aio
     APPEND PROPERTY COMPILE_DEFINITIONS _POSIX_C_SOURCE=199309L)
 
   add_executable(chatty "chatty.c")
-  target_link_libraries(chatty fildesh_lib ${FILDESH_EXTRA_ELASTIC_AIO_LIBS})
+  target_link_libraries(chatty fildesh_lib ${FILDESH_AIO_LIBS})
   set_property(TARGET chatty
     APPEND PROPERTY COMPILE_DEFINITIONS _POSIX_C_SOURCE=201112L)
 endif()
 
+if (FILDESH_BUILTIN_ELASTIC_POLL_ON)
+  add_executable(elastic_poll "elastic_poll.c")
+  target_link_libraries (elastic_poll fildesh_lib)
+endif()

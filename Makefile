@@ -26,7 +26,7 @@ all:
 
 cmake:
 	if [ ! -d $(BldPath) ] ; then $(MKDIR) $(BldPath) ; fi
-	$(GODO) $(BldPath) $(CMAKE) ..
+	$(GODO) $(BldPath) $(CMAKE) -D CMAKE_BUILD_TYPE=RelOnHost ..
 
 proj:
 	$(GODO) $(BldPath) $(MAKE)

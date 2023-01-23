@@ -55,13 +55,13 @@ add_executable(builtin_elastic_alt_tee_test "elastic_alt_tee_test.c")
 target_link_libraries(builtin_elastic_alt_tee_test fildesh_lib fildesh_tool_lib)
 add_test(NAME builtin_elastic_pthread_tee_test COMMAND
   builtin_elastic_alt_tee_test "$<TARGET_FILE:elastic_pthread>")
-if (UNIX)
+if (FILDESH_BUILTIN_ELASTIC_AIO_ON)
+  add_test(NAME builtin_elastic_aio_tee_test COMMAND
+    builtin_elastic_alt_tee_test "$<TARGET_FILE:elastic_aio>")
+endif()
+if (FILDESH_BUILTIN_ELASTIC_POLL_ON)
   add_test(NAME builtin_elastic_poll_tee_test COMMAND
     builtin_elastic_alt_tee_test "$<TARGET_FILE:elastic_poll>")
-  if (NOT APPLE AND NOT CMAKE_BUILD_TYPE STREQUAL "Release")
-    add_test(NAME builtin_elastic_aio_tee_test COMMAND
-      builtin_elastic_alt_tee_test "$<TARGET_FILE:elastic_aio>")
-  endif()
 endif()
 
 #### execfd
