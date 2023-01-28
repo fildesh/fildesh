@@ -92,6 +92,14 @@ static inline void set0_red_bit_FildeshKVE(FildeshKVE* e) {
 static inline void set1_red_bit_FildeshKVE(FildeshKVE* e) {
   e->joint |= red_bit_FildeshKVE_joint();
 }
+static inline void swap_red_bit_FildeshKVE(FildeshKVE* lhs, FildeshKVE* rhs) {
+  const size_t lhs_bit = get_red_bit_FildeshKVE_joint(lhs->joint);
+  const size_t rhs_bit = get_red_bit_FildeshKVE_joint(rhs->joint);
+  if (lhs_bit != rhs_bit) {
+    rhs->joint ^= red_bit_FildeshKVE_joint();
+    lhs->joint ^= red_bit_FildeshKVE_joint();
+  }
+}
 static inline void set0_vexists_bit_FildeshKVE(FildeshKVE* e) {
   e->joint &= ~vexists_bit_FildeshKVE_joint();
 }

@@ -2,11 +2,7 @@
 
 #define ColorBlack(x)  set0_red_bit_FildeshKVE(&map->at[x])
 #define ColorRed(x)  set1_red_bit_FildeshKVE(&map->at[x])
-static inline void assign_color(FildeshKV* map, size_t x, bool c) {
-  if (c) {ColorRed(x);}
-  else   {ColorBlack(x);}
-}
-#define AssignColor(x, c)  assign_color(map, x, c)
+#define ColorSwap(x, y)  swap_red_bit_FildeshKVE(&map->at[x], &map->at[y])
 #define RotateUp(p_a)  rotate_up_FildeshKV_BSTREE(map, p_a)
 
 
@@ -29,36 +25,64 @@ const FildeshKV_VTable DEFAULT_FildeshKV_VTable = {
   remove_FildeshKV_RBTREE,
 };
 
+static inline
+  size_t
+first_fixup_insert(FildeshKV* map, size_t x)
+{
+  size_t w = SplitOf(x, 0);
+  if (Nullish(w)) {
+    w = SplitOf(x, 1);
+  }
+  else {
+    assert(Nullish(SplitOf(x, 1)));
+  }
+
+  ColorRed(x);
+  if (!Nullish(w)) {
+    ColorSwap(x, w);
+    return w;
+  }
+  return x;
+}
+
+static inline
+  size_t
+next_fixup_insert(FildeshKV* map, size_t x)
+{
+  const size_t b = JointOf(x);
+  /* {x} is root, just set to black!*/
+  if (Nullish(b)) {
+    fildesh_log_trace("next: Paint it black.");
+    ColorBlack(x);
+    return FildeshKV_NULL_INDEX;
+  }
+
+  /* {b} is black, {x} is safe to be red!*/
+  if (!RedColorOf(b)) {
+    fildesh_log_trace("next: Keep it red.");
+    return FildeshKV_NULL_INDEX;
+  }
+  return b;
+}
+
 static
   size_t
 fixup_insert(FildeshKV* map, size_t x)
 {
   size_t insertion_index = x;
-  bool bubbling_insertion = true;
-  while (1) {
-    size_t b;
+  size_t b;
+  x = first_fixup_insert(map, x);
 
-    /* {x} is root, just set to black!*/
-    if (IsRoot(x)) {
-      fildesh_log_trace("Paint it black.");
-      ColorBlack(x);
-      break;
-    }
-
-    b = JointOf(x);
-    /* {b} is black, {x} is safe to be red!*/
-    if (!RedColorOf(b)) {
-      fildesh_log_trace("Keep it red.");
-      break;
-    }
-
+  for (b = next_fixup_insert(map, x); !Nullish(b);
+       b = next_fixup_insert(map, x))
+  {
     /* Case 1.         (continue)
      *
      *    a#              b'+
      *    / \              / \
      *  1*   +b   -->    a#   #x
      *      / \          /|   |\
-     *    2#   +'x     w* #2 3# #4
+     *    2#   +'x     1* #2 3# #4
      *        / \
      *      3#   #4
      */
@@ -67,7 +91,6 @@ fixup_insert(FildeshKV* map, size_t x)
       ColorBlack(x);
       RotateUp(&b);
       x = b;
-      bubbling_insertion = false;
     }
     /* Case 2.                        (continue)
      *
@@ -80,6 +103,7 @@ fixup_insert(FildeshKV* map, size_t x)
      *     2#   #3    1#   #2
      */
     else {
+      const bool bubbling_insertion = (insertion_index == x);
       fildesh_log_trace("Case 2.");
       ColorBlack(b);
       RotateUp(&x);
@@ -100,9 +124,9 @@ ensure_FildeshKV_RBTREE(
   FildeshKV_id_t x_id = ensure_FildeshKV_BSTREE(map, k, ksize, alloc);
   size_t x = x_id/2;
   if (old_freelist_head != map->freelist_head) {
-    ColorRed(x);
+    assert((x_id & 1) == 0);
     x = fixup_insert(map, x);
-    x_id = (2*x) | (x_id & 1);
+    x_id = 2*x;
   }
   return x_id;
 }
@@ -228,9 +252,7 @@ remove_FildeshKV_RBTREE(FildeshKV* map, FildeshKV_id_t y_id)
 
   if (!Nullish(z)) {
     /* Recolor the node that replaced {y}.*/
-    bool y_color = RedColorOf(y);
-    AssignColor(y, RedColorOf(z));
-    AssignColor(z, y_color);
+    ColorSwap(y, z);
   }
 
   if (RedColorOf(y)) {

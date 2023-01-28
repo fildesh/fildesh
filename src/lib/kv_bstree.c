@@ -261,6 +261,7 @@ rotate_up_FildeshKV_BSTREE(FildeshKV* map, size_t* p_a)
   if (IsRoot(b)) {
     AssignJoint(a, FildeshKV_NULL_INDEX);
     LocalSwap(&b, &a);
+    *p_a = a;
     /* Update {a} and {b} outer neighbors (they don't change below).*/
     MaybeAssignJoint(SplitOf(a, side), a);
     MaybeAssignJoint(SplitOf(b, oside), b);
@@ -270,6 +271,5 @@ rotate_up_FildeshKV_BSTREE(FildeshKV* map, size_t* p_a)
   }
   Join(a, oside, b);
   Join(b, side, y);
-  *p_a = a;
 }
 
