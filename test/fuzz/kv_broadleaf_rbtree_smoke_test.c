@@ -88,4 +88,14 @@ NEXT_FUZZ_DATA
   3, 3,
   6, NULL_VALUE,
 }
+NEXT_FUZZ_DATA
+{ 3, 3,
+  1, 1,
+  7, 7,
+  6, 6,
+  2, 2,
+  4, 4,
+  5, 5,
+  7, NULL_VALUE,
+}
 END_FUZZ_DATA
