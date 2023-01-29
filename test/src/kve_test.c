@@ -185,6 +185,8 @@ try_edge_split(FildeshKVE* e, size_t ksize, size_t splitksize, size_t splitvsize
 
 static void edge_split_test() {
   FildeshKVE e;
+  const size_t max_ksize = ((size_t)1 << (sizeof(size_t)*CHAR_BIT/2-2)) - 1;
+  const size_t max_splitksize = ((size_t)1 << (sizeof(size_t)*CHAR_BIT/2-1)) - 1;
 
   /* First key's size is just too big.*/
   assert(!try_edge_split(&e, high_size_bit(CHAR_BIT-1), 1, 0));
@@ -192,18 +194,13 @@ static void edge_split_test() {
     assert(!try_edge_split(&e, high_size_bit(CHAR_BIT), 1, 0));
   }
 
-  /* First key size fills all bits exept the high 1 byte + 1 bit.*/
-  assert( try_edge_split(&e, high_size_bit(CHAR_BIT)-1, 1,                  0));
-  assert( try_edge_split(&e, high_size_bit(CHAR_BIT)-1, high_byte_bit(1)-1, 0));
-  assert(!try_edge_split(&e, high_size_bit(CHAR_BIT)-1, high_byte_bit(1),   0));
-  assert( try_edge_split(&e, high_size_bit(CHAR_BIT)-1, high_byte_bit(2)-1, 1));
-  assert(!try_edge_split(&e, high_size_bit(CHAR_BIT)-1, high_byte_bit(2),   1));
-
-  /* First keys size fills all bits of the low-order byte.*/
-  assert( try_edge_split(&e, (1<<CHAR_BIT)-1, high_size_bit(1+sizeof(size_t)-2+CHAR_BIT)-1, 0));
-  assert(!try_edge_split(&e, (1<<CHAR_BIT)-1, high_size_bit(1+sizeof(size_t)-2+CHAR_BIT),   0));
-  assert( try_edge_split(&e, (1<<CHAR_BIT)-1, high_size_bit(2+sizeof(size_t)-2+CHAR_BIT)-1, 1));
-  assert(!try_edge_split(&e, (1<<CHAR_BIT)-1, high_size_bit(2+sizeof(size_t)-2+CHAR_BIT),   1));
+  /* Max allowable key sizes for being packed togethher.*/
+  assert( try_edge_split(&e, max_ksize,   max_splitksize  , 0));
+  assert( try_edge_split(&e, max_ksize,   max_splitksize  , 1));
+  assert(!try_edge_split(&e, max_ksize+1, max_splitksize  , 0));
+  assert(!try_edge_split(&e, max_ksize,   max_splitksize+1, 0));
+  assert(!try_edge_split(&e, max_ksize+1, max_splitksize  , 1));
+  assert(!try_edge_split(&e, max_ksize,   max_splitksize+1, 1));
 }
 
 static void zero_length_key_test() {

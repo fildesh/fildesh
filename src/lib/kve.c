@@ -3,38 +3,24 @@
 #include <assert.h>
 #include <string.h>
 
+#define lo_lgksize (sizeof(size_t)*CHAR_BIT/2-2)
+#define hi_lgsplitksize (sizeof(size_t)*CHAR_BIT/2-1)
+
+static size_t lo_mask_ksize = ((size_t)1 << lo_lgksize) - 1;
+static size_t hi_mask_splitksize = (((size_t)1 << hi_lgsplitksize) - 1) << lo_lgksize;
+
 size_t ksize_FildeshKVE_size(size_t x) {
-  unsigned i;
   if (0 == (x & high_size_bit(0))) {
     return x;
   }
-  for (i = 1; i < sizeof(size_t)-1; ++i) {
-    if (0 == (x & high_size_bit(i*CHAR_BIT))) {
-      return x & (high_size_bit(i*CHAR_BIT)-1);
-    }
-  }
-  return x & (((size_t)1 << CHAR_BIT)-1);
+  return x & lo_mask_ksize;
 }
 
 size_t splitksize_FildeshKVE_size(size_t x) {
-  unsigned i;
-  size_t y;
   if (0 == get_splitkexists_bit_FildeshKVE_size(x)) {
     return 0;
   }
-  if (0 == get_splitvexists_bit_FildeshKVE_size(x)) {
-    y = shiftmaskhi_size(x, 2, CHAR_BIT-2);
-  } else {
-    y = shiftmaskhi_size(x, 3, CHAR_BIT-3);
-  }
-  for (i = 1; i < sizeof(size_t)-1; ++i) {
-    if (0 == (x & high_size_bit(i*CHAR_BIT))) {
-      break;
-    }
-    y <<= CHAR_BIT-1;
-    y |= shiftmaskhi_size(x, i*CHAR_BIT+1, CHAR_BIT-1);
-  }
-  return y;
+  return (x & hi_mask_splitksize) >> lo_lgksize;
 }
 
 
@@ -128,39 +114,15 @@ static
 populate_splitk_FildeshKVE_size(size_t* p_size, size_t ksize, bool vexists)
 {
   size_t e_size = *p_size;
-  size_t tmp_ksize = ksize;
-  unsigned i;
-  if (vexists) {
-    tmp_ksize >>= (CHAR_BIT-3);
-  } else {
-    tmp_ksize >>= (CHAR_BIT-2);
+  if (0 != (e_size >> lo_lgksize)) {
+    return false;
   }
-  if (0 != shiftmaskhi_size(e_size, 0, CHAR_BIT)) {
+  if (0 != (ksize >> hi_lgsplitksize)) {
     return false;
   }
 
-  /* Counting from high.*/
-  for (i = 1; i < sizeof(size_t)-1 && tmp_ksize > 0; ++i) {
-    if (0 != shiftmaskhi_size(e_size, i*CHAR_BIT, CHAR_BIT)) {
-      return false;
-    }
-    tmp_ksize >>= CHAR_BIT-1;
-  }
-  if (tmp_ksize > 0) {
-    return false;
-  }
-  if (i < sizeof(size_t)-1 && 0 != (e_size & high_size_bit(i*CHAR_BIT))) {
-    return false;
-  }
-
-  tmp_ksize = ksize;
-  /* Counting from low.*/
-  for (i = sizeof(size_t)-i; i < sizeof(size_t); ++i) {
-    const size_t z = high_byte_bit(0) | (tmp_ksize & (high_byte_bit(0)-1));
-    e_size |= z << (i*CHAR_BIT);
-    tmp_ksize >>= CHAR_BIT-1;
-  }
-
+  e_size |= (ksize << lo_lgksize);
+  e_size |= splitkexists_bit_FildeshKVE_size();
   if (vexists) {
     e_size |= splitvexists_bit_FildeshKVE_size();
   }
