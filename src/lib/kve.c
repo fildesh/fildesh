@@ -82,7 +82,7 @@ assign_splitv_FildeshKVE(FildeshKVE* e, size_t vsize, const void* v, FildeshAllo
   }
   else {
     set1_splitvrefers_bit_FildeshKVE(e);
-    e->split[1] = (uintptr_t) v;
+    e->split[1] = (uintptr_t)v;
   }
 }
 
@@ -179,9 +179,11 @@ populate_splitkv_FildeshKVE(FildeshKVE* e,
 {
   const bool vexists = (vsize > 0);
   bool kdirect;
+  assert(!splitkexists_FildeshKVE(e));
   if (!populate_splitk_FildeshKVE_size(&e->size, ksize, vexists)) {
     return false;
   }
+  assert(0 != get_splitkexists_bit_FildeshKVE_size(e->size));
 
   if (vexists) {
     assign_splitv_FildeshKVE(e, vsize, v, alloc);
@@ -211,10 +213,12 @@ populate_demote_FildeshKVE(FildeshKVE* e,
                            FildeshAlloc* alloc)
 {
   size_t e_size = ksize;
-  const bool vexists = (vsize > 0);
+  const bool vexists = (0 != get_vexists_bit_FildeshKVE_joint(e->joint));
   if (!populate_splitk_FildeshKVE_size(&e_size, e->size, vexists)) {
     return false;
   }
+  assert(0 != get_splitkexists_bit_FildeshKVE_size(e_size));
+  e_size |= (e->joint & vrefers_bit_FildeshKVE_joint());
   e->split[0] = e->kv[0];
   e->split[1] = e->kv[1];
   populate_empty_FildeshKVE(e, ksize, k, vsize, v, alloc);

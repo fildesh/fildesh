@@ -27,7 +27,7 @@ const FildeshKV_VTable DEFAULT_FildeshKV_VTable = {
   first_id_FildeshKV_BSTREE,
   next_id_FildeshKV_BSTREE,
   lookup_FildeshKV_BSTREE,
-  ensure_FildeshKV_RBTREE,
+  ensure_FildeshKV_BROADLEAF_RBTREE,
   remove_FildeshKV_RBTREE,
 };
 

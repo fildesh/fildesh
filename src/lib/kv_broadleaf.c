@@ -1,3 +1,5 @@
+
+/* #define FILDESH_LOG_TRACE_ON 1 */
 #include "kv_broadleaf.h"
 
 #include "kv_bstree.h"
@@ -72,7 +74,6 @@ splitting_add_FildeshKV_BSTREE(
     erase_splitk_FildeshKVE(&map->at[b]);
   }
   AssignSplit(b, side, x);
-  NullifySplit(b, 1-side);
   return 2*x+(1-side);
 }
 
@@ -179,7 +180,7 @@ fixup_remove_case_0_FildeshKV_BROADLEAF_BSTREE(
  *      / \            / \
  *    a#   #'y  -->  a#   #b
  *    / \            / \
- *  w+? x+z        w*  x+   
+ *  w+? x+z        w*  x+
  **/
   void
 fixup_remove_case_1_FildeshKV_BROADLEAF_BSTREE(
