@@ -212,15 +212,19 @@ static void zero_length_key_test() {
   char value[1] = {'h'};
   char splitvalue[2] = {'w', 'o'};
 
+  assert(e->kv[0] == 0);
+  assert(e->kv[1] == 0);
   populate_empty_FildeshKVE(e, 0, dummy, sizeof(value), value, NULL);
   assert(e->kv[0] == 0);
   assert(e->kv[1] != 0);
   assert(0 == ksize_FildeshKVE_size(e->size));
   assert(0 == memcmp(value_FildeshKVE(e), value, sizeof(value)));
 
+  assert(e->split[0] == FildeshKV_NULL_INDEX);
+  assert(e->split[1] == FildeshKV_NULL_INDEX);
   populate_splitkv_FildeshKVE(e, 0, dummy, sizeof(splitvalue), splitvalue, NULL);
-  assert(e->split[0] == 0);
-  assert(e->split[1] != 0);
+  assert(e->split[0] == FildeshKV_NULL_INDEX);
+  assert(e->split[1] != FildeshKV_NULL_INDEX);
   assert(0 == ksize_FildeshKVE_size(e->size));
   assert(0 == splitksize_FildeshKVE_size(e->size));
   assert(0 == memcmp(value_FildeshKVE(e), value, sizeof(value)));

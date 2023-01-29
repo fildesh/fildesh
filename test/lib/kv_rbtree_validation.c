@@ -93,7 +93,7 @@ validate_FildeshKV_RBTREE(const FildeshKV* map)
       else {
         assert(!RedColorOf(x) || !RedColorOf(JointOf(x)));
       }
-      if (Nullish(SplitOf(x, 0)) && Nullish(SplitOf(x, 1))) {
+      if (IsLeaf(x)) {
         assert(black_count == count_up_black(map, x));
       }
     }

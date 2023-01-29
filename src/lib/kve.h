@@ -27,7 +27,12 @@ struct FildeshKVE {
   uintptr_t kv[2];
 };
 
-#define DEFAULT_FildeshKVE  { 0, 0, { 0, 0 }, { 0, 0 } }
+#define FildeshKV_NULL_INDEX (~(size_t)0 >> 3)
+#define DEFAULT_FildeshKVE  { \
+  FildeshKV_NULL_INDEX, 0, \
+  { FildeshKV_NULL_INDEX, FildeshKV_NULL_INDEX }, \
+  { 0, 0 }, \
+}
 
 static inline FildeshKVE default_FildeshKVE() {
   FildeshKVE e = DEFAULT_FildeshKVE;
@@ -220,6 +225,15 @@ populate_splitkv_FildeshKVE(FildeshKVE* e,
                             size_t ksize, const void* k,
                             size_t vsize, const void* v,
                             FildeshAlloc* alloc);
+bool
+populate_demote_FildeshKVE(FildeshKVE* e,
+                           size_t ksize, const void* k,
+                           size_t vsize, const void* v,
+                           FildeshAlloc* alloc);
+void
+move_kv_to_empty_FildeshKVE(FildeshKVE* dst, FildeshKVE* src);
+void
+move_splitkv_to_empty_FildeshKVE(FildeshKVE* dst, FildeshKVE* src);
 void
 erase_k_FildeshKVE(FildeshKVE* e);
 void

@@ -1,5 +1,7 @@
 #include "kv_bstree.h"
 
+#include "kv_broadleaf.h"
+
 static inline void assign_replacement_info(FildeshKV* map, size_t y, size_t x) {
   map->at[y].size = x;
 }
@@ -16,6 +18,14 @@ const FildeshKV_VTable DEFAULT_BSTREE_FildeshKV_VTable = {
   remove_FildeshKV_BSTREE,
 };
 
+const FildeshKV_VTable DEFAULT_BROADLEAF_BSTREE_FildeshKV_VTable = {
+  first_id_FildeshKV_BSTREE,
+  next_id_FildeshKV_BSTREE,
+  lookup_FildeshKV_BSTREE,
+  ensure_FildeshKV_BROADLEAF_BSTREE,
+  remove_FildeshKV_BSTREE,
+};
+
 static
   FildeshKV_id_t
 first_id_from_index(const FildeshKV* map, size_t x) {
@@ -23,6 +33,9 @@ first_id_from_index(const FildeshKV* map, size_t x) {
   do {
     do {
       y = x;
+      if (IsBroadLeaf(y)) {
+        return 2*y;
+      }
       x = SplitOf(y, 0);
     } while (!Nullish(x));
     x = SplitOf(y, 1);
@@ -42,7 +55,7 @@ first_id_FildeshKV_BSTREE(const FildeshKV* map) {
 next_id_FildeshKV_BSTREE(const FildeshKV* map, FildeshKV_id_t id) {
   const size_t x = id/2;
   assert(!fildesh_nullid(id));
-  if (((id & 1) == 0) && splitkexists_FildeshKVE(&map->at[x])) {
+  if (((id & 1) == 0) && IsBroadLeaf(x)) {
     return id + 1;
   }
   if (!IsRoot(x)) {
@@ -63,8 +76,8 @@ lookup_FildeshKV_BSTREE(const FildeshKV* map, const void* k, size_t ksize)
   while (!Nullish(y)) {
     int si = - cmp_k_FildeshKVE(&map->at[y], ksize, k);
     if (si == 0) {return 2*y;}
-    if (splitkexists_FildeshKVE(&map->at[y])) {
-      if (0 == cmp_splitk_FildeshKVE(&map->at[y], ksize, k)) {
+    if (IsBroadLeaf(y)) {
+      if (si > 0 && 0 == cmp_splitk_FildeshKVE(&map->at[y], ksize, k)) {
         return 2*y+1;
       }
       return FildeshKV_NULL_ID;
@@ -94,17 +107,10 @@ ensure_FildeshKV_BSTREE(
     y = SplitOf(y, side);
   }
 
-  maybe_grow_FildeshKV_SINGLE_LIST(map);
-  x = map->freelist_head;
-  assert_trivial_joint(map->at[x].joint);
-  map->freelist_head = map->at[x].joint;
-  map->at[x] = default_FildeshKVE();
+  x = empty_add_FildeshKV_BSTREE(map);
   populate_empty_FildeshKVE(&map->at[x], ksize, k, 1, 0, alloc);
-
-  MaybeAssignSplit(a, side, x);
   AssignJoint(x, a);
-  NullifySplit(x, 0);
-  NullifySplit(x, 1);
+  MaybeAssignSplit(a, side, x);
   return 2*x;
 }
 
@@ -123,6 +129,11 @@ premove_FildeshKV_BSTREE(FildeshKV* map, size_t y)
 #define oside (1-side)
   FildeshKV_id_t b;
   FildeshKV_id_t x;
+
+  if (IsBroadLeaf(y)) {
+    promote_splitk_FildeshKVE(&map->at[y]);
+    return FildeshKV_NULL_INDEX;
+  }
 
   /* This is the only case that leaves {y->joint} unchanged.
    * {y} can be the root.
@@ -147,8 +158,10 @@ premove_FildeshKV_BSTREE(FildeshKV* map, size_t y)
       AssignJoint(x, b);
       LocalSwap(&y, &x);
       /* Update {x} neighbors.*/
-      MaybeAssignJoint(SplitOf(x, 0), x);
-      MaybeAssignJoint(SplitOf(x, 1), x);
+      if (!IsBroadLeaf(x)) {
+        MaybeAssignJoint(SplitOf(x, 0), x);
+        MaybeAssignJoint(SplitOf(x, 1), x);
+      }
       /* Populate {y} for return.*/
       /* noop: AssignJoint(y, b); */
       AssignSplit(y, side_y, x);
@@ -156,6 +169,23 @@ premove_FildeshKV_BSTREE(FildeshKV* map, size_t y)
       AssignReplacementInfo(y, x);
       return y;
     }
+  }
+
+  /* We know {1} exists.
+   ****** OLD ******** NEW
+   *       y'           c
+   *      / \          / \
+   *    b,c  1  -->   b   1
+   */
+  b = SplitOf(y, 0);
+  if (IsBroadLeaf(b)) {
+    move_splitkv_to_empty_FildeshKVE(&map->at[y], &map->at[b]);
+    return FildeshKV_NULL_INDEX;
+  }
+  b = SplitOf(y, 1);
+  if (IsBroadLeaf(b)) {
+    move_kv_to_empty_FildeshKVE(&map->at[y], &map->at[b]);
+    return FildeshKV_NULL_INDEX;
   }
 
   /* We know {1} exists.
@@ -202,6 +232,10 @@ premove_FildeshKV_BSTREE(FildeshKV* map, size_t y)
   b = SplitOf(y, side);
   x = SplitOf(b, oside);
   do {
+    if (IsBroadLeaf(x)) {
+      move_splitkv_to_empty_FildeshKVE(&map->at[y], &map->at[x]);
+      return FildeshKV_NULL_INDEX;
+    }
     b = x;
     x = SplitOf(b, oside);
   } while (!Nullish(x));
@@ -235,8 +269,14 @@ premove_FildeshKV_BSTREE(FildeshKV* map, size_t y)
 remove_FildeshKV_BSTREE(FildeshKV* map, FildeshKV_id_t y_id)
 {
   size_t y = y_id/2;
+  if ((y_id & 1) != 0) {
+    erase_splitk_FildeshKVE(&map->at[y]);
+    return;
+  }
   y = premove_FildeshKV_BSTREE(map, y);
-  reclaim_element_FildeshKV_SINGLE_LIST(map, y);
+  if (!Nullish(y)) {
+    reclaim_element_FildeshKV_SINGLE_LIST(map, y);
+  }
 }
 
 /** Do a tree rotation:

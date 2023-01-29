@@ -58,6 +58,7 @@ NEXT_FUZZ_DATA
   4, 40,
   3, NULL_VALUE,
 }
+NEXT_FUZZ_DATA
 /* Remove node below the root of this tree:
  *        6
  *       /
@@ -67,7 +68,6 @@ NEXT_FUZZ_DATA
  *   \     /
  *    2   4
  */
-NEXT_FUZZ_DATA
 { 6, 60,
   3, 30,
   1, 10,

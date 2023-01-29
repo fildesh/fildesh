@@ -123,6 +123,53 @@ populate_empty_FildeshKVE(FildeshKVE* e,
   }
 }
 
+static
+  bool
+populate_splitk_FildeshKVE_size(size_t* p_size, size_t ksize, bool vexists)
+{
+  size_t e_size = *p_size;
+  size_t tmp_ksize = ksize;
+  unsigned i;
+  if (vexists) {
+    tmp_ksize >>= (CHAR_BIT-3);
+  } else {
+    tmp_ksize >>= (CHAR_BIT-2);
+  }
+  if (0 != shiftmaskhi_size(e_size, 0, CHAR_BIT)) {
+    return false;
+  }
+
+  /* Counting from high.*/
+  for (i = 1; i < sizeof(size_t)-1 && tmp_ksize > 0; ++i) {
+    if (0 != shiftmaskhi_size(e_size, i*CHAR_BIT, CHAR_BIT)) {
+      return false;
+    }
+    tmp_ksize >>= CHAR_BIT-1;
+  }
+  if (tmp_ksize > 0) {
+    return false;
+  }
+  if (i < sizeof(size_t)-1 && 0 != (e_size & high_size_bit(i*CHAR_BIT))) {
+    return false;
+  }
+
+  tmp_ksize = ksize;
+  /* Counting from low.*/
+  for (i = sizeof(size_t)-i; i < sizeof(size_t); ++i) {
+    const size_t z = high_byte_bit(0) | (tmp_ksize & (high_byte_bit(0)-1));
+    e_size |= z << (i*CHAR_BIT);
+    tmp_ksize >>= CHAR_BIT-1;
+  }
+
+  if (vexists) {
+    e_size |= splitvexists_bit_FildeshKVE_size();
+  }
+  else {
+    e_size &= ~splitvexists_bit_FildeshKVE_size();
+  }
+  *p_size = e_size;
+  return true;
+}
 
   bool
 populate_splitkv_FildeshKVE(FildeshKVE* e,
@@ -132,46 +179,15 @@ populate_splitkv_FildeshKVE(FildeshKVE* e,
 {
   const bool vexists = (vsize > 0);
   bool kdirect;
-  size_t tmp_ksize = ksize;
-  unsigned i;
-  if (vexists) {
-    tmp_ksize >>= (CHAR_BIT-3);
-  } else {
-    tmp_ksize >>= (CHAR_BIT-2);
-  }
-  if (0 != shiftmaskhi_size(e->size, 0, CHAR_BIT)) {
+  if (!populate_splitk_FildeshKVE_size(&e->size, ksize, vexists)) {
     return false;
-  }
-
-  /* Counting from high.*/
-  for (i = 1; i < sizeof(size_t)-1 && tmp_ksize > 0; ++i) {
-    if (0 != shiftmaskhi_size(e->size, i*CHAR_BIT, CHAR_BIT)) {
-      return false;
-    }
-    tmp_ksize >>= CHAR_BIT-1;
-  }
-  if (tmp_ksize > 0) {
-    return false;
-  }
-  if (i < sizeof(size_t)-1 && 0 != (e->size & high_size_bit(i*CHAR_BIT))) {
-    return false;
-  }
-
-  tmp_ksize = ksize;
-  /* Counting from low.*/
-  for (i = sizeof(size_t)-i; i < sizeof(size_t); ++i) {
-    const size_t z = high_byte_bit(0) | (tmp_ksize & (high_byte_bit(0)-1));
-    e->size |= z << (i*CHAR_BIT);
-    tmp_ksize >>= CHAR_BIT-1;
   }
 
   if (vexists) {
-    set1_splitvexists_bit_FildeshKVE(e);
     assign_splitv_FildeshKVE(e, vsize, v, alloc);
     kdirect = (ksize <= sizeof(e->split[0]));
   }
   else {
-    set0_splitvexists_bit_FildeshKVE(e);
     kdirect = (ksize <= sizeof(e->split[0]) + sizeof(e->split[1]));
   }
   if (kdirect) {
@@ -188,13 +204,49 @@ populate_splitkv_FildeshKVE(FildeshKVE* e,
   return true;
 }
 
+  bool
+populate_demote_FildeshKVE(FildeshKVE* e,
+                           size_t ksize, const void* k,
+                           size_t vsize, const void* v,
+                           FildeshAlloc* alloc)
+{
+  size_t e_size = ksize;
+  const bool vexists = (vsize > 0);
+  if (!populate_splitk_FildeshKVE_size(&e_size, e->size, vexists)) {
+    return false;
+  }
+  e->split[0] = e->kv[0];
+  e->split[1] = e->kv[1];
+  populate_empty_FildeshKVE(e, ksize, k, vsize, v, alloc);
+  e->size = e_size;
+  return true;
+}
+
+  void
+move_kv_to_empty_FildeshKVE(FildeshKVE* dst, FildeshKVE* src)
+{
+  dst->size = ksize_FildeshKVE_size(src->size);
+  dst->kv[0] = src->kv[0];
+  dst->kv[1] = src->kv[1];
+  promote_splitk_FildeshKVE(src);
+}
+
+  void
+move_splitkv_to_empty_FildeshKVE(FildeshKVE* dst, FildeshKVE* src)
+{
+  dst->size = splitksize_FildeshKVE_size(src->size);
+  dst->kv[0] = src->split[0];
+  dst->kv[1] = src->split[1];
+  erase_splitk_FildeshKVE(src);
+}
+
   void
 erase_k_FildeshKVE(FildeshKVE* e)
 {
   assert(kexists_FildeshKVE(e));
   assert(0 == get_splitkexists_bit_FildeshKVE_size(e->size));
-  e->kv[0] = 0;
-  e->kv[1] = 0;
+  e->kv[0] = FildeshKV_NULL_INDEX;
+  e->kv[1] = FildeshKV_NULL_INDEX;
   e->joint = get_index_FildeshKVE_joint(e->joint);
 }
 
@@ -202,8 +254,8 @@ erase_k_FildeshKVE(FildeshKVE* e)
 erase_splitk_FildeshKVE(FildeshKVE* e)
 {
   assert(0 != get_splitkexists_bit_FildeshKVE_size(e->size));
-  e->split[0] = 0;
-  e->split[1] = 0;
+  e->split[0] = FildeshKV_NULL_INDEX;
+  e->split[1] = FildeshKV_NULL_INDEX;
   e->size = ksize_FildeshKVE_size(e->size);
 }
 
@@ -221,8 +273,8 @@ promote_splitk_FildeshKVE(FildeshKVE* e)
   e->size = splitksize_FildeshKVE_size(e->size);
   e->kv[0] = e->split[0];
   e->kv[1] = e->split[1];
-  e->split[0] = 0;
-  e->split[1] = 0;
+  e->split[0] = FildeshKV_NULL_INDEX;
+  e->split[1] = FildeshKV_NULL_INDEX;
 }
 
   int

@@ -21,6 +21,8 @@ initial_map(uint8_t map_selection)
     DEFAULT_FildeshKV_SINGLE_LIST,
     DEFAULT_FildeshKV_BSTREE,
     DEFAULT_FildeshKV_RBTREE,
+    DEFAULT_FildeshKV_BROADLEAF_BSTREE,
+    DEFAULT_FildeshKV_BROADLEAF_RBTREE,
   };
   const uint8_t n = (uint8_t)(sizeof(a) / sizeof(a[0]));
   if (map_selection < n) {

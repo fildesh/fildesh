@@ -94,6 +94,21 @@ static void BM_MapAddIntegers_FildeshKV_BSTREE(benchmark::State& state) {
 BENCHMARK(BM_MapAddIntegers_FildeshKV_BSTREE)->LINEAR_BENCHMARK_RANGE;
 
 
+static void BM_MapAddIntegers_FildeshKV_BROADLEAF_BSTREE(benchmark::State& state) {
+  const int off = state.range(0);
+  const int mul = state.range(1);
+  const int count = state.range(2);
+  assert(off < count);
+  assert(mul < count);
+
+  for (auto _ : state) {
+    FildeshKV map[1] = {DEFAULT_FildeshKV_BROADLEAF_BSTREE};
+    MapAddIntegers_FildeshKV_common(map, off, mul, count);
+  }
+}
+BENCHMARK(BM_MapAddIntegers_FildeshKV_BROADLEAF_BSTREE)->LINEAR_BENCHMARK_RANGE;
+
+
 static void BM_MapAddIntegers_FildeshKV_RBTREE(benchmark::State& state) {
   const int off = state.range(0);
   const int mul = state.range(1);
@@ -107,6 +122,21 @@ static void BM_MapAddIntegers_FildeshKV_RBTREE(benchmark::State& state) {
   }
 }
 BENCHMARK(BM_MapAddIntegers_FildeshKV_RBTREE)->THIS_BENCHMARK_RANGE;
+
+
+static void BM_MapAddIntegers_FildeshKV_BROADLEAF_RBTREE(benchmark::State& state) {
+  const int off = state.range(0);
+  const int mul = state.range(1);
+  const int count = state.range(2);
+  assert(off < count);
+  assert(mul < count);
+
+  for (auto _ : state) {
+    FildeshKV map[1] = {DEFAULT_FildeshKV_BROADLEAF_RBTREE};
+    MapAddIntegers_FildeshKV_common(map, off, mul, count);
+  }
+}
+BENCHMARK(BM_MapAddIntegers_FildeshKV_BROADLEAF_RBTREE)->THIS_BENCHMARK_RANGE;
 
 
 static void BM_MapAddIntegers_StdMap(benchmark::State& state) {
