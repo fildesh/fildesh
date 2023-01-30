@@ -9,6 +9,24 @@ BEGIN_FUZZ_DATA
   3, 30,
 }
 NEXT_FUZZ_DATA
+/* Instead of this. It should be this.
+ *        6#             6#
+ *        / \            / \
+ *      4+   #7        3+   #7
+ *      / \            / \
+ *    3#   #5        1#2 4#5
+ *    /
+ *  1+2
+ */
+{ 6,6,
+  2,2,
+  7,7,
+  5,5,
+  4,4,
+  3,3,
+  1,1,
+}
+NEXT_FUZZ_DATA
 { 3, 30,
   4, 40,
   1, 10,
@@ -117,5 +135,20 @@ NEXT_FUZZ_DATA
   5, NULL_VALUE,
   1, 1,
   2, NULL_VALUE,
+}
+NEXT_FUZZ_DATA
+{ 4, 4,
+  2, 2,
+  1, 1,
+  5, 5,
+  3, 3,
+}
+NEXT_FUZZ_DATA
+{ 6, 6,
+  4, 4,
+  1, 1,
+  5, 5,
+  2, 2,
+  3, 3,
 }
 END_FUZZ_DATA

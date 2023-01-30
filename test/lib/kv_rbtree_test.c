@@ -56,6 +56,27 @@ combination_test()
 
 static
   void
+compress_test()
+{
+  unsigned i;
+  FildeshKV map[1] = {DEFAULT_FildeshKV_BROADLEAF_RBTREE};
+  for (i = 0; i < 256; ++i) {
+    unsigned char c = (unsigned char)i;
+    ensure_FildeshKV(map, &c, sizeof(c));
+  }
+#if 0
+  {
+    FildeshO* out = open_FildeshOF("/dev/stderr");
+    print_graphviz_FildeshKV_RBTREE(map, out); putc_FildeshO(out, '\n');
+    close_FildeshO(out);
+  }
+#endif
+  validate_growing_FildeshKV_BROADLEAF_RBTREE(map);
+  close_FildeshKV(map);
+}
+
+static
+  void
 print_debug_test()
 {
   FildeshO out[1] = {DEFAULT_FildeshO};
@@ -146,6 +167,7 @@ debugging_test()
 
 int main() {
   combination_test();
+  compress_test();
   print_debug_test();
   print_graphviz_test();
   debugging_test();
