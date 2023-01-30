@@ -38,22 +38,22 @@ first_fixup_insert(FildeshKV* map, size_t x)
 {
   size_t w;
   if (IsBroadLeaf(x)) {
-    size_t b = JointOf(x);
-    ColorRed(b);
-    ColorSwap(x, b);
-    return x;
-  }
-
-  w = SplitOf(x, 0);
-  if (Nullish(w)) {
-    w = SplitOf(x, 1);
+    w = x;
+    x = JointOf(x);
   }
   else {
-    assert(Nullish(SplitOf(x, 1)));
+    w = SplitOf(x, 0);
+    if (Nullish(w)) {
+      w = SplitOf(x, 1);
+    }
+    else {
+      assert(Nullish(SplitOf(x, 1)));
+    }
   }
 
   ColorRed(x);
   if (!Nullish(w)) {
+    assert(IsBroadLeaf(w));
     ColorSwap(x, w);
     return w;
   }
@@ -82,7 +82,7 @@ next_fixup_insert(FildeshKV* map, size_t x)
 
 static
   size_t
-fixup_insert(FildeshKV* map, size_t x)
+fixup_insert(FildeshKV* map, size_t x, bool fusing)
 {
   size_t insertion_index = x;
   size_t b;
@@ -106,6 +106,9 @@ fixup_insert(FildeshKV* map, size_t x)
       fildesh_log_trace("Case 1.");
       ColorBlack(x);
       RotateUp(&b);
+      if (fusing) {
+        maybe_fuse_FildeshKV_BROADLEAF_RBTREE(map, SplitOf(b, 1-SideOf(x)));
+      }
       x = b;
       if (bubbling_insertion) {
         insertion_index = b;
@@ -127,6 +130,10 @@ fixup_insert(FildeshKV* map, size_t x)
       ColorBlack(b);
       RotateUp(&x);
       RotateUp(&x);
+      if (fusing) {
+        maybe_fuse_FildeshKV_BROADLEAF_RBTREE(map, SplitOf(x, 0));
+        maybe_fuse_FildeshKV_BROADLEAF_RBTREE(map, SplitOf(x, 1));
+      }
       if (bubbling_insertion) {
         insertion_index = x;
       }
@@ -144,7 +151,7 @@ ensure_FildeshKV_RBTREE(
   size_t x = x_id/2;
   assert((x_id & 1) == 0);
   if (old_freelist_head != map->freelist_head) {
-    x = fixup_insert(map, x);
+    x = fixup_insert(map, x, /*fusing=*/ false);
     x_id = 2*x;
   }
   return x_id;
@@ -158,7 +165,7 @@ ensure_FildeshKV_BROADLEAF_RBTREE(
   FildeshKV_id_t x_id = ensure_FildeshKV_BROADLEAF_BSTREE(map, k, ksize, alloc);
   size_t x = x_id/2;
   if (old_freelist_head != map->freelist_head) {
-    x = fixup_insert(map, x);
+    x = fixup_insert(map, x, /*fusing=*/ true);
     x_id = (2*x) | (x_id & 1);
   }
   return x_id;
@@ -184,7 +191,7 @@ fixup_remove(FildeshKV* map, size_t y, unsigned side, size_t removal_index)
     b = JointOf(y);
     a = SplitOf(b, 1-side);
     if (IsBroadLeaf(a)) {
-      if (fixup_remove_case_0_FildeshKV_BROADLEAF_BSTREE(map, b, a)) {
+      if (fixup_remove_case_0_FildeshKV_BROADLEAF_RBTREE(map, b, a)) {
         break;
       }
       y = b;
@@ -207,7 +214,7 @@ fixup_remove(FildeshKV* map, size_t y, unsigned side, size_t removal_index)
     if (!Nullish(x) && RedColorOf(x)) {
       fildesh_log_trace("Case 1.");
       if (IsBroadLeaf(x)) {
-        fixup_remove_case_1_FildeshKV_BROADLEAF_BSTREE(
+        fixup_remove_case_1_FildeshKV_BROADLEAF_RBTREE(
             map, removal_index, side, b, a, x);
         removal_index = FildeshKV_NULL_INDEX;
         break;

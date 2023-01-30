@@ -191,10 +191,18 @@ populate_demote_FildeshKVE(FildeshKVE* e,
   void
 move_kv_to_empty_FildeshKVE(FildeshKVE* dst, FildeshKVE* src)
 {
-  dst->size = ksize_FildeshKVE_size(src->size);
+  const size_t vmask = (
+      vexists_bit_FildeshKVE_joint() | vrefers_bit_FildeshKVE_joint());
+  dst->joint = (dst->joint & ~vmask) | (src->joint & vmask);
   dst->kv[0] = src->kv[0];
   dst->kv[1] = src->kv[1];
-  promote_splitk_FildeshKVE(src);
+  if (0 == get_splitkexists_bit_FildeshKVE_size(src->size)) {
+    dst->size = src->size;
+  }
+  else {
+    dst->size = ksize_FildeshKVE_size(src->size);
+    promote_splitk_FildeshKVE(src);
+  }
 }
 
   void
@@ -204,6 +212,40 @@ move_splitkv_to_empty_FildeshKVE(FildeshKVE* dst, FildeshKVE* src)
   dst->kv[0] = src->split[0];
   dst->kv[1] = src->split[1];
   erase_splitk_FildeshKVE(src);
+}
+
+  bool
+maybe_fuse_FildeshKVE(FildeshKVE* dst, unsigned side, const FildeshKVE* src)
+{
+  assert(!splitkexists_FildeshKVE(dst));
+  assert(!splitkexists_FildeshKVE(src));
+
+  if (side == 0) {
+    const size_t vmask = (
+        vexists_bit_FildeshKVE_joint() | vrefers_bit_FildeshKVE_joint());
+    size_t e_size = src->size;
+    const bool dst_vexists = (0 != get_vexists_bit_FildeshKVE_joint(dst->joint));
+    if (!populate_splitk_FildeshKVE_size(&e_size, dst->size, dst_vexists)) {
+      return false;
+    }
+    dst->size = (e_size | (dst->joint & vrefers_bit_FildeshKVE_joint()));
+    dst->joint = (dst->joint & ~vmask) | (src->joint & vmask);
+    dst->split[0] = dst->kv[0];
+    dst->split[1] = dst->kv[1];
+    dst->kv[0] = src->kv[0];
+    dst->kv[1] = src->kv[1];
+  }
+  else {
+    size_t e_size = dst->size;
+    const bool src_vexists = (0 != get_vexists_bit_FildeshKVE_joint(src->joint));
+    if (!populate_splitk_FildeshKVE_size(&e_size, src->size, src_vexists)) {
+      return false;
+    }
+    dst->size = (e_size | (src->joint & vrefers_bit_FildeshKVE_joint()));
+    dst->split[0] = src->kv[0];
+    dst->split[1] = src->kv[1];
+  }
+  return true;
 }
 
   void

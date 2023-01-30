@@ -12,6 +12,15 @@
 #include <fildesh/fildesh.h>
 
 #include "src/lib/kv.h"
+#include "test/lib/kv_rbtree_validation.h"
+
+static bool is_rbtree_selection(uint8_t map_selection) {
+  return map_selection == 3 || map_selection == 5;
+}
+
+static bool is_broadleaf_rbtree_selection(uint8_t map_selection) {
+  return map_selection == 5;
+}
 
 static inline
   FildeshKV
@@ -42,7 +51,7 @@ static
   void
 initialize_entries(Entry** entries, const uint8_t data[], size_t size)
 {
-  size_t k_index = 0;
+  size_t k_index = 1;
   size_t k_size = 0;
   size_t v_index = 0;
   size_t v_size = 0;
@@ -79,12 +88,15 @@ initialize_entries(Entry** entries, const uint8_t data[], size_t size)
 
   int
 LLVMFuzzerTestOneInput(const uint8_t data[], size_t size) {
+  const uint8_t map_selection = (size > 0 ? data[0] : 0);
+  bool is_rbtree = is_rbtree_selection(map_selection);
+  bool is_broadleaf_rbtree = is_broadleaf_rbtree_selection(map_selection);
   FildeshKV map[1];
   size_t i;
   DECLARE_FildeshAT(Entry, entries);
 
   /* First byte determines what kind of FildeshKV we use.*/
-  *map = initial_map(size > 0 ? data[0] : 0);
+  *map = initial_map(map_selection);
   initialize_entries(entries, data, size);
 
   for (i = 0; i < count_of_FildeshAT(entries); ++i) {
@@ -92,6 +104,7 @@ LLVMFuzzerTestOneInput(const uint8_t data[], size_t size) {
     const FildeshKV_id_t id = ensure_FildeshKV(map, e.key, e.ksize);
     assign_at_FildeshKV(map, id, e.value, e.vsize);
 
+    fildesh_log_tracef("%u %u", (unsigned)*e.key, (unsigned)e.ksize);
     {
       const size_t result_size = size_of_key_at_FildeshKV(map, id);
       const void* const result_key = key_at_FildeshKV(map, id);
@@ -100,13 +113,18 @@ LLVMFuzzerTestOneInput(const uint8_t data[], size_t size) {
       assert(0 == memcmp(result_key, e.key, e.ksize));
       assert(0 == memcmp(result_value, e.value, e.vsize));
     }
+
+    if (is_rbtree) {
+      validate_FildeshKV_RBTREE(map);
+    }
+    if (is_broadleaf_rbtree) {
+      validate_growing_FildeshKV_BROADLEAF_RBTREE(map);
+    }
   }
 
-  fildesh_log_trace("yaaaaaaa");
   for (i = 0; i < count_of_FildeshAT(entries); ++i) {
     const Entry e = (*entries)[i];
     const FildeshKV_id_t id = lookup_FildeshKV(map, e.key, e.ksize);
-    fildesh_log_tracef("%u", (unsigned)(i+1));
     assert(!fildesh_nullid(id));
     assign_memref_at_FildeshKV(map, id, e.value);
   }
@@ -114,14 +132,18 @@ LLVMFuzzerTestOneInput(const uint8_t data[], size_t size) {
   for (i = 0; i < count_of_FildeshAT(entries); ++i) {
     const Entry e = (*entries)[i];
     const FildeshKV_id_t id = lookup_FildeshKV(map, e.key, e.ksize);
-    fildesh_log_tracef("%u", (unsigned)(i+1));
     assert(!fildesh_nullid(id));
     if ((const void*)e.value == value_at_FildeshKV(map, id)) {
       const void* const result_value = value_at_FildeshKV(map, id);
       assert(0 == memcmp(result_value, e.value, e.vsize));
-      fildesh_log_trace("removing");
       remove_at_FildeshKV(map, id);
     }
+  }
+
+  /* Map should be empty at the end.*/
+  {
+    FildeshKV_id_t id = first_FildeshKV(map);
+    assert(fildesh_nullid(id));
   }
 
   close_FildeshAT(entries);

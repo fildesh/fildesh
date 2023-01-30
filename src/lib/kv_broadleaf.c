@@ -105,6 +105,73 @@ leaf_add_FildeshKV_BSTREE(
   return 2*x;
 }
 
+/**
+ * Shift some values around.
+ *       a          y
+ *      / \   -->  / \
+ *     y   z      x  a,z
+ **/
+static
+  FildeshKV_id_t
+maybe_shifty_add(
+    FildeshKV* map, size_t a, unsigned side, size_t y,
+    const void* k, size_t ksize, FildeshAlloc* alloc)
+{
+  int si;
+  size_t z;
+  if (!(IsLeaf(y) && !Nullish(a))) {
+    return FildeshKV_NULL_ID;
+  }
+  z = SplitOf(a, 1-side);
+  if (!(!Nullish(z) && IsLeaf(z) && !IsBroadLeaf(z))) {
+    return FildeshKV_NULL_ID;
+  }
+  if (!IsBroadLeaf(y) || side == 1) {
+    si = - cmp_k_FildeshKVE(&map->at[y], ksize, k);
+    if (si == 0) {return 2*y;}
+  }
+  else {
+    si = - cmp_splitk_FildeshKVE(&map->at[y], ksize, k);
+    if (si == 0) {return 2*y+1;}
+  }
+
+  if (!maybe_fuse_FildeshKVE(&map->at[z], side, &map->at[a])) {
+    return FildeshKV_NULL_ID;
+  }
+
+  /* Cases where we put the new element in the now-empty {a}.*/
+  if ((side == 0 && 0 < si) || (si < 0 && side == 1)) {
+    populate_empty_FildeshKVE(&map->at[a], ksize, k, 1, 0, alloc);
+    return 2*a;
+  }
+
+  if (!IsBroadLeaf(y)) {
+    move_kv_to_empty_FildeshKVE(&map->at[a], &map->at[y]);
+    populate_empty_FildeshKVE(&map->at[y], ksize, k, 1, 0, alloc);
+    return 2*y;
+  }
+
+  if (side == 1) {
+    move_kv_to_empty_FildeshKVE(&map->at[a], &map->at[y]);
+  }
+  else {
+    move_splitkv_to_empty_FildeshKVE(&map->at[a], &map->at[y]);
+  }
+  si = - cmp_k_FildeshKVE(&map->at[y], ksize, k);
+  if (si == 0) {return 2*y;}
+
+  if (si < 0) {
+    if (populate_demote_FildeshKVE(&map->at[y], ksize, k, 1, 0, alloc)) {
+      return 2*y;
+    }
+    return leaf_add_FildeshKV_BSTREE(map, y, 0, k, ksize, alloc);
+  }
+  if (populate_splitkv_FildeshKVE(&map->at[y], ksize, k, 1, 0, alloc)) {
+    return 2*y+1;
+  }
+  return leaf_add_FildeshKV_BSTREE(map, y, 1, k, ksize, alloc);
+}
+
 /** If a node matching {x} exists, return that node.
  * Otherwise, add {x} to the tree and return it.
  **/
@@ -117,10 +184,15 @@ ensure_FildeshKV_BROADLEAF_BSTREE(
   unsigned side = 0;
 
   while (!Nullish(y)) {
-    FildeshKVE* e = &map->at[y];
-    int si = - cmp_k_FildeshKVE(e, ksize, k);
+    FildeshKV_id_t id;
+    int si;
+    id = maybe_shifty_add(map, a, side, y, k, ksize, alloc);
+    if (!fildesh_nullid(id)) {return id;}
+
+    si = - cmp_k_FildeshKVE(&map->at[y], ksize, k);
     if (si == 0) {return 2*y;}
-    if (splitkexists_FildeshKVE(e)) {
+
+    if (IsBroadLeaf(y)) {
       if (si < 0) {
         if (side == 0) {
           return taking_add_FildeshKV_BSTREE(map, y, 0, k, ksize, alloc);
@@ -129,7 +201,7 @@ ensure_FildeshKV_BROADLEAF_BSTREE(
           return joining_add_FildeshKV_BSTREE(map, a, y, 0, k, ksize, alloc);
         }
       }
-      si = - cmp_splitk_FildeshKVE(e, ksize, k);
+      si = - cmp_splitk_FildeshKVE(&map->at[y], ksize, k);
       if (si == 0) {return 2*y+1;}
       if (si > 0) {
         if (side == 0) {
@@ -149,6 +221,48 @@ ensure_FildeshKV_BROADLEAF_BSTREE(
   return leaf_add_FildeshKV_BSTREE(map, a, side, k, ksize, alloc);
 }
 
+  void
+maybe_fuse_FildeshKV_BROADLEAF_RBTREE(FildeshKV* map, size_t b)
+{
+  size_t w = SplitOf(b, 0);
+  size_t x = SplitOf(b, 1);
+
+  assert(!RedColorOf(b) && "Only called on black nodes.");
+  if (Nullish(w) && Nullish(x)) {
+    return;
+  }
+  if (!Nullish(w)) {
+    if (!IsLeaf(w) || IsBroadLeaf(w) || !RedColorOf(w)) {
+      return;
+    }
+  }
+  if (!Nullish(x)) {
+    if (!IsLeaf(x) || IsBroadLeaf(x) || !RedColorOf(x)) {
+      return;
+    }
+  }
+
+  if (Nullish(w)) {
+    if (maybe_fuse_FildeshKVE(&map->at[b], 1, &map->at[x])) {
+      reclaim_element_FildeshKV_SINGLE_LIST(map, x);
+    }
+  }
+  else if (Nullish(x)) {
+    if (maybe_fuse_FildeshKVE(&map->at[b], 0, &map->at[w])) {
+      reclaim_element_FildeshKV_SINGLE_LIST(map, w);
+    }
+  }
+  else {
+    if (maybe_fuse_FildeshKVE(&map->at[w], 1, &map->at[b])) {
+      LocalSwap(&b, &x);
+      AssignJoint(x, JointOf(b));
+      AssignSplit(x, 0, w);
+      NullifySplit(x, 1);
+      reclaim_element_FildeshKV_SINGLE_LIST(map, b);
+    }
+  }
+}
+
 /* Case of split {a}.
  *
  *      b+             b#   (done)
@@ -161,7 +275,7 @@ ensure_FildeshKV_BROADLEAF_BSTREE(
  *
  */
   bool
-fixup_remove_case_0_FildeshKV_BROADLEAF_BSTREE(
+fixup_remove_case_0_FildeshKV_BROADLEAF_RBTREE(
     FildeshKV* map, size_t b, size_t a)
 {
   assert(!RedColorOf(a));
@@ -183,7 +297,7 @@ fixup_remove_case_0_FildeshKV_BROADLEAF_BSTREE(
  *  w+? x+z        w*  x+
  **/
   void
-fixup_remove_case_1_FildeshKV_BROADLEAF_BSTREE(
+fixup_remove_case_1_FildeshKV_BROADLEAF_RBTREE(
     FildeshKV* map, size_t y, unsigned side,
     size_t b, size_t a, size_t x)
 {

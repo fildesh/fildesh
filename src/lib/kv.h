@@ -18,6 +18,5 @@ extern const FildeshKV_VTable DEFAULT_BROADLEAF_RBTREE_FildeshKV_VTable;
 
 void maybe_grow_FildeshKV_SINGLE_LIST(FildeshKV*);
 void reclaim_element_FildeshKV_SINGLE_LIST(FildeshKV*, size_t);
-bool validate_FildeshKV_RBTREE(const FildeshKV*);
 
 END_EXTERN_C

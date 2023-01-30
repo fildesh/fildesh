@@ -7,13 +7,19 @@ add_test(NAME fuzz_grow_mpop_fuzz_test COMMAND fuzz_grow_mpop_fuzz_test)
 
 add_executable(fuzz_kv_ensure_fuzz_test
   "kv_ensure_fuzz_test.c"
-  "fuzz_main.c")
+  "fuzz_main.c"
+  "${CMAKE_SOURCE_DIR}/test/lib/kv_rbtree_validation.c"
+  "${CMAKE_SOURCE_DIR}/test/lib/kv_rbtree_validation.h"
+)
 target_link_libraries(fuzz_kv_ensure_fuzz_test fildesh_lib)
 add_test(NAME fuzz_kv_ensure_fuzz_test COMMAND fuzz_kv_ensure_fuzz_test)
 
 add_executable(fuzz_kv_ensure_smoke_test
   "kv_ensure_smoke_test.c"
-  "kv_ensure_fuzz_test.c")
+  "kv_ensure_fuzz_test.c"
+  "${CMAKE_SOURCE_DIR}/test/lib/kv_rbtree_validation.c"
+  "${CMAKE_SOURCE_DIR}/test/lib/kv_rbtree_validation.h"
+)
 target_link_libraries(fuzz_kv_ensure_smoke_test fildesh_lib)
 add_test(NAME fuzz_kv_ensure_smoke_test COMMAND fuzz_kv_ensure_smoke_test)
 

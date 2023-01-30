@@ -19,7 +19,7 @@ cc_fuzz_test(
 cc_fuzz_test(
     name = "kv_ensure_fuzz_test",
     srcs = ["kv_ensure_fuzz_test.c"],
-    deps = ["//:fildesh_lib"],
+    deps = ["//test/lib:kv_rbtree_validation_lib"],
     max_guesses = 50000,
 )
 cc_smoke_test(
@@ -28,7 +28,7 @@ cc_smoke_test(
         "kv_ensure_smoke_test.c",
         "kv_ensure_fuzz_test.c",
     ],
-    deps = ["//:fildesh_lib"],
+    deps = ["//test/lib:kv_rbtree_validation_lib"],
 )
 
 cc_fuzz_test(
