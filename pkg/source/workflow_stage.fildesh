@@ -1,0 +1,13 @@
+#!/bin/env fildesh
+
+(: source_root Str .self.opt.source_root)
+(: final_dst Str .self.opt.final_dst)
+
+|< grep -m1 -E -e 'version = ' "${source_root}/MODULE.bazel"
+|- sed -E -e 's/.*"(.*)".*/\1/'
+|> elastic $(OF version) $(OF version2)
+
+zec -o $(OF dst) / "${final_dst}/fildesh-" $(XA version) ".tar.gz" /
+zec -o $(OF prefix) / "fildesh-" $(XA version2) "/" /
+
+godo "${source_root}" git archive --format=tar.gz -o $(XA dst) --prefix $(XA prefix) HEAD
