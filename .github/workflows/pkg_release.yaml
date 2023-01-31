@@ -55,6 +55,14 @@ jobs:
         --source_root=$GITHUB_WORKSPACE
         --final_dst=${{runner.workspace}}/bld/pkg/final
 
+    - name: Package source
+      working-directory: ${{runner.workspace}}
+      run: >
+        ./bld/pkg/fildesh/usr/bin/fildesh
+        $GITHUB_WORKSPACE/pkg/source/workflow_stage.fildesh
+        --source_root=$GITHUB_WORKSPACE
+        --final_dst=${{runner.workspace}}/bld/pkg/final
+
     - name: Upload Package Artifacts
       uses: actions/upload-artifact@v3
       with:
