@@ -6,7 +6,7 @@ inherit cmake
 
 DESCRIPTION="Now you're scripting with FIFOs."
 HOMEPAGE="https://github.com/fildesh/fildesh"
-SRC_URI="https://github.com/fildesh/fildesh/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz"
+SRC_URI="https://github.com/fildesh/fildesh/releases/download/v${PV}/fildesh-${PV}.tar.gz -> ${P}.tar.gz"
 
 LICENSE="ISC"
 SLOT="0/0"
