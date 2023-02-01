@@ -241,6 +241,7 @@ maybe_fuse_FildeshKV_BROADLEAF_RBTREE(FildeshKV* map, size_t b)
       return;
     }
   }
+  assert(false);
 
   if (Nullish(w)) {
     if (maybe_fuse_FildeshKVE(&map->at[b], 1, &map->at[x])) {
