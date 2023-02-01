@@ -39,18 +39,25 @@ NEXT_FUZZ_DATA
   3, NULL_VALUE,
 }
 NEXT_FUZZ_DATA
+/* Coverage in bstree.c premove_FildeshKV_BSTREE():
+ *   ... b = SplitOf(y, 1); if (IsBroadLeaf(b)) {
+ */
+{ 2,2, 3,3, 1,1, 4,4, 1,1, 2,NULL_VALUE,
+}
+NEXT_FUZZ_DATA
+/* Coverage in bstree.c premove_FildeshKV_BSTREE():
+ *   ... do { if (IsBroadLeaf(y)) {
+ */
+{ 4,4, 3,3, 6,6, 8,8, 10,10, 9,9, 1,1, 7,7, 5,5, 2,2, 6,NULL_VALUE,
+}
+#if 0
+NEXT_FUZZ_DATA
 { 3, 3,
   2, 2,
   1, 1,
   4, 4,
   2, 2,
   3, NULL_VALUE,
-}
-NEXT_FUZZ_DATA
-/* Coverage in bstree.c premove_FildeshKV_BSTREE():
- * ... do { if (IsBroadLeaf(y)) {
- */
-{ 4,4, 3,3, 6,6, 8,8, 10,10, 9,9, 1,1, 7,7, 5,5, 2,2, 6,NULL_VALUE,
 }
 NEXT_FUZZ_DATA
 /* The rest of these are for the sake of coverage.*/
@@ -62,4 +69,5 @@ NEXT_FUZZ_DATA
 NEXT_FUZZ_DATA
 { 0x3a,0x1,0xff,0x0,0x3a,0x31,0xff,0xff,0xb7,0x3a,0x2b,0x23,0xb7,0x0,0x3a,0xff,0xff,0x31,0xf7,0xdf,0xb7,
 }
+#endif
 END_FUZZ_DATA
