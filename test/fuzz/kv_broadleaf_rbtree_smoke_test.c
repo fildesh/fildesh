@@ -27,16 +27,38 @@ NEXT_FUZZ_DATA
   1,1,
 }
 NEXT_FUZZ_DATA
-/* Coverage in kv_broadleaf.c fixup_remove_case_0_FildeshKV_BROADLEAF_RBTREE():
+/* Coverage in  kv_broadleaf.c  fixup_remove_case_0_FildeshKV_BROADLEAF_RBTREE():
  *  ...  if (RedColorOf(b)) {
  */
 { 2,2, 6,6, 3,3, 4,4, 1,1, 7,7, 5,5, 4,NULL_VALUE,
 }
 NEXT_FUZZ_DATA
-/* Coverage in kv_broadleaf.c fixup_remove_case_1_FildeshKV_BROADLEAF_RBTREE():
+/* Coverage in  kv_broadleaf.c  fixup_remove_case_1_FildeshKV_BROADLEAF_RBTREE():
+ *  ... if (side == 0) {
+ */
+{ 2,2, 1,1, 8,8, 6,6, 5,5, 7,7, 5,NULL_VALUE, 4,4, 3,3, 1,NULL_VALUE,
+}
+NEXT_FUZZ_DATA
+/* Coverage in  kv_broadleaf.c  fixup_remove_case_1_FildeshKV_BROADLEAF_RBTREE():
  *  ... if (side == 0) {...} else {
  */
 { 7,7, 8,8, 1,1, 3,3, 4,4, 2,2, 4,NULL_VALUE, 5,5, 6,8, 8,NULL_VALUE,
+}
+NEXT_FUZZ_DATA
+/* Coverage in  kv_broadleaf.c  fixup_remove_case_1_FildeshKV_BROADLEAF_RBTREE():
+ *  ...  if (Nullish(JointOf(b))) {...} else {
+ */
+{ 2,2,
+  1,1,
+  8,8,
+  9,9,
+  5,5,
+  7,7,
+  3,3,
+  7,NULL_VALUE,
+  4,4,
+  6,6,
+  9,NULL_VALUE,
 }
 NEXT_FUZZ_DATA
 { 3, 30,
