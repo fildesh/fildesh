@@ -241,21 +241,23 @@ maybe_fuse_FildeshKV_BROADLEAF_RBTREE(FildeshKV* map, size_t b)
       return;
     }
   }
-  assert(false);
 
   if (Nullish(w)) {
     if (maybe_fuse_FildeshKVE(&map->at[b], 1, &map->at[x])) {
+      ColorBlack(b);
       reclaim_element_FildeshKV_SINGLE_LIST(map, x);
     }
   }
   else if (Nullish(x)) {
     if (maybe_fuse_FildeshKVE(&map->at[b], 0, &map->at[w])) {
+      ColorBlack(b);
       reclaim_element_FildeshKV_SINGLE_LIST(map, w);
     }
   }
   else {
     if (maybe_fuse_FildeshKVE(&map->at[w], 1, &map->at[b])) {
       LocalSwap(&b, &x);
+      ColorSwap(b, x);
       AssignJoint(x, JointOf(b));
       AssignSplit(x, 0, w);
       NullifySplit(x, 1);

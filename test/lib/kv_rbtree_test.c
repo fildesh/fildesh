@@ -135,7 +135,7 @@ debugging_test()
   FildeshO* out = open_FildeshOF("/dev/stderr");
   FildeshKV map[1] = {DEFAULT_FildeshKV_BROADLEAF_RBTREE};
 
-  puts_FildeshO(out, "BEGIN TEST");
+  puts_FildeshO(out, "BEGIN TEST\n");
 
   ensure_FildeshKV(map, "\x01", 1);
   print_debug_FildeshKV_RBTREE(map, out); putc_FildeshO(out, '\n'); flush_FildeshO(out);

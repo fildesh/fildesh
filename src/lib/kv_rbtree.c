@@ -41,6 +41,17 @@ first_fixup_insert(FildeshKV* map, size_t x)
     w = x;
     x = JointOf(x);
   }
+  else if (false && IsLeaf(x)) {
+    size_t b = JointOf(x);
+    w = FildeshKV_NULL_INDEX;
+    if (!Nullish(b)) {
+      size_t y = SplitOf(b, 1-SideOf(x));
+      if (!RedColorOf(y)) {
+        ColorBlack(x);
+        return FildeshKV_NULL_INDEX;
+      }
+    }
+  }
   else {
     w = SplitOf(x, 0);
     if (Nullish(w)) {
