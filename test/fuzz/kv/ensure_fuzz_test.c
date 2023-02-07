@@ -2,7 +2,7 @@
  *
  * We allow the keys and values to have zero-length.
  **/
-#include "fuzz_common.h"
+#include "test/fuzz/fuzz_common.h"
 
 #include <assert.h>
 #include <stdlib.h>

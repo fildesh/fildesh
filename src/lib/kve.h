@@ -237,6 +237,8 @@ move_splitkv_to_empty_FildeshKVE(FildeshKVE* dst, FildeshKVE* src);
 bool
 maybe_fuse_FildeshKVE(FildeshKVE* dst, unsigned side, const FildeshKVE* src);
 void
+fuse_FildeshKVE(FildeshKVE* dst, unsigned side, const FildeshKVE* src);
+void
 erase_k_FildeshKVE(FildeshKVE* e);
 void
 erase_splitk_FildeshKVE(FildeshKVE* e);

@@ -41,17 +41,6 @@ first_fixup_insert(FildeshKV* map, size_t x)
     w = x;
     x = JointOf(x);
   }
-  else if (false && IsLeaf(x)) {
-    size_t b = JointOf(x);
-    w = FildeshKV_NULL_INDEX;
-    if (!Nullish(b)) {
-      size_t y = SplitOf(b, 1-SideOf(x));
-      if (!RedColorOf(y)) {
-        ColorBlack(x);
-        return FildeshKV_NULL_INDEX;
-      }
-    }
-  }
   else {
     w = SplitOf(x, 0);
     if (Nullish(w)) {
@@ -93,12 +82,104 @@ next_fixup_insert(FildeshKV* map, size_t x)
 
 static
   size_t
-fixup_insert(FildeshKV* map, size_t x, bool fusing)
+fixup_insert(FildeshKV* map, FildeshKV_id_t insertion_id)
 {
-  size_t insertion_index = x;
+  size_t x = insertion_id/2;
   size_t b;
   x = first_fixup_insert(map, x);
 
+  assert(IsLeaf(x));
+  b = next_fixup_insert(map, x);
+  if (!Nullish(b)) {
+    const bool bubbling_insertion = (insertion_id/2 == x);
+    unsigned b_side = SideOf(b);
+    size_t a = JointOf(b);
+    size_t c = SplitOf(a, 1-b_side);
+    /* Easy. Just flip the colors of a,b,c.
+     *     a#        a'+
+     *     / \        / \
+     *    +b  +c --> #b  #c
+     *    |          |
+     *  x'+y?      x'+y?
+     */
+    if (!Nullish(c)) {
+      ColorBlack(b);
+      ColorBlack(c);
+      ColorRed(a);
+      x = a;
+    }
+    else if (b_side == SideOf(x)) {
+      /* Case 1 in the loop will handle this.*/
+    }
+    else if (!IsBroadLeaf(x)) {
+      /* Case 2 in the loop will handle this.*/
+    }
+    else if (b_side == 0) {
+      /* Case 0.1 for leaf.
+       *    a#       y'+
+       *    /         / \
+       *  b+   -->  b#x a#
+       *    \
+       *    x+y
+       */
+      AssignJoint(x, JointOf(a));
+      LocalSwap(&x, &a);
+      {
+        FildeshKVE e = map->at[x];
+        erase_splitk_FildeshKVE(&e);
+        fuse_FildeshKVE(&map->at[b], 1, &e);
+      }
+      promote_splitk_FildeshKVE(&map->at[x]);
+      Join(x, 0, b);
+      ColorBlack(b);
+      Join(x, 1, a);
+      NullifySplit(a, 0);
+
+      if (bubbling_insertion) {
+        if ((insertion_id & 1) == 0) {
+          insertion_id = 2*b+1;
+        }
+        else {
+          insertion_id = 2*x;
+        }
+      }
+    }
+    else {
+      /* Case 0.2 for leaf.
+       *  a'#           y'+
+       *     \           / \
+       *      +b  -->  a#x  #b
+       *     /
+       *   x+y
+       */
+      AssignJoint(x, JointOf(a));
+      LocalSwap(&x, &a);
+      {
+        FildeshKVE e = map->at[x];
+        erase_splitk_FildeshKVE(&e);
+        fuse_FildeshKVE(&map->at[a], 1, &e);
+      }
+      promote_splitk_FildeshKVE(&map->at[x]);
+      Join(x, 0, a);
+      Join(x, 1, b);
+      ColorBlack(b);
+      NullifySplit(b, 0);
+
+      if (bubbling_insertion) {
+        if ((insertion_id & 1) == 0) {
+          insertion_id = 2*a+1;
+        }
+        else {
+          insertion_id = 2*x;
+        }
+      }
+    }
+  }
+
+  /* Loop invariant is:
+   * - The {x} side of {b} has as many black nodes as the other side.
+   * - However, {x} and its parent {b} are both red, so we have to bubble up.
+   */
   for (b = next_fixup_insert(map, x); !Nullish(b);
        b = next_fixup_insert(map, x))
   {
@@ -111,18 +192,17 @@ fixup_insert(FildeshKV* map, size_t x, bool fusing)
      *    2#   +'x     1* #2 3# #4
      *        / \
      *      3#   #4
+     *
+     * Note: For broadleaf trees, there's no opportunity to fuse here.
      */
     if (SideOf(x) == SideOf(b)) {
-      const bool bubbling_insertion = (insertion_index == b);
+      const bool bubbling_insertion = (insertion_id/2 == b);
       fildesh_log_trace("Case 1.");
       ColorBlack(x);
       RotateUp(&b);
-      if (fusing) {
-        maybe_fuse_FildeshKV_BROADLEAF_RBTREE(map, SplitOf(b, 1-SideOf(x)));
-      }
       x = b;
       if (bubbling_insertion) {
-        insertion_index = b;
+        insertion_id = 2*b;
       }
     }
     /* Case 2.                        (continue)
@@ -134,23 +214,21 @@ fixup_insert(FildeshKV* map, size_t x, bool fusing)
      *   1#   +'x       b#   #3       1# #2 3# *4
      *       / \        / \
      *     2#   #3    1#   #2
+     *
+     * Note: For broadleaf trees, there's no opportunity to fuse here.
      */
     else {
-      const bool bubbling_insertion = (insertion_index == x);
+      const bool bubbling_insertion = (insertion_id/2 == x);
       fildesh_log_trace("Case 2.");
       ColorBlack(b);
       RotateUp(&x);
       RotateUp(&x);
-      if (fusing) {
-        maybe_fuse_FildeshKV_BROADLEAF_RBTREE(map, SplitOf(x, 0));
-        maybe_fuse_FildeshKV_BROADLEAF_RBTREE(map, SplitOf(x, 1));
-      }
       if (bubbling_insertion) {
-        insertion_index = x;
+        insertion_id = (2 * x) | (insertion_id & 1);
       }
     }
   }
-  return insertion_index;
+  return insertion_id;
 }
 
   FildeshKV_id_t
@@ -159,11 +237,9 @@ ensure_FildeshKV_RBTREE(
 {
   const size_t old_freelist_head = map->freelist_head;
   FildeshKV_id_t x_id = ensure_FildeshKV_BSTREE(map, k, ksize, alloc);
-  size_t x = x_id/2;
   assert((x_id & 1) == 0);
   if (old_freelist_head != map->freelist_head) {
-    x = fixup_insert(map, x, /*fusing=*/ false);
-    x_id = 2*x;
+    x_id = fixup_insert(map, x_id);
   }
   return x_id;
 }
@@ -174,10 +250,8 @@ ensure_FildeshKV_BROADLEAF_RBTREE(
 {
   const size_t old_freelist_head = map->freelist_head;
   FildeshKV_id_t x_id = ensure_FildeshKV_BROADLEAF_BSTREE(map, k, ksize, alloc);
-  size_t x = x_id/2;
   if (old_freelist_head != map->freelist_head) {
-    x = fixup_insert(map, x, /*fusing=*/ true);
-    x_id = (2*x) | (x_id & 1);
+    x_id = fixup_insert(map, x_id);
   }
   return x_id;
 }
@@ -197,10 +271,16 @@ fixup_remove(FildeshKV* map, size_t y, unsigned side, size_t removal_index)
     return removal_index;
   }
 
+  /* Loop invariant is:
+   * - The {y} side of {b} is short by 1 black node.
+   * - However, {y} is black, so we have to bubble up and fill the gap.
+   * - Note that {y} may be a dummy node and not actually exist.
+   */
   while (!IsRoot(y)) {
     size_t b, a, w, x;
     b = JointOf(y);
     a = SplitOf(b, 1-side);
+    assert(!Nullish(a));
     if (IsBroadLeaf(a)) {
       if (fixup_remove_case_0_FildeshKV_BROADLEAF_RBTREE(map, b, a)) {
         break;

@@ -1,4 +1,4 @@
-#include "kv_fuzz_common.h"
+#include "test/fuzz/kv/fuzz_common.h"
 #include "test/lib/kv_rbtree_validation.h"
 
   int
@@ -12,10 +12,11 @@ LLVMFuzzerTestOneInput(const uint8_t data[], size_t size) {
     print_debug_FildeshKV_RBTREE(map, out);
     putc_FildeshO(out, '\n');
     close_FildeshO(out);
-    validate_FildeshKV_RBTREE(map);
   }
-  for (i = 1; i < size; i+=2) {
-    if (data[i] == 0xff) {break;}
+  validate_FildeshKV_RBTREE(map);
+  for (i = 0; i < size; ++i) {
+    if (data[i] == 0) {break;}
+    if (data[i] >= 64) {break;}
     if (i == size-1) {
       validate_growing_FildeshKV_BROADLEAF_RBTREE(map);
     }

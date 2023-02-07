@@ -18,7 +18,7 @@ joining_add_FildeshKV_BSTREE(
   }
   else {
     AssignSplit(a, SideOf(x), b);
-    fildesh_log_trace("reggo join");
+    fildesh_log_trace("join");
   }
   AssignJoint(b, a);
   AssignSplit(b, 1-side, x);
@@ -36,45 +36,41 @@ taking_add_FildeshKV_BSTREE(
   map->at[x] = map->at[b];
   fildesh_log_trace("taking");
 
-  AssignJoint(x, b);
   if (side == 0) {
+    fildesh_log_trace("side0");
     erase_splitk_FildeshKVE(&map->at[x]);
     populate_demote_FildeshKVE(&map->at[x], ksize, k, 1, 0, alloc);
     promote_splitk_FildeshKVE(&map->at[b]);
   }
   else {
-    promote_splitk_FildeshKVE(&map->at[x]);
-    populate_splitkv_FildeshKVE(&map->at[x], ksize, k, 1, 0, alloc);
+    fildesh_log_trace("side1");
     erase_splitk_FildeshKVE(&map->at[b]);
+    populate_empty_FildeshKVE(&map->at[b], ksize, k, 1, 0, alloc);
   }
-  AssignSplit(b, side, x);
-  NullifySplit(b, 1-side);
-  return 2*x+side;
+  AssignJoint(x, b);
+  AssignSplit(b, 0, x);
+  if (side == 0) {
+    return 2*x;
+  }
+  return 2*b;
 }
 
 static
   FildeshKV_id_t
 splitting_add_FildeshKV_BSTREE(
-    FildeshKV* map, size_t b, unsigned side,
+    FildeshKV* map, size_t b,
     const void* k, size_t ksize, FildeshAlloc* alloc)
 {
   size_t x = empty_add_FildeshKV_BSTREE(map);
   map->at[x] = map->at[b];
   fildesh_log_trace("splitting");
 
+  erase_splitk_FildeshKVE(&map->at[x]);
+  populate_splitkv_FildeshKVE(&map->at[x], ksize, k, 1, 0, alloc);
+  promote_splitk_FildeshKVE(&map->at[b]);
   AssignJoint(x, b);
-  if (side == 0) {
-    erase_splitk_FildeshKVE(&map->at[x]);
-    populate_splitkv_FildeshKVE(&map->at[x], ksize, k, 1, 0, alloc);
-    promote_splitk_FildeshKVE(&map->at[b]);
-  }
-  else {
-    promote_splitk_FildeshKVE(&map->at[x]);
-    populate_demote_FildeshKVE(&map->at[x], ksize, k, 1, 0, alloc);
-    erase_splitk_FildeshKVE(&map->at[b]);
-  }
-  AssignSplit(b, side, x);
-  return 2*x+(1-side);
+  AssignSplit(b, 0, x);
+  return 2*x+1;
 }
 
 static
@@ -211,7 +207,7 @@ ensure_FildeshKV_BROADLEAF_BSTREE(
           return taking_add_FildeshKV_BSTREE(map, y, 1, k, ksize, alloc);
         }
       }
-      return splitting_add_FildeshKV_BSTREE(map, y, side, k, ksize, alloc);
+      return splitting_add_FildeshKV_BSTREE(map, y, k, ksize, alloc);
     }
     side = (si < 0 ? 0 : 1);
     a = y;

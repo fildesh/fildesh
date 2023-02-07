@@ -185,8 +185,8 @@ try_edge_split(FildeshKVE* e, size_t ksize, size_t splitksize, size_t splitvsize
 
 static void edge_split_test() {
   FildeshKVE e;
-  const size_t max_ksize = ((size_t)1 << (sizeof(size_t)*CHAR_BIT/2-2)) - 1;
-  const size_t max_splitksize = ((size_t)1 << (sizeof(size_t)*CHAR_BIT/2-1)) - 1;
+  const size_t max_ksize = ((size_t)1 << (sizeof(size_t)*CHAR_BIT/2-1)) - 1;
+  const size_t max_splitksize = ((size_t)1 << (sizeof(size_t)*CHAR_BIT/2-2)) - 1;
 
   /* First key's size is just too big.*/
   assert(!try_edge_split(&e, high_size_bit(CHAR_BIT-1), 1, 0));

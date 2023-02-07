@@ -3,8 +3,8 @@
 #include <assert.h>
 #include <string.h>
 
-#define lo_lgksize (sizeof(size_t)*CHAR_BIT/2-2)
-#define hi_lgsplitksize (sizeof(size_t)*CHAR_BIT/2-1)
+#define lo_lgksize (sizeof(size_t)*CHAR_BIT/2-1)
+#define hi_lgsplitksize (sizeof(size_t)*CHAR_BIT/2-2)
 
 static size_t lo_mask_ksize = ((size_t)1 << lo_lgksize) - 1;
 static size_t hi_mask_splitksize = (((size_t)1 << hi_lgsplitksize) - 1) << lo_lgksize;
@@ -249,6 +249,14 @@ maybe_fuse_FildeshKVE(FildeshKVE* dst, unsigned side, const FildeshKVE* src)
 }
 
   void
+fuse_FildeshKVE(FildeshKVE* dst, unsigned side, const FildeshKVE* src)
+{
+  if (!maybe_fuse_FildeshKVE(dst, side, src)) {
+    assert(false);
+  }
+}
+
+  void
 erase_k_FildeshKVE(FildeshKVE* e)
 {
   assert(kexists_FildeshKVE(e));
@@ -295,6 +303,7 @@ cmp_k_FildeshKVE(const FildeshKVE* e, size_t keysize, const void* key)
   if (kdirect_FildeshKVE_joint(e->joint, actual_size)) {
     return memcmp(direct_k_FildeshKVE_kv(e->kv), key, actual_size);
   }
+  if (key == (const void*)e->kv[0]) {return 0;}
   return memcmp(indirect_k_FildeshKVE_kv(e->kv), key, actual_size);
 }
 
@@ -308,5 +317,6 @@ cmp_splitk_FildeshKVE(const FildeshKVE* e, size_t keysize, const void* key)
   if (splitkdirect_FildeshKVE_size(e->size, actual_size)) {
     return memcmp(direct_splitk_FildeshKVE_split(e->split), key, actual_size);
   }
+  if (key == (const void*)e->split[0]) {return 0;}
   return memcmp(indirect_splitk_FildeshKVE_split(e->split), key, actual_size);
 }
