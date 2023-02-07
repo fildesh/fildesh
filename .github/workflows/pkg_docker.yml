@@ -11,7 +11,7 @@ env:
 
 jobs:
   build_and_push:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     permissions:
       contents: read
       packages: write
@@ -39,7 +39,7 @@ jobs:
         password: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Build and Push Image
-      uses: docker/build-push-action@v3
+      uses: docker/build-push-action@v4
       with:
         context: bazel-bin/
         file: pkg/docker/Dockerfile
