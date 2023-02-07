@@ -84,7 +84,6 @@ static void check_setget(size_t ksize, size_t vsize,
   char v[sizeof(uintptr_t)+1];
   char splitk[sizeof(uintptr_t)*2+1+256];
   char splitv[sizeof(uintptr_t)+1];
-  bool populated_splitkv;
   unsigned i;
   FildeshKVE e = DEFAULT_FildeshKVE;
 
@@ -114,10 +113,8 @@ static void check_setget(size_t ksize, size_t vsize,
     return;
   }
 
-  populated_splitkv =
-    populate_splitkv_FildeshKVE(&e, splitksize, splitk, splitvsize, splitv, NULL);
-  /* It actually populated data.*/
-  assert(populated_splitkv);
+  /* Populate data (function asserts success).*/
+  populate_splitkv_FildeshKVE(&e, splitksize, splitk, splitvsize, splitv, NULL);
   /* Size is preserved.*/
   assert(ksize == ksize_FildeshKVE_size(e.size));
   assert(splitksize == splitksize_FildeshKVE_size(e.size));
@@ -164,7 +161,8 @@ try_edge_split(FildeshKVE* e, size_t ksize, size_t splitksize, size_t splitvsize
   bool populated;
   *e = default_FildeshKVE();
   populate_empty_FildeshKVE(e, ksize, data, 1, data, NULL);
-  populated = populate_splitkv_FildeshKVE(e, splitksize, data, splitvsize, data, NULL);
+  populated = maybe_populate_splitkv_FildeshKVE(
+      e, splitksize, data, splitvsize, data, NULL);
 
   assert(ksize == ksize_FildeshKVE_size(e->size));
   assert(value_FildeshKVE(e));

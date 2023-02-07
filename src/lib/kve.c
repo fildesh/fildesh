@@ -134,10 +134,11 @@ populate_splitk_FildeshKVE_size(size_t* p_size, size_t ksize, bool vexists)
 }
 
   bool
-populate_splitkv_FildeshKVE(FildeshKVE* e,
-                            size_t ksize, const void* k,
-                            size_t vsize, const void* v,
-                            FildeshAlloc* alloc)
+maybe_populate_splitkv_FildeshKVE(
+    FildeshKVE* e,
+    size_t ksize, const void* k,
+    size_t vsize, const void* v,
+    FildeshAlloc* alloc)
 {
   const bool vexists = (vsize > 0);
   bool kdirect;
@@ -169,10 +170,11 @@ populate_splitkv_FildeshKVE(FildeshKVE* e,
 }
 
   bool
-populate_demote_FildeshKVE(FildeshKVE* e,
-                           size_t ksize, const void* k,
-                           size_t vsize, const void* v,
-                           FildeshAlloc* alloc)
+maybe_populate_demote_FildeshKVE(
+    FildeshKVE* e,
+    size_t ksize, const void* k,
+    size_t vsize, const void* v,
+    FildeshAlloc* alloc)
 {
   size_t e_size = ksize;
   const bool vexists = (0 != get_vexists_bit_FildeshKVE_joint(e->joint));
@@ -186,6 +188,30 @@ populate_demote_FildeshKVE(FildeshKVE* e,
   populate_empty_FildeshKVE(e, ksize, k, vsize, v, alloc);
   e->size = e_size;
   return true;
+}
+
+  void
+populate_splitkv_FildeshKVE(
+    FildeshKVE* e,
+    size_t ksize, const void* k,
+    size_t vsize, const void* v,
+    FildeshAlloc* alloc)
+{
+  if (!maybe_populate_splitkv_FildeshKVE(e, ksize, k, vsize, v, alloc)) {
+    assert(false);
+  }
+}
+
+  void
+populate_demote_FildeshKVE(
+    FildeshKVE* e,
+    size_t ksize, const void* k,
+    size_t vsize, const void* v,
+    FildeshAlloc* alloc)
+{
+  if (!maybe_populate_demote_FildeshKVE(e, ksize, k, vsize, v, alloc)) {
+    assert(false);
+  }
 }
 
   void

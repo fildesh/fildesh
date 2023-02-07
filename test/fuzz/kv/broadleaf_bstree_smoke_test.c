@@ -61,4 +61,10 @@ NEXT_FUZZ_DATA
  */
 { 202, 4, 3, 2, 203, 5, 1, 204, 201,
 }
+NEXT_FUZZ_DATA
+/* Coverage in kv_broadleaf.c maybe_shifty_add():
+ *  ... return
+ */
+{ 1,2,3,4,1,201,
+}
 END_FUZZ_DATA

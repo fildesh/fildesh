@@ -221,11 +221,23 @@ populate_empty_FildeshKVE(FildeshKVE* e,
                           size_t vsize, const void* v,
                           FildeshAlloc* alloc);
 bool
+maybe_populate_splitkv_FildeshKVE(
+    FildeshKVE* e,
+    size_t ksize, const void* k,
+    size_t vsize, const void* v,
+    FildeshAlloc* alloc);
+bool
+maybe_populate_demote_FildeshKVE(
+    FildeshKVE* e,
+    size_t ksize, const void* k,
+    size_t vsize, const void* v,
+    FildeshAlloc* alloc);
+void
 populate_splitkv_FildeshKVE(FildeshKVE* e,
                             size_t ksize, const void* k,
                             size_t vsize, const void* v,
                             FildeshAlloc* alloc);
-bool
+void
 populate_demote_FildeshKVE(FildeshKVE* e,
                            size_t ksize, const void* k,
                            size_t vsize, const void* v,

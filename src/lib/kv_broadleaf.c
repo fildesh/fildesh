@@ -83,13 +83,13 @@ leaf_add_FildeshKV_BSTREE(
   if (!Nullish(a) && Nullish(SplitOf(a, 1-side))) {
     if (side == 0) {
       fildesh_log_trace("leaf0");
-      if (populate_demote_FildeshKVE(&map->at[a], ksize, k, 1, 0, alloc)) {
+      if (maybe_populate_demote_FildeshKVE(&map->at[a], ksize, k, 1, 0, alloc)) {
         return 2*a;
       }
     }
     else {
       fildesh_log_trace("leaf1");
-      if (populate_splitkv_FildeshKVE(&map->at[a], ksize, k, 1, 0, alloc)) {
+      if (maybe_populate_splitkv_FildeshKVE(&map->at[a], ksize, k, 1, 0, alloc)) {
         return 2*a+1;
       }
     }
@@ -157,12 +157,10 @@ maybe_shifty_add(
   if (si == 0) {return 2*y;}
 
   if (si < 0) {
-    if (populate_demote_FildeshKVE(&map->at[y], ksize, k, 1, 0, alloc)) {
-      return 2*y;
-    }
-    return leaf_add_FildeshKV_BSTREE(map, y, 0, k, ksize, alloc);
+    populate_demote_FildeshKVE(&map->at[y], ksize, k, 1, 0, alloc);
+    return 2*y;
   }
-  if (populate_splitkv_FildeshKVE(&map->at[y], ksize, k, 1, 0, alloc)) {
+  if (maybe_populate_splitkv_FildeshKVE(&map->at[y], ksize, k, 1, 0, alloc)) {
     return 2*y+1;
   }
   return leaf_add_FildeshKV_BSTREE(map, y, 1, k, ksize, alloc);
