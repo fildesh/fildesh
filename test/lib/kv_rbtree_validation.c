@@ -120,7 +120,6 @@ validate_growing_FildeshKV_BROADLEAF_RBTREE(const FildeshKV* map)
 {
   size_t id_count = 0;
   size_t node_count = 0;
-  size_t extra_count = 2;
   FildeshKV_id_t id;
   for (id = first_FildeshKV(map);
        !fildesh_nullid(id);
@@ -141,15 +140,12 @@ validate_growing_FildeshKV_BROADLEAF_RBTREE(const FildeshKV* map)
         assert(IsBroadLeaf(w));
       }
       else {
-        extra_count += 1;
-        /* assert(IsBroadLeaf(w) || !IsLeaf(w)); */
+        assert(IsBroadLeaf(w) || !IsLeaf(w));
       }
     }
   }
   /* fildesh_log_errorf("%u %u", (unsigned)node_count, (unsigned)id_count); */
   /* Guarantee 25% compression.*/
-  /* assert(node_count <= id_count - id_count/4 + extra_count); */
-  assert(node_count <= id_count - id_count/4 + 3);
-  assert(extra_count <= 10);
+  assert(node_count <= id_count - id_count/4 + 2);
 }
 

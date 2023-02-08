@@ -82,7 +82,7 @@ next_fixup_insert(FildeshKV* map, size_t x)
 
 static
   size_t
-fixup_insert(FildeshKV* map, FildeshKV_id_t insertion_id)
+fixup_insert(FildeshKV* map, FildeshKV_id_t insertion_id, bool fusing)
 {
   size_t x = insertion_id/2;
   size_t b;
@@ -115,6 +115,7 @@ fixup_insert(FildeshKV* map, FildeshKV_id_t insertion_id)
       /* Case 2 in the loop will handle this.*/
     }
     else if (b_side == 0) {
+      fildesh_log_trace("Case 0.1.");
       /* Case 0.1 for leaf.
        *    a#       y'+
        *    /         / \
@@ -145,6 +146,7 @@ fixup_insert(FildeshKV* map, FildeshKV_id_t insertion_id)
       }
     }
     else {
+      fildesh_log_trace("Case 0.2.");
       /* Case 0.2 for leaf.
        *  a'#           y'+
        *     \           / \
@@ -183,6 +185,7 @@ fixup_insert(FildeshKV* map, FildeshKV_id_t insertion_id)
   for (b = next_fixup_insert(map, x); !Nullish(b);
        b = next_fixup_insert(map, x))
   {
+    const unsigned b_side = SideOf(b);
     /* Case 1.         (continue)
      *
      *    a#              b'+
@@ -192,10 +195,8 @@ fixup_insert(FildeshKV* map, FildeshKV_id_t insertion_id)
      *    2#   +'x     1* #2 3# #4
      *        / \
      *      3#   #4
-     *
-     * Note: For broadleaf trees, there's no opportunity to fuse here.
      */
-    if (SideOf(x) == SideOf(b)) {
+    if (SideOf(x) == b_side) {
       const bool bubbling_insertion = (insertion_id/2 == b);
       fildesh_log_trace("Case 1.");
       ColorBlack(x);
@@ -214,8 +215,6 @@ fixup_insert(FildeshKV* map, FildeshKV_id_t insertion_id)
      *   1#   +'x       b#   #3       1# #2 3# *4
      *       / \        / \
      *     2#   #3    1#   #2
-     *
-     * Note: For broadleaf trees, there's no opportunity to fuse here.
      */
     else {
       const bool bubbling_insertion = (insertion_id/2 == x);
@@ -225,6 +224,17 @@ fixup_insert(FildeshKV* map, FildeshKV_id_t insertion_id)
       RotateUp(&x);
       if (bubbling_insertion) {
         insertion_id = (2 * x) | (insertion_id & 1);
+      }
+    }
+
+    if (fusing) {
+      FildeshKV_id_t id = maybe_redden_fuse_FildeshKV_BROADLEAF_RBTREE(
+          map, SplitOf(x, 1-b_side), insertion_id);
+      if (!fildesh_nullid(id)) {
+        insertion_id = id;
+        ColorBlack(x);
+        ColorRed(SplitOf(x, b_side));
+        break;
       }
     }
   }
@@ -239,7 +249,7 @@ ensure_FildeshKV_RBTREE(
   FildeshKV_id_t x_id = ensure_FildeshKV_BSTREE(map, k, ksize, alloc);
   assert((x_id & 1) == 0);
   if (old_freelist_head != map->freelist_head) {
-    x_id = fixup_insert(map, x_id);
+    x_id = fixup_insert(map, x_id, /*fusing=*/ false);
   }
   return x_id;
 }
@@ -251,7 +261,7 @@ ensure_FildeshKV_BROADLEAF_RBTREE(
   const size_t old_freelist_head = map->freelist_head;
   FildeshKV_id_t x_id = ensure_FildeshKV_BROADLEAF_BSTREE(map, k, ksize, alloc);
   if (old_freelist_head != map->freelist_head) {
-    x_id = fixup_insert(map, x_id);
+    x_id = fixup_insert(map, x_id, /*fusing=*/ true);
   }
   return x_id;
 }

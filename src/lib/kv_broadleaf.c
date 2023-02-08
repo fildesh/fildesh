@@ -215,6 +215,36 @@ ensure_FildeshKV_BROADLEAF_BSTREE(
   return leaf_add_FildeshKV_BSTREE(map, a, side, k, ksize, alloc);
 }
 
+  FildeshKV_id_t
+maybe_redden_fuse_FildeshKV_BROADLEAF_RBTREE(
+    FildeshKV* map, size_t b, FildeshKV_id_t insertion_id)
+{
+  const size_t w = SplitOf(b, 0);
+  size_t x = SplitOf(b, 1);
+  assert(!RedColorOf(b));
+  if (Nullish(w) || Nullish(x) ||
+      IsBroadLeaf(w) || IsBroadLeaf(x) ||
+      !IsLeaf(w) || !IsLeaf(x) ||
+      !maybe_fuse_FildeshKVE(&map->at[w], 1, &map->at[b]))
+  {
+    return FildeshKV_NULL_ID;
+  }
+
+  if (insertion_id/2 == b) {
+    insertion_id = 2*w+1;
+  }
+  else if (insertion_id/2 == x) {
+    insertion_id = 2*b;
+  }
+  ColorRed(w);
+  LocalSwap(&b, &x);
+  AssignJoint(x, JointOf(b));
+  AssignSplit(x, 0, w);
+  NullifySplit(x, 1);
+  reclaim_element_FildeshKV_SINGLE_LIST(map, b);
+  return insertion_id;
+}
+
   void
 maybe_fuse_FildeshKV_BROADLEAF_RBTREE(FildeshKV* map, size_t b)
 {

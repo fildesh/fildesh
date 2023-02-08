@@ -183,5 +183,29 @@ NEXT_FUZZ_DATA
 }
 NEXT_FUZZ_DATA
 {0x10,0x30,0x8,0x35,0x22,0xff}
+NEXT_FUZZ_DATA
+/* Finds 2 leaves.*/
+{ 12,
+  14,
+  13,
+  15,
+  3,
+  2,
+  11,
+  8,
+  1,
+  9,
+  10,
+  4,
+  6,
+  7,
+  5,
+}
+NEXT_FUZZ_DATA
+{ 4,3,1,201,2,202,5,203,204,
+}
+NEXT_FUZZ_DATA
 #endif
+{ 3, 203, 1, 2, 202, 204, 201, 1,0, 4
+}
 END_FUZZ_DATA

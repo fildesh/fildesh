@@ -5,6 +5,9 @@ BEGIN_EXTERN_C
 FildeshKV_id_t
 ensure_FildeshKV_BROADLEAF_BSTREE(FildeshKV*, const void*, size_t, FildeshAlloc*);
 
+FildeshKV_id_t
+maybe_redden_fuse_FildeshKV_BROADLEAF_RBTREE(
+    FildeshKV* map, size_t b, FildeshKV_id_t insertion_id);
 void
 maybe_fuse_FildeshKV_BROADLEAF_RBTREE(FildeshKV* map, size_t b);
 
