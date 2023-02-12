@@ -3,40 +3,29 @@
 #define NULL_VALUE 255
 
 BEGIN_FUZZ_DATA
-/* Map 1->10, remove 1, then map 2->20.*/
-{ 2, 20,
-  1, 10,
+/* Add 2, then add 1.*/
+{ 2, 1,
 }
 NEXT_FUZZ_DATA
-/* Map 3->30, 1->10, 2->20.*/
-{ 3, 30,
-  1, 10,
-  2, 20,
+/* Add 3, 1, 2.*/
+{ 3, 1, 2,
 }
 NEXT_FUZZ_DATA
-/* Map 1->10, 2->20, 3->30.*/
-{ 1, 10,
-  2, 20,
-  3, 30,
+/* Add 1, 2, 3.*/
+{ 1, 2, 3,
 }
 NEXT_FUZZ_DATA
-/* Map 1->10, then remove 1->10.*/
-{ 1, 10,
-  1, NULL_VALUE,
+/* Add 1, then remove it.*/
+{ 1, 1,0,
 }
 NEXT_FUZZ_DATA
 /* Remove root of balanced tree of size 3, then add another value.*/
-{ 2, 20,
-  1, 10,
-  3, 30,
-  2, NULL_VALUE,
-  4, 40,
+{ 2, 1, 3,
+  2,0,
+  4,
 }
 NEXT_FUZZ_DATA
-{ 3, 30,
-  2, 20,
-  1, 10,
-  4, 40,
-  4, NULL_VALUE,
+{ 3, 2, 1, 4,
+  4,0,
 }
 END_FUZZ_DATA

@@ -18,22 +18,50 @@ static void add_remove_in_order_test()
 {
   FildeshKV map[1] = {DEFAULT_FildeshKV_SINGLE_LIST};
   const unsigned n = 10;
+  const unsigned values[] = {
+    200, 201, 202, 203, 204, 205, 206, 207, 208, 209,
+  };
   unsigned i;
   for (i = 0; i < n; ++i) {
     const unsigned k = i;
-    unsigned v = i+10;
     const FildeshKV_id_t id = ensure_FildeshKV(map, &k, sizeof(k));
-    unsigned* p;
+    const unsigned* p;
     assert(!fildesh_nullid(id));
-    assign_at_FildeshKV(map, id, &v, sizeof(v));
-    p = (unsigned*)value_at_FildeshKV(map, id);
-    assert(*p == v);
-    assert(p != &v);
+    assign_at_FildeshKV(map, id, &values[i], sizeof(values[0]));
+    p = (const unsigned*)value_at_FildeshKV(map, id);
+    assert(*p == values[i]);
+    assert(p != &values[i]);
+
+    assign_memref_at_FildeshKV(map, id, &values[i]);
+    p = (const unsigned*)value_at_FildeshKV(map, id);
+    assert(p == &values[i]);
+
     print_whole_thing(map);
   }
+
+  /* Ensure it is stored in the order I expect.
+   * If this changes, smoke tests should too.
+   */
+  {
+    const unsigned expected_values[] = {
+      208, 209,
+      206, 207,
+      204, 205,
+      202, 203,
+      200, 201,
+    };
+    FildeshKV_id_t id = first_FildeshKV(map);
+    for (i = 0; i < n; ++i) {
+      assert(!fildesh_nullid(id));
+      assert(expected_values[i] == *(unsigned*)value_at_FildeshKV(map, id));
+      id = next_at_FildeshKV(map, id);
+    }
+    assert(fildesh_nullid(id));
+  }
+
   for (i = 0; i < n; ++i) {
     const unsigned k = i;
-    const unsigned expected_v = i+10;
+    const unsigned expected_v = i+200;
     const FildeshKV_id_t id = lookup_FildeshKV(map, &k, sizeof(k));
     unsigned* p;
     assert(!fildesh_nullid(id));

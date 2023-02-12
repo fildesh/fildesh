@@ -9,14 +9,14 @@ NEXT_FUZZ_DATA
 { 1, 90, 90,
 }
 NEXT_FUZZ_DATA
-/* Replace splitvalue with pointer (when sizeof(void*) <= 8).*/
+/* Replace value with pointer (when sizeof(void*) <= 8).*/
 { 1,
   1,0, 1,0,
   2,0, 1,0,
   2,0, 1,2,3,4,5,6,7,8,9,0,
 }
 NEXT_FUZZ_DATA
-/* Use a pointer for the splitkey (when sizeof(void*) <= 8).*/
+/* Use a pointer for the key (when sizeof(void*) <= 8).*/
 { 1,
   11,0, 1,0,
   1,2,3,4,5,6,7,8,9,0, 1,0,

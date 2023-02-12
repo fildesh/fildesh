@@ -5,7 +5,7 @@
 LLVMFuzzerTestOneInput(const uint8_t data[], size_t size) {
   FildeshKV map[1] = {DEFAULT_FildeshKV_RBTREE};
   int istat = kv_fuzz_common(map, data, size);
-  assert(validate_FildeshKV_RBTREE(map));
+  validate_FildeshKV_RBTREE(map);
   close_FildeshKV(map);
   return istat;
 }

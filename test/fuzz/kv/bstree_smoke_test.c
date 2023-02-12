@@ -1,22 +1,17 @@
 #include "test/fuzz/smoke_common.h"
 
-#define NULL_VALUE 255
-
 BEGIN_FUZZ_DATA
-/* Map 1->10, remove 1, then map 2->20.*/
-{ 2, 20,
-  1, 10,
+/* Add 1, remove 1, then add 2.*/
+{ 2,
+  1,
 }
 NEXT_FUZZ_DATA
-/* Map 1->10, then remove 1->10.*/
-{ 1, 10,
-  1, NULL_VALUE,
+/* Add 1, then remove 1.*/
+{ 1, 1,0,
 }
 NEXT_FUZZ_DATA
-/* Map 1->10, 2->20, then remove 1->10.*/
-{ 1, 10,
-  2, 20,
-  1, NULL_VALUE,
+/* Add 1, then add 2, then remove 1.*/
+{ 1, 2, 1,0,
 }
 NEXT_FUZZ_DATA
 /* Remove the root of linear tree, then remove leaf.
@@ -26,11 +21,7 @@ NEXT_FUZZ_DATA
  *     \
  *      3
  */
-{ 1, 10,
-  2, 20,
-  3, 30,
-  1, NULL_VALUE,
-  3, NULL_VALUE,
+{ 1, 2, 3, 1,0, 3,0,
 }
 NEXT_FUZZ_DATA
 /* Remove the root of this tree:
@@ -38,10 +29,7 @@ NEXT_FUZZ_DATA
  *   / \
  *  1   3
  */
-{ 2, 20,
-  1, 10,
-  3, 30,
-  2, NULL_VALUE,
+{ 2, 1, 3, 2,0,
 }
 NEXT_FUZZ_DATA
 /* Remove the root of this tree:
@@ -51,13 +39,9 @@ NEXT_FUZZ_DATA
  *   \     /
  *    2   4
  */
-{ 3, 30,
-  1, 10,
-  2, 20,
-  5, 50,
-  4, 40,
-  3, NULL_VALUE,
+{ 3, 1, 2, 5, 4, 3,0,
 }
+NEXT_FUZZ_DATA
 /* Remove node below the root of this tree:
  *        6
  *       /
@@ -67,13 +51,6 @@ NEXT_FUZZ_DATA
  *   \     /
  *    2   4
  */
-NEXT_FUZZ_DATA
-{ 6, 60,
-  3, 30,
-  1, 10,
-  2, 20,
-  5, 50,
-  4, 40,
-  3, NULL_VALUE,
+{ 6, 3, 1, 2, 5, 4, 3,0,
 }
 END_FUZZ_DATA

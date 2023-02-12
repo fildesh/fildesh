@@ -23,6 +23,9 @@ first_id_from_index(const FildeshKV* map, size_t x) {
   do {
     do {
       y = x;
+      if (IsBroadLeaf(y)) {
+        return 2*y;
+      }
       x = SplitOf(y, 0);
     } while (!Nullish(x));
     x = SplitOf(y, 1);
@@ -42,7 +45,7 @@ first_id_FildeshKV_BSTREE(const FildeshKV* map) {
 next_id_FildeshKV_BSTREE(const FildeshKV* map, FildeshKV_id_t id) {
   const size_t x = id/2;
   assert(!fildesh_nullid(id));
-  if (((id & 1) == 0) && splitkexists_FildeshKVE(&map->at[x])) {
+  if (((id & 1) == 0) && IsBroadLeaf(x)) {
     return id + 1;
   }
   if (!IsRoot(x)) {
@@ -63,8 +66,8 @@ lookup_FildeshKV_BSTREE(const FildeshKV* map, const void* k, size_t ksize)
   while (!Nullish(y)) {
     int si = - cmp_k_FildeshKVE(&map->at[y], ksize, k);
     if (si == 0) {return 2*y;}
-    if (splitkexists_FildeshKVE(&map->at[y])) {
-      if (0 == cmp_splitk_FildeshKVE(&map->at[y], ksize, k)) {
+    if (IsBroadLeaf(y)) {
+      if (si > 0 && 0 == cmp_splitk_FildeshKVE(&map->at[y], ksize, k)) {
         return 2*y+1;
       }
       return FildeshKV_NULL_ID;
@@ -94,17 +97,10 @@ ensure_FildeshKV_BSTREE(
     y = SplitOf(y, side);
   }
 
-  maybe_grow_FildeshKV_SINGLE_LIST(map);
-  x = map->freelist_head;
-  assert_trivial_joint(map->at[x].joint);
-  map->freelist_head = map->at[x].joint;
-  map->at[x] = default_FildeshKVE();
+  x = empty_add_FildeshKV_BSTREE(map);
   populate_empty_FildeshKVE(&map->at[x], ksize, k, 1, 0, alloc);
-
-  MaybeAssignSplit(a, side, x);
   AssignJoint(x, a);
-  NullifySplit(x, 0);
-  NullifySplit(x, 1);
+  MaybeAssignSplit(a, side, x);
   return 2*x;
 }
 
@@ -261,6 +257,7 @@ rotate_up_FildeshKV_BSTREE(FildeshKV* map, size_t* p_a)
   if (IsRoot(b)) {
     AssignJoint(a, FildeshKV_NULL_INDEX);
     LocalSwap(&b, &a);
+    *p_a = a;
     /* Update {a} and {b} outer neighbors (they don't change below).*/
     MaybeAssignJoint(SplitOf(a, side), a);
     MaybeAssignJoint(SplitOf(b, oside), b);
@@ -270,6 +267,5 @@ rotate_up_FildeshKV_BSTREE(FildeshKV* map, size_t* p_a)
   }
   Join(a, oside, b);
   Join(b, side, y);
-  *p_a = a;
 }
 
