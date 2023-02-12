@@ -1,4 +1,4 @@
-#include "smoke_common.h"
+#include "test/fuzz/smoke_common.h"
 
 BEGIN_FUZZ_DATA
 /* A zero-length key with a 1-length value.*/

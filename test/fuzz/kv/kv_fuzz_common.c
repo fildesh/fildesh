@@ -4,7 +4,7 @@
  * This approach gives better coverage, but can only be used when testing the
  * `ensure` function, not the `replace` function.
  **/
-#include "fuzz_common.h"
+#include "kv_fuzz_common.h"
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
