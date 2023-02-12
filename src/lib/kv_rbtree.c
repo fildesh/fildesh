@@ -1,14 +1,5 @@
 #include "kv_bstree.h"
 
-#define ColorBlack(x)  set0_red_bit_FildeshKVE(&map->at[x])
-#define ColorRed(x)  set1_red_bit_FildeshKVE(&map->at[x])
-static inline void assign_color(FildeshKV* map, size_t x, bool c) {
-  if (c) {ColorRed(x);}
-  else   {ColorBlack(x);}
-}
-#define AssignColor(x, c)  assign_color(map, x, c)
-#define RotateUp(p_a)  rotate_up_FildeshKV_BSTREE(map, p_a)
-
 
 static FildeshKV_id_t ensure_FildeshKV_RBTREE(FildeshKV*, const void*, size_t, FildeshAlloc*);
 static void remove_FildeshKV_RBTREE(FildeshKV*, FildeshKV_id_t);
@@ -35,7 +26,12 @@ fixup_insert(FildeshKV* map, size_t x)
 {
   size_t insertion_index = x;
   bool bubbling_insertion = true;
-  while (1) {
+
+  /* Loop invariant is:
+   * - The {x} side of {b} has as many black nodes as the other side.
+   * - However, {x} and its parent {b} are both red, so we have to bubble up.
+   */
+  while (true) {
     size_t b;
 
     /* {x} is root, just set to black!*/
@@ -58,7 +54,7 @@ fixup_insert(FildeshKV* map, size_t x)
      *    / \              / \
      *  1*   +b   -->    a#   #x
      *      / \          /|   |\
-     *    2#   +'x     w* #2 3# #4
+     *    2#   +'x     1* #2 3# #4
      *        / \
      *      3#   #4
      */
@@ -99,10 +95,11 @@ ensure_FildeshKV_RBTREE(
   const size_t old_freelist_head = map->freelist_head;
   FildeshKV_id_t x_id = ensure_FildeshKV_BSTREE(map, k, ksize, alloc);
   size_t x = x_id/2;
+  assert((x_id & 1) == 0);
   if (old_freelist_head != map->freelist_head) {
     ColorRed(x);
     x = fixup_insert(map, x);
-    x_id = (2*x) | (x_id & 1);
+    x_id = 2*x;
   }
   return x_id;
 }
@@ -122,10 +119,16 @@ fixup_remove(FildeshKV* map, size_t y, unsigned side)
     return;
   }
 
+  /* Loop invariant is:
+   * - The {y} side of {b} is short by 1 black node.
+   * - However, {y} is black, so we have to bubble up and fill the gap.
+   * - Note that {y} may be a dummy node and not actually exist.
+   */
   while (!IsRoot(y)) {
     size_t b, a, w, x;
     b = JointOf(y);
     a = SplitOf(b, 1-side);
+    assert(!Nullish(a));
     w = SplitOf(a, 1-side);
     x = SplitOf(a, side);
 
@@ -228,9 +231,7 @@ remove_FildeshKV_RBTREE(FildeshKV* map, FildeshKV_id_t y_id)
 
   if (!Nullish(z)) {
     /* Recolor the node that replaced {y}.*/
-    bool y_color = RedColorOf(y);
-    AssignColor(y, RedColorOf(z));
-    AssignColor(z, y_color);
+    ColorSwap(y, z);
   }
 
   if (RedColorOf(y)) {

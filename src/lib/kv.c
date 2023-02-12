@@ -6,13 +6,7 @@
 lookup_value_FildeshKV(FildeshKV* map, const void* k, size_t ksize)
 {
   FildeshKV_id_t id = lookup_FildeshKV(map, k, ksize);
-  FildeshKVE* e;
-  if (id == FildeshKV_NULL_ID) {return NULL;}
-  e = &map->at[id/2];
-  if (0 == (id & 1)) {
-    return (void*) value_FildeshKVE(e);
-  }
-  return (void*) splitvalue_FildeshKVE(e);
+  return (void*)value_at_FildeshKV(map, id);
 }
 
 size_t size_of_key_at_FildeshKV(const FildeshKV* map, FildeshKV_id_t id) {

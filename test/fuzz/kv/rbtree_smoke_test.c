@@ -1,4 +1,4 @@
-#include "smoke_common.h"
+#include "test/fuzz/smoke_common.h"
 
 #define NULL_VALUE 255
 

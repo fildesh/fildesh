@@ -39,14 +39,14 @@ combination_test()
         FildeshKV_id_t id = ensure_FildeshKV(map, keys[idx], 1);
         assert(!value_at_FildeshKV(map, id));
         assign_at_FildeshKV(map, id, &idx, sizeof(unsigned));
-        assert(validate_FildeshKV_RBTREE(map));
+        validate_FildeshKV_RBTREE(map);
       }
       for (i = 0; i < nkeys; ++i) {
         const unsigned idx = (muls[mj] * i) % nkeys;
         FildeshKV_id_t id = lookup_FildeshKV(map, keys[idx], 1);
         assert(!fildesh_nullid(id));
         remove_at_FildeshKV(map, id);
-        assert(validate_FildeshKV_RBTREE(map));
+        validate_FildeshKV_RBTREE(map);
       }
     }
   }

@@ -10,7 +10,7 @@ print_debug_FildeshKV_RBTREE(const FildeshKV* map, FildeshO* out)
        id = next_at_FildeshKV(map, id))
   {
     size_t x = id/2;
-    print_int_FildeshO(out, (unsigned)*(char*)key_at_FildeshKV(map, id));
+    print_int_FildeshO(out, *(unsigned char*)key_at_FildeshKV(map, id));
     puts_FildeshO(out, ": ");
     puts_FildeshO(out, (RedColorOf(x) ? "red" : "black"));
     putc_FildeshO(out, ' ');
@@ -40,7 +40,10 @@ print_graphviz_FildeshKV_RBTREE(const FildeshKV* map, FildeshO* out)
     putc_FildeshO(out, 'q');
     print_int_FildeshO(out, (int)x);
     puts_FildeshO(out, " [label = \"");
-    print_int_FildeshO(out, (unsigned)*(char*)key_at_FildeshKV(map, id));
+    print_int_FildeshO(out, *(unsigned char*)key_at_FildeshKV(map, id));
+    if (IsBroadLeaf(x)) {
+      putc_FildeshO(out, '!');
+    }
     puts_FildeshO(out, "\", color = \"");
     puts_FildeshO(out, (RedColorOf(x) ? "red" : "black"));
     puts_FildeshO(out, "\"];\n");
@@ -75,15 +78,16 @@ count_up_black(const FildeshKV* map, size_t x) {
   return n;
 }
 
-  bool
+  void
 validate_FildeshKV_RBTREE(const FildeshKV* map)
 {
   unsigned black_count;
   FildeshKV_id_t id = first_FildeshKV(map);
   if (fildesh_nullid(id)) {
-    return true;
+    return;
   }
   black_count = count_up_black(map, id/2);
+  assert(black_count > 0);
   do {
     if ((id & 1) == 0) {
       size_t x = id/2;
@@ -93,12 +97,11 @@ validate_FildeshKV_RBTREE(const FildeshKV* map)
       else {
         assert(!RedColorOf(x) || !RedColorOf(JointOf(x)));
       }
-      if (Nullish(SplitOf(x, 0)) && Nullish(SplitOf(x, 1))) {
+      if (IsLeaf(x)) {
         assert(black_count == count_up_black(map, x));
       }
     }
     id = next_at_FildeshKV(map, id);
   } while (!fildesh_nullid(id));
-  return (black_count > 0);
 }
 

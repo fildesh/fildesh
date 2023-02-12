@@ -1,4 +1,4 @@
-#include "kv_fuzz_common.h"
+#include "test/fuzz/kv/fuzz_common.h"
 
   int
 LLVMFuzzerTestOneInput(const uint8_t data[], size_t size) {
