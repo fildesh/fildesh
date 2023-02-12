@@ -215,6 +215,20 @@ ensure_FildeshKV_BROADLEAF_BSTREE(
   return leaf_add_FildeshKV_BSTREE(map, a, side, k, ksize, alloc);
 }
 
+/** Invariant: All subtrees have nodes/entries < 75%.
+ * They can be combined (node + subtree + subtree) to stay below 75%.
+ *
+ * Valid elementary subtrees:
+ * - 2 entries in 1 node (1/2).
+ * - 3 entries in 2 nodes (2/3).
+ *      2      3
+ *      *      *
+ *     /      /
+ *    ##     #
+ *            \
+ *            ++
+ **/
+
   FildeshKV_id_t
 maybe_redden_fuse_FildeshKV_BROADLEAF_RBTREE(
     FildeshKV* map, size_t b, FildeshKV_id_t insertion_id)
