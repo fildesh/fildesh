@@ -1,12 +1,12 @@
 
 if (FILDESH_BUILTIN_ELASTIC_AIO_ON)
-  add_test(NAME chatty_test COMMAND chatty)
-endif()
+  add_executable(chatty "chatty.c")
+  target_link_libraries(chatty fildesh_lib ${FILDESH_AIO_LIBS})
+  set_property(TARGET chatty
+    APPEND PROPERTY COMPILE_DEFINITIONS _POSIX_C_SOURCE=201112L)
 
-add_executable(alloc_test
-  "alloc_test.c")
-target_link_libraries(alloc_test fildesh_lib)
-add_test(NAME alloc_test COMMAND alloc_test)
+  add_test(NAME src_chatty_test COMMAND chatty)
+endif()
 
 add_executable(delimit_edge_test
   "delimit_edge_test.c")
@@ -22,16 +22,6 @@ add_executable(gets_test
   "gets_test.c")
 target_link_libraries(gets_test fildesh_lib)
 add_test(NAME gets_test COMMAND gets_test)
-
-add_executable(kve_test
-  "kve_test.c")
-target_link_libraries(kve_test fildesh_lib)
-add_test(NAME kve_test COMMAND kve_test)
-
-add_executable(mascii_test
-  "mascii_test.c")
-target_link_libraries(mascii_test fildesh_lib)
-add_test(NAME mascii_test COMMAND mascii_test)
 
 add_executable(parse_int_test
   "parse_int_test.c")

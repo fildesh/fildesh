@@ -109,11 +109,6 @@ if (FILDESH_BUILTIN_ELASTIC_AIO_ON)
   target_link_libraries (elastic_aio fildesh_lib ${FILDESH_AIO_LIBS})
   set_property (TARGET elastic_aio
     APPEND PROPERTY COMPILE_DEFINITIONS _POSIX_C_SOURCE=199309L)
-
-  add_executable(chatty "chatty.c")
-  target_link_libraries(chatty fildesh_lib ${FILDESH_AIO_LIBS})
-  set_property(TARGET chatty
-    APPEND PROPERTY COMPILE_DEFINITIONS _POSIX_C_SOURCE=201112L)
 endif()
 
 if (FILDESH_BUILTIN_ELASTIC_POLL_ON)

@@ -1,10 +1,12 @@
 exports_files([
     "brbtree.c",
+    "bstree.c",
     "bstree.h",
     "kv.c",
     "kv.h",
     "kve.c",
     "kve.h",
+    "rbtree.c",
     "single_list.c",
 ], visibility = [
     "//:__pkg__",

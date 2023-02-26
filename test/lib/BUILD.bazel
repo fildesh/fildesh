@@ -1,4 +1,11 @@
 cc_test(
+    name = "alloc_test",
+    srcs = ["alloc_test.c"],
+    deps = ["//:fildesh_lib"],
+    size = "small",
+)
+
+cc_test(
     name = "array_test",
     srcs = ["array_test.c"],
     deps = ["//:fildesh_lib"],
@@ -6,15 +13,8 @@ cc_test(
 )
 
 cc_test(
-    name = "kv_rbtree_test",
-    srcs = ["kv_rbtree_test.c"],
-    deps = ["//test/lib/kv:kv_validation_lib"],
-    size = "small",
-)
-
-cc_test(
-    name = "kv_single_list_test",
-    srcs = ["kv_single_list_test.c"],
+    name = "mascii_test",
+    srcs = ["mascii_test.c"],
     deps = ["//:fildesh_lib"],
     size = "small",
 )

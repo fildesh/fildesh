@@ -3,8 +3,6 @@ exports_files([
     "array.c",
     "infile.c",
     "instream.c",
-    "kv_bstree.c",
-    "kv_rbtree.c",
     "log.c",
     "mascii.c",
     "mascii.h",

@@ -56,20 +56,6 @@ cc_library(
 )
 
 cc_binary(
-    name = "chatty",
-    srcs = ["chatty.c"],
-    deps = ["//:fildesh_lib"],
-    linkopts = select({
-        "@platforms//os:linux": ["-lrt"],
-        "//conditions:default": [],
-    }),
-    target_compatible_with = [
-        "@platforms//os:linux",
-    ],
-    visibility = ["//test/src:__pkg__"],
-)
-
-cc_binary(
     name = "elastic_aio",
     srcs = ["elastic_aio.c"],
     deps = ["//:fildesh_lib"],

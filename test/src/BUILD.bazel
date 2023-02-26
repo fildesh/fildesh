@@ -1,15 +1,23 @@
 load("//:def.bzl", "spawn_test")
 
-cc_test(
-    name = "alloc_test",
-    srcs = ["alloc_test.c"],
+cc_binary(
+    name = "chatty",
+    srcs = ["chatty.c"],
     deps = ["//:fildesh_lib"],
-    size = "small",
+    linkopts = select({
+        "@platforms//os:linux": ["-lrt"],
+        "//conditions:default": [],
+    }),
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
+    visibility = ["//test/src:__pkg__"],
+    testonly = True,
 )
 
 spawn_test(
     name = "chatty_test",
-    binary = "//src:chatty",
+    binary = ":chatty",
     target_compatible_with = [
         "@platforms//os:linux",
     ],
@@ -32,20 +40,6 @@ cc_test(
 cc_test(
     name = "gets_test",
     srcs = ["gets_test.c"],
-    deps = ["//:fildesh_lib"],
-    size = "small",
-)
-
-cc_test(
-    name = "kve_test",
-    srcs = ["kve_test.c"],
-    deps = ["//:fildesh_lib"],
-    size = "small",
-)
-
-cc_test(
-    name = "mascii_test",
-    srcs = ["mascii_test.c"],
     deps = ["//:fildesh_lib"],
     size = "small",
 )

@@ -9,6 +9,27 @@ cc_library(
     ],
     deps = ["//:fildesh_lib"],
     visibility = ["//test:__subpackages__"],
-    testonly = 1,
+    testonly = True,
+)
+
+cc_test(
+    name = "kve_test",
+    srcs = ["kve_test.c"],
+    deps = ["//:fildesh_lib"],
+    size = "small",
+)
+
+cc_test(
+    name = "rbtree_test",
+    srcs = ["rbtree_test.c"],
+    deps = [":kv_validation_lib"],
+    size = "small",
+)
+
+cc_test(
+    name = "single_list_test",
+    srcs = ["single_list_test.c"],
+    deps = ["//:fildesh_lib"],
+    size = "small",
 )
 
