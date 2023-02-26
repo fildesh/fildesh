@@ -2,7 +2,7 @@
 
 #include <fildesh/fildesh.h>
 
-#include "src/lib/kv.h"
+#include "src/lib/kv/kv.h"
 
 BEGIN_EXTERN_C
 

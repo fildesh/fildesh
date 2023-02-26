@@ -3,7 +3,7 @@
 #include <vector>
 #include <fildesh/fildesh.h>
 
-#include "src/lib/kv.h"
+#include "src/lib/kv/kv.h"
 
 #define LINEAR_BENCHMARK_RANGE \
   Args({100, 3, 200}) \

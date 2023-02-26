@@ -1,7 +1,7 @@
 #include <assert.h>
 #include <string.h>
 
-#include "src/lib/kv.h"
+#include "src/lib/kv/kv.h"
 #include "test/lib/kv/rbtree_validation.h"
 
 /**

@@ -1,4 +1,4 @@
-#include "src/lib/kv_bstree.h"
+#include "src/lib/kv/bstree.h"
 
 static FildeshKV_id_t ensure_FildeshKV_BRBTREE(FildeshKV*, const void*, size_t, FildeshAlloc*);
 static void remove_FildeshKV_BRBTREE(FildeshKV*, FildeshKV_id_t);

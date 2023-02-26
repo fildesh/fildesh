@@ -1,6 +1,6 @@
 #include "rbtree_validation.h"
 
-#include "src/lib/kv_bstree.h"
+#include "src/lib/kv/bstree.h"
 
   void
 print_debug_FildeshKV_RBTREE(const FildeshKV* map, FildeshO* out)

@@ -10,7 +10,7 @@
 
 #include <fildesh/fildesh.h>
 
-#include "src/lib/kv.h"
+#include "src/lib/kv/kv.h"
 
 static inline
   FildeshKV

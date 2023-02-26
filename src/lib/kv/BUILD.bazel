@@ -1,5 +1,11 @@
 exports_files([
     "brbtree.c",
+    "bstree.h",
+    "kv.c",
+    "kv.h",
+    "kve.c",
+    "kve.h",
+    "single_list.c",
 ], visibility = [
     "//:__pkg__",
     "//test/benchmark:__pkg__",
