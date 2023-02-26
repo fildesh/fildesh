@@ -61,7 +61,7 @@ lookup_FildeshKV_SINGLE_LIST(const FildeshKV* map, const void* k, size_t ksize)
     if (0 == cmp_k_FildeshKVE(e, ksize, k)) {
       return 2*i;
     }
-    if (0 != get_splitkexists_bit_FildeshKVE_size(e->size)) {
+    if (splitkexists_FildeshKVE(e)) {
       if (0 == cmp_splitk_FildeshKVE(e, ksize, k)) {
         return 2*i+1;
       }
@@ -99,7 +99,7 @@ add_FildeshKV_SINLGE_LIST(
     FildeshKV* map, const void* k, size_t ksize, FildeshAlloc* alloc)
 {
   if (map->freelist_head > 0 &&
-      0 == get_splitkexists_bit_FildeshKVE_size(map->at[0].size))
+      !splitkexists_FildeshKVE(&map->at[0]))
   {
     if (maybe_populate_splitkv_FildeshKVE(
             &map->at[0], ksize, k, 1, NULL, alloc)) {
@@ -160,7 +160,7 @@ void remove_FildeshKV_SINGLE_LIST(FildeshKV* map, FildeshKV_id_t id) {
     erase_splitk_FildeshKVE(e);
     return;
   }
-  if (0 != get_splitkexists_bit_FildeshKVE_size(e->size)) {
+  if (splitkexists_FildeshKVE(e)) {
     promote_splitk_FildeshKVE(e);
     return;
   }

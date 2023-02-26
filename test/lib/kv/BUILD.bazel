@@ -1,0 +1,14 @@
+
+cc_library(
+    name = "kv_validation_lib",
+    srcs = [
+        "brbtree_validation.c",
+        "brbtree_validation.h",
+        "rbtree_validation.c",
+        "rbtree_validation.h",
+    ],
+    deps = ["//:fildesh_lib"],
+    visibility = ["//test:__subpackages__"],
+    testonly = 1,
+)
+

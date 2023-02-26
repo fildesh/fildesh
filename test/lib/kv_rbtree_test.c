@@ -2,7 +2,7 @@
 #include <string.h>
 
 #include "src/lib/kv.h"
-#include "test/lib/kv_rbtree_validation.h"
+#include "test/lib/kv/rbtree_validation.h"
 
 /**
  * Rigorously test red-black tree with different combinations of insert

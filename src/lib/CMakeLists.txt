@@ -18,6 +18,7 @@ add_library(fildesh_lib_obj OBJECT
   "outfile.c"
   "outstream.c"
   "string.c"
+  "kv/brbtree.c"
   "${CMAKE_SOURCE_DIR}/include/fildesh/fildesh.h"
   )
 add_library(fildesh_lib STATIC

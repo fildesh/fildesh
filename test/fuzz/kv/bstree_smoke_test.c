@@ -1,7 +1,7 @@
 #include "test/fuzz/smoke_common.h"
 
 BEGIN_FUZZ_DATA
-/* Add 1, remove 1, then add 2.*/
+/* Add 2, then add 1.*/
 { 2,
   1,
 }

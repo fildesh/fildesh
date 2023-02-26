@@ -63,6 +63,7 @@ cc_library(
         "//src/lib:outfile.c",
         "//src/lib:outstream.c",
         "//src/lib:string.c",
+        "//src/lib/kv:brbtree.c",
     ],
     includes = ["include"],
     deps = [":fildesh_compat_lib"],

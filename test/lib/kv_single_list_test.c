@@ -19,7 +19,7 @@ static void add_remove_in_order_test()
   FildeshKV map[1] = {DEFAULT_FildeshKV_SINGLE_LIST};
   const unsigned n = 10;
   const unsigned values[] = {
-    200, 201, 202, 203, 204, 205, 206, 207, 208, 209,
+    100, 101, 102, 103, 104, 105, 106, 107, 108, 109,
   };
   unsigned i;
   for (i = 0; i < n; ++i) {
@@ -44,11 +44,11 @@ static void add_remove_in_order_test()
    */
   {
     const unsigned expected_values[] = {
-      208, 209,
-      206, 207,
-      204, 205,
-      202, 203,
-      200, 201,
+      108, 109,
+      106, 107,
+      104, 105,
+      102, 103,
+      100, 101,
     };
     FildeshKV_id_t id = first_FildeshKV(map);
     for (i = 0; i < n; ++i) {
@@ -61,7 +61,7 @@ static void add_remove_in_order_test()
 
   for (i = 0; i < n; ++i) {
     const unsigned k = i;
-    const unsigned expected_v = i+200;
+    const unsigned expected_v = i + 100;
     const FildeshKV_id_t id = lookup_FildeshKV(map, &k, sizeof(k));
     unsigned* p;
     assert(!fildesh_nullid(id));

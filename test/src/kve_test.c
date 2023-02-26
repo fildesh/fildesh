@@ -13,6 +13,7 @@
 
 static void trivial_setget_bit_test() {
   const size_t hi3 = high_size_bit(0) | high_size_bit(1) | high_size_bit(2);
+  const size_t hi2 = high_size_bit(0) | high_size_bit(1);
   FildeshKVE e;
   e.joint = 0;
   e.size = 0;
@@ -22,28 +23,28 @@ static void trivial_setget_bit_test() {
   set1_red_bit_FildeshKVE(&e);
   assert(0 != get_red_bit_FildeshKVE_joint(e.joint));
 
+  assert(!kexists_FildeshKVE(&e));
   assert(0 == get_vexists_bit_FildeshKVE_joint(e.joint));
   set1_vexists_bit_FildeshKVE(&e);
   assert(0 != get_vexists_bit_FildeshKVE_joint(e.joint));
+  assert(kexists_FildeshKVE(&e));
 
   assert(0 == get_vrefers_bit_FildeshKVE_joint(e.joint));
   set1_vrefers_bit_FildeshKVE(&e);
   assert(0 != get_vrefers_bit_FildeshKVE_joint(e.joint));
 
-  assert(0 == get_splitkexists_bit_FildeshKVE_size(e.size));
-  set1_splitkexists_bit_FildeshKVE(&e);
-  assert(0 != get_splitkexists_bit_FildeshKVE_size(e.size));
-
+  assert(!splitkexists_FildeshKVE(&e));
   assert(0 == get_splitvexists_bit_FildeshKVE_size(e.size));
   set1_splitvexists_bit_FildeshKVE(&e);
   assert(0 != get_splitvexists_bit_FildeshKVE_size(e.size));
+  assert(splitkexists_FildeshKVE(&e));
 
   assert(0 == get_splitvrefers_bit_FildeshKVE_size(e.size));
   set1_splitvrefers_bit_FildeshKVE(&e);
   assert(0 != get_splitvrefers_bit_FildeshKVE_size(e.size));
 
   assert(e.joint == hi3);
-  assert(e.size == hi3);
+  assert(e.size == hi2);
   e.joint = ~(size_t)0;
   e.size = ~(size_t)0;
 
@@ -56,24 +57,24 @@ static void trivial_setget_bit_test() {
   set0_vexists_bit_FildeshKVE(&e);
   assert(0 == get_vexists_bit_FildeshKVE_joint(e.joint));
 
+  assert(kexists_FildeshKVE(&e));
   assert(0 != get_vrefers_bit_FildeshKVE_joint(e.joint));
   set0_vrefers_bit_FildeshKVE(&e);
   assert(0 == get_vrefers_bit_FildeshKVE_joint(e.joint));
-
-  assert(0 != get_splitkexists_bit_FildeshKVE_size(e.size));
-  set0_splitkexists_bit_FildeshKVE(&e);
-  assert(0 == get_splitkexists_bit_FildeshKVE_size(e.size));
+  assert(!kexists_FildeshKVE(&e));
 
   assert(0 != get_splitvexists_bit_FildeshKVE_size(e.size));
   set0_splitvexists_bit_FildeshKVE(&e);
   assert(0 == get_splitvexists_bit_FildeshKVE_size(e.size));
 
+  assert(splitkexists_FildeshKVE(&e));
   assert(0 != get_splitvrefers_bit_FildeshKVE_size(e.size));
   set0_splitvrefers_bit_FildeshKVE(&e);
   assert(0 == get_splitvrefers_bit_FildeshKVE_size(e.size));
+  assert(!splitkexists_FildeshKVE(&e));
 
   assert(e.joint == ~hi3);
-  assert(e.size == ~hi3);
+  assert(e.size == ~hi2);
 }
 
 static void check_setget(size_t ksize, size_t vsize,
@@ -175,7 +176,7 @@ try_edge_split(FildeshKVE* e, size_t ksize, size_t splitksize, size_t splitvsize
       assert(!splitvalue_FildeshKVE(e));
     }
   } else {
-    assert(0 == splitksize_FildeshKVE_size(e->size));
+    assert(!splitkexists_FildeshKVE(e));
     assert(!splitvalue_FildeshKVE(e));
   }
   return populated;
@@ -183,8 +184,8 @@ try_edge_split(FildeshKVE* e, size_t ksize, size_t splitksize, size_t splitvsize
 
 static void edge_split_test() {
   FildeshKVE e;
-  const size_t max_ksize = ((size_t)1 << (sizeof(size_t)*CHAR_BIT/2-1)) - 1;
-  const size_t max_splitksize = ((size_t)1 << (sizeof(size_t)*CHAR_BIT/2-2)) - 1;
+  const size_t max_ksize = FildeshKVE_splitksize_max;
+  const size_t max_splitksize = FildeshKVE_splitksize_max;
 
   /* First key's size is just too big.*/
   assert(!try_edge_split(&e, high_size_bit(CHAR_BIT-1), 1, 0));

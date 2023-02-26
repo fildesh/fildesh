@@ -20,13 +20,9 @@ const FildeshKV_VTable DEFAULT_FildeshKV_VTable = {
   remove_FildeshKV_RBTREE,
 };
 
-static
   size_t
-fixup_insert(FildeshKV* map, size_t x)
+fixup_insert_FildeshKV_RBTREE(FildeshKV* map, size_t x, size_t insertion_index)
 {
-  size_t insertion_index = x;
-  bool bubbling_insertion = true;
-
   /* Loop invariant is:
    * - The {x} side of {b} has as many black nodes as the other side.
    * - However, {x} and its parent {b} are both red, so we have to bubble up.
@@ -59,11 +55,14 @@ fixup_insert(FildeshKV* map, size_t x)
      *      3#   #4
      */
     if (SideOf(x) == SideOf(b)) {
+      const bool bubbling_insertion = (insertion_index == b);
       fildesh_log_trace("Case 1.");
       ColorBlack(x);
       RotateUp(&b);
       x = b;
-      bubbling_insertion = false;
+      if (bubbling_insertion) {
+        insertion_index = b;
+      }
     }
     /* Case 2.                        (continue)
      *
@@ -76,6 +75,7 @@ fixup_insert(FildeshKV* map, size_t x)
      *     2#   #3    1#   #2
      */
     else {
+      const bool bubbling_insertion = (insertion_index == x);
       fildesh_log_trace("Case 2.");
       ColorBlack(b);
       RotateUp(&x);
@@ -98,7 +98,7 @@ ensure_FildeshKV_RBTREE(
   assert((x_id & 1) == 0);
   if (old_freelist_head != map->freelist_head) {
     ColorRed(x);
-    x = fixup_insert(map, x);
+    x = fixup_insert_FildeshKV_RBTREE(map, x, x);
     x_id = 2*x;
   }
   return x_id;
@@ -109,9 +109,8 @@ ensure_FildeshKV_RBTREE(
  * but {y->joint} points to a node whose {side} is one level
  * short on black nodes.
  **/
-static
   void
-fixup_remove(FildeshKV* map, size_t y, unsigned side)
+fixup_remove_FildeshKV_RBTREE(FildeshKV* map, size_t y, unsigned side)
 {
   if (RedColorOf(y)) {
     fildesh_log_trace("Paint it black.");
@@ -238,16 +237,16 @@ remove_FildeshKV_RBTREE(FildeshKV* map, FildeshKV_id_t y_id)
     fildesh_log_trace("Removed red.");
   }
   else if (!Nullish(SplitOf(y, 0))) {
-    fixup_remove(map, SplitOf(y, 0), 0);
+    fixup_remove_FildeshKV_RBTREE(map, SplitOf(y, 0), 0);
   }
   else if (!Nullish(SplitOf(y, 1))) {
-    fixup_remove(map, SplitOf(y, 1), 1);
+    fixup_remove_FildeshKV_RBTREE(map, SplitOf(y, 1), 1);
   }
   else if (!Nullish(JointOf(y))) {
     /* Assume {y} is a leaf in the tree to simplify fixup.*/
     unsigned side = Nullish(SplitOf(JointOf(y), 1)) ? 1 : 0;
     assert(!Nullish(SplitOf(JointOf(y), 1-side)));
-    fixup_remove(map, y, side);
+    fixup_remove_FildeshKV_RBTREE(map, y, side);
   }
   else {
     fildesh_log_trace("JointOf(y) is null.");

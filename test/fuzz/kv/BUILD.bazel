@@ -15,6 +15,17 @@ cc_smoke_test(
     deps = ["//:fildesh_lib"],
 )
 
+cc_smoke_test(
+    name = "brbtree_smoke_test",
+    srcs = [
+        "brbtree_smoke_test.c",
+        "brbtree_fuzz_test.c",
+        "kv_fuzz_common.c",
+        "kv_fuzz_common.h",
+    ],
+    deps = ["//test/lib/kv:kv_validation_lib"],
+)
+
 cc_fuzz_test(
     name = "bstree_fuzz_test",
     srcs = [
@@ -43,7 +54,7 @@ cc_fuzz_test(
         "kv_fuzz_common.c",
         "kv_fuzz_common.h",
     ],
-    deps = ["//test/lib:kv_rbtree_validation_lib"],
+    deps = ["//test/lib/kv:kv_validation_lib"],
     max_guesses = 50000,
 )
 cc_smoke_test(
@@ -54,7 +65,7 @@ cc_smoke_test(
         "kv_fuzz_common.c",
         "kv_fuzz_common.h",
     ],
-    deps = ["//test/lib:kv_rbtree_validation_lib"],
+    deps = ["//test/lib/kv:kv_validation_lib"],
 )
 
 cc_fuzz_test(

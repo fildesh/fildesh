@@ -5,20 +5,10 @@ cc_test(
     size = "small",
 )
 
-cc_library(
-    name = "kv_rbtree_validation_lib",
-    srcs = [
-        "kv_rbtree_validation.c",
-        "kv_rbtree_validation.h",
-    ],
-    deps = ["//:fildesh_lib"],
-    visibility = ["//test:__subpackages__"],
-)
-
 cc_test(
     name = "kv_rbtree_test",
     srcs = ["kv_rbtree_test.c"],
-    deps = [":kv_rbtree_validation_lib"],
+    deps = ["//test/lib/kv:kv_validation_lib"],
     size = "small",
 )
 

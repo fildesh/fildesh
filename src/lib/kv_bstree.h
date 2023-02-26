@@ -15,7 +15,7 @@ static inline void assign_joint(const FildeshKV* map, size_t x, size_t y) {
   set_joint_index_FildeshKVE(&map->at[x], y);
 }
 #define AssignJoint(x, y)  assign_joint(map, x, y)
-#define NullifyJoint(x)  AssignJoint(x, FildeshKV_NULL_INDEX)
+#define NullifyJoint(x)  nullify_joint_index_FildeshKVE(&map->at[x])
 static inline void maybe_assign_joint(const FildeshKV* map, size_t x, size_t y) {
   if (Nullish(x)) {return;}
   AssignJoint(x, y);
@@ -72,16 +72,40 @@ static inline unsigned side_of(const FildeshKV* map, size_t x) {
 }
 #define SideOf(x)  side_of(map, x)
 
-static inline void local_swap(FildeshKV* map, size_t* p_x, size_t* p_y) {
-  const size_t x = *p_x;
+static inline void local_swap(FildeshKV* map, size_t* p_y, size_t* p_x) {
   const size_t y = *p_y;
-  FildeshKVE e = map->at[x];
-  map->at[x] = map->at[y];
-  map->at[y] = e;
-  *p_x = y;
+  const size_t x = *p_x;
+  FildeshKVE e = map->at[y];
+  map->at[y] = map->at[x];
+  map->at[x] = e;
   *p_y = x;
+  *p_x = y;
 }
-#define LocalSwap(p_x, p_y)  local_swap(map, p_x, p_y)
+#define LocalSwap(p_y, p_x)  local_swap(map, p_y, p_x)
+
+static inline void sub_join(FildeshKV* map, size_t* p_y, size_t* p_x) {
+  const size_t y = *p_y;
+  const size_t x = *p_x;
+  const size_t b = JointOf(y);
+
+  if (!IsBroadLeaf(y)) {
+    NullifySplit(y, 0);
+    NullifySplit(y, 1);
+  }
+  NullifyJoint(y);
+
+  AssignJoint(x, b);
+  if (Nullish(b)) {
+    local_swap(map, p_y, p_x);
+  }
+  else if (y == SplitOf(b, 1)) {
+    AssignSplit(b, 1, x);
+  }
+  else {
+    AssignSplit(b, 0, x);
+  }
+}
+#define SubJoin(p_y, p_x) sub_join(map, p_y, p_x)
 
 /* For red-black tree only.*/
 #define RedColorOf(x)  red_FildeshKVE(&map->at[x])

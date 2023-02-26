@@ -1,0 +1,8 @@
+exports_files([
+    "brbtree.c",
+], visibility = [
+    "//:__pkg__",
+    "//test/benchmark:__pkg__",
+    "//test/fuzz:__pkg__",
+    "//test/src:__pkg__",
+])

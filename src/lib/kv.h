@@ -11,8 +11,12 @@ extern const FildeshKV_VTable DEFAULT_BSTREE_FildeshKV_VTable;
 #define DEFAULT_FildeshKV_BSTREE { NULL, NULL, 0, 0, &DEFAULT_BSTREE_FildeshKV_VTable }
 extern const FildeshKV_VTable DEFAULT_RBTREE_FildeshKV_VTable;
 #define DEFAULT_FildeshKV_RBTREE { NULL, NULL, 0, 0, &DEFAULT_RBTREE_FildeshKV_VTable }
+extern const FildeshKV_VTable DEFAULT_BRBTREE_FildeshKV_VTable;
+#define DEFAULT_FildeshKV_BRBTREE { NULL, NULL, 0, 0, &DEFAULT_BRBTREE_FildeshKV_VTable }
 
 void maybe_grow_FildeshKV_SINGLE_LIST(FildeshKV*);
 void reclaim_element_FildeshKV_SINGLE_LIST(FildeshKV*, size_t);
+size_t fixup_insert_FildeshKV_RBTREE(FildeshKV*, size_t, size_t);
+void fixup_remove_FildeshKV_RBTREE(FildeshKV*, size_t, unsigned);
 
 END_EXTERN_C

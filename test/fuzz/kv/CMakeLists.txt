@@ -11,6 +11,14 @@ add_executable(fuzz_kv_ensure_smoke_test
 target_link_libraries(fuzz_kv_ensure_smoke_test fildesh_lib)
 add_test(NAME fuzz_kv_ensure_smoke_test COMMAND fuzz_kv_ensure_smoke_test)
 
+add_executable(fuzz_kv_brbtree_smoke_test
+  "brbtree_smoke_test.c"
+  "brbtree_fuzz_test.c"
+  "kv_fuzz_common.c"
+  "kv_fuzz_common.h")
+target_link_libraries(fuzz_kv_brbtree_smoke_test kv_validation_lib)
+add_test(NAME fuzz_kv_brbtree_smoke_test COMMAND fuzz_kv_brbtree_smoke_test)
+
 add_executable(fuzz_kv_bstree_fuzz_test
   "bstree_fuzz_test.c"
   "${CMAKE_SOURCE_DIR}/test/fuzz/fuzz_main.c"
@@ -32,10 +40,8 @@ add_executable(fuzz_kv_rbtree_fuzz_test
   "${CMAKE_SOURCE_DIR}/test/fuzz/fuzz_main.c"
   "kv_fuzz_common.c"
   "kv_fuzz_common.h"
-  "${CMAKE_SOURCE_DIR}/test/lib/kv_rbtree_validation.c"
-  "${CMAKE_SOURCE_DIR}/test/lib/kv_rbtree_validation.h"
 )
-target_link_libraries(fuzz_kv_rbtree_fuzz_test fildesh_lib)
+target_link_libraries(fuzz_kv_rbtree_fuzz_test kv_validation_lib)
 add_test(NAME fuzz_kv_rbtree_fuzz_test COMMAND fuzz_kv_rbtree_fuzz_test)
 
 add_executable(fuzz_kv_rbtree_smoke_test
@@ -43,10 +49,8 @@ add_executable(fuzz_kv_rbtree_smoke_test
   "rbtree_fuzz_test.c"
   "kv_fuzz_common.c"
   "kv_fuzz_common.h"
-  "${CMAKE_SOURCE_DIR}/test/lib/kv_rbtree_validation.c"
-  "${CMAKE_SOURCE_DIR}/test/lib/kv_rbtree_validation.h"
 )
-target_link_libraries(fuzz_kv_rbtree_smoke_test fildesh_lib)
+target_link_libraries(fuzz_kv_rbtree_smoke_test kv_validation_lib)
 add_test(NAME fuzz_kv_rbtree_smoke_test COMMAND fuzz_kv_rbtree_smoke_test)
 
 add_executable(fuzz_kv_single_list_fuzz_test

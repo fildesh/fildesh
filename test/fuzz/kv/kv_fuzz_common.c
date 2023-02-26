@@ -12,7 +12,7 @@
 
 
 #ifdef FILDESH_LOG_TRACE_ON
-#include "test/lib/kv_rbtree_validation.h"
+#include "test/lib/kv/rbtree_validation.h"
 static const void* dummy_key(uint8_t kidx) {
   static uint8_t keys[256];
   keys[kidx] = kidx;
@@ -39,10 +39,9 @@ static void maybe_print_debug(FildeshKV* map) {
 
 static size_t key_size(uint8_t b) {
   const size_t shift =
-    /* hi_lgksize in kve.c */
-    sizeof(size_t)*CHAR_BIT/2-2
+    FildeshKVE_splitk_lgsize_max
     /* Number of bits required for numbers 0 to 127.*/
-    - 7
+    - (CHAR_BIT - 1)
     ;
   return (size_t)b << shift;
 }
@@ -81,17 +80,17 @@ kv_fuzz_common(FildeshKV* map, const uint8_t data[], size_t size)
     if (v == 0) {
       if (a[kidx] != 0) {
         remove_at_FildeshKV(map, id);
+        maybe_print_debug(map);
         assert(fildesh_nullid(lookup_FildeshKV(map, dummy_key(kidx), ksize)));
       }
     }
     else {
       id = ensure_FildeshKV(map, dummy_key(kidx), ksize);
       assign_at_FildeshKV(map, id, &v, sizeof(v));
+      maybe_print_debug(map);
       assert(id == lookup_FildeshKV(map, dummy_key(kidx), ksize));
     }
     a[kidx] = v;
-
-    maybe_print_debug(map);
   }
 
   for (i = 1; i < 256; ++i) {

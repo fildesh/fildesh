@@ -140,15 +140,13 @@ premove_FildeshKV_BSTREE(FildeshKV* map, size_t y)
         AssignReplacementInfo(y, x);
         return y;
       }
-      AssignJoint(x, b);
-      LocalSwap(&y, &x);
+      SubJoin(&y, &x);
       /* Update {x} neighbors.*/
       MaybeAssignJoint(SplitOf(x, 0), x);
       MaybeAssignJoint(SplitOf(x, 1), x);
       /* Populate {y} for return.*/
       /* noop: AssignJoint(y, b); */
       AssignSplit(y, side_y, x);
-      NullifySplit(y, 1-side_y);
       AssignReplacementInfo(y, x);
       return y;
     }
@@ -166,8 +164,8 @@ premove_FildeshKV_BSTREE(FildeshKV* map, size_t y)
     b = SplitOf(y, side);
 
     if (Nullish(SplitOf(b, oside))) {
-      AssignJoint(b, JointOf(y));
       AssignSplit(b, oside, SplitOf(y, oside));
+      AssignJoint(b, JointOf(y));
       LocalSwap(&y, &b);
       /* Update {b} neighbors.*/
       MaybeAssignJoint(SplitOf(b, side), b);
