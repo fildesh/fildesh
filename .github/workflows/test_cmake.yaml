@@ -76,3 +76,38 @@ jobs:
       shell: bash
       working-directory: ${{runner.workspace}}/bld
       run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=RelOnHost
+
+
+  alpine:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - alpine_arch: x86
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Setup latest Alpine Linux
+      uses: jirutka/setup-alpine@v1
+      with:
+        arch: ${{ matrix.alpine_arch }}
+        packages: >
+          build-base
+          cmake
+
+    - name: Build inside Alpine chroot as default user (unprivileged)
+      run: |
+        mkdir bld
+        cd bld
+        cmake ..
+        cmake --build .
+      shell: alpine.sh {0}
+
+    - name: Test inside Alpine chroot as default user (unprivileged)
+      run: |
+        cd bld
+        ctest --timeout 10
+      shell: alpine.sh {0}
+
