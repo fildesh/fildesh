@@ -47,9 +47,9 @@ add_library(fildesh_builtin_lib_obj OBJECT
   "godo.c"
   "ssh-all.c"
   "waitdo.c"
+  "xargz.c"
   "xpipe.c"
   "${CMAKE_SOURCE_DIR}/src/bin/version.h"
-  "${CMAKE_SOURCE_DIR}/include/fildesh_builtin.h"
   "${CMAKE_SOURCE_DIR}/include/fildesh_posix_thread.h"
   "${CMAKE_SOURCE_DIR}/src/builtin/add.c"
   "${CMAKE_SOURCE_DIR}/src/builtin/bestmatch.c"
@@ -57,6 +57,9 @@ add_library(fildesh_builtin_lib_obj OBJECT
   "${CMAKE_SOURCE_DIR}/src/builtin/delimend.c"
   "${CMAKE_SOURCE_DIR}/src/builtin/elastic_pthread.c"
   "${CMAKE_SOURCE_DIR}/src/builtin/expect_failure.c"
+  "${CMAKE_SOURCE_DIR}/src/builtin/fildesh_builtin.c"
+  "${CMAKE_SOURCE_DIR}/src/builtin/fildesh_builtin.h"
+  "${CMAKE_SOURCE_DIR}/src/builtin/oargz.c"
   "${CMAKE_SOURCE_DIR}/src/builtin/replace_string.c"
   "${CMAKE_SOURCE_DIR}/src/builtin/seq.c"
   "${CMAKE_SOURCE_DIR}/src/builtin/sponge.c"
@@ -90,18 +93,18 @@ target_link_libraries(fildesh_builtin_lib
 add_subdirectory(bin)
 
 add_executable(execfd "execfd.c"
-  "${CMAKE_SOURCE_DIR}/include/fildesh_builtin.h")
+  "${CMAKE_SOURCE_DIR}/src/builtin/fildesh_builtin.h")
 target_link_libraries(execfd fildesh_lib)
 
 add_executable(godo "godo.c"
-  "${CMAKE_SOURCE_DIR}/include/fildesh_builtin.h")
+  "${CMAKE_SOURCE_DIR}/src/builtin/fildesh_builtin.h")
 target_link_libraries(godo fildesh_lib)
 
 add_executable(sshall "ssh-all.c")
 target_link_libraries(sshall fildesh_lib)
 
 add_executable(waitdo "waitdo.c"
-  "${CMAKE_SOURCE_DIR}/include/fildesh_builtin.h")
+  "${CMAKE_SOURCE_DIR}/src/builtin/fildesh_builtin.h")
 target_link_libraries(waitdo fildesh_lib)
 
 if (FILDESH_BUILTIN_ELASTIC_AIO_ON)

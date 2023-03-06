@@ -34,6 +34,11 @@ fildesh_test(
 )
 
 fildesh_test(
+    name = "stdargz_test",
+    srcs = ["stdargz_test.fildesh"],
+)
+
+fildesh_test(
     name = "stdio_test",
     srcs = ["stdio_test.fildesh"],
 )

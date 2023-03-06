@@ -1,0 +1,13 @@
+
+$(H script)
+|< stdargz
+|- xargz -- zec
+|> stdout
+$(H script)
+
+fildesh -stdout $(OF result) -f $(XF script) -- "/" "Hello" " World\n" "/"
+
+zec -o $(OF expect) / "Hello World\n" /
+|< cmp $(XF expect) $(XF result)
+|> stdout
+

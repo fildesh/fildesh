@@ -123,6 +123,14 @@ set_property(TARGET builtin_godo_test
 add_test(NAME builtin_godo_test COMMAND
   builtin_godo_test "$<TARGET_FILE:expectish>" "${CMAKE_SOURCE_DIR}/test/expect/literal_hello.txt")
 
+#### oargz
+
+add_executable(builtin_oargz_test "oargz_test.c" "${CMAKE_SOURCE_DIR}/src/builtin/oargz.c")
+target_link_libraries(builtin_oargz_test fildesh_lib fildesh_tool_lib)
+set_property(TARGET builtin_oargz_test
+  APPEND PROPERTY COMPILE_DEFINITIONS FILDESH_BUILTIN_LIBRARY)
+add_test(NAME builtin_oargz_test COMMAND builtin_oargz_test)
+
 #### replace_string
 
 add_test(NAME builtin_replace_string_test COMMAND fildesh -f

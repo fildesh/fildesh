@@ -96,7 +96,7 @@ cc_test(
     name = "execfd_test",
     srcs = [
         "execfd_test.c",
-        "//include:fildesh_builtin.h",
+        "//src/builtin:fildesh_builtin.h",
         "//src:execfd.c",
     ],
     defines = ["UNIT_TESTING"],
@@ -109,7 +109,7 @@ cc_test(
     name = "execfd_cat_test",
     srcs = [
         "execfd_cat_test.c",
-        "//include:fildesh_builtin.h",
+        "//src/builtin:fildesh_builtin.h",
         "//src:execfd.c",
     ],
     defines = ["UNIT_TESTING"],
@@ -132,7 +132,7 @@ cc_test(
     srcs = [
         "expect_failure_test.c",
         "//src/builtin:expect_failure.c",
-        "//include:fildesh_builtin.h",
+        "//src/builtin:fildesh_builtin.h",
     ],
     defines = ["UNIT_TESTING"],
     deps = ["//:fildesh_lib"],
@@ -203,6 +203,22 @@ cc_test(
     args = [
         "$(location //tool:expectish)",
         "$(location hello_newline.txt)",
+    ],
+)
+
+#### oargz
+
+cc_test(
+    name = "oargz_test",
+    srcs = [
+        "oargz_test.c",
+        "//src/builtin:fildesh_builtin.h",
+        "//src/builtin:oargz.c",
+    ],
+    defines = ["FILDESH_BUILTIN_LIBRARY"],
+    deps = [
+        "//:fildesh_lib",
+        "//:fildesh_tool_lib",
     ],
 )
 
@@ -279,7 +295,7 @@ cc_test(
     srcs = [
         "transpose_test.c",
         "//src/builtin:transpose.c",
-        "//include:fildesh_builtin.h",
+        "//src/builtin:fildesh_builtin.h",
     ],
     defines = ["FILDESH_BUILTIN_LIBRARY"],
     deps = [
@@ -300,7 +316,7 @@ cc_test(
     srcs = [
         "ujoin_test.c",
         "//src/builtin:ujoin.c",
-        "//include:fildesh_builtin.h",
+        "//src/builtin:fildesh_builtin.h",
     ],
     defines = ["UNIT_TESTING"],
     deps = ["//:fildesh_lib", "//:fildesh_tool_lib"],

@@ -1,11 +1,10 @@
+#define FILDESH_LOG_TRACE_ON 1
+#include "src/builtin/fildesh_builtin.h"
+
 #include <assert.h>
 #include <stdarg.h>
 #include <stdlib.h>
 
-#define FILDESH_LOG_TRACE_ON 1
-#include <fildesh/fildesh.h>
-
-#include "fildesh_builtin.h"
 #include "include/fildesh/fildesh_compat_file.h"
 
 static int call_sut_main(const char* name, ...)

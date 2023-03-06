@@ -3,41 +3,27 @@
  * This code is written by Alex Klinkhamer.
  * It uses the ISC license (see the LICENSE file in the top-level directory).
  **/
-
-#include <fildesh/fildesh.h>
-#include "fildesh_builtin.h"
-#include "include/fildesh/fildesh_compat_errno.h"
-#include "include/fildesh/fildesh_compat_fd.h"
-#include "include/fildesh/fildesh_compat_file.h"
-#include "include/fildesh/fildesh_compat_sh.h"
-#include "include/fildesh/fildesh_compat_string.h"
-#include "fildesh_posix_thread.h"
-
-#include "src/bin/version.h"
-#include "src/syntax/defstr.h"
-#include "src/syntax/line.h"
-#include "src/syntax/opt.h"
-#include "src/syntax/symval.h"
-
 #include <assert.h>
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#if defined(FILDESH_PREFER_AIO)
-# if !defined(FILDESH_BUILTIN_ELASTIC_AIO_ON)
-#  define FILDESH_BUILTIN_ELASTIC_AIO_ON
-# endif
-#elif defined(FILDESH_PREFER_POLL)
-# if !defined(FILDESH_BUILTIN_ELASTIC_POLL_ON)
-#  define FILDESH_BUILTIN_ELASTIC_POLL_ON
-# endif
-#else
-# if !defined(FILDESH_PREFER_PTHREAD)
-#  define FILDESH_PREFER_PTHREAD
-# endif
-#endif
+#include <fildesh/fildesh.h>
+
+#include "include/fildesh_posix_thread.h"
+#include "include/fildesh/fildesh_compat_errno.h"
+#include "include/fildesh/fildesh_compat_fd.h"
+#include "include/fildesh/fildesh_compat_file.h"
+#include "include/fildesh/fildesh_compat_sh.h"
+#include "include/fildesh/fildesh_compat_string.h"
+
+#include "src/bin/version.h"
+#include "src/builtin/fildesh_builtin.h"
+#include "src/syntax/defstr.h"
+#include "src/syntax/line.h"
+#include "src/syntax/opt.h"
+#include "src/syntax/symval.h"
 
 /* Defined in main_fildesh.c.*/
 void push_fildesh_exit_callback(void (*f) (void*), void* x);
@@ -104,6 +90,7 @@ struct CommandHookup {
   FildeshKV add_map; /* Temporarily hold new symbols for the current line.*/
   fildesh_fd_t stdin_fd;
   fildesh_fd_t stdout_fd;
+  DECLARE_FildeshAT(const char*, stdargs);
   /* Stderr stays at fd 2 but should be closed explicitly if we dup2 over it.*/
   bool stderr_fd_opened;
 };
@@ -258,6 +245,7 @@ new_CommandHookup(FildeshAlloc* alloc)
   cmd_hookup->tmpfile_count = 0;
   cmd_hookup->stdin_fd = 0;
   cmd_hookup->stdout_fd = 1;
+  init_FildeshAT(cmd_hookup->stdargs);
   cmd_hookup->stderr_fd_opened = false;
   return cmd_hookup;
 }
@@ -289,6 +277,7 @@ static void free_CommandHookup(CommandHookup* cmd_hookup, int* istat) {
   if (cmd_hookup->stdout_fd >= 0 && cmd_hookup->stdout_fd != 1) {
     fildesh_compat_fd_close(cmd_hookup->stdout_fd);
   }
+  close_FildeshAT(cmd_hookup->stdargs);
   if (cmd_hookup->stderr_fd_opened) {
     fildesh_compat_fd_close(2);
   }
@@ -750,6 +739,14 @@ setup_commands(Command** cmds, CommandHookup* cmd_hookup)
         cmd->kind = StderrCommand;
         break;
       }
+      else if (arg_q == 0 && eq_cstr("stdargz", arg)) {
+        unsigned i;
+        (*cmd->args)[arg_r] = (char*)"oargz";
+        push_FildeshAT(cmd->args, (char*) "--");
+        for (i = 0; i < count_of_FildeshAT(cmd_hookup->stdargs); ++i) {
+          push_FildeshAT(cmd->args, (char*)(*cmd_hookup->stdargs)[i]);
+        }
+      }
     }
 
     for (arg_r = 0; arg_r < count_of_FildeshAT(cmd->args) && istat == 0; ++ arg_r)
@@ -1082,201 +1079,8 @@ show_usage()
           fildesh_exe);
 }
 
-
-#ifdef FILDESH_BUILTIN_ELASTIC_AIO_ON
-int main_elastic_aio(unsigned argc, char** argv);
-#endif
-#ifdef FILDESH_BUILTIN_ELASTIC_POLL_ON
-int main_elastic_poll(unsigned argc, char** argv);
-#endif
-int main_godo(unsigned argc, char** argv);
-int main_ssh_all(unsigned argc, char** argv);
-int main_waitdo(unsigned argc, char** argv);
-int main_xpipe(unsigned argc, char** argv);
-
-static int fildesh_main_add(unsigned argc, char** argv) {
-  return fildesh_builtin_add_main(argc, argv, NULL, NULL);
-}
-static int fildesh_main_bestmatch(unsigned argc, char** argv) {
-  return fildesh_builtin_bestmatch_main(argc, argv, NULL, NULL);
-}
-static int fildesh_main_cmp(unsigned argc, char** argv) {
-  return fildesh_builtin_cmp_main(argc, argv, NULL, NULL);
-}
-static int fildesh_main_delimend(unsigned argc, char** argv) {
-  return fildesh_builtin_delimend_main(argc, argv, NULL, NULL);
-}
-static int fildesh_main_elastic_pthread(unsigned argc, char** argv) {
-  return fildesh_builtin_elastic_pthread_main(argc, argv, NULL, NULL);
-}
-static int main_execfd(unsigned argc, char** argv) {
-  return fildesh_builtin_execfd_main(argc, argv, NULL, NULL);
-}
-static int main_expect_failure(unsigned argc, char** argv) {
-  return fildesh_builtin_expect_failure_main(argc, argv, NULL, NULL);
-}
-static int main_fildesh(unsigned argc, char** argv) {
-  return fildesh_builtin_fildesh_main(argc, argv, NULL, NULL);
-}
-static int fildesh_main_replace_string(unsigned argc, char** argv) {
-  return fildesh_builtin_replace_string_main(argc, argv, NULL, NULL);
-}
-static int fildesh_main_seq(unsigned argc, char** argv) {
-  return fildesh_builtin_seq_main(argc, argv, NULL, NULL);
-}
-static int fildesh_main_sponge(unsigned argc, char** argv) {
-  return fildesh_builtin_sponge_main(argc, argv, NULL, NULL);
-}
-static int fildesh_main_time2sec(unsigned argc, char** argv) {
-  return fildesh_builtin_time2sec_main(argc, argv, NULL, NULL);
-}
-static int fildesh_main_transpose(unsigned argc, char** argv) {
-  return fildesh_builtin_transpose_main(argc, argv, NULL, NULL);
-}
-static int fildesh_main_ujoin(unsigned argc, char** argv) {
-  return fildesh_builtin_ujoin_main(argc, argv, NULL, NULL);
-}
-static int fildesh_main_void(unsigned argc, char** argv) {
-  return fildesh_builtin_void_main(argc, argv, NULL, NULL);
-}
-static int fildesh_main_zec(unsigned argc, char** argv) {
-  return fildesh_builtin_zec_main(argc, argv, NULL, NULL);
-}
-
-static int fildesh_main_elastic(unsigned argc, char** argv) {
-  /* Ensure that exactly one default for elastic is defined
-   * by otherwise throwing a syntax error for zero/multiple returns.
-   */
-#if defined(FILDESH_PREFER_PTHREAD)
-  return fildesh_main_elastic_pthread(argc, argv);
-#endif
-#if defined(FILDESH_PREFER_AIO)
-  return main_elastic_aio(argc, argv);
-#endif
-#if defined(FILDESH_PREFER_POLL)
-  return main_elastic_poll(argc, argv);
-#endif
-}
-
-bool fildesh_builtin_is_threadsafe(const char* name)
-{
-  static const char* const all[] = {
-    "add",
-    "bestmatch",
-    "cmp",
-    "delimend",
-#if defined(FILDESH_PREFER_PTHREAD)
-    "elastic",
-#endif
-    "elastic_pthread",
-    "execfd",
-    "expect_failure",
-    "replace_string",
-    "seq",
-    "sponge",
-    "time2sec",
-    "transpose",
-    "ujoin",
-    "void",
-    "zec",
-    NULL,
-  };
-  unsigned i;
-  for (i = 0; all[i]; ++i) {
-    if (0 == strcmp(name, all[i])) {
-      return true;
-    }
-  }
-  return false;
-}
-
-int (*fildesh_specific_util (const char* arg)) (unsigned, char**)
-{
-  typedef struct FildeshBuiltinMap FildeshBuiltinMap;
-  struct FildeshBuiltinMap {
-    const char* name;
-    int (*main_fn)(unsigned,char**);
-  };
-  static const FildeshBuiltinMap builtins[] = {
-    {"add", fildesh_main_add},
-    {"best-match", fildesh_main_bestmatch},
-    {"bestmatch", fildesh_main_bestmatch},
-    {"cmp", fildesh_main_cmp},
-    {"delimend", fildesh_main_delimend},
-    {"elastic", fildesh_main_elastic},
-    {"elastic_pthread", fildesh_main_elastic_pthread},
-#ifdef FILDESH_BUILTIN_ELASTIC_AIO_ON
-    {"elastic_aio", main_elastic_aio},
-#endif
-#ifdef FILDESH_BUILTIN_ELASTIC_POLL_ON
-    {"elastic_poll", main_elastic_poll},
-#endif
-    {"execfd", main_execfd},
-    {"expect_failure", main_expect_failure},
-    {"fildesh", main_fildesh},
-    {"godo", main_godo},
-    {"replace_string", fildesh_main_replace_string},
-    {"seq", fildesh_main_seq},
-    {"sponge", fildesh_main_sponge},
-    {"ssh-all", main_ssh_all},
-    {"time2sec", fildesh_main_time2sec},
-    {"transpose", fildesh_main_transpose},
-    {"ujoin", fildesh_main_ujoin},
-    {"void", fildesh_main_void},
-    {"waitdo", main_waitdo},
-    {"xpipe", main_xpipe},
-    {"zec", fildesh_main_zec},
-    {NULL, NULL},
-  };
-  unsigned i;
-
-  for (i = 0; builtins[i].name; ++i) {
-    if (0 == strcmp(builtins[i].name, arg)) {
-      return builtins[i].main_fn;
-    }
-  }
-  return NULL;
-}
-
-int fildesh_builtin_main(const char* name, unsigned argc, char** argv)
-{
-  int (*f) (unsigned, char**);
-  f = fildesh_specific_util(name);
-  if (!f) {
-    fildesh_log_errorf("Unknown builtin: %s", name);
-    return -1;
-  }
-  return f(argc, argv);
-}
-
 FILDESH_POSIX_THREAD_CALLBACK(builtin_command_thread_fn, BuiltinCommandThreadArg*, st)
 {
-  typedef struct FildeshBuiltinMainMap FildeshBuiltinMainMap;
-  struct FildeshBuiltinMainMap {
-    const char* name;
-    int (*main_fn)(unsigned, char**, FildeshX**, FildeshO**);
-  };
-  static const FildeshBuiltinMainMap builtins[] = {
-    {"add", fildesh_builtin_add_main},
-    {"bestmatch", fildesh_builtin_bestmatch_main},
-    {"cmp", fildesh_builtin_cmp_main},
-    {"delimend", fildesh_builtin_delimend_main},
-#ifdef FILDESH_PREFER_PTHREAD
-    {"elastic", fildesh_builtin_elastic_pthread_main},
-#endif
-    {"elastic_pthread", fildesh_builtin_elastic_pthread_main},
-    {"execfd", fildesh_builtin_execfd_main},
-    {"expect_failure", fildesh_builtin_expect_failure_main},
-    {"replace_string", fildesh_builtin_replace_string_main},
-    {"seq", fildesh_builtin_seq_main},
-    {"sponge", fildesh_builtin_sponge_main},
-    {"time2sec", fildesh_builtin_time2sec_main},
-    {"transpose", fildesh_builtin_transpose_main},
-    {"ujoin", fildesh_builtin_ujoin_main},
-    {"void", fildesh_builtin_void_main},
-    {"zec", fildesh_builtin_zec_main},
-    {NULL, NULL},
-  };
   Command* cmd = st->command;
   unsigned offset = 0;
   unsigned argc;
@@ -1303,13 +1107,7 @@ FILDESH_POSIX_THREAD_CALLBACK(builtin_command_thread_fn, BuiltinCommandThreadArg
   st->argv[offset] = st->argv[offset-2];
   st->argv[offset-2] = name;
 
-  assert(fildesh_builtin_is_threadsafe(name));
-  for (i = 0; builtins[i].name; ++i) {
-    if (0 == strcmp(name, builtins[i].name)) {
-      main_fn = builtins[i].main_fn;
-      break;
-    }
-  }
+  main_fn = fildesh_builtin_threadsafe_fn_lookup(name);
   assert(main_fn);
 
   argc -= offset;
@@ -1395,6 +1193,18 @@ fix_known_flags_Command(Command* cmd, FildeshKV* alias_map) {
         1 == strlen((*cmd->args)[1]) &&
         1 == strlen((*cmd->args)[2])) {
       (*cmd->args)[0] = strdup_FildeshAlloc(cmd->alloc, "replace_string");
+    }
+  }
+  else if (eq_cstr("xargz", (*cmd->args)[0])) {
+    unsigned i = 0;
+    if (eq_cstr("--", (*cmd->args)[i])) {
+      i += 1;
+    }
+    if ((*cmd->args)[i]) {
+      replacement = lookup_strmap(alias_map, (*cmd->args)[0]);
+      if (replacement) {
+        (*cmd->args)[i] = replacement;
+      }
     }
   }
 }
@@ -1557,9 +1367,9 @@ spawn_commands(const char* fildesh_exe, Command** cmds,
       push_FildeshAT(argv, lace_strdup("--"));
       push_FildeshAT(argv, lace_strdup((*cmd->args)[0]));
     }
-    else if (fildesh_specific_util ((*cmd->args)[0])) {
+    else if (fildesh_builtin_main_fn_lookup((*cmd->args)[0])) {
       if (!forkonly) {
-        use_thread = fildesh_builtin_is_threadsafe((*cmd->args)[0]);
+        use_thread = !!fildesh_builtin_threadsafe_fn_lookup((*cmd->args)[0]);
       }
       push_FildeshAT(argv, lace_strdup(fildesh_exe));
       push_FildeshAT(argv, lace_strdup("-as"));
@@ -1888,7 +1698,7 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
     assert(argi <= argc);
     assert(!argv[argc]);
     exstatus = fildesh_syntax_parse_flags(
-        &argv[argi], &cmd_hookup->map, tmp_out);
+        &argv[argi], &cmd_hookup->map, cmd_hookup->stdargs,  tmp_out);
   }
   if (exiting || exstatus != 0) {
     close_FildeshAT(script_args);

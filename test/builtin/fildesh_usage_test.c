@@ -203,6 +203,17 @@ ujoin_usage_tests(const char* fildesh_exe, const char* bad_filename) {
 }
 
 static void
+xargz_usage_tests(const char* fildesh_exe) {
+  int istat;
+
+  /* Need to give a command.*/
+  istat = fildesh_compat_fd_spawnlp_wait(
+      0, 1, 2, NULL, fildesh_exe, "-as", "xargz",
+      "--", NULL);
+  assert(istat == 64);
+}
+
+static void
 zec_usage_tests(const char* fildesh_exe, const char* bad_filename) {
   const char* good_filename = "/dev/null";
   int istat;
@@ -261,6 +272,7 @@ int main(int argc, char** argv) {
   execfd_usage_tests(fildesh_exe, bad_filename);
   time2sec_usage_tests(fildesh_exe);
   ujoin_usage_tests(fildesh_exe, bad_filename);
+  xargz_usage_tests(fildesh_exe);
   zec_usage_tests(fildesh_exe, bad_filename);
 
   free(bad_filename);

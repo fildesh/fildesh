@@ -1,10 +1,10 @@
-
-#include "fildesh_builtin.h"
-#include "include/fildesh/fildesh_compat_sh.h"
+#include "src/builtin/fildesh_builtin.h"
 
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+
+#include "include/fildesh/fildesh_compat_sh.h"
 
   int
 main_waitdo(unsigned argc, char** argv)
@@ -49,7 +49,7 @@ main_waitdo(unsigned argc, char** argv)
     while (! feof (in) && ! ferror (in))  fgetc (in);
     fclose (in);
 
-    if (fildesh_specific_util(argv[argi]))
+    if (fildesh_builtin_main_fn_lookup(argv[argi]))
     {
       return fildesh_builtin_main(argv[argi], argc-argi, &argv[argi]);
     }

@@ -3,14 +3,13 @@
  * process for each different line of input and forwards that line of input
  * to the spawned process' stdin.
  **/
+#include "src/builtin/fildesh_builtin.h"
 
-#include <fildesh/fildesh.h>
-#include "fildesh_builtin.h"
+#include <stdlib.h>
+
 #include "include/fildesh/fildesh_compat_errno.h"
 #include "include/fildesh/fildesh_compat_fd.h"
 #include "include/fildesh/fildesh_compat_sh.h"
-#include <stdlib.h>
-
 
 static
   void
@@ -38,7 +37,7 @@ run_with_line(const char* fildesh_exe, unsigned argc, const char** argv,
   }
 
   actual_argv = (const char**)malloc(sizeof(char*) * (2+argc+1));
-  if (fildesh_specific_util(argv[0])) {
+  if (fildesh_builtin_main_fn_lookup(argv[0])) {
     actual_argv[offset++] = fildesh_exe;
     actual_argv[offset++] = "-as";
   }

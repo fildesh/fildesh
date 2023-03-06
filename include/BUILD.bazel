@@ -2,9 +2,3 @@ exports_files([
     "fildesh_posix_thread.h",
     "fildesh_tool.h",
 ])
-exports_files([
-    "fildesh_builtin.h",
-], visibility = [
-    "//src:__subpackages__",
-    "//test:__subpackages__",
-])

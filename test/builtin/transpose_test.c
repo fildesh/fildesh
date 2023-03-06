@@ -1,11 +1,11 @@
-#include <fildesh/fildesh.h>
-#include "fildesh_builtin.h"
-#include "fildesh_tool.h"
+#include "src/builtin/fildesh_builtin.h"
 
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "fildesh_tool.h"
 
 int
 fildesh_builtin_transpose_main(unsigned argc, char** argv,

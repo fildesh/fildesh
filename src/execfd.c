@@ -1,15 +1,14 @@
-
-#include <fildesh/fildesh.h>
-#include "fildesh_builtin.h"
-#include "include/fildesh/fildesh_compat_fd.h"
-#include "include/fildesh/fildesh_compat_file.h"
-#include "include/fildesh/fildesh_compat_sh.h"
-#include "include/fildesh/fildesh_compat_string.h"
+#include "src/builtin/fildesh_builtin.h"
 
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "include/fildesh/fildesh_compat_fd.h"
+#include "include/fildesh/fildesh_compat_file.h"
+#include "include/fildesh/fildesh_compat_sh.h"
+#include "include/fildesh/fildesh_compat_string.h"
 
 static
   void
@@ -221,7 +220,7 @@ fildesh_builtin_execfd_main(unsigned argc, char** argv,
 
   spawn_offsets = (size_t*)malloc(sizeof(size_t) * argc);
 
-  if (exstatus == 0 && fildesh_specific_util(argv[off])) {
+  if (exstatus == 0 && fildesh_builtin_main_fn_lookup(argv[off])) {
     puts_FildeshO(&spawn_buf, argv[0]);
     next_spawn_arg(spawn_offsets, &spawn_argc, &spawn_buf);
     puts_FildeshO(&spawn_buf, "-as");
