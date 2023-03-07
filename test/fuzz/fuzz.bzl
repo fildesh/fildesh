@@ -19,21 +19,21 @@ def cc_fuzz_test(name, srcs, deps, max_guesses):
   native.cc_test(
       name = name,
       args = select({
-          "//test/fuzz:full_fuzzing": ["-runs=" + str(max_guesses)],
+          "//test:full_fuzzing_on": ["-runs=" + str(max_guesses)],
           "//conditions:default": [],
       }),
       srcs = select({
-          "//test/fuzz:full_fuzzing": srcs,
+          "//test:full_fuzzing_on": srcs,
           "//conditions:default": srcs + ["//test/fuzz:fuzz_main.c"],
       }),
       deps = deps,
       size = "small",
       copts = select({
-          "//test/fuzz:full_fuzzing": libfuzzer_compile_flags,
+          "//test:full_fuzzing_on": libfuzzer_compile_flags,
           "//conditions:default": [],
       }),
       linkopts = select({
-          "//test/fuzz:full_fuzzing": libfuzzer_compile_flags,
+          "//test:full_fuzzing_on": libfuzzer_compile_flags,
           "//conditions:default": [],
       }),
   )
@@ -45,7 +45,7 @@ def cc_fuzz_test(name, srcs, deps, max_guesses):
       linkopts = libfuzzer_compile_flags,
       testonly = 1,
       target_compatible_with = select({
-          "//test/fuzz:full_fuzzing": [],
+          "//test:full_fuzzing_on": [],
           "//conditions:default": ["@platforms//:incompatible"],
       })
   )

@@ -7,7 +7,7 @@ def cc_benchmark(name, srcs, deps=[], **kwargs):
           "@google_benchmark//:benchmark_main",
       ],
       args = select({
-          "//test/benchmark:full_benchmarking": [],
+          "//test:full_benchmarking_on": [],
           "//conditions:default": ["--benchmark_min_time=0.000001"],
       }),
       **kwargs,

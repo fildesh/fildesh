@@ -6,13 +6,6 @@ exports_files([
     "smoke_common.h",
 ])
 
-config_setting(
-    name = "full_fuzzing",
-    flag_values = {
-        "//test:enable_full_fuzzing": "true",
-    }
-)
-
 
 cc_fuzz_test(
     name = "grow_mpop_fuzz_test",
