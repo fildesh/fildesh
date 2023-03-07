@@ -12,18 +12,23 @@ fildesh_builtin_replace_string_main(unsigned argc, char** argv,
   FildeshO* out = NULL;
   int exstatus = 0;
   const unsigned char* needle;
-  const unsigned char* replacement;
+  const unsigned char* replacement = NULL;
   size_t needle_size;
-  size_t replacement_size;
+  size_t replacement_size = 0;
 
-  if (argc != 3) {
-    fildesh_log_error("Need exactly 2 arguments");
+  if (argc != 2 && argc != 3) {
+    fildesh_log_error("Need 2 or 3 arguments.");
     return 64;
   }
   needle = (const unsigned char*) argv[1];
-  replacement = (const unsigned char*) argv[2];
   needle_size = strlen(argv[1]);
-  replacement_size = strlen(argv[2]);
+  if (needle_size == 0) {needle_size = 1;}
+
+  if (argc == 3) {
+    replacement = (const unsigned char*) argv[2];
+    replacement_size = strlen(argv[2]);
+    if (replacement_size == 0) {replacement_size = 1;}
+  }
 
   in = open_arg_FildeshXF(0, argv, inputv);
   out = open_arg_FildeshOF(0, argv, outputv);

@@ -85,7 +85,9 @@ maybe_flush_FildeshO(FildeshO* o)
   void
 put_bytestring_FildeshO(FildeshO* out, const unsigned char* s, size_t n)
 {
-  char* buf = grow_FildeshO(out, n);
+  char* buf;
+  if (n == 0) {return;}
+  buf = grow_FildeshO(out, n);
   memcpy(buf, s, n);
   maybe_flush_FildeshO(out);
 }

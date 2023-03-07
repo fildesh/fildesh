@@ -1,14 +1,14 @@
 # A few odd replacements.
 
 $(H expect_content)
-0hi
+zeroone
 2
 3
 4
 6
 7
 8
-9hi0
+9onezero
 
 $(H expect_content)
 
@@ -17,7 +17,13 @@ zec -o $(OF expect) / $(XA expect_content) /
 
 
 |< seq 0 10
-|- replace_string "5\n" ""
-|- replace_string "\n1" "hi"
+# Remove line with 5 on it.
+|- replace_string "5\n"
+# Change lines that start with "1" say "one" instead
+# and remove the preceding newline.
+|- replace_string "\n1" "one"
+# Change "0" to NUL byte, then NUL byte to "zero".
+|- replace_string "0" ""
+|- replace_string "" "zero"
 |- cmp $(XF expect) -
 |> stdout
