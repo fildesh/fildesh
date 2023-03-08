@@ -11,6 +11,19 @@ alias(
     visibility = ["//visibility:public"],
 )
 
+alias(
+    name = "sxproto2textproto",
+    actual = "//src/sxproto:sxproto2textproto",
+    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "sxproto_lib",
+    actual = "//src/sxproto:sxproto_lib",
+    visibility = ["//visibility:public"],
+)
+
+
 cc_library(
     name = "fildesh_compat_lib",
     srcs = [

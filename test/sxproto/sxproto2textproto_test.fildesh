@@ -1,0 +1,197 @@
+
+# There are several tests. Search for:
+# - scalar_content
+# - message_content
+# - empty_message_content
+# - repeated_content
+# - manyof_content
+
+(: scalar_content Str """
+; An integer.
+(i 5)
+; A float.
+(f 5.5)
+; A string.
+(s "hello")
+""")
+(: scalar_expect Str """
+# An integer.
+i: 5
+# A float.
+f: 5.5
+# A string.
+s: "hello"
+""")
+
+$(O expect) oargz -- "${scalar_expect}"
+|< oargz -- "${scalar_content}"
+|- sxproto2textproto
+|- cmp $(XF expect)
+|> stderr
+
+
+$(barrier)
+
+(: message_content Str """
+; A message holding the first 3 fields of the previous example.
+(m (i 5) (f 5.5) (s "hello"))
+""")
+(: message_expect Str """
+# A message holding the first 3 fields of the previous example.
+m { i: 5 f: 5.5 s: "hello"}
+""")
+
+$(O expect) oargz -- "${message_expect}"
+|< oargz -- "${message_content}"
+|- sxproto2textproto
+|- cmp $(XF expect)
+|> stderr
+
+
+$(barrier)
+
+(: empty_message_content Str """
+; An empty message.
+(m)
+""")
+(: empty_message_expect Str """
+# An empty message.
+m {}
+""")
+
+$(O expect) oargz -- "${empty_message_expect}"
+|< oargz -- "${empty_message_content}"
+|- sxproto2textproto
+|- cmp $(XF expect)
+|> stderr
+
+
+$(barrier)
+
+(: repeated_content Str """
+; An array of integers.
+(my_integers 1)
+(my_integers 2)
+(my_integers 3)
+
+; An array of strings.
+(my_strings "yo")
+(my_strings "howdy")
+(my_strings "sup")
+
+; An array of messages.
+(my_messages (i 5))
+(my_messages)
+(my_messages
+  (i 5)
+  (f 5.5)
+  (s "hello"))
+""")
+(: repeated_expect Str """
+# An array of integers.
+my_integers: 1
+my_integers: 2
+my_integers: 3
+
+# An array of strings.
+my_strings: "yo"
+my_strings: "howdy"
+my_strings: "sup"
+
+# An array of messages.
+my_messages { i: 5}
+my_messages {}
+my_messages {
+  i: 5
+  f: 5.5
+  s: "hello"}
+""")
+
+$(O expect) oargz -- "${repeated_expect}"
+|< oargz -- "${repeated_content}"
+|- sxproto2textproto
+|- cmp $(XF expect)
+|> stderr
+
+
+$(barrier)
+
+(: array_content Str """
+; An array of integers.
+((my_integers) 1 2 3)
+
+; An array of strings.
+((my_strings) "yo" "howdy" "sup")
+
+; An array of 3 messages.
+((my_messages)
+ (() (i 5))
+ (())
+ (() (i 5) (f 5.5) (s "hello")))
+""")
+(: array_expect Str """
+# An array of integers.
+my_integers: [ 1, 2, 3]
+
+# An array of strings.
+my_strings: [ "yo", "howdy", "sup"]
+
+# An array of 3 messages.
+my_messages: [
+ { i: 5},
+ {},
+ { i: 5 f: 5.5 s: "hello"}]
+""")
+
+$(O expect) oargz -- "${array_expect}"
+|< oargz -- "${array_content}"
+|- sxproto2textproto
+|- cmp $(XF expect)
+|> stderr
+
+
+$(barrier)
+
+(: manyof_content Str """
+(((expressions))
+
+ (value true)
+ true
+
+ (not (value false))
+
+ (or ((values) (() (value false)) (() (value true))))
+ (((or)) (value false) (value true))
+ (((or)) false true)
+
+ (((or))
+  false
+  (((and)) true false)
+  (((or)) false false true))
+)
+""")
+(: manyof_expect Str """
+expressions {values: [
+
+ {value: true},
+ {value: true},
+
+ {not { value: false}},
+
+ {or { values: [ { value: false}, { value: true}]}},
+ {or {values: [ {value: false}, {value: true}]}},
+ {or {values: [ {value: false}, {value: true}]}},
+
+ {or {values: [
+  {value: false},
+  {and {values: [ {value: true}, {value: false}]}},
+  {or {values: [ {value: false}, {value: false}, {value: true}]}}]}}
+]}
+""")
+
+$(O expect) oargz -- "${manyof_expect}"
+|< oargz -- "${manyof_content}"
+|- sxproto2textproto
+|- cmp $(XF expect)
+|> stderr
+

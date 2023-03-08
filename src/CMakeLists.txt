@@ -1,6 +1,7 @@
 
 add_subdirectory(lib)
 add_subdirectory(builtin)
+add_subdirectory(sxproto)
 
 
 # Conditionally referenced.
