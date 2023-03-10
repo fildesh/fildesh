@@ -4,6 +4,6 @@ fildesh_test(
     name = "sxproto2textproto_test",
     srcs = ["sxproto2textproto_test.fildesh"],
     aliases = {
-        "sxproto2textproto": "//:sxproto2textproto",
+        "sxproto2textproto": "//tool:sxproto2textproto",
     },
 )

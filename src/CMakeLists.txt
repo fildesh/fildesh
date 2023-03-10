@@ -84,6 +84,7 @@ set_property(TARGET fildesh_builtin_lib_obj APPEND PROPERTY COMPILE_DEFINITIONS
 
 add_library(fildesh_builtin_lib STATIC
   $<TARGET_OBJECTS:fildesh_builtin_lib_obj>
+  $<TARGET_OBJECTS:sxproto_lib_obj>
   $<TARGET_OBJECTS:fildesh_lib_obj>
   $<TARGET_OBJECTS:fildesh_compat_lib_obj>
   )

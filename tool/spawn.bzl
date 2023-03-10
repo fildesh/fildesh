@@ -15,7 +15,7 @@ _fildespawn_test = rule(
     attrs = {
         "data": attr.label_list(allow_files=True),
         "_fildespawn": attr.label(
-            default = Label("//:fildespawn"),
+            default = Label("//tool:fildespawn"),
             allow_single_file = True,
             executable = True,
             cfg = "exec",

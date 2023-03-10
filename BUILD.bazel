@@ -5,15 +5,11 @@ alias(
     visibility = ["//visibility:public"],
 )
 
+# Use //tool:fildespawn instead.
+# TODO(#121): Remove in v0.2.0.
 alias(
     name = "fildespawn",
     actual = "//tool:fildespawn",
-    visibility = ["//visibility:public"],
-)
-
-alias(
-    name = "sxproto2textproto",
-    actual = "//src/sxproto:sxproto2textproto",
     visibility = ["//visibility:public"],
 )
 

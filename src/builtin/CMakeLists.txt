@@ -24,6 +24,9 @@ target_link_libraries(seq fildesh_lib)
 add_executable(sponge "sponge.c")
 target_link_libraries(sponge fildesh_lib)
 
+add_executable(sxproto2textproto "sxproto2textproto.c")
+target_link_libraries(sxproto2textproto sxproto_lib fildesh_lib)
+
 add_executable(time2sec "time2sec.c")
 target_link_libraries(time2sec fildesh_lib)
 

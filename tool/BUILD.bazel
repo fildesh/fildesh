@@ -1,25 +1,51 @@
-# These are small enough to run many times as cc_test().
-exports_files([
-    "spawn.c",
-], visibility = ["//visibility:public"])
 
-exports_files([
-    "expectish.c",
-    "pipem.c",
-    "shout.c",
-], visibility = [
-    "//:__pkg__",
-    "//test/tool:__pkg__",
-])
 
+################################################################################
+## Spawning.
+################################################################################
+# This first section is sorted by simplicity,
+# where the most basic tools with least dependencies come first.
+
+# Extremely simple testing tools named `shout` and `expectish` that
+# respectively write a line of text (separated by spaces) to a file
+# and test that a file consists of expected text (separated by blank space).
 cc_binary(
-    name = "cembed",
-    srcs = [
-        "cembed.c",
-    ],
+    name = "shout",
+    srcs = ["shout.c"],
+    visibility = ["//visibility:public"],
+)
+cc_binary(
+    name = "expectish",
+    srcs = ["expectish.c"],
+    visibility = ["//visibility:public"],
+)
+# Unit tests need visibility.
+exports_files(["expectish.c", "shout.c"], visibility = ["//test/tool:__pkg__"])
+
+# Extremely simple tool named `spawn` used to run programs.
+cc_binary(
+    name = "spawn",
+    srcs = ["spawn.c"],
+    visibility = ["//visibility:public"],
+)
+# Its source code is compiled many times in cc_test() calls
+# invoked from our spawn_test() and fildesh_test() macros.
+exports_files(["spawn.c"], visibility = ["//visibility:public"])
+
+# A more advanced version of `spawn` is named `fildespawn`.
+# It can perform stdin/stdout file redirection
+# and is used to test that aspect of our "compat" library.
+cc_binary(
+    name = "fildespawn",
+    srcs = ["fildespawn.c"],
+    deps = ["//:fildesh_compat_lib"],
     visibility = ["//visibility:public"],
 )
 
+# An even more advanced version of `spawn` is named `comparispawn`.
+# It spawns a program and compares that output with that of a given file.
+# It depends on the main Fildesh library for convenience and
+# helps validate our "tool" library that some C unit tests rely on.
 cc_binary(
     name = "comparispawn",
     srcs = ["comparispawn.c"],
@@ -30,39 +56,38 @@ cc_binary(
     visibility = ["//visibility:public"],
 )
 
+
+################################################################################
+## Code and data.
+################################################################################
+
+# cembed and cswitch are
+cc_binary(
+    name = "cembed",
+    srcs = ["cembed.c"],
+    visibility = ["//visibility:public"],
+)
 cc_binary(
     name = "cswitch",
-    srcs = [
-        "cswitch.c",
-    ],
+    srcs = ["cswitch.c"],
     visibility = ["//visibility:public"],
 )
 
-cc_binary(
-    name = "expectish",
-    srcs = ["expectish.c"],
+# The sxproto2textproto tool is used by rules_sxproto.
+alias(
+    name = "sxproto2textproto",
+    actual = "//src/builtin:sxproto2textproto",
     visibility = ["//visibility:public"],
 )
 
-cc_binary(
-    name = "fildespawn",
-    srcs = [
-        "fildespawn.c",
-    ],
-    deps = [
-        "//:fildesh_compat_lib",
-    ],
-    visibility = ["//visibility:public"],
-)
 
-cc_binary(
-    name = "shout",
-    srcs = ["shout.c"],
-    visibility = ["//visibility:public"],
-)
+################################################################################
+## Tool library.
+################################################################################
+# The library //:fildesh_tool_lib is built elsewhere (one level up).
+exports_files([
+    "pipem.c",
+], visibility = [
+    "//:__pkg__",
+])
 
-cc_binary(
-    name = "spawn",
-    srcs = ["spawn.c"],
-    visibility = ["//visibility:public"],
-)

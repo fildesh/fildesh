@@ -9,9 +9,3 @@ cc_library(
     visibility = ["//:__pkg__"],
 )
 
-cc_binary(
-    name = "sxproto2textproto",
-    srcs = ["sxproto2textproto_main.c"],
-    deps = ["//:sxproto_lib"],
-    visibility = ["//:__pkg__"],
-)
