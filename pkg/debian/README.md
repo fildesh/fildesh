@@ -3,7 +3,7 @@
 From the project root, run the make script:
 
 ```shell
-./pkg/deb/make.fildesh
+./pkg/debian/make.fildesh
 ```
 
 It should tell you where the resulting Debian package was created.

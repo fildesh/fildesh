@@ -16,7 +16,7 @@ fildesh_version=$(grep -m1 -E -e 'version = ' MODULE.bazel | sed -E -e 's/.*"(.*
 # Make location for ebuild.
 install -d /var/db/repos/local/dev-lang/fildesh
 # Copy ebuild.
-install -T pkg/ebuild/fildesh.ebuild /var/db/repos/local/dev-lang/fildesh/fildesh-${fildesh_version}.ebuild
+install -T pkg/gentoo/fildesh.ebuild /var/db/repos/local/dev-lang/fildesh/fildesh-${fildesh_version}.ebuild
 # Create Manifest entry.
 ebuild /var/db/repos/local/dev-lang/fildesh/fildesh-${fildesh_version}.ebuild manifest
 
