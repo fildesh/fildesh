@@ -64,6 +64,7 @@ add_library(fildesh_builtin_lib_obj OBJECT
   "${CMAKE_SOURCE_DIR}/src/builtin/replace_string.c"
   "${CMAKE_SOURCE_DIR}/src/builtin/seq.c"
   "${CMAKE_SOURCE_DIR}/src/builtin/sponge.c"
+  "${CMAKE_SOURCE_DIR}/src/builtin/sxproto2textproto.c"
   "${CMAKE_SOURCE_DIR}/src/builtin/time2sec.c"
   "${CMAKE_SOURCE_DIR}/src/builtin/transpose.c"
   "${CMAKE_SOURCE_DIR}/src/builtin/ujoin.c"

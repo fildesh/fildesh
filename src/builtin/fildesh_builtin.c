@@ -64,6 +64,9 @@ static int fildesh_main_sponge(unsigned argc, char** argv) {
 static int fildesh_main_oargz(unsigned argc, char** argv) {
   return fildesh_builtin_oargz_main(argc, argv, NULL, NULL);
 }
+static int fildesh_main_sxproto2textproto(unsigned argc, char** argv) {
+  return fildesh_builtin_sxproto2textproto_main(argc, argv, NULL, NULL);
+}
 static int fildesh_main_time2sec(unsigned argc, char** argv) {
   return fildesh_builtin_time2sec_main(argc, argv, NULL, NULL);
 }
@@ -118,6 +121,7 @@ int (* fildesh_builtin_threadsafe_fn_lookup(const char* name)
     {"replace_string", fildesh_builtin_replace_string_main},
     {"seq", fildesh_builtin_seq_main},
     {"sponge", fildesh_builtin_sponge_main},
+    {"sxproto2textproto", fildesh_builtin_sxproto2textproto_main},
     {"time2sec", fildesh_builtin_time2sec_main},
     {"transpose", fildesh_builtin_transpose_main},
     {"ujoin", fildesh_builtin_ujoin_main},
@@ -165,6 +169,7 @@ int (* fildesh_builtin_main_fn_lookup(const char* name)
     {"seq", fildesh_main_seq},
     {"sponge", fildesh_main_sponge},
     {"ssh-all", main_ssh_all},
+    {"sxproto2textproto", fildesh_main_sxproto2textproto},
     {"time2sec", fildesh_main_time2sec},
     {"transpose", fildesh_main_transpose},
     {"ujoin", fildesh_main_ujoin},

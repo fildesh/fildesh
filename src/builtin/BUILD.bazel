@@ -90,7 +90,7 @@ cc_binary(
     name = "sxproto2textproto",
     srcs = ["sxproto2textproto.c"],
     deps = ["//:sxproto_lib"],
-    visibility = ["//tool:__pkg__"],
+    visibility = ["//visibility:public"],
 )
 
 cc_binary(

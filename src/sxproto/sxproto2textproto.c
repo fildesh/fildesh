@@ -14,6 +14,7 @@ typedef struct SxprotoAST SxprotoAST;
 struct SxprotoPosition {
   unsigned line_count;
   unsigned column_count;
+  FildeshO* err_out;
 };
 
 struct SxprotoSeparation {
@@ -76,8 +77,14 @@ update_SxprotoPosition(SxprotoPosition* pos, const FildeshX* slice)
 static void
 syntax_error(const SxprotoPosition* pos, const char* msg)
 {
-  fprintf(stderr, "Line %u column %u: %s\n",
-          pos->line_count+1, pos->column_count+1, msg);
+  FildeshO* const out = pos->err_out;
+  puts_FildeshO(out, "Line ");
+  print_int_FildeshO(out, (int)(pos->line_count+1));
+  puts_FildeshO(out, " column ");
+  print_int_FildeshO(out, (int)(pos->column_count+1));
+  puts_FildeshO(out, ": ");
+  puts_FildeshO(out, msg);
+  putc_FildeshO(out, '\n');
 }
 
   static void
@@ -222,7 +229,7 @@ parse_after_open_paren(
       result->text = strdup_FildeshX(&slice, alloc);
       parse_separation(in, result, pos, alloc);
       if (!skipstr_FildeshX(in, ")")) {
-        syntax_error(pos, "Expected closing paren.");
+        syntax_error(pos, "Expected closing paren for manyof.");
         return false;
       }
       pos->column_count += 1;
@@ -314,12 +321,14 @@ parse_after_open_paren(
   return true;
 }
 
-  static SxprotoAST*
-parse_sxproto(FildeshX* in, FildeshAlloc* alloc)
+static
+  SxprotoAST*
+parse_sxproto(FildeshX* in, FildeshAlloc* alloc, FildeshO* err_out)
 {
   SxprotoAST sentinel;
   SxprotoAST* a;
-  SxprotoPosition pos[1] = {{0, 0}};
+  SxprotoPosition pos[1] = {{0, 0, NULL}};
+  pos->err_out = err_out;
   for (a = elem_after_separation(in, &sentinel, pos, alloc);
        a;
        a = next_after_separation(in, a, pos, alloc))
@@ -457,14 +466,14 @@ translate_SxprotoAST(
 }
 
 
-/* Leaves output file open.*/
-bool sxproto2textproto(FildeshX* in, FildeshO* out)
+/* Leaves output files open.*/
+bool sxproto2textproto(FildeshX* in, FildeshO* out, FildeshO* err_out)
 {
   FildeshAlloc* alloc = open_FildeshAlloc();
   SxprotoAST* result;
   SxprotoAST* a;
 
-  result = parse_sxproto(in, alloc);
+  result = parse_sxproto(in, alloc, err_out);
   close_FildeshX(in);
   for (a = result; a; a = a->next) {
     translate_SxprotoAST(a, NULL, out);
