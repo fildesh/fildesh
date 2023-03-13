@@ -43,7 +43,7 @@ jobs:
       working-directory: ${{runner.workspace}}
       run: >
         ./bld/pkg/fildesh/usr/bin/fildesh
-        $GITHUB_WORKSPACE/pkg/deb/workflow_stage.fildesh
+        $GITHUB_WORKSPACE/pkg/debian/workflow_stage.fildesh
         --source_root=$GITHUB_WORKSPACE
         --pkg_dst=${{runner.workspace}}/bld/pkg
 
@@ -51,7 +51,7 @@ jobs:
       working-directory: ${{runner.workspace}}
       run: >
         ./bld/pkg/fildesh/usr/bin/fildesh
-        $GITHUB_WORKSPACE/pkg/ebuild/workflow_stage.fildesh
+        $GITHUB_WORKSPACE/pkg/gentoo/workflow_stage.fildesh
         --source_root=$GITHUB_WORKSPACE
         --final_dst=${{runner.workspace}}/bld/pkg/final
 
