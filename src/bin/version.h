@@ -1,1 +1,1 @@
-static const char fildesh_bin_version[] = "0.1.7";
+static const char fildesh_bin_version[] = "0.1.8";
