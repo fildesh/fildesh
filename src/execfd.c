@@ -2,7 +2,6 @@
 
 #include <assert.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 #include "include/fildesh/fildesh_compat_fd.h"
@@ -93,17 +92,6 @@ readin_fd(FildeshO* buf, fildesh_fd_t fd, bool scrap_newline)
   return s;
 }
 
-static
-  void
-next_spawn_arg(size_t* spawn_offsets,
-               unsigned* spawn_argc,
-               FildeshO* spawn_buf)
-{
-  putc_FildeshO(spawn_buf, '\0');
-  *spawn_argc += 1;
-  spawn_offsets[*spawn_argc] = spawn_buf->size;
-}
-
   int
 fildesh_builtin_execfd_main(unsigned argc, char** argv,
                             FildeshX** inputv, FildeshO** outputv)
@@ -114,29 +102,19 @@ fildesh_builtin_execfd_main(unsigned argc, char** argv,
   unsigned i;
   fildesh_fd_t stdin_fd = 0;
   fildesh_fd_t stdout_fd = 1;
-  unsigned inherit_count;
-  fildesh_fd_t* fds_to_inherit;
-  unsigned exitfd_count;
-  fildesh_fd_t* exitfds;
+  DECLARE_DEFAULT_FildeshAT(fildesh_fd_t, fds_to_inherit);
+  DECLARE_DEFAULT_FildeshAT(fildesh_fd_t, exitfds);
+  DECLARE_DEFAULT_FildeshAT(const char*, spawn_argv);
+  FildeshAlloc* alloc = open_FildeshAlloc();
   FildeshO* status_out = NULL;
   char* exe = NULL;
-  char** spawn_argv = NULL;
-  unsigned spawn_argc = 0;
-  size_t* spawn_offsets;
-  FildeshO spawn_buf = DEFAULT_FildeshO;
+  FildeshO buf_slice = DEFAULT_FildeshO;
   const char* arg_fmt = NULL;
 
   assert(!inputv);
   assert(!outputv);
 
   if (argc < 3) {show_usage(); return 64;}
-
-  fds_to_inherit = (fildesh_fd_t*) malloc(sizeof(fildesh_fd_t) * (argc-2));
-  inherit_count = 0;
-  fds_to_inherit[inherit_count] = -1;
-
-  exitfds = (fildesh_fd_t*) malloc(sizeof(fildesh_fd_t) * (argc / 2));
-  exitfd_count = 0;
 
   argi = 1;
   while (argv[argi] && 0 != strcmp(argv[argi], "--") && exstatus == 0) {
@@ -157,8 +135,7 @@ fildesh_builtin_execfd_main(unsigned argc, char** argv,
     } else if (0 == strcmp(argv[argi], "-inheritfd")) {
       fildesh_fd_t fd = -1;
       if (fildesh_parse_int(&fd, argv[++argi]) && fd >= 0) {
-        fds_to_inherit[inherit_count++] = fd;
-        fds_to_inherit[inherit_count] = -1;
+        push_FildeshAT(fds_to_inherit, fd);
       } else {
         fildesh_log_errorf("Cannot parse -inheritfd: %s", argv[argi]);
         exstatus = 64;
@@ -174,7 +151,7 @@ fildesh_builtin_execfd_main(unsigned argc, char** argv,
     } else if (0 == strcmp(argv[argi], "-exitfd")) {
       fildesh_fd_t fd = -1;
       if (fildesh_parse_int(&fd, argv[++argi]) && fd >= 0) {
-        exitfds[exitfd_count++] = fildesh_compat_fd_claim(fd);
+        push_FildeshAT(exitfds, fildesh_compat_fd_claim(fd));
       } else {
         fildesh_log_errorf("Cannot parse -exitfd: %s", argv[argi]);
         exstatus = 64;
@@ -218,60 +195,48 @@ fildesh_builtin_execfd_main(unsigned argc, char** argv,
     }
   }
 
-  spawn_offsets = (size_t*)malloc(sizeof(size_t) * argc);
-
   if (exstatus == 0 && fildesh_builtin_main_fn_lookup(argv[off])) {
-    puts_FildeshO(&spawn_buf, argv[0]);
-    next_spawn_arg(spawn_offsets, &spawn_argc, &spawn_buf);
-    puts_FildeshO(&spawn_buf, "-as");
-    next_spawn_arg(spawn_offsets, &spawn_argc, &spawn_buf);
+    push_FildeshAT(spawn_argv, argv[0]);
+    push_FildeshAT(spawn_argv, "-as");
   }
 
-  for (i = 0; i < argc-off && exstatus == 0; ++i) {
+  for (i = 0; off+i < argc && exstatus == 0; ++i) {
     int fd = -1;
 
-    if (i == 0) {
-      spawn_offsets[0] = 0;
-    } else {
-      if (arg_fmt[2*i-1] == '_') {
-        next_spawn_arg(spawn_offsets, &spawn_argc, &spawn_buf);
-      }
-    }
-
     if (arg_fmt[2*i] == 'a') {
-      puts_FildeshO(&spawn_buf, argv[off+i]);
-      continue;
+      puts_FildeshO(&buf_slice, argv[off+i]);
     }
-
-    if (!fildesh_parse_int(&fd, argv[off+i]) || fd < 0) {
+    else if (!fildesh_parse_int(&fd, argv[off+i]) || fd < 0) {
       fildesh_log_errorf("Cannot parse fd from arg: %s", argv[off+i]);
       exstatus = 64;
-    } else if (i == 0) {
+    }
+    else if (i == 0) {
       if (exe) {
         exstatus = pipe_to_file(fd, exe);
         if (exstatus == 0) {
-          puts_FildeshO(&spawn_buf, exe);
+          puts_FildeshO(&buf_slice, exe);
         }
-      } else {
+      }
+      else {
         fildesh_log_error("Need to provide -exe argument.");
         exstatus = 64;
       }
-    } else {
-      readin_fd(&spawn_buf, fd, true);
+    }
+    else {
+      readin_fd(&buf_slice, fd, true);
+    }
+
+    if (arg_fmt[2*i+1] == '_' ||
+        arg_fmt[2*i+1] == '\0' ||
+        off+i+1 == argc)
+    {
+      push_FildeshAT(spawn_argv, strdup_FildeshO(&buf_slice, alloc));
+      truncate_FildeshO(&buf_slice);
     }
   }
 
-  if (exstatus == 0) {
-    putc_FildeshO(&spawn_buf, '\0');
-    spawn_argc += 1;
-    spawn_argv = (char**)malloc(sizeof(char*) * (spawn_argc+1));
-    for (i = 0; i < spawn_argc; ++i) {
-      spawn_argv[i] = &spawn_buf.at[spawn_offsets[i]];
-    }
-    spawn_argv[spawn_argc] = NULL;
-    free(spawn_offsets);
-    spawn_offsets = NULL;
-  }
+  close_FildeshO(&buf_slice);
+
   if (exstatus == 0 && exe) {
     fildesh_compat_file_chmod_u_rwx(exe, 1, 1, 1);
   }
@@ -279,44 +244,26 @@ fildesh_builtin_execfd_main(unsigned argc, char** argv,
   if (exstatus != 0) {
     show_usage();
   } else {
-#if defined(FILDESH_BUILTIN_LIBRARY) || defined(UNIT_TESTING)
+    push_FildeshAT(fds_to_inherit, -1);
+    push_FildeshAT(spawn_argv, NULL);
     exstatus = fildesh_compat_fd_spawnvp_wait(
-        stdin_fd, stdout_fd, 2, fds_to_inherit,
-        (const char**)spawn_argv);
-#else
-    fildesh_compat_fd_move_to(0, stdin_fd);
-    fildesh_compat_fd_move_to(1, stdout_fd);
-    if (exitfd_count == 0 && !status_out) {
-      exstatus = -1;
-      fildesh_compat_sh_exec((const char**)&spawn_argv[off]);
-    } else {
-      exstatus = fildesh_compat_sh_spawn((const char**)&spawn_argv[off]);
-    }
-#endif
+        stdin_fd, stdout_fd, 2, (*fds_to_inherit),
+        *spawn_argv);
     if (status_out && exstatus >= 0) {
       print_int_FildeshO(status_out, exstatus);
       exstatus = 0;
     }
   }
 
-  if (spawn_offsets) {
-    free(spawn_offsets);
-  }
-  if (spawn_argv) {
-    free(spawn_argv);
-  }
-  close_FildeshO(&spawn_buf);
+  close_FildeshAT(spawn_argv);
+  close_FildeshO(status_out);
+  close_FildeshAlloc(alloc);
 
-  if (status_out) {
-    close_FildeshO(status_out);
+  for (i = 0; i < count_of_FildeshAT(exitfds); ++i) {
+    fildesh_compat_fd_close((*exitfds)[i]);
   }
-
-  for (i = 0; i < exitfd_count; ++i) {
-    fildesh_compat_fd_close(exitfds[i]);
-  }
-  free(exitfds);
-
-  free(fds_to_inherit);
+  close_FildeshAT(exitfds);
+  close_FildeshAT(fds_to_inherit);
 
   if (exstatus < 0) {exstatus = 126;}
   return exstatus;

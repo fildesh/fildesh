@@ -87,14 +87,13 @@ main_elastic_aio(unsigned argc, char** argv)
 {
   unsigned argi = 1;
   int istat = 0;
-  DECLARE_FildeshAT(IOState, ios);
+  DECLARE_DEFAULT_FildeshAT(IOState, ios);
   const size_t xbuf_inc = 1024;
   const struct aiocb** aiocb_buf;
   IOState* x; /* Input.*/
   unsigned i;
 
   /**** BEGIN ARGUMENT_PARSING ****/
-  init_FildeshAT(ios);
   grow_FildeshAT(ios, 1);
   (*ios)[0] = default_IOState();
   (*ios)[0].aio.aio_fildes = -1;

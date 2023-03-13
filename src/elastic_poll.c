@@ -173,13 +173,10 @@ main_elastic_poll(unsigned argc, char** argv)
   int istat = 0;
   IOState* io;
   struct pollfd* pfd;
-  DECLARE_FildeshAT(IOState, ios);
-  DECLARE_FildeshAT(struct pollfd, pollfds);
+  DECLARE_DEFAULT_FildeshAT(IOState, ios);
+  DECLARE_DEFAULT_FildeshAT(struct pollfd, pollfds);
   unsigned i;
   int exstatus = 0;
-
-  init_FildeshAT(ios);
-  init_FildeshAT(pollfds);
 
   /* Initialize input.*/
   io = grow1_FildeshAT(ios);

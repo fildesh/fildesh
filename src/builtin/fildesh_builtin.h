@@ -36,7 +36,7 @@ int (* fildesh_builtin_main_fn_lookup(const char* name)
     ) (unsigned, char**)
 {
   (void) name;
-  return 0;
+  return NULL;
 }
 static inline
 int fildesh_builtin_main(const char* name, unsigned argc, char** argv)
