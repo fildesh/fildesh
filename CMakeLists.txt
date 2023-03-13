@@ -79,7 +79,24 @@ elseif (CMAKE_CXX_COMPILER_ID STREQUAL CLANG_COMPILER_ID)
 endif()
 message(STATUS "CMAKE_CXX_FLAGS is ${CMAKE_CXX_FLAGS}")
 
+
 find_package(Threads REQUIRED)
+
+# Conditionally referenced.
+set(FILDESH_AIO_LIBS)
+list(APPEND FILDESH_AIO_LIBS "rt")
+if (FILDESH_PREFER_AIO)
+  set (FILDESH_BUILTIN_ELASTIC_AIO_ON TRUE)
+endif()
+# Conditionally referenced.
+set(FILDESH_POLL_LIBS)
+if (APPLE)
+  list(APPEND FILDESH_POLL_LIBS "c")
+endif()
+if (FILDESH_PREFER_POLL)
+  set (FILDESH_BUILTIN_ELASTIC_POLL_ON TRUE)
+endif()
+
 
 include_directories("${CMAKE_SOURCE_DIR}")
 include_directories("${CMAKE_SOURCE_DIR}/include")

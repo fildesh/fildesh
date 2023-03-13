@@ -174,7 +174,7 @@ static inline void fildesh_log_tracef(const char* s, ...) {(void)s;}
 #endif
 
 /** A true and real zero pointer.**/
-#define fildesh_cast_zero_as(T)  ((T*)((char*)NULL-(uintptr_t)NULL))
+#define FILDESH_MEMREF_ZERO  ((void*)((char*)NULL-(uintptr_t)NULL))
 
 
 struct FildeshX_VTable
@@ -298,7 +298,7 @@ struct FildeshA {
 #define DECLARE_FildeshAT(T, name) \
   T* name[3]
 #define DECLARE_DEFAULT_FildeshAT(T, name) \
-  T* name[3] = {NULL, fildesh_cast_zero_as(T), fildesh_cast_zero_as(T)}
+  T* name[3] = {NULL, (T*)FILDESH_MEMREF_ZERO, (T*)FILDESH_MEMREF_ZERO}
 
 void close_FildeshAT(void*);
 void clear_FildeshAT(void*);

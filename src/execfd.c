@@ -114,7 +114,9 @@ fildesh_builtin_execfd_main(unsigned argc, char** argv,
   assert(!inputv);
   assert(!outputv);
 
-  if (argc < 3) {show_usage(); return 64;}
+  if (argc < 3) {
+    exstatus = 64;
+  }
 
   argi = 1;
   while (argv[argi] && 0 != strcmp(argv[argi], "--") && exstatus == 0) {
