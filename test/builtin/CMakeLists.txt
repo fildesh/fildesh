@@ -204,6 +204,12 @@ target_link_libraries(builtin_waitdo_test fildesh_lib fildesh_tool_lib)
 add_test(NAME builtin_waitdo_test COMMAND
   builtin_waitdo_test "$<TARGET_FILE:waitdo>" "$<TARGET_FILE:shout>")
 
+#### xargz
+
+add_test(NAME builtin_xargz_alias_test COMMAND
+  fildesh -alias "shout=$<TARGET_FILE:shout>" -f
+  "${CMAKE_CURRENT_SOURCE_DIR}/xargz_alias_test.fildesh")
+
 #### xpipe
 
 add_test(NAME builtin_xpipe_nested_test COMMAND fildesh -f

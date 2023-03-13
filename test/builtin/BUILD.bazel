@@ -354,6 +354,14 @@ cc_test(
     ],
 )
 
+#### xargz
+
+fildesh_test(
+    name = "xargz_alias_test",
+    srcs = ["xargz_alias_test.fildesh"],
+    aliases = {"shout": "//tool:shout"},
+)
+
 #### xpipe
 
 fildesh_test(

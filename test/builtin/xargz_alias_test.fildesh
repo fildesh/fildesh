@@ -1,0 +1,16 @@
+
+(: content Str """
+a
+b
+c
+d
+""")
+
+zec -o $(OF expect) / " a b c d\n" /
+
+|< zec / "${content}" /
+# Change "\n" to NUL byte.
+|- replace_string "\n" ""
+|- xargz -- shout -
+|- cmp $(XF expect) -
+|> stdout

@@ -1196,12 +1196,12 @@ fix_known_flags_Command(Command* cmd, FildeshKV* alias_map) {
     }
   }
   else if (eq_cstr("xargz", (*cmd->args)[0])) {
-    unsigned i = 0;
+    unsigned i = 1;
     if (eq_cstr("--", (*cmd->args)[i])) {
       i += 1;
     }
     if ((*cmd->args)[i]) {
-      replacement = lookup_strmap(alias_map, (*cmd->args)[0]);
+      replacement = lookup_strmap(alias_map, (*cmd->args)[i]);
       if (replacement) {
         (*cmd->args)[i] = replacement;
       }
@@ -1292,13 +1292,10 @@ spawn_commands(const char* fildesh_exe, Command** cmds,
   struct uint2 {
     unsigned s[2];
   };
-  DECLARE_FildeshAT(char*, argv);
-  DECLARE_FildeshAT(uint2, fdargs);
+  DECLARE_DEFAULT_FildeshAT(char*, argv);
+  DECLARE_DEFAULT_FildeshAT(uint2, fdargs);
   unsigned i;
   int istat = 0;
-
-  init_FildeshAT(argv);
-  init_FildeshAT(fdargs);
 
   for (i = 0; i < count_of_FildeshAT(cmds) && istat == 0; ++i)
   {
@@ -1458,7 +1455,7 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
                              FildeshX** inputv, FildeshO** outputv)
 {
   char* fildesh_exe = argv[0];
-  DECLARE_FildeshAT(const char*, script_args);
+  DECLARE_DEFAULT_FildeshAT(const char*, script_args);
   Command** cmds = NULL;
   bool use_stdin = true;
   FildeshX* script_in = NULL;
@@ -1472,8 +1469,6 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
   bool exiting = false;
   int exstatus = 0;
   int istat;
-
-  init_FildeshAT(script_args);
 
   /* We shouldn't have an error yet.*/
   fildesh_compat_errno_clear();
@@ -1710,8 +1705,7 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
   push_fildesh_exit_callback(close_FildeshAlloc_generic, global_alloc);
 
   {
-    DECLARE_FildeshAT(Command, tmp_cmds);
-    init_FildeshAT(tmp_cmds);
+    DECLARE_DEFAULT_FildeshAT(Command, tmp_cmds);
     cmds = (Command**)malloc(sizeof(tmp_cmds));
     memcpy(cmds, tmp_cmds, sizeof(tmp_cmds));
   }

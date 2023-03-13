@@ -14,10 +14,8 @@ main_xargz(unsigned argc, char** argv)
   unsigned argi = 1;
   FildeshX* in = NULL;
   FildeshAlloc* alloc = open_FildeshAlloc();
-  DECLARE_FildeshAT(char*, spawn_argv);
+  DECLARE_DEFAULT_FildeshAT(char*, spawn_argv);
   int (* main_fn)(unsigned, char**) = NULL;
-
-  init_FildeshAT(spawn_argv);
 
   if (argv[argi] &&
       argv[argi][0] == '-' && argv[argi][1] == '-' && argv[argi][2] == '\0')
@@ -49,15 +47,17 @@ main_xargz(unsigned argc, char** argv)
       s[slice.size] = '\0';
       push_FildeshAT(spawn_argv, s);
     }
+    push_FildeshAT(spawn_argv, NULL);
   }
   close_FildeshX(in);
 
   if (exstatus == 0) {
     if (main_fn) {
-      exstatus = main_fn((unsigned)count_of_FildeshAT(spawn_argv), *spawn_argv);
+      exstatus = main_fn((unsigned)count_of_FildeshAT(spawn_argv)-1, *spawn_argv);
     }
     else {
-      exstatus = fildesh_compat_sh_spawn((const char**)*spawn_argv);
+      fildesh_compat_sh_exec((const char**)*spawn_argv);
+      exstatus = 126;
     }
   }
 
