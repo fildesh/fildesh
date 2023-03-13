@@ -23,7 +23,7 @@ zec -o $(OF expect) / $(XA expect_content) /
 # and remove the preceding newline.
 |- replace_string "\n1" "one"
 # Change "0" to NUL byte, then NUL byte to "zero".
-|- replace_string "0" ""
-|- replace_string "" "zero"
+|- replace_string "0" "\0"
+|- replace_string "\0" "zero"
 |- cmp $(XF expect) -
 |> stdout

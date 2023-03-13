@@ -83,6 +83,7 @@ parse_double_quoted_fildesh_string(FildeshX* in, FildeshO* out, FildeshKV* map)
       }
       c = in->at[in->off];
       switch(c) {
+        case '0': {c = '\0'; break;}
         case 'n': {c = '\n'; break;}
         case 't': {c = '\t'; break;}
         case '\r':
