@@ -21,8 +21,8 @@ skip_blank_bytes(FildeshX* in, size_t* text_nlines)
 {
   size_t i;
   FildeshX slice = while_chars_FildeshX(in, fildesh_compat_string_blank_bytes);
-  for (i = in->off; i < in->size; ++i) {
-    if (in->at[i] == '\n') {
+  for (i = 0; i < slice.size; ++i) {
+    if (slice.at[i] == '\n') {
       *text_nlines += 1;
     }
   }

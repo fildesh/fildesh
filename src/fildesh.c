@@ -385,7 +385,7 @@ parse_file(
       istat = -1;
       fildesh_log_errorf(
           "In %s, line %u: %s",
-          this_filename, (unsigned)text_nlines, emsg);
+          this_filename, (unsigned)text_nlines+1, emsg);
       break;
     }
     line = fildesh_syntax_parse_line(in, &text_nlines, global_alloc, tmp_out);
