@@ -5,7 +5,7 @@ set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 
 project(fildesh)
 
-enable_testing()
+include(CTest)
 
 
 if (NOT CMAKE_BUILD_TYPE)
@@ -104,6 +104,8 @@ include(GNUInstallDirs)
 add_subdirectory(compat)
 add_subdirectory(src)
 add_subdirectory(tool)
-add_subdirectory(test)
+if (BUILD_TESTING)
+  add_subdirectory(test)
+endif()
 add_subdirectory(pkg)
 
