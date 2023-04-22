@@ -174,7 +174,7 @@ static inline void fildesh_log_tracef(const char* s, ...) {(void)s;}
 #endif
 
 /** A true and real zero pointer.**/
-#define FILDESH_MEMREF_ZERO  ((void*)((char*)NULL-(uintptr_t)NULL))
+#define FILDESH_MEMREF_ZERO  ((void*)((char*)(uintptr_t)1-1))
 
 
 struct FildeshX_VTable
