@@ -1,4 +1,9 @@
 
+if (NOT PROJECT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
+  # Avoid polluting namespace of dependent project.
+  return()
+endif()
+
 add_executable(add "add.c")
 target_link_libraries(add fildesh_lib)
 

@@ -85,6 +85,12 @@ target_link_libraries(fildesh_builtin_lib
 
 add_subdirectory(bin)
 
+
+if (NOT PROJECT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
+  # Avoid polluting namespace of dependent project.
+  return()
+endif()
+
 add_executable(execfd "execfd.c"
   "${PROJECT_SOURCE_DIR}/src/builtin/fildesh_builtin.h")
 target_link_libraries(execfd fildesh_lib)

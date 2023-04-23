@@ -3,7 +3,7 @@ cmake_minimum_required (VERSION 2.8.12)
 set(CMAKE_DISABLE_SOURCE_CHANGES ON)
 set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 
-project(fildesh)
+project(Fildesh)
 
 include(CTest)
 
@@ -98,11 +98,25 @@ if (FILDESH_PREFER_POLL)
 endif()
 
 
-include_directories("${PROJECT_SOURCE_DIR}")
-include_directories("${PROJECT_SOURCE_DIR}/include")
+set(Fildesh_INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/include")
+include_directories(
+  ${Fildesh_INCLUDE_DIRS}
+  "${PROJECT_SOURCE_DIR}"
+)
 include(GNUInstallDirs)
 add_subdirectory(compat)
 add_subdirectory(src)
+set(Fildesh_LIBRARIES "$<TARGET_NAME:fildesh_lib>")
+
+
+if (NOT PROJECT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
+  set(Fildesh_INCLUDE_DIRS "${Fildesh_INCLUDE_DIRS}" PARENT_SCOPE)
+  set(Fildesh_LIBRARIES ${Fildesh_LIBRARIES} PARENT_SCOPE)
+  # Try to keep dependent project namespace clean.
+  # No need for tests or anything else.
+  return()
+endif()
+
 add_subdirectory(tool)
 if (BUILD_TESTING)
   add_subdirectory(test)
