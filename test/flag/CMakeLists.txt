@@ -23,4 +23,4 @@ add_test(NAME flag_stdio_test COMMAND fildesh -f
 
 add_test(NAME flag_version_test COMMAND fildesh -f
   "${CMAKE_CURRENT_SOURCE_DIR}/version_test.fildesh"
-  "--bazel_module_file=${CMAKE_SOURCE_DIR}/MODULE.bazel")
+  "--bazel_module_file=${PROJECT_SOURCE_DIR}/MODULE.bazel")

@@ -7,8 +7,8 @@ add_executable(spawn spawn.c)
 
 add_library(fildesh_tool_lib STATIC
   "pipem.c"
-  "${CMAKE_SOURCE_DIR}/include/fildesh_posix_thread.h"
-  "${CMAKE_SOURCE_DIR}/include/fildesh_tool.h"
+  "${PROJECT_SOURCE_DIR}/include/fildesh_posix_thread.h"
+  "${PROJECT_SOURCE_DIR}/include/fildesh_tool.h"
   )
 target_link_libraries(fildesh_tool_lib fildesh_compat_lib ${CMAKE_THREAD_LIBS_INIT})
 

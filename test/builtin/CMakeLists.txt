@@ -11,7 +11,7 @@
 
 #### add
 
-add_executable(builtin_add_float_test "add_float_test.c" "${CMAKE_SOURCE_DIR}/src/builtin/add.c")
+add_executable(builtin_add_float_test "add_float_test.c" "${PROJECT_SOURCE_DIR}/src/builtin/add.c")
 target_link_libraries(builtin_add_float_test fildesh_lib fildesh_tool_lib)
 set_property(TARGET builtin_add_float_test
   APPEND PROPERTY COMPILE_DEFINITIONS FILDESH_BUILTIN_LIBRARY)
@@ -66,7 +66,7 @@ endif()
 
 #### execfd
 
-add_executable(builtin_execfd_test "execfd_test.c" "${CMAKE_SOURCE_DIR}/src/execfd.c")
+add_executable(builtin_execfd_test "execfd_test.c" "${PROJECT_SOURCE_DIR}/src/execfd.c")
 target_link_libraries(builtin_execfd_test fildesh_lib fildesh_tool_lib)
 set_property(TARGET builtin_execfd_test
   APPEND PROPERTY COMPILE_DEFINITIONS UNIT_TESTING)
@@ -74,7 +74,7 @@ add_test(NAME builtin_execfd_test COMMAND
   "${CMAKE_COMMAND}" -E env "TEST_TMPDIR=${CMAKE_CURRENT_BINARY_DIR}"
   "$<TARGET_FILE:builtin_execfd_test>" "$<TARGET_FILE:zec>")
 
-add_executable(builtin_execfd_cat_test "execfd_cat_test.c" "${CMAKE_SOURCE_DIR}/src/execfd.c")
+add_executable(builtin_execfd_cat_test "execfd_cat_test.c" "${PROJECT_SOURCE_DIR}/src/execfd.c")
 target_link_libraries(builtin_execfd_cat_test fildesh_lib fildesh_tool_lib)
 set_property(TARGET builtin_execfd_cat_test
   APPEND PROPERTY COMPILE_DEFINITIONS UNIT_TESTING)
@@ -87,14 +87,14 @@ add_test(NAME builtin_execfd_script_test COMMAND
 #### expect_failure
 
 add_executable(builtin_expect_failure_test "expect_failure_test.c"
-  "${CMAKE_SOURCE_DIR}/src/builtin/expect_failure.c")
+  "${PROJECT_SOURCE_DIR}/src/builtin/expect_failure.c")
 target_link_libraries(builtin_expect_failure_test fildesh_lib)
 set_property(TARGET builtin_expect_failure_test
   APPEND PROPERTY COMPILE_DEFINITIONS UNIT_TESTING)
 add_test(NAME builtin_expect_failure_test COMMAND
   builtin_expect_failure_test
-  "${CMAKE_SOURCE_DIR}/test/expect/literal_0.txt"
-  "${CMAKE_SOURCE_DIR}/test/expect/literal_127.txt"
+  "${PROJECT_SOURCE_DIR}/test/expect/literal_0.txt"
+  "${PROJECT_SOURCE_DIR}/test/expect/literal_127.txt"
   "${CMAKE_CURRENT_SOURCE_DIR}/hello_newline.txt"
   )
 
@@ -116,16 +116,16 @@ add_test(NAME builtin_fildesh_usage_test COMMAND builtin_fildesh_usage_test "${f
 
 #### godo
 
-add_executable(builtin_godo_test "godo_test.c" "${CMAKE_SOURCE_DIR}/src/godo.c")
+add_executable(builtin_godo_test "godo_test.c" "${PROJECT_SOURCE_DIR}/src/godo.c")
 target_link_libraries(builtin_godo_test fildesh_lib)
 set_property(TARGET builtin_godo_test
   APPEND PROPERTY COMPILE_DEFINITIONS FILDESH_BUILTIN_LIBRARY)
 add_test(NAME builtin_godo_test COMMAND
-  builtin_godo_test "$<TARGET_FILE:expectish>" "${CMAKE_SOURCE_DIR}/test/expect/literal_hello.txt")
+  builtin_godo_test "$<TARGET_FILE:expectish>" "${PROJECT_SOURCE_DIR}/test/expect/literal_hello.txt")
 
 #### oargz
 
-add_executable(builtin_oargz_test "oargz_test.c" "${CMAKE_SOURCE_DIR}/src/builtin/oargz.c")
+add_executable(builtin_oargz_test "oargz_test.c" "${PROJECT_SOURCE_DIR}/src/builtin/oargz.c")
 target_link_libraries(builtin_oargz_test fildesh_lib fildesh_tool_lib)
 set_property(TARGET builtin_oargz_test
   APPEND PROPERTY COMPILE_DEFINITIONS FILDESH_BUILTIN_LIBRARY)
@@ -145,7 +145,7 @@ endif()
 
 #### sshall
 
-add_executable(echocat "echocat.c" "${CMAKE_SOURCE_DIR}/src/builtin/zec.c")
+add_executable(echocat "echocat.c" "${PROJECT_SOURCE_DIR}/src/builtin/zec.c")
 set_property(TARGET echocat
   APPEND PROPERTY COMPILE_DEFINITIONS FILDESH_BUILTIN_LIBRARY)
 target_link_libraries(echocat fildesh_lib)
@@ -161,7 +161,7 @@ add_test(NAME builtin_sshall_test COMMAND
 
 #### time2sec
 
-add_executable(builtin_time2sec_test "time2sec_test.c" "${CMAKE_SOURCE_DIR}/src/builtin/time2sec.c")
+add_executable(builtin_time2sec_test "time2sec_test.c" "${PROJECT_SOURCE_DIR}/src/builtin/time2sec.c")
 target_link_libraries(builtin_time2sec_test fildesh_lib fildesh_tool_lib)
 set_property(TARGET builtin_time2sec_test
   APPEND PROPERTY COMPILE_DEFINITIONS FILDESH_BUILTIN_LIBRARY)
@@ -170,7 +170,7 @@ add_test(NAME builtin_time2sec_test COMMAND builtin_time2sec_test)
 #### transpose
 
 add_executable(builtin_transpose_test "transpose_test.c"
-  "${CMAKE_SOURCE_DIR}/src/builtin/transpose.c")
+  "${PROJECT_SOURCE_DIR}/src/builtin/transpose.c")
 target_link_libraries(builtin_transpose_test fildesh_lib fildesh_tool_lib)
 set_property(TARGET builtin_transpose_test
   APPEND PROPERTY COMPILE_DEFINITIONS UNIT_TESTING)
@@ -182,7 +182,7 @@ add_test(NAME builtin_transpose_tab_test COMMAND fildesh -f
 #### ujoin
 
 add_executable(builtin_ujoin_test "ujoin_test.c"
-  "${CMAKE_SOURCE_DIR}/src/builtin/ujoin.c")
+  "${PROJECT_SOURCE_DIR}/src/builtin/ujoin.c")
 target_link_libraries(builtin_ujoin_test fildesh_lib fildesh_tool_lib)
 set_property(TARGET builtin_ujoin_test
   APPEND PROPERTY COMPILE_DEFINITIONS UNIT_TESTING)

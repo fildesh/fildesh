@@ -1,11 +1,11 @@
 
 list(APPEND fildesh_compat_PUBLIC_HEADERS
-  "${CMAKE_SOURCE_DIR}/include/fildesh/fildesh_compat_errno.h"
-  "${CMAKE_SOURCE_DIR}/include/fildesh/fildesh_compat_fd.h"
-  "${CMAKE_SOURCE_DIR}/include/fildesh/fildesh_compat_file.h"
-  "${CMAKE_SOURCE_DIR}/include/fildesh/fildesh_compat_random.h"
-  "${CMAKE_SOURCE_DIR}/include/fildesh/fildesh_compat_sh.h"
-  "${CMAKE_SOURCE_DIR}/include/fildesh/fildesh_compat_string.h"
+  "${PROJECT_SOURCE_DIR}/include/fildesh/fildesh_compat_errno.h"
+  "${PROJECT_SOURCE_DIR}/include/fildesh/fildesh_compat_fd.h"
+  "${PROJECT_SOURCE_DIR}/include/fildesh/fildesh_compat_file.h"
+  "${PROJECT_SOURCE_DIR}/include/fildesh/fildesh_compat_random.h"
+  "${PROJECT_SOURCE_DIR}/include/fildesh/fildesh_compat_sh.h"
+  "${PROJECT_SOURCE_DIR}/include/fildesh/fildesh_compat_string.h"
   )
 
 add_library(fildesh_compat_lib_obj OBJECT

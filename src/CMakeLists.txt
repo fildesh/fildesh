@@ -40,34 +40,34 @@ add_library(fildesh_builtin_lib_obj OBJECT
   "waitdo.c"
   "xargz.c"
   "xpipe.c"
-  "${CMAKE_SOURCE_DIR}/src/bin/version.h"
-  "${CMAKE_SOURCE_DIR}/include/fildesh_posix_thread.h"
-  "${CMAKE_SOURCE_DIR}/src/builtin/add.c"
-  "${CMAKE_SOURCE_DIR}/src/builtin/bestmatch.c"
-  "${CMAKE_SOURCE_DIR}/src/builtin/cmp.c"
-  "${CMAKE_SOURCE_DIR}/src/builtin/delimend.c"
-  "${CMAKE_SOURCE_DIR}/src/builtin/elastic_pthread.c"
-  "${CMAKE_SOURCE_DIR}/src/builtin/expect_failure.c"
-  "${CMAKE_SOURCE_DIR}/src/builtin/fildesh_builtin.c"
-  "${CMAKE_SOURCE_DIR}/src/builtin/fildesh_builtin.h"
-  "${CMAKE_SOURCE_DIR}/src/builtin/oargz.c"
-  "${CMAKE_SOURCE_DIR}/src/builtin/replace_string.c"
-  "${CMAKE_SOURCE_DIR}/src/builtin/seq.c"
-  "${CMAKE_SOURCE_DIR}/src/builtin/sponge.c"
-  "${CMAKE_SOURCE_DIR}/src/builtin/sxproto2textproto.c"
-  "${CMAKE_SOURCE_DIR}/src/builtin/time2sec.c"
-  "${CMAKE_SOURCE_DIR}/src/builtin/transpose.c"
-  "${CMAKE_SOURCE_DIR}/src/builtin/ujoin.c"
-  "${CMAKE_SOURCE_DIR}/src/builtin/void.c"
-  "${CMAKE_SOURCE_DIR}/src/builtin/zec.c"
-  "${CMAKE_SOURCE_DIR}/src/syntax/defstr.c"
-  "${CMAKE_SOURCE_DIR}/src/syntax/defstr.h"
-  "${CMAKE_SOURCE_DIR}/src/syntax/line.c"
-  "${CMAKE_SOURCE_DIR}/src/syntax/line.h"
-  "${CMAKE_SOURCE_DIR}/src/syntax/opt.c"
-  "${CMAKE_SOURCE_DIR}/src/syntax/opt.h"
-  "${CMAKE_SOURCE_DIR}/src/syntax/symval.c"
-  "${CMAKE_SOURCE_DIR}/src/syntax/symval.h"
+  "${PROJECT_SOURCE_DIR}/src/bin/version.h"
+  "${PROJECT_SOURCE_DIR}/include/fildesh_posix_thread.h"
+  "${PROJECT_SOURCE_DIR}/src/builtin/add.c"
+  "${PROJECT_SOURCE_DIR}/src/builtin/bestmatch.c"
+  "${PROJECT_SOURCE_DIR}/src/builtin/cmp.c"
+  "${PROJECT_SOURCE_DIR}/src/builtin/delimend.c"
+  "${PROJECT_SOURCE_DIR}/src/builtin/elastic_pthread.c"
+  "${PROJECT_SOURCE_DIR}/src/builtin/expect_failure.c"
+  "${PROJECT_SOURCE_DIR}/src/builtin/fildesh_builtin.c"
+  "${PROJECT_SOURCE_DIR}/src/builtin/fildesh_builtin.h"
+  "${PROJECT_SOURCE_DIR}/src/builtin/oargz.c"
+  "${PROJECT_SOURCE_DIR}/src/builtin/replace_string.c"
+  "${PROJECT_SOURCE_DIR}/src/builtin/seq.c"
+  "${PROJECT_SOURCE_DIR}/src/builtin/sponge.c"
+  "${PROJECT_SOURCE_DIR}/src/builtin/sxproto2textproto.c"
+  "${PROJECT_SOURCE_DIR}/src/builtin/time2sec.c"
+  "${PROJECT_SOURCE_DIR}/src/builtin/transpose.c"
+  "${PROJECT_SOURCE_DIR}/src/builtin/ujoin.c"
+  "${PROJECT_SOURCE_DIR}/src/builtin/void.c"
+  "${PROJECT_SOURCE_DIR}/src/builtin/zec.c"
+  "${PROJECT_SOURCE_DIR}/src/syntax/defstr.c"
+  "${PROJECT_SOURCE_DIR}/src/syntax/defstr.h"
+  "${PROJECT_SOURCE_DIR}/src/syntax/line.c"
+  "${PROJECT_SOURCE_DIR}/src/syntax/line.h"
+  "${PROJECT_SOURCE_DIR}/src/syntax/opt.c"
+  "${PROJECT_SOURCE_DIR}/src/syntax/opt.h"
+  "${PROJECT_SOURCE_DIR}/src/syntax/symval.c"
+  "${PROJECT_SOURCE_DIR}/src/syntax/symval.h"
   )
 
 set_property(TARGET fildesh_builtin_lib_obj APPEND PROPERTY COMPILE_DEFINITIONS
@@ -86,18 +86,18 @@ target_link_libraries(fildesh_builtin_lib
 add_subdirectory(bin)
 
 add_executable(execfd "execfd.c"
-  "${CMAKE_SOURCE_DIR}/src/builtin/fildesh_builtin.h")
+  "${PROJECT_SOURCE_DIR}/src/builtin/fildesh_builtin.h")
 target_link_libraries(execfd fildesh_lib)
 
 add_executable(godo "godo.c"
-  "${CMAKE_SOURCE_DIR}/src/builtin/fildesh_builtin.h")
+  "${PROJECT_SOURCE_DIR}/src/builtin/fildesh_builtin.h")
 target_link_libraries(godo fildesh_lib)
 
 add_executable(sshall "ssh-all.c")
 target_link_libraries(sshall fildesh_lib)
 
 add_executable(waitdo "waitdo.c"
-  "${CMAKE_SOURCE_DIR}/src/builtin/fildesh_builtin.h")
+  "${PROJECT_SOURCE_DIR}/src/builtin/fildesh_builtin.h")
 target_link_libraries(waitdo fildesh_lib)
 
 if (FILDESH_BUILTIN_ELASTIC_AIO_ON)

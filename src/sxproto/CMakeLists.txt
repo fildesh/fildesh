@@ -1,14 +1,14 @@
 
 add_library(sxproto_lib_obj OBJECT
   "sxproto2textproto.c"
-  "${CMAKE_SOURCE_DIR}/include/fildesh/sxproto.h"
+  "${PROJECT_SOURCE_DIR}/include/fildesh/sxproto.h"
 )
 add_library(sxproto_lib STATIC
   $<TARGET_OBJECTS:sxproto_lib_obj>
 )
 set_target_properties(sxproto_lib PROPERTIES OUTPUT_NAME "sxproto")
 set(SXPROTO_LIB_PUBLIC_HEADERS
-  "${CMAKE_SOURCE_DIR}/include/fildesh/sxproto.h"
+  "${PROJECT_SOURCE_DIR}/include/fildesh/sxproto.h"
 )
 set_target_properties(sxproto_lib PROPERTIES
   PUBLIC_HEADER "${SXPROTO_LIB_PUBLIC_HEADERS}")

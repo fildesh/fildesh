@@ -7,7 +7,7 @@ add_executable(compat_random_bytes_test "random_bytes_test.c")
 target_link_libraries(compat_random_bytes_test fildesh_compat_lib)
 add_test(NAME compat_random_bytes_test COMMAND compat_random_bytes_test)
 
-add_executable(compat_sh_escape_argv_test "sh_escape_argv_test.c" "${CMAKE_SOURCE_DIR}/tool/spawn.c")
+add_executable(compat_sh_escape_argv_test "sh_escape_argv_test.c" "${PROJECT_SOURCE_DIR}/tool/spawn.c")
 set_property(TARGET compat_sh_escape_argv_test
   APPEND PROPERTY COMPILE_DEFINITIONS UNIT_TESTING)
 target_link_libraries(compat_sh_escape_argv_test fildesh_compat_lib)

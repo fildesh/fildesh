@@ -38,7 +38,7 @@ add_executable(read_file_lines_test
 target_link_libraries(read_file_lines_test fildesh_lib)
 add_test(NAME read_file_lines_test
   COMMAND read_file_lines_test
-  WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
+  WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
 
 add_executable(sibling_file_test
   "sibling_file_test.c")

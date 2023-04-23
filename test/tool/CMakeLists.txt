@@ -8,22 +8,22 @@ add_test(NAME tool_success_test COMMAND success)
 
 add_test(NAME tool_comparispawn_diff_test COMMAND spawn !
   "$<TARGET_FILE:comparispawn>"
-  "${CMAKE_SOURCE_DIR}/test/expect/literal_hello.txt"
+  "${PROJECT_SOURCE_DIR}/test/expect/literal_hello.txt"
   "$<TARGET_FILE:shout>" "-" "hel" "lo")
 add_test(NAME tool_comparispawn_shout_hello_test COMMAND comparispawn
-  "${CMAKE_SOURCE_DIR}/test/expect/literal_hello.txt"
+  "${PROJECT_SOURCE_DIR}/test/expect/literal_hello.txt"
   "$<TARGET_FILE:shout>" "-" "hello")
 
 #### expectish
 
 add_test(NAME tool_expectish_hello_test COMMAND expectish
-  "${CMAKE_SOURCE_DIR}/test/expect/literal_hello.txt" "hello")
+  "${PROJECT_SOURCE_DIR}/test/expect/literal_hello.txt" "hello")
 
 #### fildespawn
 
 add_test(NAME tool_fildespawn_success_test COMMAND fildespawn -- "$<TARGET_FILE:success>")
 add_test(NAME tool_fildespawn_stdin_test COMMAND fildespawn
-  "stdin=open_readonly:${CMAKE_SOURCE_DIR}/test/expect/literal_hello.txt"
+  "stdin=open_readonly:${PROJECT_SOURCE_DIR}/test/expect/literal_hello.txt"
   -- "$<TARGET_FILE:expectish>" - "hello")
 
 #### pipem_test
@@ -50,7 +50,7 @@ add_test(NAME tool_spawn_not_spawn_not_absent_test COMMAND
   spawn ! "$<TARGET_FILE:spawn>" ! "$<TARGET_FILE:spawn>.doesnotexist")
 
 add_executable(tool_spawn_status_test
-  "spawn_status_test.c" "${CMAKE_SOURCE_DIR}/tool/spawn.c")
+  "spawn_status_test.c" "${PROJECT_SOURCE_DIR}/tool/spawn.c")
 set_property(TARGET tool_spawn_status_test
   APPEND PROPERTY COMPILE_DEFINITIONS UNIT_TESTING)
 add_test(NAME tool_spawn_status_test COMMAND

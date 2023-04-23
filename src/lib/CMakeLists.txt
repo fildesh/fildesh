@@ -19,7 +19,7 @@ add_library(fildesh_lib_obj OBJECT
   "kv/kve.h"
   "kv/rbtree.c"
   "kv/single_list.c"
-  "${CMAKE_SOURCE_DIR}/include/fildesh/fildesh.h"
+  "${PROJECT_SOURCE_DIR}/include/fildesh/fildesh.h"
   )
 add_library(fildesh_lib STATIC
   $<TARGET_OBJECTS:fildesh_lib_obj>
@@ -28,9 +28,9 @@ add_library(fildesh_lib STATIC
 target_link_libraries(fildesh_lib ${CMAKE_THREAD_LIBS_INIT})
 set_target_properties(fildesh_lib PROPERTIES OUTPUT_NAME "fildesh")
 set(FILDESH_LIB_PUBLIC_HEADERS
-  "${CMAKE_SOURCE_DIR}/include/fildesh/fildesh.h"
-  "${CMAKE_SOURCE_DIR}/include/fildesh/ifstream.hh"
-  "${CMAKE_SOURCE_DIR}/include/fildesh/ofstream.hh"
+  "${PROJECT_SOURCE_DIR}/include/fildesh/fildesh.h"
+  "${PROJECT_SOURCE_DIR}/include/fildesh/ifstream.hh"
+  "${PROJECT_SOURCE_DIR}/include/fildesh/ofstream.hh"
   )
 set_target_properties(fildesh_lib PROPERTIES
   PUBLIC_HEADER "${FILDESH_LIB_PUBLIC_HEADERS}")

@@ -9,7 +9,7 @@ add_executable(cmp "cmp.c")
 target_link_libraries(cmp fildesh_lib)
 
 add_executable(elastic_pthread "elastic_pthread.c"
-  "${CMAKE_SOURCE_DIR}/include/fildesh_posix_thread.h")
+  "${PROJECT_SOURCE_DIR}/include/fildesh_posix_thread.h")
 target_link_libraries(elastic_pthread fildesh_lib ${CMAKE_THREAD_LIBS_INIT})
 
 add_executable(expect_failure "expect_failure.c")

@@ -98,8 +98,8 @@ if (FILDESH_PREFER_POLL)
 endif()
 
 
-include_directories("${CMAKE_SOURCE_DIR}")
-include_directories("${CMAKE_SOURCE_DIR}/include")
+include_directories("${PROJECT_SOURCE_DIR}")
+include_directories("${PROJECT_SOURCE_DIR}/include")
 include(GNUInstallDirs)
 add_subdirectory(compat)
 add_subdirectory(src)
