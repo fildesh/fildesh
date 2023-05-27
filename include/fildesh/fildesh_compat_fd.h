@@ -2,37 +2,39 @@
 #define FILDESH_COMPAT_FD_H_
 #include <stddef.h>
 
-typedef int fildesh_compat_fd_t;
+typedef int FildeshCompat_fd;
+/* Deprecated. Use FildeshCompat_fd.*/
+typedef FildeshCompat_fd fildesh_compat_fd_t;
 int
-fildesh_compat_fd_close(fildesh_compat_fd_t fd);
+fildesh_compat_fd_close(FildeshCompat_fd fd);
 int
-fildesh_compat_fd_move_to(fildesh_compat_fd_t dst, fildesh_compat_fd_t oldfd);
-fildesh_compat_fd_t
-fildesh_compat_fd_claim(fildesh_compat_fd_t fd);
-fildesh_compat_fd_t
+fildesh_compat_fd_move_to(FildeshCompat_fd dst, FildeshCompat_fd oldfd);
+FildeshCompat_fd
+fildesh_compat_fd_claim(FildeshCompat_fd fd);
+FildeshCompat_fd
 fildesh_compat_file_open_readonly(const char*);
-fildesh_compat_fd_t
+FildeshCompat_fd
 fildesh_compat_file_open_writeonly(const char*);
 int
-fildesh_compat_fd_pipe(fildesh_compat_fd_t* ret_produce,
-                       fildesh_compat_fd_t* ret_consume);
+fildesh_compat_fd_pipe(FildeshCompat_fd* ret_produce,
+                       FildeshCompat_fd* ret_consume);
 size_t
-fildesh_compat_fd_write(fildesh_compat_fd_t fd,
+fildesh_compat_fd_write(FildeshCompat_fd fd,
                         const void* data,
                         size_t data_size);
 size_t
-fildesh_compat_fd_read(fildesh_compat_fd_t fd,
+fildesh_compat_fd_read(FildeshCompat_fd fd,
                        void* buf,
                        size_t buf_capacity);
 
-int fildesh_compat_fd_spawnvp_wait(fildesh_compat_fd_t stdin_fd,
-                                   fildesh_compat_fd_t stdout_fd,
-                                   fildesh_compat_fd_t stderr_fd,
+int fildesh_compat_fd_spawnvp_wait(FildeshCompat_fd stdin_fd,
+                                   FildeshCompat_fd stdout_fd,
+                                   FildeshCompat_fd stderr_fd,
                                    const int* fds_to_close,
                                    const char* const* argv);
-int fildesh_compat_fd_spawnlp_wait(fildesh_compat_fd_t stdin_fd,
-                                   fildesh_compat_fd_t stdout_fd,
-                                   fildesh_compat_fd_t stderr_fd,
+int fildesh_compat_fd_spawnlp_wait(FildeshCompat_fd stdin_fd,
+                                   FildeshCompat_fd stdout_fd,
+                                   FildeshCompat_fd stderr_fd,
                                    const int* fds_to_close,
                                    const char* cmd,
                                    ...);

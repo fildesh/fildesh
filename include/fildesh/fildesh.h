@@ -20,10 +20,17 @@ typedef char bool;
 # endif
 #endif
 
-typedef int fildesh_fd_t;
-typedef uint8_t fildesh_lgsize_t;
+typedef int Fildesh_fd;
+typedef uint8_t Fildesh_lgsize;
 #define FILDESH_LGSIZE_MAX UCHAR_MAX
-typedef size_t FildeshKV_id_t;
+typedef size_t FildeshKV_id;
+
+/* Deprecated. Use Fildesh_fd.*/
+typedef Fildesh_fd fildesh_fd_t;
+/* Deprecated. Use Fildesh_lgsize.*/
+typedef Fildesh_lgsize fildesh_lgsize_t;
+/* Deprecated. Use FildeshKV_id.*/
+typedef FildeshKV_id FildeshKV_id_t;
 
 #ifndef BEGIN_EXTERN_C
 # ifdef __cplusplus
@@ -51,8 +58,8 @@ struct FildeshX {
   char* at;
   size_t size;
   size_t off;
-  fildesh_lgsize_t alloc_lgsize;
-  fildesh_lgsize_t flush_lgsize;
+  Fildesh_lgsize alloc_lgsize;
+  Fildesh_lgsize flush_lgsize;
   const FildeshX_VTable* vt;
 };
 #define DEFAULT_FildeshX  { NULL, 0, 0, 0, 12, NULL }
@@ -84,10 +91,10 @@ bool parse_double_FildeshX(FildeshX*, double*);
 
 FildeshX* open_FildeshXA();
 
-fildesh_fd_t fildesh_arg_open_readonly(const char*);
+Fildesh_fd fildesh_arg_open_readonly(const char*);
 FildeshX* open_FildeshXF(const char* filename);
 FildeshX* open_sibling_FildeshXF(const char* sibling, const char* filename);
-FildeshX* open_fd_FildeshX(fildesh_fd_t fd);
+FildeshX* open_fd_FildeshX(Fildesh_fd fd);
 FildeshX* open_arg_FildeshXF(unsigned argi, char** argv, FildeshX** inputv);
 
 const char* filename_FildeshXF(FildeshX*);
@@ -103,10 +110,10 @@ void puts_FildeshO(FildeshO*, const char*);
 void print_int_FildeshO(FildeshO*, int);
 void print_double_FildeshO(FildeshO*, double);
 
-fildesh_fd_t fildesh_arg_open_writeonly(const char*);
+Fildesh_fd fildesh_arg_open_writeonly(const char*);
 FildeshO* open_FildeshOF(const char* filename);
 FildeshO* open_sibling_FildeshOF(const char* sibling, const char* filename);
-FildeshO* open_fd_FildeshO(fildesh_fd_t fd);
+FildeshO* open_fd_FildeshO(Fildesh_fd fd);
 FildeshO* open_arg_FildeshOF(unsigned argi, char** argv, FildeshO** outputv);
 
 const char* filename_FildeshOF(FildeshO*);
@@ -115,9 +122,9 @@ const char* filename_FildeshOF(FildeshO*);
 char* fildesh_parse_int(int* ret, const char* in);
 char* fildesh_parse_double(double* ret, const char* in);
 #define FILDESH_INT_BASE10_SIZE_MAX (1 + (unsigned)(CHAR_BIT*sizeof(int)) / 3 + 1)
-unsigned fildesh_encode_int_base10(char*, fildesh_fd_t);
+unsigned fildesh_encode_int_base10(char*, Fildesh_fd);
 #define FILDESH_FD_PATH_SIZE_MAX (8+FILDESH_INT_BASE10_SIZE_MAX)
-unsigned fildesh_encode_fd_path(char*, fildesh_fd_t);
+unsigned fildesh_encode_fd_path(char*, Fildesh_fd);
 
 
 #ifndef _MSC_VER
@@ -225,8 +232,8 @@ struct FildeshO {
   char* at;
   size_t size;
   size_t off;
-  fildesh_lgsize_t alloc_lgsize;
-  fildesh_lgsize_t flush_lgsize;
+  Fildesh_lgsize alloc_lgsize;
+  Fildesh_lgsize flush_lgsize;
   const FildeshO_VTable* vt;
 };
 #define DEFAULT_FildeshO  { NULL, 0, 0, 0, 12, NULL }
@@ -237,7 +244,7 @@ struct FildeshO {
   (sizeof(size_t)*CHAR_BIT - (size_t)FILDESH_ALLOC_MIN_BLOCK_LGSIZE-1)
 
 struct FildeshAlloc {
-  fildesh_lgsize_t block_count;
+  Fildesh_lgsize block_count;
   char* blocks[FILDESH_ALLOC_MAX_BLOCKS];
   size_t sizes[FILDESH_ALLOC_MAX_BLOCKS];
 };
@@ -254,7 +261,7 @@ struct FildeshKV {
   FildeshKVE* at;
   FildeshAlloc* alloc;
   size_t freelist_head;
-  fildesh_lgsize_t allocated_lgcount;
+  Fildesh_lgsize allocated_lgcount;
   const FildeshKV_VTable* vt;
 };
 #define DEFAULT_FildeshKV { NULL, NULL, 0, 0, &DEFAULT_FildeshKV_VTable }
@@ -267,20 +274,20 @@ struct FildeshKV {
  * - remove_at_FildeshKV()
  **/
 struct FildeshKV_VTable {
-  FildeshKV_id_t (*first_fn)(const FildeshKV*);
-  FildeshKV_id_t (*next_fn)(const FildeshKV*, FildeshKV_id_t);
-  FildeshKV_id_t (*lookup_fn)(const FildeshKV*, const void*, size_t);
-  FildeshKV_id_t (*ensure_fn)(FildeshKV*, const void*, size_t, FildeshAlloc*);
-  void           (*remove_fn)(FildeshKV*, FildeshKV_id_t);
+  FildeshKV_id (*first_fn)(const FildeshKV*);
+  FildeshKV_id (*next_fn)(const FildeshKV*, FildeshKV_id);
+  FildeshKV_id (*lookup_fn)(const FildeshKV*, const void*, size_t);
+  FildeshKV_id (*ensure_fn)(FildeshKV*, const void*, size_t, FildeshAlloc*);
+  void           (*remove_fn)(FildeshKV*, FildeshKV_id);
 };
 extern const FildeshKV_VTable DEFAULT_FildeshKV_VTable;
 
 void* lookup_value_FildeshKV(FildeshKV*, const void*, size_t);
-size_t size_of_key_at_FildeshKV(const FildeshKV*, FildeshKV_id_t);
-const void* key_at_FildeshKV(const FildeshKV*, FildeshKV_id_t);
-const void* value_at_FildeshKV(const FildeshKV*, FildeshKV_id_t);
-void assign_at_FildeshKV(FildeshKV*, FildeshKV_id_t, const void*, size_t);
-void assign_memref_at_FildeshKV(FildeshKV*, FildeshKV_id_t, const void*);
+size_t size_of_key_at_FildeshKV(const FildeshKV*, FildeshKV_id);
+const void* key_at_FildeshKV(const FildeshKV*, FildeshKV_id);
+const void* value_at_FildeshKV(const FildeshKV*, FildeshKV_id);
+void assign_at_FildeshKV(FildeshKV*, FildeshKV_id, const void*, size_t);
+void assign_memref_at_FildeshKV(FildeshKV*, FildeshKV_id, const void*);
 void close_FildeshKV(FildeshKV*);
 
 /* Deprecated. Use DEFAULT_FildeshKV_VTable.*/
@@ -293,7 +300,7 @@ extern const FildeshKV_VTable DEFAULT_SINGLE_LIST_FildeshKV_VTable;
 struct FildeshA {
   void* at;
   size_t count;
-  fildesh_lgsize_t allocated_lgcount;
+  Fildesh_lgsize allocated_lgcount;
 };
 #define DECLARE_FildeshAT(T, name) \
   T* name[3]
@@ -303,10 +310,10 @@ struct FildeshA {
 void close_FildeshAT(void*);
 void clear_FildeshAT(void*);
 void*
-realloc_more_FildeshA_(void* at, fildesh_lgsize_t* p_allocated_lgcount,
+realloc_more_FildeshA_(void* at, Fildesh_lgsize* p_allocated_lgcount,
                        const size_t element_size, const size_t count);
 void*
-realloc_less_FildeshA_(void* at, fildesh_lgsize_t* p_allocated_lgcount,
+realloc_less_FildeshA_(void* at, Fildesh_lgsize* p_allocated_lgcount,
                        const size_t element_size, const size_t count);
 
 
@@ -327,25 +334,25 @@ static inline FildeshX until_byte_FildeshX(FildeshX* in, unsigned char delim) {
   return until_char_FildeshX(in, (char)delim);
 }
 
-static inline FildeshKV_id_t any_id_FildeshKV(const FildeshKV* map) {
+static inline FildeshKV_id any_id_FildeshKV(const FildeshKV* map) {
   return map->vt->first_fn(map);
 }
-static inline FildeshKV_id_t first_FildeshKV(const FildeshKV* map) {
+static inline FildeshKV_id first_FildeshKV(const FildeshKV* map) {
   return map->vt->first_fn(map);
 }
-static inline FildeshKV_id_t next_at_FildeshKV(const FildeshKV* map, FildeshKV_id_t id) {
+static inline FildeshKV_id next_at_FildeshKV(const FildeshKV* map, FildeshKV_id id) {
   return map->vt->next_fn(map, id);
 }
-static inline FildeshKV_id_t lookup_FildeshKV(const FildeshKV* map, const void* k, size_t ksize) {
+static inline FildeshKV_id lookup_FildeshKV(const FildeshKV* map, const void* k, size_t ksize) {
   return map->vt->lookup_fn(map, k, ksize);
 }
-static inline FildeshKV_id_t ensure_FildeshKV(FildeshKV* map, const void* k, size_t ksize) {
+static inline FildeshKV_id ensure_FildeshKV(FildeshKV* map, const void* k, size_t ksize) {
   return map->vt->ensure_fn(map, k, ksize, map->alloc);
 }
-static inline FildeshKV_id_t ensuref_FildeshKV(FildeshKV* map, const void* k, size_t ksize) {
+static inline FildeshKV_id ensuref_FildeshKV(FildeshKV* map, const void* k, size_t ksize) {
   return map->vt->ensure_fn(map, k, ksize, NULL);
 }
-static inline void remove_at_FildeshKV(FildeshKV* map, FildeshKV_id_t id) {
+static inline void remove_at_FildeshKV(FildeshKV* map, FildeshKV_id id) {
   map->vt->remove_fn(map, id);
 }
 
@@ -356,7 +363,7 @@ static inline void remove_at_FildeshKV(FildeshKV* map, FildeshKV_id_t id) {
 
 static inline
   size_t
-fildesh_size_of_lgcount(size_t size, fildesh_lgsize_t lgcount) {
+fildesh_size_of_lgcount(size_t size, Fildesh_lgsize lgcount) {
   if (lgcount == 0) {return 0;}
   return size << (lgcount - 1);
 }
@@ -430,7 +437,7 @@ resize_FildeshAT_(void* p, size_t element_size, size_t n)
 static inline
   void*
 grow_FildeshA_(void** p_at, size_t* p_count,
-               fildesh_lgsize_t* p_allocated_lgcount,
+               Fildesh_lgsize* p_allocated_lgcount,
                size_t element_size, size_t difference)
 {
   void* at = *p_at;
@@ -447,11 +454,11 @@ grow_FildeshA_(void** p_at, size_t* p_count,
 static inline
   void
 mpop_FildeshA_(void** p_at, size_t* p_count,
-               fildesh_lgsize_t* p_allocated_lgcount,
+               Fildesh_lgsize* p_allocated_lgcount,
                size_t element_size, size_t difference)
 {
   const size_t count = *p_count - difference;
-  const fildesh_lgsize_t allocated_lgcount = *p_allocated_lgcount;
+  const Fildesh_lgsize allocated_lgcount = *p_allocated_lgcount;
 
   *p_count = count;
   if ((allocated_lgcount >= 3) && ((count >> (allocated_lgcount - 3)) == 0)) {
