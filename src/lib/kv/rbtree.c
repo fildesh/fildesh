@@ -250,6 +250,9 @@ remove_FildeshKV_RBTREE(FildeshKV* map, FildeshKV_id_t y_id)
   }
   else {
     fildesh_log_trace("JointOf(y) is null.");
+    if (Nullish(SplitOf(y, 0)) && Nullish(SplitOf(y, 1))) {
+      map->root = FildeshKV_NULL_INDEX;
+    }
   }
   reclaim_element_FildeshKV_SINGLE_LIST(map, y);
 }

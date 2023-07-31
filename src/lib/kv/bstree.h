@@ -96,7 +96,11 @@ static inline void sub_join(FildeshKV* map, size_t* p_y, size_t* p_x) {
 
   AssignJoint(x, b);
   if (Nullish(b)) {
+#if 0
+    map->root = x;
+#else
     local_swap(map, p_y, p_x);
+#endif
   }
   else if (y == SplitOf(b, 1)) {
     AssignSplit(b, 1, x);
@@ -124,6 +128,9 @@ empty_add_FildeshKV_BSTREE(FildeshKV* map)
   assert_trivial_joint(map->at[x].joint);
   map->freelist_head = map->at[x].joint;
   map->at[x] = default_FildeshKVE();
+  if (Nullish(get_index_FildeshKVE_joint(map->root))) {
+    map->root = x;
+  }
   return x;
 }
 

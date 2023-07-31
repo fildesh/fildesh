@@ -35,10 +35,11 @@ first_id_from_index(const FildeshKV* map, size_t x) {
 
   FildeshKV_id_t
 first_id_FildeshKV_BSTREE(const FildeshKV* map) {
-  if (map->freelist_head == 0) {
+  size_t y = get_index_FildeshKVE_joint(map->root);
+  if (Nullish(y)) {
     return FildeshKV_NULL_ID;
   }
-  return first_id_from_index(map, 0);
+  return first_id_from_index(map, y);
 }
 
   FildeshKV_id_t
@@ -61,7 +62,7 @@ next_id_FildeshKV_BSTREE(const FildeshKV* map, FildeshKV_id_t id) {
   FildeshKV_id_t
 lookup_FildeshKV_BSTREE(const FildeshKV* map, const void* k, size_t ksize)
 {
-  size_t y = (map->freelist_head > 0 ? 0 : FildeshKV_NULL_INDEX);
+  size_t y = get_index_FildeshKVE_joint(map->root);
 
   while (!Nullish(y)) {
     int si = - cmp_k_FildeshKVE(&map->at[y], ksize, k);
@@ -85,7 +86,7 @@ ensure_FildeshKV_BSTREE(
     FildeshKV* map, const void* k, size_t ksize, FildeshAlloc* alloc)
 {
   size_t a = FildeshKV_NULL_INDEX;
-  size_t y = (map->freelist_head > 0 ? 0 : FildeshKV_NULL_INDEX);
+  size_t y = get_index_FildeshKVE_joint(map->root);
   size_t x;
   unsigned side = 0;
 
@@ -207,7 +208,11 @@ premove_FildeshKV_BSTREE(FildeshKV* map, size_t y)
 
   AssignJoint(x, JointOf(y));
   if (Nullish(JointOf(y))) {
+#if 0
+    map->root = x;
+#else
     LocalSwap(&y, &x);
+#endif
   }
   else {
     AssignSplit(JointOf(y), side_y, x);
@@ -230,6 +235,9 @@ remove_FildeshKV_BSTREE(FildeshKV* map, FildeshKV_id_t y_id)
 {
   size_t y = y_id/2;
   y = premove_FildeshKV_BSTREE(map, y);
+  if (Nullish(JointOf(y)) && Nullish(SplitOf(y, 0)) && Nullish(SplitOf(y, 1))) {
+    map->root = FildeshKV_NULL_INDEX;
+  }
   reclaim_element_FildeshKV_SINGLE_LIST(map, y);
 }
 
@@ -254,11 +262,15 @@ rotate_up_FildeshKV_BSTREE(FildeshKV* map, size_t* p_a)
 
   if (IsRoot(b)) {
     AssignJoint(a, FildeshKV_NULL_INDEX);
+#if 0
+    map->root = a;
+#else
     LocalSwap(&b, &a);
     *p_a = a;
     /* Update {a} and {b} outer neighbors (they don't change below).*/
     MaybeAssignJoint(SplitOf(a, side), a);
     MaybeAssignJoint(SplitOf(b, oside), b);
+#endif
   }
   else {
     Join(JointOf(b), SideOf(b), a);
