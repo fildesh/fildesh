@@ -25,7 +25,7 @@ static
   FildeshKV_id_t
 lookup_for_ensure_FildeshKV_BRBTREE(const FildeshKV* map, const FildeshKVE* e)
 {
-  size_t y = get_index_FildeshKVE_joint(map->root);
+  size_t y = bucket_head_of_FildeshKV(map);
   if (Nullish(y)) {
     return FildeshKV_NULL_ID;
   }

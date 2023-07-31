@@ -35,7 +35,7 @@ first_id_from_index(const FildeshKV* map, size_t x) {
 
   FildeshKV_id_t
 first_id_FildeshKV_BSTREE(const FildeshKV* map) {
-  size_t y = get_index_FildeshKVE_joint(map->root);
+  size_t y = bucket_head_of_FildeshKV(map);
   if (Nullish(y)) {
     return FildeshKV_NULL_ID;
   }
@@ -56,13 +56,23 @@ next_id_FildeshKV_BSTREE(const FildeshKV* map, FildeshKV_id_t id) {
     }
     return 2*y;
   }
+  if (map->bucket_heads) {
+    size_t bucket = get_bucket_FildeshKVE_joint(JointOf(x));
+    do {
+      bucket += 1;
+      if (0 != (bucket >> map->bucket_lgcount)) {
+        return FildeshKV_NULL_ID;
+      }
+    } while (map->bucket_heads[bucket] == FildeshKV_NULL_INDEX);
+    return 2*map->bucket_heads[bucket];
+  }
   return FildeshKV_NULL_ID;
 }
 
   FildeshKV_id_t
 lookup_FildeshKV_BSTREE(const FildeshKV* map, const void* k, size_t ksize)
 {
-  size_t y = get_index_FildeshKVE_joint(map->root);
+  size_t y = bucket_head_of_FildeshKV(map);
 
   while (!Nullish(y)) {
     int si = - cmp_k_FildeshKVE(&map->at[y], ksize, k);
@@ -86,7 +96,7 @@ ensure_FildeshKV_BSTREE(
     FildeshKV* map, const void* k, size_t ksize, FildeshAlloc* alloc)
 {
   size_t a = FildeshKV_NULL_INDEX;
-  size_t y = get_index_FildeshKVE_joint(map->root);
+  size_t y = bucket_head_of_FildeshKV(map);
   size_t x;
   unsigned side = 0;
 
@@ -100,8 +110,15 @@ ensure_FildeshKV_BSTREE(
 
   x = empty_add_FildeshKV_BSTREE(map);
   populate_empty_FildeshKVE(&map->at[x], ksize, k, 1, 0, alloc);
-  AssignJoint(x, a);
-  MaybeAssignSplit(a, side, x);
+  if (map->bucket_heads && Nullish(a)) {
+    size_t bucket = 0;
+    map->bucket_heads[bucket] = x;
+    set_joint_bucket_FildeshKVE(&map->at[x], bucket);
+  }
+  else {
+    AssignJoint(x, a);
+    MaybeAssignSplit(a, side, x);
+  }
   return 2*x;
 }
 
@@ -207,9 +224,14 @@ premove_FildeshKV_BSTREE(FildeshKV* map, size_t y)
   Join(b, oside, SplitOf(x, side));
 
   AssignJoint(x, JointOf(y));
-  if (Nullish(JointOf(y))) {
+  if (IsRoot(y)) {
 #if 0
-    map->root = x;
+    if (map->bucket_heads) {
+      map->bucket_heads[get_bucket_FildeshKVE_joint(JointOf(y))] = x;
+    }
+    else {
+      LocalSwap(&y, &x);
+    }
 #else
     LocalSwap(&y, &x);
 #endif
@@ -235,8 +257,11 @@ remove_FildeshKV_BSTREE(FildeshKV* map, FildeshKV_id_t y_id)
 {
   size_t y = y_id/2;
   y = premove_FildeshKV_BSTREE(map, y);
-  if (Nullish(JointOf(y)) && Nullish(SplitOf(y, 0)) && Nullish(SplitOf(y, 1))) {
-    map->root = FildeshKV_NULL_INDEX;
+  if (map->bucket_heads) {
+    if (IsRoot(y) && Nullish(SplitOf(y, 0)) && Nullish(SplitOf(y, 1))) {
+      size_t bucket = get_bucket_FildeshKVE_joint(JointOf(y));
+      map->bucket_heads[bucket] = FildeshKV_NULL_INDEX;
+    }
   }
   reclaim_element_FildeshKV_SINGLE_LIST(map, y);
 }
@@ -261,16 +286,18 @@ rotate_up_FildeshKV_BSTREE(FildeshKV* map, size_t* p_a)
   size_t y = SplitOf(a, oside);
 
   if (IsRoot(b)) {
-    AssignJoint(a, FildeshKV_NULL_INDEX);
-#if 0
-    map->root = a;
-#else
-    LocalSwap(&b, &a);
-    *p_a = a;
-    /* Update {a} and {b} outer neighbors (they don't change below).*/
-    MaybeAssignJoint(SplitOf(a, side), a);
-    MaybeAssignJoint(SplitOf(b, oside), b);
-#endif
+    AssignJoint(a, JointOf(b));
+    if (map->bucket_heads) {
+      size_t bucket = get_bucket_FildeshKVE_joint(JointOf(b));
+      map->bucket_heads[bucket] = a;
+    }
+    else {
+      LocalSwap(&b, &a);
+      *p_a = a;
+      /* Update {a} and {b} outer neighbors (they don't change below).*/
+      MaybeAssignJoint(SplitOf(a, side), a);
+      MaybeAssignJoint(SplitOf(b, oside), b);
+    }
   }
   else {
     Join(JointOf(b), SideOf(b), a);

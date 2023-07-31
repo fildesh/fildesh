@@ -249,9 +249,9 @@ remove_FildeshKV_RBTREE(FildeshKV* map, FildeshKV_id_t y_id)
     fixup_remove_FildeshKV_RBTREE(map, y, side);
   }
   else {
-    fildesh_log_trace("JointOf(y) is null.");
-    if (Nullish(SplitOf(y, 0)) && Nullish(SplitOf(y, 1))) {
-      map->root = FildeshKV_NULL_INDEX;
+    if (map->bucket_heads) {
+      size_t bucket = get_bucket_FildeshKVE_joint(JointOf(y));
+      map->bucket_heads[bucket] = FildeshKV_NULL_INDEX;
     }
   }
   reclaim_element_FildeshKV_SINGLE_LIST(map, y);

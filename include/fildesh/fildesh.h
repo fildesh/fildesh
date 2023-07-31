@@ -260,15 +260,15 @@ char* strdup_FildeshO(const FildeshO*, FildeshAlloc*);
 struct FildeshKV {
   FildeshKVE* at;
   FildeshAlloc* alloc;
-  size_t root;
   size_t freelist_head;
   Fildesh_lgsize allocated_lgcount;
+  Fildesh_lgsize bucket_lgcount;
+  size_t* bucket_heads;
   const FildeshKV_VTable* vt;
 };
 #define DEFAULT_FildeshKV { \
   NULL, NULL, \
-  ~(size_t)0, \
-  0, 0, \
+  0, 0, 0, NULL, \
   &DEFAULT_FildeshKV_VTable \
 }
 /** Implementation-specific maintenance functions.
@@ -300,7 +300,7 @@ void close_FildeshKV(FildeshKV*);
 extern const FildeshKV_VTable DEFAULT_SINGLE_LIST_FildeshKV_VTable;
 /* Deprecated. Use DEFAULT_FildeshKV.*/
 #define DEFAULT_FildeshKV_SINGLE_LIST \
-{ NULL, NULL, ~(size_t)0, 0, 0, &DEFAULT_SINGLE_LIST_FildeshKV_VTable }
+{ NULL, NULL, 0, 0, 0, NULL, &DEFAULT_SINGLE_LIST_FildeshKV_VTable }
 
 
 struct FildeshA {

@@ -2,7 +2,7 @@
 
 #include "kv.h"
 
-#define Nullish(x)  (x == FildeshKV_NULL_INDEX)
+#define Nullish(x)  (((x) & nullish_bit_FildeshKVE_joint()) != 0)
 
 static inline size_t joint_of(const FildeshKV* map, size_t x) {
   assert(!Nullish(x));
@@ -45,7 +45,7 @@ static inline void maybe_assign_split(FildeshKV* map, size_t y, unsigned side, s
 #define MaybeAssignSplit(y, side, x)  maybe_assign_split(map, y, side, x)
 
 static inline bool is_root(const FildeshKV* map, size_t i) {
-  return FildeshKV_NULL_INDEX == JointOf(i);
+  return Nullish(JointOf(i));
 }
 #define IsRoot(i)  is_root(map, i)
 
@@ -96,11 +96,12 @@ static inline void sub_join(FildeshKV* map, size_t* p_y, size_t* p_x) {
 
   AssignJoint(x, b);
   if (Nullish(b)) {
-#if 0
-    map->root = x;
-#else
-    local_swap(map, p_y, p_x);
-#endif
+    if (map->bucket_heads) {
+      map->bucket_heads[0] = x;
+    }
+    else {
+      local_swap(map, p_y, p_x);
+    }
   }
   else if (y == SplitOf(b, 1)) {
     AssignSplit(b, 1, x);
@@ -128,9 +129,6 @@ empty_add_FildeshKV_BSTREE(FildeshKV* map)
   assert_trivial_joint(map->at[x].joint);
   map->freelist_head = map->at[x].joint;
   map->at[x] = default_FildeshKVE();
-  if (Nullish(get_index_FildeshKVE_joint(map->root))) {
-    map->root = x;
-  }
   return x;
 }
 
