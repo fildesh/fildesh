@@ -55,7 +55,7 @@ MapAddIntegers_FildeshKV_common(
   }
   for (int i = 0; i < count; ++i) {
     const int k = calculate_key(i, off, mul, count);
-    const int* v = (int*) lookup_value_FildeshKV(map, &k, sizeof(k));
+    int* v = (int*) lookup_value_FildeshKV(map, &k, sizeof(k));
     assert(v);
     assert(*v == calculate_value(i, off, mul, count));
     benchmark::DoNotOptimize(*v);
@@ -142,7 +142,7 @@ static void BM_MapAddIntegers_StdMap(benchmark::State& state) {
       const int k = calculate_key(i, off, mul, count);
       std::map<int,int>::const_iterator v = map.find(k);
       assert(v != map.end());
-      benchmark::DoNotOptimize(*v);
+      benchmark::DoNotOptimize(v);
     }
   }
 }
@@ -164,7 +164,7 @@ static void BM_MapAddIntegers_Array(benchmark::State& state) {
       map[k] = v;
     }
 		for (int i = 0; i < count; ++i) {
-      const int k = calculate_key(i, off, mul, count);
+      int k = calculate_key(i, off, mul, count);
       benchmark::DoNotOptimize(map[k]);
     }
     delete[] map;
@@ -182,13 +182,13 @@ static void BM_MapAddIntegers_Nop(benchmark::State& state) {
 
   for (auto _ : state) {
 		for (int i = 0; i < count; ++i) {
-      const int k = calculate_key(i, off, mul, count);
-      const int v = calculate_value(i, off, mul, count);
+      int k = calculate_key(i, off, mul, count);
+      int v = calculate_value(i, off, mul, count);
       benchmark::DoNotOptimize(k);
       benchmark::DoNotOptimize(v);
     }
 		for (int i = 0; i < count; ++i) {
-      const int k = calculate_key(i, off, mul, count);
+      int k = calculate_key(i, off, mul, count);
       benchmark::DoNotOptimize(k);
     }
   }
