@@ -7,12 +7,8 @@ static
   void
 skipstr_easy_test()
 {
-  FildeshX in[1] = { DEFAULT_FildeshX };
+  FildeshX in[1] = {LITERAL_FildeshX("please skip me brooo")};
   bool skipped;
-  char content[] = "please skip me brooo";
-
-  in->at = content;
-  in->size = strlen(content);
 
   skipped = skipstr_FildeshX(in, "just");
   assert(!skipped);

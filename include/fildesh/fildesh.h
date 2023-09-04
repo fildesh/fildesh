@@ -64,6 +64,7 @@ struct FildeshX {
 };
 #define DEFAULT_FildeshX  { NULL, 0, 0, 0, 12, NULL }
 #define DEFAULT1_FildeshX(vt)  { NULL, 0, 0, 0, 12, vt }
+#define LITERAL_FildeshX(s)  { (char*)(s), sizeof(s)-1, 0, 0, 0, NULL }
 
 
 size_t read_FildeshX(FildeshX*);
@@ -333,6 +334,22 @@ static inline bool peek_byte_FildeshX(FildeshX* in, unsigned char guess) {
 }
 static inline FildeshX until_byte_FildeshX(FildeshX* in, unsigned char delim) {
   return until_char_FildeshX(in, (char)delim);
+}
+static inline void putslice_FildeshO(FildeshO* out, const FildeshX slice) {
+  put_bytestring_FildeshO(
+      out, (const unsigned char*)&slice.at[slice.off], slice.size - slice.off);
+}
+
+static inline FildeshX memref_FildeshX(const void* s, size_t n) {
+  FildeshX slice = DEFAULT_FildeshX;
+  slice.at = (char*)s;
+  slice.size = n;
+  slice.flush_lgsize = 0;
+  return slice;
+}
+#define literal_FildeshX(s)  memref_FildeshX((s), sizeof(s)-1)
+static inline FildeshX getslice_FildeshO(const FildeshO* oslice) {
+  return memref_FildeshX(&oslice->at[oslice->off], oslice->size - oslice->off);
 }
 
 static inline FildeshKV_id any_id_FildeshKV(const FildeshKV* map) {

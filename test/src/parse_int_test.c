@@ -11,11 +11,7 @@ parse_int_easy_test()
 {
   int got = 0;
   bool good;
-  FildeshX in[1] = { DEFAULT_FildeshX };
-  char content[] = "5 -10\n 0  98654  3216 +200";
-
-  in->at = content;
-  in->size = strlen(content);
+  FildeshX in[1] = {LITERAL_FildeshX("5 -10\n 0  98654  3216 +200")};
 
   good = parse_int_FildeshX(in, &got);
   assert(good);

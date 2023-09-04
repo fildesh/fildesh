@@ -12,12 +12,8 @@ static inline bool sliced_FildeshX(const FildeshX* slice) {
 }
 
 static inline FildeshX slice_FildeshX(FildeshX* in, size_t beg_off, size_t end_off) {
-  FildeshX slice = DEFAULT_FildeshX;
   assert(beg_off <= end_off);
-  slice.at = &in->at[beg_off];
-  slice.size = end_off - beg_off;
-  slice.flush_lgsize = 0;
-  return slice;
+  return memref_FildeshX(&in->at[beg_off], end_off - beg_off);
 }
 
   size_t

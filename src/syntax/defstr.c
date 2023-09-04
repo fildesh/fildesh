@@ -47,8 +47,7 @@ lookup_string_variable(FildeshKV* map, FildeshX* in, FildeshO* tmp_out)
 {
   const char* result = NULL;
   truncate_FildeshO(tmp_out);
-  put_bytestring_FildeshO(tmp_out, (unsigned char*)&in->at[in->off],
-                          in->size - in->off);
+  putslice_FildeshO(tmp_out, *in);
   putc_FildeshO(tmp_out, '\0');
   if (pfxeq_cstr(".self.env.", tmp_out->at)) {
     tmp_out->off = 10;
@@ -175,7 +174,7 @@ parse_double_quoted_fildesh_string_or_variable(FildeshX* in, FildeshO* out, size
       puts_FildeshO(out, v);
     }
     else {
-      put_bytestring_FildeshO(out, (unsigned char*)tmp_out->at, tmp_out->size);
+      putslice_FildeshO(out, getslice_FildeshO(tmp_out));
     }
   }
   else if (skipstr_FildeshX(in, "++")) {
@@ -185,7 +184,7 @@ parse_double_quoted_fildesh_string_or_variable(FildeshX* in, FildeshO* out, size
     while (!peek_char_FildeshX(in, ')') && in->off < in->size) {
       emsg = parse_double_quoted_fildesh_string_or_variable(in, tmp_out, text_nlines, map);
       if (emsg) {break;}
-      put_bytestring_FildeshO(out, (unsigned char*)tmp_out->at, tmp_out->size);
+      putslice_FildeshO(out, getslice_FildeshO(tmp_out));
       skip_blank_bytes(in, text_nlines);
       truncate_FildeshO(tmp_out);
     }
