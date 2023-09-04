@@ -127,3 +127,10 @@ print_double_FildeshO(FildeshO* out, double q)
   memcpy(grow_FildeshO(out, n), buf, n);
   maybe_flush_FildeshO(out);
 }
+
+  void
+repeat_byte_FildeshO(FildeshO* out, unsigned char b, size_t n)
+{
+  memset(grow_FildeshO(out, n), b, n);
+  maybe_flush_FildeshO(out);
+}

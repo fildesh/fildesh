@@ -109,6 +109,7 @@ void putc_FildeshO(FildeshO*, char);
 void puts_FildeshO(FildeshO*, const char*);
 void print_int_FildeshO(FildeshO*, int);
 void print_double_FildeshO(FildeshO*, double);
+void repeat_byte_FildeshO(FildeshO*, unsigned char, size_t);
 
 Fildesh_fd fildesh_arg_open_writeonly(const char*);
 FildeshO* open_FildeshOF(const char* filename);
@@ -278,7 +279,7 @@ struct FildeshKV_VTable {
   FildeshKV_id (*next_fn)(const FildeshKV*, FildeshKV_id);
   FildeshKV_id (*lookup_fn)(const FildeshKV*, const void*, size_t);
   FildeshKV_id (*ensure_fn)(FildeshKV*, const void*, size_t, FildeshAlloc*);
-  void           (*remove_fn)(FildeshKV*, FildeshKV_id);
+  void         (*remove_fn)(FildeshKV*, FildeshKV_id);
 };
 extern const FildeshKV_VTable DEFAULT_FildeshKV_VTable;
 

@@ -122,15 +122,9 @@ fildesh_builtin_transpose_main(unsigned argc, char** argv,
     for (j = 0; j < line_count; ++j) {
       char* field = (i < mat[j].field_count ? mat[j].fields[i] : NULL);
       size_t field_width = field ? strlen(field) : 0;
-      size_t width_needed;
       assert(field_width <= mat[j].max_width);
       if (pad && (field || j + 1 < line_count)) {
-        for (width_needed = mat[j].max_width - field_width;
-             width_needed > 0;
-             width_needed -= 1)
-        {
-          putc_FildeshO(out, ' ');
-        }
+        repeat_byte_FildeshO(out, ' ', mat[j].max_width - field_width);
       }
 
       if (field) {
