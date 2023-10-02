@@ -37,16 +37,16 @@ cc_fuzz_test(
 )
 
 cc_fuzz_test(
-    name = "parse_sxproto_fuzz_test",
-    srcs = ["parse_sxproto_fuzz_test.c"],
+    name = "parse_sxpb_fuzz_test",
+    srcs = ["parse_sxpb_fuzz_test.c"],
     deps = ["//:sxproto_lib"],
     max_guesses = 100000,
 )
 cc_smoke_test(
-    name = "parse_sxproto_smoke_test",
+    name = "parse_sxpb_smoke_test",
     srcs = [
-        "parse_sxproto_fuzz_test.c",
-        "parse_sxproto_smoke_test.c",
+        "parse_sxpb_fuzz_test.c",
+        "parse_sxpb_smoke_test.c",
     ],
     deps = ["//:sxproto_lib"],
 )

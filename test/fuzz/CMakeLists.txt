@@ -24,18 +24,18 @@ add_executable(fuzz_parse_fildesh_line_fuzz_test
 target_link_libraries(fuzz_parse_fildesh_line_fuzz_test fildesh_lib)
 add_test(NAME fuzz_parse_fildesh_line_fuzz_test COMMAND fuzz_parse_fildesh_line_fuzz_test)
 
-add_executable(fuzz_parse_sxproto_fuzz_test
-  "parse_sxproto_fuzz_test.c"
+add_executable(fuzz_parse_sxpb_fuzz_test
+  "parse_sxpb_fuzz_test.c"
   "fuzz_main.c"
 )
-target_link_libraries(fuzz_parse_sxproto_fuzz_test sxproto_lib fildesh_lib)
-add_test(NAME fuzz_parse_sxproto_fuzz_test COMMAND fuzz_parse_sxproto_fuzz_test)
+target_link_libraries(fuzz_parse_sxpb_fuzz_test ${FildeshSxproto_LIBRARIES})
+add_test(NAME fuzz_parse_sxpb_fuzz_test COMMAND fuzz_parse_sxpb_fuzz_test)
 
-add_executable(fuzz_parse_sxproto_smoke_test
-  "parse_sxproto_fuzz_test.c"
-  "parse_sxproto_smoke_test.c"
+add_executable(fuzz_parse_sxpb_smoke_test
+  "parse_sxpb_fuzz_test.c"
+  "parse_sxpb_smoke_test.c"
 )
-target_link_libraries(fuzz_parse_sxproto_smoke_test sxproto_lib fildesh_lib)
-add_test(NAME fuzz_parse_sxproto_smoke_test COMMAND fuzz_parse_sxproto_smoke_test)
+target_link_libraries(fuzz_parse_sxpb_smoke_test ${FildeshSxproto_LIBRARIES})
+add_test(NAME fuzz_parse_sxpb_smoke_test COMMAND fuzz_parse_sxpb_smoke_test)
 
 add_subdirectory(kv)

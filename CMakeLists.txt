@@ -107,11 +107,13 @@ include(GNUInstallDirs)
 add_subdirectory(compat)
 add_subdirectory(src)
 set(Fildesh_LIBRARIES "$<TARGET_NAME:fildesh_lib>")
+set(FildeshSxproto_LIBRARIES "$<TARGET_NAME:sxproto_lib>" "$<TARGET_NAME:fildesh_lib>")
 
 
 if (NOT PROJECT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
   set(Fildesh_INCLUDE_DIRS "${Fildesh_INCLUDE_DIRS}" PARENT_SCOPE)
   set(Fildesh_LIBRARIES ${Fildesh_LIBRARIES} PARENT_SCOPE)
+  set(FildeshSxproto_LIBRARIES ${FildeshSxproto_LIBRARIES} PARENT_SCOPE)
   # Try to keep dependent project namespace clean.
   # No need for tests or anything else.
   return()

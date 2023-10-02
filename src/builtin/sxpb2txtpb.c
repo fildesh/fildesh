@@ -17,8 +17,13 @@ fildesh_builtin_sxpb2txtpb_main(
   }
 
   if (exstatus == 0) {
-    if (!sxproto2textproto(in, out, err_out)) {
+    FildeshSxpb* sxpb = slurp_sxpb_close_FildeshX(in, NULL, err_out);
+    if (!sxpb) {
       exstatus = 1;
+    }
+    if (exstatus == 0) {
+      print_txtpb_FildeshO(out, sxpb);
+      close_FildeshSxpb(sxpb);
     }
   }
   close_FildeshO(out);

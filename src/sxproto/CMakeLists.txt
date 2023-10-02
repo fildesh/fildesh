@@ -1,6 +1,12 @@
 
 add_library(sxproto_lib_obj OBJECT
-  "sxproto2textproto.c"
+  "parse_sxpb.c"
+  "parse_sxpb.h"
+  "schema.c"
+  "sxpb.c"
+  "txtpb.c"
+  "value.c"
+  "value.h"
   "${PROJECT_SOURCE_DIR}/include/fildesh/sxproto.h"
 )
 add_library(sxproto_lib STATIC
