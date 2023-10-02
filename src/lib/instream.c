@@ -274,6 +274,17 @@ while_chars_FildeshX(FildeshX* in, const char* span)
 }
 
   bool
+peek_chars_FildeshX(FildeshX* in, const char* needles)
+{
+  if (peek_bytestring_FildeshX(in, NULL, 1)) {
+    if (in->at[in->off] != '\0') {
+      return !!strchr(needles, in->at[in->off]);
+    }
+  }
+  return false;
+}
+
+  bool
 peek_bytestring_FildeshX(FildeshX* in, const unsigned char* s, size_t n)
 {
   while (in->size - in->off < n) {
@@ -427,6 +438,23 @@ parse_int_FildeshX(FildeshX* in, int* ret)
     memcpy(buf, slice.at, slice.size);
     buf[slice.size] = '\0';
     end = fildesh_parse_int(ret, buf);
+  }
+  return !!end;
+}
+
+  bool
+parse_unsigned_FildeshX(FildeshX* in, unsigned* ret)
+{
+  char buf[101];
+  FildeshX slice;
+  char* end = NULL;
+  skipchrs_FildeshX(in, fildesh_compat_string_blank_bytes);
+  slice = while_chars_FildeshX(in, "+0123456789");
+  if (slice.size > 0) {
+    if (slice.size > sizeof(buf)-1) {return false;}
+    memcpy(buf, slice.at, slice.size);
+    buf[slice.size] = '\0';
+    end = fildesh_parse_unsigned(ret, buf);
   }
   return !!end;
 }

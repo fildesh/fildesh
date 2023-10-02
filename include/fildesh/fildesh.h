@@ -78,6 +78,7 @@ FildeshX until_char_FildeshX(FildeshX*, char delim);
 FildeshX until_bytestring_FildeshX(FildeshX*, const unsigned char*, size_t);
 FildeshX until_chars_FildeshX(FildeshX*, const char* delims);
 FildeshX while_chars_FildeshX(FildeshX*, const char* span);
+bool peek_chars_FildeshX(FildeshX*, const char*);
 bool peek_bytestring_FildeshX(FildeshX*, const unsigned char*, size_t);
 bool skip_bytestring_FildeshX(FildeshX*, const unsigned char*, size_t);
 FildeshX slicechr_FildeshX(FildeshX*, char delim);
@@ -88,6 +89,7 @@ char* gets_FildeshX(FildeshX*, const char* delim);
 bool skipchrs_FildeshX(FildeshX*, const char* span);
 bool skipstr_FildeshX(FildeshX*, const char* s);
 bool parse_int_FildeshX(FildeshX*, int*);
+bool parse_unsigned_FildeshX(FildeshX*, unsigned*);
 bool parse_double_FildeshX(FildeshX*, double*);
 
 FildeshX* open_FildeshXA();
@@ -122,6 +124,7 @@ const char* filename_FildeshOF(FildeshO*);
 
 
 char* fildesh_parse_int(int* ret, const char* in);
+char* fildesh_parse_unsigned(unsigned* ret, const char* in);
 char* fildesh_parse_double(double* ret, const char* in);
 #define FILDESH_INT_BASE10_SIZE_MAX (1 + (unsigned)(CHAR_BIT*sizeof(int)) / 3 + 1)
 unsigned fildesh_encode_int_base10(char*, Fildesh_fd);
@@ -341,10 +344,9 @@ static inline void putslice_FildeshO(FildeshO* out, const FildeshX slice) {
 }
 
 static inline FildeshX memref_FildeshX(const void* s, size_t n) {
-  FildeshX slice = DEFAULT_FildeshX;
+  FildeshX slice = LITERAL_FildeshX("");
   slice.at = (char*)s;
   slice.size = n;
-  slice.flush_lgsize = 0;
   return slice;
 }
 #define literal_FildeshX(s)  memref_FildeshX((s), sizeof(s)-1)

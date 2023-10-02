@@ -8,7 +8,7 @@ static
   void
 slicechrs_easy_test()
 {
-  FildeshX in[1] = {LITERAL_FildeshX("(i.am some|content.)")};
+  FildeshX in[1] = {LITERAL_FildeshX("(i.am some|content.)\0h\0i\0.")};
   FildeshX slice;
   const char delims[] = " ().|";
 
@@ -54,6 +54,18 @@ slicechrs_easy_test()
   assert(slice.size == 2);
   assert(0 == memcmp(slice.at, ".)", 2));
 
+  assert(peek_char_FildeshX(in, '\0'));
+  assert(peek_byte_FildeshX(in, 0));
+  assert(!peek_chars_FildeshX(in, delims));
+
+  slice = until_chars_FildeshX(in, delims);
+  assert(slice.size == 5);
+  assert(0 == memcmp(slice.at, "\0h\0i\0", 5));
+
+  slice = while_chars_FildeshX(in, delims);
+  assert(slice.size == 1);
+  assert(0 == memcmp(slice.at, ".", 1));
+
   slice = until_chars_FildeshX(in, delims);
   assert(slice.size == 0);
   assert(!slice.at);
@@ -63,6 +75,7 @@ slicechrs_easy_test()
   assert(!peek_char_FildeshX(in, ')'));
   assert(!peek_char_FildeshX(in, '\0'));
   assert(!peek_byte_FildeshX(in, 0));
+  assert(!peek_chars_FildeshX(in, delims));
 }
 
 int main() {
