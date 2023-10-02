@@ -25,7 +25,7 @@ s: "hello"
 
 $(O expect) oargz -- "${scalar_expect}"
 |< oargz -- "${scalar_content}"
-|- sxproto2textproto
+|- sxpb2txtpb
 |- cmp $(XF expect)
 |> stderr
 
@@ -43,7 +43,7 @@ m { i: 5 f: 5.5 s: "hello"}
 
 $(O expect) oargz -- "${message_expect}"
 |< oargz -- "${message_content}"
-|- sxproto2textproto
+|- sxpb2txtpb
 |- cmp $(XF expect)
 |> stderr
 
@@ -61,7 +61,7 @@ m {}
 
 $(O expect) oargz -- "${empty_message_expect}"
 |< oargz -- "${empty_message_content}"
-|- sxproto2textproto
+|- sxpb2txtpb
 |- cmp $(XF expect)
 |> stderr
 
@@ -109,7 +109,7 @@ my_messages {
 
 $(O expect) oargz -- "${repeated_expect}"
 |< oargz -- "${repeated_content}"
-|- sxproto2textproto
+|- sxpb2txtpb
 |- cmp $(XF expect)
 |> stderr
 
@@ -145,7 +145,7 @@ my_messages: [
 
 $(O expect) oargz -- "${array_expect}"
 |< oargz -- "${array_content}"
-|- sxproto2textproto
+|- sxpb2txtpb
 |- cmp $(XF expect)
 |> stderr
 
@@ -191,7 +191,7 @@ expressions {values: [
 
 $(O expect) oargz -- "${manyof_expect}"
 |< oargz -- "${manyof_content}"
-|- sxproto2textproto
+|- sxpb2txtpb
 |- cmp $(XF expect)
 |> stderr
 

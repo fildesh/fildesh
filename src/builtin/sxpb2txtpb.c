@@ -1,7 +1,7 @@
 #include <fildesh/sxproto.h>
 
   int
-fildesh_builtin_sxproto2textproto_main(
+fildesh_builtin_sxpb2txtpb_main(
     unsigned argc, char** argv,
     FildeshX** inputv, FildeshO** outputv)
 {
@@ -28,6 +28,6 @@ fildesh_builtin_sxproto2textproto_main(
 
 #ifndef FILDESH_BUILTIN_LIBRARY
 int main(int argc, char** argv) {
-  return fildesh_builtin_sxproto2textproto_main(argc, argv, NULL, NULL);
+  return fildesh_builtin_sxpb2txtpb_main(argc, argv, NULL, NULL);
 }
 #endif

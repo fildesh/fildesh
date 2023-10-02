@@ -1,4 +1,4 @@
 
-add_test(NAME sxproto2textproto_test COMMAND fildesh
-  -alias "sxproto2textproto=$<TARGET_FILE:sxproto2textproto>"
-  -f "${CMAKE_CURRENT_SOURCE_DIR}/sxproto2textproto_test.fildesh")
+add_test(NAME sxpb2txtpb_test COMMAND fildesh
+  -alias "sxpb2txtpb=$<TARGET_FILE:sxpb2txtpb>"
+  -f "${CMAKE_CURRENT_SOURCE_DIR}/sxpb2txtpb_test.fildesh")
