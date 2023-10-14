@@ -8,5 +8,6 @@ exports_files([
     "fildesh_compat_string.h",
     "ifstream.hh",
     "ofstream.hh",
+    "string.hh",
     "sxproto.h",
 ])

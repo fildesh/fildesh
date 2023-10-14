@@ -5,15 +5,17 @@ common:bzlmod --experimental_enable_bzlmod
 build:linux_dev_platform --copt=-march=native
 
 # Testing.
+build:standard_test_platform --config=bzlmod
+build:standard_test_platform --disk_cache=~/.cache/bazel
+# Ubuntu compiles with native.
+build:linux_test_platform --cxxopt='-std=c++17'
 build:linux_test_platform --copt=-march=native
-build:linux_test_platform --config=bzlmod
-build:linux_test_platform --disk_cache=~/.cache/bazel
+build:linux_test_platform --config=standard_test_platform
 build:ubuntu-latest_test_platform --config=linux_test_platform
 # OSX uses the same Bazel flags for automated tests.
 build:macos-latest_test_platform --config=linux_test_platform
 # Windows complains about some compile flags. Treat it differently.
-build:windows-latest_test_platform --config=bzlmod
-build:windows-latest_test_platform --disk_cache=~/.cache/bazel
+build:windows-latest_test_platform --config=standard_test_platform
 
 
 # Define the --config=asan-libfuzzer configuration.
