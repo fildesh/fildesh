@@ -87,7 +87,7 @@ readin_fd(FildeshO* buf, fildesh_fd_t fd, bool scrap_newline)
       s[in->size-2] = '\0';
     }
   }
-  puts_FildeshO(buf, s);
+  putstr_FildeshO(buf, s);
   close_FildeshX(in);
   return s;
 }
@@ -206,7 +206,7 @@ fildesh_builtin_execfd_main(unsigned argc, char** argv,
     int fd = -1;
 
     if (arg_fmt[2*i] == 'a') {
-      puts_FildeshO(&buf_slice, argv[off+i]);
+      putstr_FildeshO(&buf_slice, argv[off+i]);
     }
     else if (!fildesh_parse_int(&fd, argv[off+i]) || fd < 0) {
       fildesh_log_errorf("Cannot parse fd from arg: %s", argv[off+i]);
@@ -216,7 +216,7 @@ fildesh_builtin_execfd_main(unsigned argc, char** argv,
       if (exe) {
         exstatus = pipe_to_file(fd, exe);
         if (exstatus == 0) {
-          puts_FildeshO(&buf_slice, exe);
+          putstr_FildeshO(&buf_slice, exe);
         }
       }
       else {

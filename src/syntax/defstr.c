@@ -118,7 +118,7 @@ parse_double_quoted_fildesh_string(FildeshX* in, FildeshO* out, FildeshKV* map)
       if (!sym || sym->kind != HereDocVal) {
         return "Variable not known at parse time.";
       }
-      puts_FildeshO(out, sym->as.here_doc);
+      putstr_FildeshO(out, sym->as.here_doc);
     }
     else if (skipstr_FildeshX(in, "\r\n")) {
       putc_FildeshO(out, '\n');
@@ -151,7 +151,7 @@ parse_double_quoted_fildesh_string_or_variable(FildeshX* in, FildeshO* out, size
     if (!v) {
       return "Unknown string variable.";
     }
-    puts_FildeshO(out, v);
+    putstr_FildeshO(out, v);
   }
   else if (skipstr_FildeshX(in, "??")) {
     const char* v;
@@ -171,7 +171,7 @@ parse_double_quoted_fildesh_string_or_variable(FildeshX* in, FildeshO* out, size
       emsg = "Need closing paren for \"(??\".";
     }
     else if (v) {
-      puts_FildeshO(out, v);
+      putstr_FildeshO(out, v);
     }
     else {
       putslice_FildeshO(out, getslice_FildeshO(tmp_out));

@@ -15,7 +15,7 @@ fildesh_builtin_oargz_main(
     argi += 1;
   }
   for (; argi < argc; ++argi) {
-    puts_FildeshO(out, argv[argi]);
+    putstr_FildeshO(out, argv[argi]);
     if (argi + 1 < argc) {
       putc_FildeshO(out, '\0');
     }

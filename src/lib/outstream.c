@@ -100,7 +100,7 @@ putc_FildeshO(FildeshO* o, char c)
 }
 
   void
-puts_FildeshO(FildeshO* o, const char* s)
+putstr_FildeshO(FildeshO* o, const char* s)
 {
   const size_t length = strlen(s);
   char* buf = grow_FildeshO(o, length);

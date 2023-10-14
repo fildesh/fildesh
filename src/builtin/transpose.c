@@ -128,10 +128,10 @@ fildesh_builtin_transpose_main(unsigned argc, char** argv,
       }
 
       if (field) {
-        puts_FildeshO(out, field);
+        putstr_FildeshO(out, field);
       }
       if (j + 1 < line_count) {
-        puts_FildeshO(out, delim);
+        putstr_FildeshO(out, delim);
       }
     }
     putc_FildeshO(out, '\n');

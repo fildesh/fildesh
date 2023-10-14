@@ -50,7 +50,7 @@ run_with_line(const char* fildesh_exe, unsigned argc, const char** argv,
   pid = fildesh_compat_fd_spawnvp(source_fd, 1, 2, NULL, actual_argv);
   free(actual_argv);
   if (pid >= 0) {
-    puts_FildeshO(to_spawned, line);
+    putstr_FildeshO(to_spawned, line);
     putc_FildeshO(to_spawned, '\n');
   } else {
     fildesh_log_error("Spawn failed.");

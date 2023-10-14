@@ -54,7 +54,7 @@ spawn_ssh(const char* ssh_exe, const char* cmd, const char* host)
       NULL);
 
   if (pid >= 0) {
-    puts_FildeshO(to_remote, cmd);
+    putstr_FildeshO(to_remote, cmd);
   }
   close_FildeshO(to_remote);
   if (pid >= 0) {

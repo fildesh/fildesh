@@ -224,7 +224,7 @@ fildesh_builtin_bestmatch_main(
          s = getline_FildeshX(stream_in))
     {
       unsigned i = matching_line(s, lines, line_count, key_widths, lcs_array);
-      puts_FildeshO(out, lines[i]);
+      putstr_FildeshO(out, lines[i]);
       putc_FildeshO(out, '\n');
     }
   }

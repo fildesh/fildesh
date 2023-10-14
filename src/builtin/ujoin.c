@@ -157,7 +157,7 @@ compare_lines(FildeshX* in, LineJoin** joins, size_t join_count,
       if (nomatch_out)
       {
         if (payload)  payload[0] = nixed_char;
-        puts_FildeshO(nomatch_out, line);
+        putstr_FildeshO(nomatch_out, line);
         putc_FildeshO(nomatch_out, '\n');
       }
     }
@@ -166,7 +166,7 @@ compare_lines(FildeshX* in, LineJoin** joins, size_t join_count,
       if (payload)  payload[0] = nixed_char;
       if (dupmatch_out)
       {
-        puts_FildeshO(dupmatch_out, line);
+        putstr_FildeshO(dupmatch_out, line);
         putc_FildeshO(dupmatch_out, '\n');
       }
       else
@@ -330,27 +330,27 @@ fildesh_builtin_ujoin_main(
       bool tab = false;
       if (keep_join_field)
       {
-        puts_FildeshO(out, join->field);
+        putstr_FildeshO(out, join->field);
         tab = true;
       }
 
       if (stream_on_left && stream_line != join->field) {
-        if (tab) {puts_FildeshO(out, delim);}
+        if (tab) {putstr_FildeshO(out, delim);}
         tab = true;
-        puts_FildeshO(out, stream_line);
+        putstr_FildeshO(out, stream_line);
       }
 
       if (join->lookup_line)
       {
-        if (tab) {puts_FildeshO(out, delim);}
+        if (tab) {putstr_FildeshO(out, delim);}
         tab = true;
-        puts_FildeshO(out, join->lookup_line);
+        putstr_FildeshO(out, join->lookup_line);
       }
 
       if (!stream_on_left && stream_line != join->field) {
-        if (tab) {puts_FildeshO(out, delim);}
+        if (tab) {putstr_FildeshO(out, delim);}
         tab = true;
-        puts_FildeshO(out, stream_line);
+        putstr_FildeshO(out, stream_line);
       }
       putc_FildeshO(out, '\n');
     }

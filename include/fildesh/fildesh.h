@@ -109,7 +109,7 @@ void flush_FildeshO(FildeshO*);
 void maybe_flush_FildeshO(FildeshO*);
 void put_bytestring_FildeshO(FildeshO*, const unsigned char*, size_t);
 void putc_FildeshO(FildeshO*, char);
-void puts_FildeshO(FildeshO*, const char*);
+void putstr_FildeshO(FildeshO*, const char*);
 void print_int_FildeshO(FildeshO*, int);
 void print_double_FildeshO(FildeshO*, double);
 void repeat_byte_FildeshO(FildeshO*, unsigned char, size_t);
@@ -342,6 +342,8 @@ static inline void putslice_FildeshO(FildeshO* out, const FildeshX slice) {
   put_bytestring_FildeshO(
       out, (const unsigned char*)&slice.at[slice.off], slice.size - slice.off);
 }
+/* Deprecated. Use putstr_FildeshO().*/
+static inline void puts_FildeshO(FildeshO* out, const char* s) {putstr_FildeshO(out, s);}
 
 static inline FildeshX memref_FildeshX(const void* s, size_t n) {
   FildeshX slice = LITERAL_FildeshX("");
