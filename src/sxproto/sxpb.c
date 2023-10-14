@@ -110,19 +110,16 @@ ensure_field_at_FildeshSxpb(
   const char*
 name_at_FildeshSxpb(const FildeshSxpb* sxpb, FildeshSxpbIT it)
 {
-  const FildeshSxprotoValue* e;
+  const FildeshSxprotoValue* const e = &(*sxpb->values)[(
+      fildesh_nullid(it.elem_id) ? it.cons_id : it.elem_id)];
   assert(!nullish_FildeshSxpbIT(it));
-  if (!fildesh_nullid(it.elem_id)) {
-    e = &(*sxpb->values)[it.elem_id];
-    if (e->field_kind == FildeshSxprotoFieldKind_MESSAGE ||
-        e->field_kind == FildeshSxprotoFieldKind_LITERAL ||
-        e->field_kind == FildeshSxprotoFieldKind_ARRAY ||
-        e->field_kind == FildeshSxprotoFieldKind_MANYOF)
-    {
-      return e->text;
-    }
+  if (e->field_kind == FildeshSxprotoFieldKind_MESSAGE ||
+      e->field_kind == FildeshSxprotoFieldKind_LITERAL ||
+      e->field_kind == FildeshSxprotoFieldKind_ARRAY ||
+      e->field_kind == FildeshSxprotoFieldKind_MANYOF)
+  {
+    return e->text;
   }
-  e = &(*sxpb->values)[it.cons_id];
-  return e->text;
+  return NULL;
 }
 
