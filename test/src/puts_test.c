@@ -61,6 +61,7 @@ param3_test_puts(unsigned chunk_size, fildesh_lgsize_t flush_lgsize, const char*
   puts_FildeshO(o, lines[0]);
   puts_FildeshO(o, delim);
   assert(flush_lgsize == 0 || (o->size >> flush_lgsize) == 0);
+  assert(allocated_size_of_FildeshO(o) >= o->size);
 
   putstr_FildeshO(o, lines[1]);
   putstr_FildeshO(o, delim);

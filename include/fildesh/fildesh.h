@@ -323,8 +323,21 @@ realloc_less_FildeshA_(void* at, Fildesh_lgsize* p_allocated_lgcount,
 
 
 /* Inlines.*/
+static inline
+  size_t
+fildesh_size_of_lgcount(size_t size, Fildesh_lgsize lgcount) {
+  if (lgcount == 0) {return 0;}
+  return size << (lgcount - 1);
+}
+
 static inline FildeshX default_FildeshX() {FildeshX tmp = DEFAULT_FildeshX; return tmp;}
 static inline FildeshO default_FildeshO() {FildeshO tmp = DEFAULT_FildeshO; return tmp;}
+static inline size_t allocated_size_of_FildeshX(const FildeshX* x) {
+  return fildesh_size_of_lgcount(1, x->alloc_lgsize);
+}
+static inline size_t allocated_size_of_FildeshO(const FildeshO* o) {
+  return fildesh_size_of_lgcount(1, o->alloc_lgsize);
+}
 static inline void truncate_FildeshX(FildeshX* x) {x->off = 0; x->size = 0;}
 static inline void truncate_FildeshO(FildeshO* o) {o->off = 0; o->size = 0;}
 static inline bool peek_char_FildeshX(FildeshX* in, char guess) {
@@ -382,13 +395,6 @@ static inline void remove_at_FildeshKV(FildeshKV* map, FildeshKV_id id) {
   ((T*) reserve_FildeshAlloc(alloc, (n)*sizeof(T), fildesh_alignof(T)))
 
 #define fildesh_nullid(id)  (!~(id))
-
-static inline
-  size_t
-fildesh_size_of_lgcount(size_t size, Fildesh_lgsize lgcount) {
-  if (lgcount == 0) {return 0;}
-  return size << (lgcount - 1);
-}
 
 /* Dynamic array inlines take up the rest of this file.*/
 
