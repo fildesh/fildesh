@@ -5,9 +5,8 @@
 #include <string>
 #include <vector>
 
-#include <fildesh/fildesh.h>
-#include <fildesh/ifstream.hh>
-#include <fildesh/ofstream.hh>
+#include <fildesh/istream.hh>
+#include <fildesh/ostream.hh>
 extern "C" {
 #include "include/fildesh/fildesh_compat_file.h"
 }
@@ -37,7 +36,7 @@ static void write_seq_file(const std::string& filename, int n) {
 static void BM_FileWriteIntegers_FildeshOF(benchmark::State& state) {
   const std::string& filename = temporary_file_name("WriteIntegers_FildeshOF", state.range(0));
   for (auto _ : state) {
-    write_seq_file(filename, state.range(0));
+    write_seq_file(filename.c_str(), state.range(0));
   }
   fildesh_compat_file_rm(filename.c_str());
 }
@@ -48,7 +47,7 @@ BENCHMARK(BM_FileWriteIntegers_FildeshOF)->THIS_BENCHMARK_RANGE;
 static void BM_FileWriteIntegers_fildesh_ofstream(benchmark::State& state) {
   const std::string& filename = temporary_file_name("WriteIntegers_fildesh_ofstream", state.range(0));
   for (auto _ : state) {
-    fildesh::ofstream out(filename);
+    fildesh::ofstream out(filename.c_str());
 		for (int i = 0; i < state.range(0); ++i) {
       out << i << '\n';
 		}
@@ -64,7 +63,7 @@ static void BM_FileWriteIntegers_std_ofstream(benchmark::State& state) {
   for (auto _ : state) {
     std::ios_base::openmode mode = (
         std::ios_base::out | std::ios_base::trunc);
-    std::ofstream out(filename, mode);
+    std::ofstream out(filename.c_str(), mode);
 		for (int i = 0; i < state.range(0); ++i) {
       out << i << '\n';
 		}
@@ -112,7 +111,7 @@ static void BM_FileReadIntegers_fildesh_ifstream(benchmark::State& state) {
   const std::string& filename = temporary_file_name("ReadIntegers_fildesh_ifstream", state.range(0));
   write_seq_file(filename, state.range(0));
   for (auto _ : state) {
-    fildesh::ifstream in(filename);
+    fildesh::ifstream in(filename.c_str());
 		for (int i = 0; i < state.range(0); ++i) {
       int x = -1;
       in >> x;
@@ -129,7 +128,7 @@ static void BM_FileReadIntegers_std_ifstream(benchmark::State& state) {
   const std::string& filename = temporary_file_name("ReadIntegers_std_ifstream", state.range(0));
   write_seq_file(filename, state.range(0));
   for (auto _ : state) {
-    std::ifstream in(filename);
+    std::ifstream in(filename.c_str());
 		for (int i = 0; i < state.range(0); ++i) {
       int x = -1;
       in >> x;
@@ -180,7 +179,7 @@ static void BM_FileReadLines_fildesh_ifstream(benchmark::State& state) {
   const std::string& filename = temporary_file_name("ReadLines_fildesh_ifstream", state.range(0));
   write_seq_file(filename, state.range(0));
   for (auto _ : state) {
-    fildesh::ifstream in(filename);
+    fildesh::ifstream in(filename.c_str());
     std::string line;
 		for (int i = 1; i < state.range(0); ++i) {
       std::getline(in, line, '\n');
@@ -196,7 +195,7 @@ static void BM_FileReadLines_std_ifstream(benchmark::State& state) {
   const std::string& filename = temporary_file_name("ReadLines_std_ifstream", state.range(0));
   write_seq_file(filename, state.range(0));
   for (auto _ : state) {
-    std::ifstream in(filename);
+    std::ifstream in(filename.c_str());
     std::string line;
 		for (int i = 0; i < state.range(0); ++i) {
       std::getline(in, line, '\n');

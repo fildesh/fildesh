@@ -93,8 +93,9 @@ cc_library(
 cc_library(
     name = "fildesh_cc_lib",
     srcs = [
-        "//include/fildesh:ifstream.hh",
-        "//include/fildesh:ofstream.hh",
+        "//include/fildesh:istream.hh",
+        "//include/fildesh:ostream.hh",
+        "//include/fildesh:streambuf.hh",
         "//include/fildesh:string.hh",
     ],
     includes = ["include"],

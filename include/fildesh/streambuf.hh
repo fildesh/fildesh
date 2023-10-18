@@ -1,9 +1,9 @@
-#ifndef FILDESH_IFSTREAM_HH_
-#define FILDESH_IFSTREAM_HH_
-#include <fildesh/fildesh.h>
-
+#ifndef FILDESH_STREAMBUF_HH_
+#define FILDESH_STREAMBUF_HH_
 #include <cstring>
-#include <istream>
+#include <streambuf>
+
+#include <fildesh/fildesh.h>
 
 #ifndef fildesh_cc_override
 # if defined(__cplusplus) && (__cplusplus >= 201103L)
@@ -13,46 +13,31 @@
 # endif
 #endif
 
-
 namespace fildesh {
-class ifstream : private std::streambuf, public std::istream
+
+class istreambuf : public std::streambuf
 {
 public:
-  ifstream()
-  : std::istream(this)
-  , in_(NULL)
-  {
-    setstate(std::ios::badbit);
+  istreambuf()
+    : in_(NULL)
+  {}
+
+  explicit istreambuf(::FildeshX* in)
+    : in_(in)
+  {}
+
+  ~istreambuf() {
+    reset(NULL);
   }
 
-  ifstream(const std::string& filename)
-    : std::istream(this)
-    , in_(::open_FildeshXF(filename.c_str()))
-  {
-    if (!in_) {setstate(std::ios::badbit);}
-  }
-
-  ifstream(::FildeshX* in)
-    : std::istream(this)
-    , in_(in)
-  {
-    if (!in_) {setstate(std::ios::badbit);}
-  }
-
-  ~ifstream() {
-    this->close();
-  }
-
-  void close() {
-    setstate(std::ios::badbit);
+  void reset(FildeshX* in) {
     close_FildeshX(in_);
-    in_ = NULL;
+    in_ = in;
   }
-  void open(const std::string& filename) {
-    clear();
-    close_FildeshX(in_);
-    in_ = ::open_FildeshXF(filename.c_str());
-  }
+
+  bool operator!() const {return !in_;}
+  FildeshX* c_struct() {return in_;}
+  const FildeshX* c_struct() const {return in_;}
 
 private:
   std::streamsize xsgetn(char* buf, std::streamsize size) fildesh_cc_override {
@@ -109,5 +94,52 @@ private:
 private:
   FildeshX* in_;
 };
-}
+
+
+class ostreambuf : public std::streambuf
+{
+public:
+  ostreambuf()
+    : out_(NULL)
+  {}
+
+  explicit ostreambuf(::FildeshO* out)
+    : out_(out)
+  {}
+
+  ~ostreambuf() {
+    reset(NULL);
+  }
+
+  void reset(FildeshO* out) {
+    close_FildeshO(out_);
+    out_ = out;
+  }
+
+  bool operator!() const {return !out_;}
+  FildeshO* c_struct() {return out_;}
+  const FildeshO* c_struct() const {return out_;}
+
+private:
+  int sync() fildesh_cc_override {
+    ::flush_FildeshO(out_);
+    return 0;
+  }
+
+  std::streamsize xsputn(const char* buf, std::streamsize size) fildesh_cc_override {
+    memcpy(grow_FildeshO(out_, size), buf, size);
+    maybe_flush_FildeshO(out_);
+    return size;
+  }
+
+  std::streambuf::int_type overflow(std::streambuf::int_type c) fildesh_cc_override {
+    ::putc_FildeshO(out_, (char)c);
+    return 0;
+  }
+
+private:
+  FildeshO* out_;
+};
+
+}  // namespace fildesh
 #endif

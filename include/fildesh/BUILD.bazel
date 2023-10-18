@@ -6,8 +6,9 @@ exports_files([
     "fildesh_compat_random.h",
     "fildesh_compat_sh.h",
     "fildesh_compat_string.h",
-    "ifstream.hh",
-    "ofstream.hh",
+    "istream.hh",
+    "ostream.hh",
+    "streambuf.hh",
     "string.hh",
     "sxproto.h",
 ])

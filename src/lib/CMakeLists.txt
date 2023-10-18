@@ -29,8 +29,9 @@ target_link_libraries(fildesh_lib ${CMAKE_THREAD_LIBS_INIT})
 set_target_properties(fildesh_lib PROPERTIES OUTPUT_NAME "fildesh")
 set(FILDESH_LIB_PUBLIC_HEADERS
   "${PROJECT_SOURCE_DIR}/include/fildesh/fildesh.h"
-  "${PROJECT_SOURCE_DIR}/include/fildesh/ifstream.hh"
-  "${PROJECT_SOURCE_DIR}/include/fildesh/ofstream.hh"
+  "${PROJECT_SOURCE_DIR}/include/fildesh/istream.hh"
+  "${PROJECT_SOURCE_DIR}/include/fildesh/ostream.hh"
+  "${PROJECT_SOURCE_DIR}/include/fildesh/streambuf.hh"
   "${PROJECT_SOURCE_DIR}/include/fildesh/string.hh"
   )
 set_target_properties(fildesh_lib PROPERTIES
