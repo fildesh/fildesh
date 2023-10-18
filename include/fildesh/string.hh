@@ -1,8 +1,8 @@
 #ifndef FILDESH_STRING_HH_
 #define FILDESH_STRING_HH_
-#include <fildesh/fildesh.h>
-
 #include <string>
+
+#include <fildesh/ostream.hh>
 
 
 namespace fildesh {
@@ -34,4 +34,32 @@ inline FildeshO& operator<<(FildeshO& out, std::string_view s) {
   return out;
 }
 #endif  // defined(__cpp_lib_string_view)
+
+
+namespace fildesh {
+
+class ostringstream : public ostream
+{
+public:
+  ostringstream()
+    : ostream(&oslice_)
+    , oslice_(default_FildeshO())
+  {}
+
+  std::string str() {
+    return make_string(oslice_);
+  }
+#ifdef __cpp_lib_string_view
+  std::string_view view() const {
+    return make_string_view(oslice_);
+  }
+#endif  // defined(__cpp_lib_string_view)
+
+  void truncate() {truncate_FildeshO(&oslice_);}
+
+private:
+  FildeshO oslice_;
+};
+
+}  // namespace fildesh
 #endif

@@ -29,8 +29,23 @@ static void append_assign_test() {
   close_FildeshO(oslice);
 }
 
+static void ostringstream_test() {
+  fildesh::ostringstream oss;
+
+  oss << '1' << "2" << 3;
+  assert(oss.str() == "123");
+#ifdef __cpp_lib_string_view
+  assert(oss.view() == "123");
+#endif  // defined(__cpp_lib_string_view)
+
+  oss.truncate();
+  oss << '4' << "5" << 6;
+  assert(oss.str() == "456");
+}
+
 int main() {
   append_assign_test();
+  ostringstream_test();
   return 0;
 }
 
