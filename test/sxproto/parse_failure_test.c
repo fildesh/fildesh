@@ -34,6 +34,8 @@ parse_failure_test()
       "(((u)");
   XPT("Expected closing paren after array name.",
       "((");
+  XPT("Denote empty message in array as (), not (()).",
+      "((a) (()))");
   XPT("Message expects named fields inside it.",
       "(");
   XPT("Literal field can only hold 1 value.",

@@ -110,6 +110,7 @@ static void parse_field_test() {
   tryparse("(m (x 5) (\"y\" 7) (z 12))");
   tryparse("((a) 1 2 3 4 5)");
   tryparse("(((b)) 1 2 3 4 5)");
+  tryparse("((a) (() (x 5)) (() (y 7)) () (() (z 12)))");
 
 #undef tryparse
   close_FildeshO(oslice);

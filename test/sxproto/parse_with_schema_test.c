@@ -65,6 +65,7 @@ parse_with_schema_test()
     (cons (car \"first\") (cdr (car \"second\") (cdr (car \"third\") (cdr))))\n\
     ((messages)\n\
      (() (car \"schwam\"))\n\
+     ()\n\
      (() (\"car\" \"doo\") (cdr (car \"two and heif\"))))\n\
     ";
   FildeshX in[1] = {LITERAL_FildeshX(content)};
@@ -204,6 +205,10 @@ parse_with_schema_test()
     good = lone_subfield_at_FildeshSxpb_to_str(&tmp_s, sxpb, it, "car");
     assert(good);
     assert(0 == strcmp(tmp_s, "schwam"));
+
+    it = next_at_FildeshSxpb(sxpb, it);
+    /* Empty message.*/
+    assert(nullish_FildeshSxpbIT(first_at_FildeshSxpb(sxpb, it)));
 
     it = next_at_FildeshSxpb(sxpb, it);
     good = lone_subfield_at_FildeshSxpb_to_str(&tmp_s, sxpb, it, "car");

@@ -386,7 +386,11 @@ parse_field_FildeshSxpbInfo(
   skip_separation(in, info);
 
   if (nesting_depth == 0) {
-    if (peek_chars_FildeshX(in, "()")) {
+    if (oslice->size == 0) {
+      field_kind = FildeshSxprotoFieldKind_MESSAGE;
+      field = schema;
+    }
+    else if (peek_chars_FildeshX(in, "()")) {
       field_kind = FildeshSxprotoFieldKind_MESSAGE;
     }
     else {
@@ -395,6 +399,10 @@ parse_field_FildeshSxpbInfo(
   }
   else if (nesting_depth == 1) {
     if (oslice->size == 0) {
+      if (peek_chars_FildeshX(in, ")")) {
+        syntax_error(info, "Denote empty message in array as (), not (()).");
+        return false;
+      }
       field_kind = FildeshSxprotoFieldKind_MESSAGE;
       field = schema;
     }
