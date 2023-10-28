@@ -8,7 +8,7 @@ static
   void
 slicechrs_easy_test()
 {
-  FildeshX in[1] = {LITERAL_FildeshX("(i.am some|content.)\0h\0i\0.")};
+  DECLARE_STRLIT_FildeshX(in, "(i.am some|content.)\0h\0i\0.");
   FildeshX slice;
   const char delims[] = " ().|";
 

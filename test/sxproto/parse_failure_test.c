@@ -6,7 +6,7 @@
 
 
 #define XPT(expect, text)  do { \
-  FildeshX in[1] = {LITERAL_FildeshX(text)}; \
+  DECLARE_STRLIT_FildeshX(in, text); \
   FildeshSxpb* sxpb; \
   sxpb = slurp_sxpb_close_FildeshX(in, NULL, oslice); \
   assert(!sxpb); \

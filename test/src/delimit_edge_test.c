@@ -9,7 +9,7 @@ static
   void
 slicestr_long_delim_no_match_test()
 {
-  FildeshX in[1] = {LITERAL_FildeshX("iamsomecontent")};
+  DECLARE_STRLIT_FildeshX(in, "iamsomecontent");
   FildeshX slice;
   size_t i;
   const size_t content_length = in->size;

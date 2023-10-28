@@ -7,7 +7,7 @@ static
   void
 skipstr_easy_test()
 {
-  FildeshX in[1] = {LITERAL_FildeshX("please skip me brooo")};
+  DECLARE_STRLIT_FildeshX(in, "please skip me brooo");
   bool skipped;
 
   skipped = skipstr_FildeshX(in, "just");

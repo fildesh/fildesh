@@ -4,7 +4,7 @@
 
 static void append_assign_test() {
   FildeshO oslice[1] = {DEFAULT_FildeshO};
-  FildeshX in[1] = {LITERAL_FildeshX("alpha beta gamma")};
+  FildeshX in[1] = {FildeshX_of_strlit("alpha beta gamma")};
   std::string s = fildesh::make_string(*in);
   assert(0 == s.compare("alpha beta gamma"));
 

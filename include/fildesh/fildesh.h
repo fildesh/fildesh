@@ -64,7 +64,8 @@ struct FildeshX {
 };
 #define DEFAULT_FildeshX  { NULL, 0, 0, 0, 12, NULL }
 #define DEFAULT1_FildeshX(vt)  { NULL, 0, 0, 0, 12, vt }
-#define LITERAL_FildeshX(s)  { (char*)(s), sizeof(s)-1, 0, 0, 0, NULL }
+#define DECLARE_STRLIT_FildeshX(name, s) \
+  FildeshX name[1] = {{ (char*)s, sizeof(s)-1, 0, 0, 0, NULL }}
 
 
 size_t read_FildeshX(FildeshX*);
@@ -358,15 +359,23 @@ static inline void putslice_FildeshO(FildeshO* out, const FildeshX slice) {
 /* Deprecated. Use putstr_FildeshO().*/
 static inline void puts_FildeshO(FildeshO* out, const char* s) {putstr_FildeshO(out, s);}
 
-static inline FildeshX memref_FildeshX(const void* s, size_t n) {
-  FildeshX slice = LITERAL_FildeshX("");
-  slice.at = (char*)s;
-  slice.size = n;
-  return slice;
+static inline FildeshX FildeshX_of_bytestring(const unsigned char* s, size_t n) {
+  DECLARE_STRLIT_FildeshX(in, "");
+  in->at = (char*)s;
+  in->size = n;
+  return *in;
 }
-#define literal_FildeshX(s)  memref_FildeshX((s), sizeof(s)-1)
-static inline FildeshX getslice_FildeshO(const FildeshO* oslice) {
-  return memref_FildeshX(&oslice->at[oslice->off], oslice->size - oslice->off);
+#define fildesh_bytestrlit(s)  (const unsigned char*)(s), sizeof(s)-1
+#define FildeshX_of_strlit(s)  FildeshX_of_bytestring(fildesh_bytestrlit(s))
+static inline FildeshX getslice_FildeshX(const FildeshX* in) {
+  return FildeshX_of_bytestring(
+      (const unsigned char*)&in->at[in->off],
+      in->size - in->off);
+}
+static inline FildeshX getslice_FildeshO(const FildeshO* out) {
+  return FildeshX_of_bytestring(
+      (const unsigned char*)&out->at[out->off],
+      out->size - out->off);
 }
 
 static inline FildeshKV_id any_id_FildeshKV(const FildeshKV* map) {

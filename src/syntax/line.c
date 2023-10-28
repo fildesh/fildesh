@@ -167,7 +167,7 @@ fildesh_syntax_sep_line(
       s = &s[i];
     }
     else if (s[0] == '"') {
-      FildeshX slice = memref_FildeshX(s, strlen(s));
+      FildeshX slice = FildeshX_of_bytestring((unsigned char*)s, strlen(s));
       const char* emsg;
       slice.off = 1;
       truncate_FildeshO(tmp_out);
@@ -180,7 +180,7 @@ fildesh_syntax_sep_line(
     else if (pfxeq_cstr("$(getenv ", s)) {
       FildeshX in[1];
       FildeshX slice;
-      *in = memref_FildeshX(s, strlen(s));
+      *in = FildeshX_of_bytestring((unsigned char*)s, strlen(s));
       in->off = strlen("$(getenv ");
       while_chars_FildeshX(in, " ");
       slice = until_char_FildeshX(in, ')');

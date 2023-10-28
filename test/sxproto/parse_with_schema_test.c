@@ -68,7 +68,7 @@ parse_with_schema_test()
      ()\n\
      (() (\"car\" \"doo\") (cdr (car \"two and heif\"))))\n\
     ";
-  FildeshX in[1] = {LITERAL_FildeshX(content)};
+  DECLARE_STRLIT_FildeshX(in, content);
   FildeshO* err_out = open_FildeshOF("/dev/stderr");
   const FildeshSxprotoField* const schema = sxproto_schema();
   FildeshSxpb* const sxpb = slurp_sxpb_close_FildeshX(in, schema, err_out);
