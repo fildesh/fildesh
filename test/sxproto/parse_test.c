@@ -22,6 +22,7 @@ static void parse_string_test() {
   expectparse("abcdef", "\"abcdef\"");
   expectparse("ab\"cd", "\"ab\\\"cd\"");
   expectparse("ab\\", "\"ab\\\\\"");
+  expectparse("a  \n b", "\"a  \\n b\"");
 
 #undef expectparse
   close_FildeshO(oslice);
@@ -78,6 +79,9 @@ static void parse_name_test() {
   expectparse("z", 2, "((z))");
   expectparse("", 1, "()");
   expectparse("", 2, "(())");
+  /* Quoted names.*/
+  expectparse("abc", 0, "\"abc\"");
+  expectparse("(a\"bc", 1, "( \"(a\\\"bc\")");
 
 #undef expectparse
   close_FildeshO(oslice);
@@ -103,6 +107,7 @@ static void parse_field_test() {
   tryparse("(y \"hello\")");
   tryparse("(z 5.254)");
   tryparse("(m (x 5) (y 7) (z 12))");
+  tryparse("(m (x 5) (\"y\" 7) (z 12))");
   tryparse("((a) 1 2 3 4 5)");
   tryparse("(((b)) 1 2 3 4 5)");
 

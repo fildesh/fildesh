@@ -24,6 +24,10 @@ parse_failure_test()
 {
   FildeshO oslice[1] = {DEFAULT_FildeshO};
 
+  XPT("Unknown escape sequence. Only very basic ones are supported.",
+      "(\"a\" (\"b\\.\" 5))");
+  XPT("Expected subfield name to be quoted too.",
+      "(\"a\" (b 5))");
   XPT("Expected 2 closing parens after manyof name; got 0.",
       "((((");
   XPT("Expected 2 closing parens after manyof name; got 1.",

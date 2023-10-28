@@ -56,8 +56,9 @@ static inline
   bool
 skipstr_FildeshSxpbInfo(FildeshSxpbInfo* info, FildeshX* in, const char* s)
 {
-  if (skipstr_FildeshX(in, s)) {
-    info->column_count += strlen(s);
+  const size_t n = strlen(s);
+  if (skip_bytestring_FildeshX(in, (const unsigned char*)s, n)) {
+    info->column_count += n;
     return true;
   }
   return false;
@@ -86,9 +87,8 @@ parse_string_FildeshSxpbInfo(
   FildeshX slice;
 
   truncate_FildeshO(oslice);
-  if (!skipstr_FildeshSxpbInfo(info, in, "\"")) {
-    return false;
-  }
+  assert(in->off < in->size && in->at[in->off] == '"');
+  skipstr_FildeshSxpbInfo(info, in, "\"");
 
   for (slice = until_chars_FildeshSxpbInfo(info, in, "\\\"");
        in->off < in->size && in->at[in->off] != '"';
@@ -220,7 +220,21 @@ parse_name_FildeshSxpbInfo(
   }
   slice = until_chars_FildeshSxpbInfo(info, in, sxpb_delim_bytes);
   truncate_FildeshO(oslice);
-  putslice_FildeshO(oslice, slice);
+  if (slice.size == 0) {
+    if (peek_char_FildeshX(in, '"')) {
+      if (!parse_string_FildeshSxpbInfo(info, in, oslice)) {
+        return false;
+      }
+      info->quoted_names_on = true;
+    }
+  }
+  else if (info->quoted_names_on) {
+    syntax_error(info, "Expected subfield name to be quoted too.");
+    return false;
+  }
+  else {
+    putslice_FildeshO(oslice, slice);
+  }
 
   if (nesting_depth > 0) {
     skip_separation(in, info);
@@ -354,6 +368,7 @@ parse_field_FildeshSxpbInfo(
     FildeshSxpbIT p_it,
     FildeshO* oslice)
 {
+  const bool info_quoted_names_on = info->quoted_names_on;
   unsigned nesting_depth = 0;
   size_t elem_count = 0;
   const FildeshSxprotoField* field = NULL;
@@ -361,9 +376,8 @@ parse_field_FildeshSxpbInfo(
   FildeshSxprotoFieldKind elem_kind = FildeshSxprotoFieldKind_UNKNOWN;
   truncate_FildeshO(oslice);
 
-  if (!skipstr_FildeshSxpbInfo(info, in, "(")) {
-    return false;
-  }
+  assert(in->off < in->size && in->at[in->off] == '(');
+  skipstr_FildeshSxpbInfo(info, in, "(");
 
   skip_separation(in, info);
   if (!parse_name_FildeshSxpbInfo(info, in, oslice, &nesting_depth)) {
@@ -558,6 +572,7 @@ parse_field_FildeshSxpbInfo(
     skip_separation(in, info);
   }
 
+  info->quoted_names_on = info_quoted_names_on;
   return true;
 }
 

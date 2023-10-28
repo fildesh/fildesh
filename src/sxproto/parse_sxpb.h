@@ -4,12 +4,13 @@ typedef struct FildeshSxpbInfo FildeshSxpbInfo;
 
 struct FildeshSxpbInfo {
   bool allow_repeated;
+  bool quoted_names_on;
   unsigned line_count;
   unsigned column_count;
   FildeshO* err_out;
 };
 #define DEFAULT_FildeshSxpbInfo \
-{ false, 0, 0, NULL }
+{ false, false, 0, 0, NULL }
 
 
 bool

@@ -63,7 +63,9 @@ parse_with_schema_test()
       (u 0)))\n\
     ((a) 0.5e1 4 30e-1 2.e0 1)\n\
     (cons (car \"first\") (cdr (car \"second\") (cdr (car \"third\") (cdr))))\n\
-    ((messages) (() (car \"schwam\")) (() (car \"doo\") (cdr (car \"two and heif\"))))\n\
+    ((messages)\n\
+     (() (car \"schwam\"))\n\
+     (() (\"car\" \"doo\") (cdr (car \"two and heif\"))))\n\
     ";
   FildeshX in[1] = {LITERAL_FildeshX(content)};
   FildeshO* err_out = open_FildeshOF("/dev/stderr");
