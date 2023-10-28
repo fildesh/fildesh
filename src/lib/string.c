@@ -40,6 +40,24 @@ fildesh_parse_int(int* ret, const char* in)
 }
 
   char*
+fildesh_parse_unsigned(unsigned* ret, const char* in)
+{
+  unsigned long v;
+  char* out = NULL;
+
+  assert(ret);
+  if (!in) {return NULL;}
+  v = strtoul(in, &out, 10);
+
+  if (out == in)  out = NULL;
+  if (out) {
+    *ret = (unsigned) v;
+    if (*ret != v)  out = NULL;
+  }
+  return out;
+}
+
+  char*
 fildesh_parse_double(double* ret, const char* in)
 {
   double v;

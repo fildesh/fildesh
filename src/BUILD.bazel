@@ -32,7 +32,7 @@ cc_library(
         "//src/builtin:replace_string.c",
         "//src/builtin:seq.c",
         "//src/builtin:sponge.c",
-        "//src/builtin:sxproto2textproto.c",
+        "//src/builtin:sxpb2txtpb.c",
         "//src/builtin:time2sec.c",
         "//src/builtin:transpose.c",
         "//src/builtin:ujoin.c",

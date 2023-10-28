@@ -12,7 +12,7 @@ exports_files([
     "oargz.c",
     "seq.c",
     "sponge.c",
-    "sxproto2textproto.c",
+    "sxpb2txtpb.c",
     "time2sec.c",
     "transpose.c",
     "ujoin.c",
@@ -87,8 +87,8 @@ cc_binary(
 )
 
 cc_binary(
-    name = "sxproto2textproto",
-    srcs = ["sxproto2textproto.c"],
+    name = "sxpb2txtpb",
+    srcs = ["sxpb2txtpb.c"],
     deps = ["//:sxproto_lib"],
     visibility = ["//visibility:public"],
 )

@@ -1,21 +1,21 @@
 #include "test/fuzz/smoke_common.h"
 
 BEGIN_FUZZ_DATA
-/* "Expected manyof name."
+/* "Expected 2 closing parens after manyof name; got 0."
  */
 "(((("
 NEXT_FUZZ_DATA
-/* "Expected closing paren for manyof."
+/* "Expected 2 closing parens after manyof name; got 1."
  */
-"((("
+"(((u)"
 NEXT_FUZZ_DATA
-/* "Expected closing paren."
+/* "Expected closing paren after array name."
  */
 "(("
 NEXT_FUZZ_DATA
-/* "Expected field name."
+/* "Message expects named fields inside it."
  */
-{ '(' }
+"("
 NEXT_FUZZ_DATA
 /* "Expected a scalar but got a field."
  */
@@ -40,4 +40,8 @@ NEXT_FUZZ_DATA
 /* "Got extra closing paren at top level."
  */
 ")"
+NEXT_FUZZ_DATA
+/* "Expected a literal or closing paren."
+ */
+"((x)\0"
 END_FUZZ_DATA

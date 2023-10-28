@@ -56,7 +56,7 @@ static void BM_strndup_FildeshAlloc(benchmark::State& state) {
   const std::string original = make_original_string(state.range(0));
   const unsigned count = state.range(1);
   FildeshO o_original[1] = {DEFAULT_FildeshO};
-  puts_FildeshO(o_original, original.c_str());
+  putstr_FildeshO(o_original, original.c_str());
   for (auto _ : state) {
     FildeshAlloc* alloc = open_FildeshAlloc();
     char** copies = fildesh_allocate(char*, count, alloc);

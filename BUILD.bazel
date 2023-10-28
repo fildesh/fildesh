@@ -1,8 +1,23 @@
+load("@rules_license//rules:license.bzl", "license")
+
+package(
+    default_applicable_licenses = [":license"],
+    default_visibility = ["//visibility:public"],
+)
+license(
+    name = "license",
+    license_kinds = ["@rules_license//licenses/spdx:ISC"],
+    license_text = "LICENSE",
+)
+exports_files([
+    "LICENSE",
+    "MODULE.bazel",
+])
+
 
 alias(
     name = "fildesh",
     actual = "//src/bin:fildesh",
-    visibility = ["//visibility:public"],
 )
 
 # Use //tool:fildespawn instead.
@@ -10,13 +25,11 @@ alias(
 alias(
     name = "fildespawn",
     actual = "//tool:fildespawn",
-    visibility = ["//visibility:public"],
 )
 
 alias(
     name = "sxproto_lib",
     actual = "//src/sxproto:sxproto_lib",
-    visibility = ["//visibility:public"],
 )
 
 
@@ -47,7 +60,6 @@ cc_library(
         ],
         "//conditions:default": ["-pthread"],
     }),
-    visibility = ["//visibility:public"],
 )
 
 cc_library(
@@ -76,18 +88,18 @@ cc_library(
     ],
     includes = ["include"],
     deps = [":fildesh_compat_lib"],
-    visibility = ["//visibility:public"],
 )
 
 cc_library(
     name = "fildesh_cc_lib",
     srcs = [
-        "//include/fildesh:ifstream.hh",
-        "//include/fildesh:ofstream.hh",
+        "//include/fildesh:istream.hh",
+        "//include/fildesh:ostream.hh",
+        "//include/fildesh:streambuf.hh",
+        "//include/fildesh:string.hh",
     ],
     includes = ["include"],
     deps = [":fildesh_lib"],
-    visibility = ["//visibility:public"],
 )
 
 cc_library(
@@ -99,11 +111,5 @@ cc_library(
     ],
     includes = ["include"],
     deps = [":fildesh_compat_lib"],
-    visibility = ["//visibility:public"],
 )
 
-exports_files([
-    "MODULE.bazel",
-], visibility = [
-    "//test/flag:__pkg__",
-])

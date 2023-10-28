@@ -62,6 +62,7 @@ param3_test_gets(unsigned chunk_size, fildesh_lgsize_t flush_lgsize, const char*
 
   line = gets_FildeshX(&xf->x, delim);
   assert(0 == strcmp(lines[0], line));
+  assert(allocated_size_of_FildeshX(&xf->x) >= xf->x.size);
 
   line = gets_FildeshX(&xf->x, delim);
   assert(0 == strcmp(lines[1], line));

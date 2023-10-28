@@ -43,16 +43,13 @@ fildesh_builtin_replace_string_main(unsigned argc, char** argv,
   }
 
   while (exstatus == 0 && 0 < read_FildeshX(in)) {
-    FildeshX slice = DEFAULT_FildeshX;
+    FildeshX slice = memref_FildeshX(&in->at[in->off], in->size - in->off);
     FildeshX span;
-    slice.at = &in->at[in->off];
-    slice.size = in->size - in->off;
-    slice.flush_lgsize = 0;
     for (span = until_bytestring_FildeshX(&slice, needle, needle_size);
          span.at;
          span = until_bytestring_FildeshX(&slice, needle, needle_size))
     {
-      put_bytestring_FildeshO(out, (unsigned char*) span.at, span.size);
+      putslice_FildeshO(out, span);
       if (skip_bytestring_FildeshX(&slice, NULL, needle_size)) {
         put_bytestring_FildeshO(out, replacement, replacement_size);
       }
@@ -61,7 +58,7 @@ fildesh_builtin_replace_string_main(unsigned argc, char** argv,
     maybe_flush_FildeshX(in);
   }
   if (exstatus == 0) {
-    put_bytestring_FildeshO(out, (unsigned char*) &in->at[in->off], in->size - in->off);
+    putslice_FildeshO(out, *in);
   }
   close_FildeshX(in);
   close_FildeshO(out);

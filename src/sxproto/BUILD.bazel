@@ -2,7 +2,13 @@
 cc_library(
     name = "sxproto_lib",
     srcs = [
-        "sxproto2textproto.c",
+        "parse_sxpb.c",
+        "parse_sxpb.h",
+        "schema.c",
+        "sxpb.c",
+        "txtpb.c",
+        "value.c",
+        "value.h",
         "//include/fildesh:sxproto.h",
     ],
     deps = ["//:fildesh_lib"],

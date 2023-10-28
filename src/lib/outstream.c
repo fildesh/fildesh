@@ -100,7 +100,7 @@ putc_FildeshO(FildeshO* o, char c)
 }
 
   void
-puts_FildeshO(FildeshO* o, const char* s)
+putstr_FildeshO(FildeshO* o, const char* s)
 {
   const size_t length = strlen(s);
   char* buf = grow_FildeshO(o, length);
@@ -125,5 +125,12 @@ print_double_FildeshO(FildeshO* out, double q)
   unsigned n = sprintf(buf, "%.17g", q);
   assert(n > 0);
   memcpy(grow_FildeshO(out, n), buf, n);
+  maybe_flush_FildeshO(out);
+}
+
+  void
+repeat_byte_FildeshO(FildeshO* out, unsigned char b, size_t n)
+{
+  memset(grow_FildeshO(out, n), b, n);
   maybe_flush_FildeshO(out);
 }

@@ -18,7 +18,7 @@ jobs:
     runs-on: ${{ matrix.platform }}
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Create Build Environment
       run: cmake -E make_directory ${{runner.workspace}}/bld
@@ -59,7 +59,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: CMake Version Set
       uses: jwlawson/actions-setup-cmake@v1.14
@@ -87,7 +87,7 @@ jobs:
           - alpine_arch: x86
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Setup latest Alpine Linux
       uses: jirutka/setup-alpine@v1

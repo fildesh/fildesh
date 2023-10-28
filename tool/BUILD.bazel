@@ -73,10 +73,18 @@ cc_binary(
     visibility = ["//visibility:public"],
 )
 
-# The sxproto2textproto tool is used by rules_sxproto.
+# The sxpb2txtpb tool is used by rules_sxproto.
+alias(
+    name = "sxpb2txtpb",
+    actual = "//src/builtin:sxpb2txtpb",
+    visibility = ["//visibility:public"],
+)
+
+# Use //tool:sxpb2txtpb instead.
+# TODO(#142): Remove in v0.2.0.
 alias(
     name = "sxproto2textproto",
-    actual = "//src/builtin:sxproto2textproto",
+    actual = "//src/builtin:sxpb2txtpb",
     visibility = ["//visibility:public"],
 )
 

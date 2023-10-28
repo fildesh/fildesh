@@ -15,17 +15,14 @@
 (s "hello")
 """)
 (: scalar_expect Str """
-# An integer.
+f: 5.5e+0
 i: 5
-# A float.
-f: 5.5
-# A string.
 s: "hello"
 """)
 
 $(O expect) oargz -- "${scalar_expect}"
 |< oargz -- "${scalar_content}"
-|- sxproto2textproto
+|- sxpb2txtpb
 |- cmp $(XF expect)
 |> stderr
 
@@ -37,13 +34,16 @@ $(barrier)
 (m (i 5) (f 5.5) (s "hello"))
 """)
 (: message_expect Str """
-# A message holding the first 3 fields of the previous example.
-m { i: 5 f: 5.5 s: "hello"}
+m {
+  f: 5.5e+0
+  i: 5
+  s: "hello"
+}
 """)
 
 $(O expect) oargz -- "${message_expect}"
 |< oargz -- "${message_content}"
-|- sxproto2textproto
+|- sxpb2txtpb
 |- cmp $(XF expect)
 |> stderr
 
@@ -55,13 +55,12 @@ $(barrier)
 (m)
 """)
 (: empty_message_expect Str """
-# An empty message.
 m {}
 """)
 
 $(O expect) oargz -- "${empty_message_expect}"
 |< oargz -- "${empty_message_content}"
-|- sxproto2textproto
+|- sxpb2txtpb
 |- cmp $(XF expect)
 |> stderr
 
@@ -88,28 +87,26 @@ $(barrier)
   (s "hello"))
 """)
 (: repeated_expect Str """
-# An array of integers.
-my_integers: 1
-my_integers: 2
-my_integers: 3
-
-# An array of strings.
 my_strings: "yo"
 my_strings: "howdy"
 my_strings: "sup"
-
-# An array of messages.
-my_messages { i: 5}
-my_messages {}
+my_integers: 1
+my_integers: 2
+my_integers: 3
 my_messages {
   i: 5
-  f: 5.5
-  s: "hello"}
+}
+my_messages {}
+my_messages {
+  f: 5.5e+0
+  i: 5
+  s: "hello"
+}
 """)
 
 $(O expect) oargz -- "${repeated_expect}"
 |< oargz -- "${repeated_content}"
-|- sxproto2textproto
+|- sxpb2txtpb
 |- cmp $(XF expect)
 |> stderr
 
@@ -126,26 +123,25 @@ $(barrier)
 ; An array of 3 messages.
 ((my_messages)
  (() (i 5))
- (())
+ ()
  (() (i 5) (f 5.5) (s "hello")))
 """)
 (: array_expect Str """
-# An array of integers.
-my_integers: [ 1, 2, 3]
-
-# An array of strings.
-my_strings: [ "yo", "howdy", "sup"]
-
-# An array of 3 messages.
-my_messages: [
- { i: 5},
- {},
- { i: 5 f: 5.5 s: "hello"}]
+my_strings: ["yo", "howdy", "sup"]
+my_integers: [1, 2, 3]
+my_messages: [{
+  i: 5
+}, {
+}, {
+  f: 5.5e+0
+  i: 5
+  s: "hello"
+}]
 """)
 
 $(O expect) oargz -- "${array_expect}"
 |< oargz -- "${array_content}"
-|- sxproto2textproto
+|- sxpb2txtpb
 |- cmp $(XF expect)
 |> stderr
 
@@ -171,27 +167,58 @@ $(barrier)
 )
 """)
 (: manyof_expect Str """
-expressions {values: [
-
- {value: true},
- {value: true},
-
- {not { value: false}},
-
- {or { values: [ { value: false}, { value: true}]}},
- {or {values: [ {value: false}, {value: true}]}},
- {or {values: [ {value: false}, {value: true}]}},
-
- {or {values: [
-  {value: false},
-  {and {values: [ {value: true}, {value: false}]}},
-  {or {values: [ {value: false}, {value: false}, {value: true}]}}]}}
-]}
+expressions {values: [{
+  value: true
+}, {
+  value: true
+}, {
+  not {
+    value: false
+  }
+}, {
+  or {
+    values: [{
+      value: false
+    }, {
+      value: true
+    }]
+  }
+}, {
+  or {values: [{
+    value: false
+  }, {
+    value: true
+  }]}
+}, {
+  or {values: [{
+    value: false
+  }, {
+    value: true
+  }]}
+}, {
+  or {values: [{
+    value: false
+  }, {
+    and {values: [{
+      value: true
+    }, {
+      value: false
+    }]}
+  }, {
+    or {values: [{
+      value: false
+    }, {
+      value: false
+    }, {
+      value: true
+    }]}
+  }]}
+}]}
 """)
 
 $(O expect) oargz -- "${manyof_expect}"
 |< oargz -- "${manyof_content}"
-|- sxproto2textproto
+|- sxpb2txtpb
 |- cmp $(XF expect)
 |> stderr
 

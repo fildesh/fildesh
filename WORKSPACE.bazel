@@ -2,5 +2,5 @@
 # (Github actions and bzlmod dependents do this automatically.)
 
 workspace(name = "fildesh")
-load("//:workspace.bzl", "fildesh_dev_dependencies")
+load("//:dep/bazel_workspace.bzl", "fildesh_dev_dependencies")
 fildesh_dev_dependencies()

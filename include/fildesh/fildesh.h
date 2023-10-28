@@ -64,6 +64,7 @@ struct FildeshX {
 };
 #define DEFAULT_FildeshX  { NULL, 0, 0, 0, 12, NULL }
 #define DEFAULT1_FildeshX(vt)  { NULL, 0, 0, 0, 12, vt }
+#define LITERAL_FildeshX(s)  { (char*)(s), sizeof(s)-1, 0, 0, 0, NULL }
 
 
 size_t read_FildeshX(FildeshX*);
@@ -77,6 +78,7 @@ FildeshX until_char_FildeshX(FildeshX*, char delim);
 FildeshX until_bytestring_FildeshX(FildeshX*, const unsigned char*, size_t);
 FildeshX until_chars_FildeshX(FildeshX*, const char* delims);
 FildeshX while_chars_FildeshX(FildeshX*, const char* span);
+bool peek_chars_FildeshX(FildeshX*, const char*);
 bool peek_bytestring_FildeshX(FildeshX*, const unsigned char*, size_t);
 bool skip_bytestring_FildeshX(FildeshX*, const unsigned char*, size_t);
 FildeshX slicechr_FildeshX(FildeshX*, char delim);
@@ -87,6 +89,7 @@ char* gets_FildeshX(FildeshX*, const char* delim);
 bool skipchrs_FildeshX(FildeshX*, const char* span);
 bool skipstr_FildeshX(FildeshX*, const char* s);
 bool parse_int_FildeshX(FildeshX*, int*);
+bool parse_unsigned_FildeshX(FildeshX*, unsigned*);
 bool parse_double_FildeshX(FildeshX*, double*);
 
 FildeshX* open_FildeshXA();
@@ -106,9 +109,10 @@ void flush_FildeshO(FildeshO*);
 void maybe_flush_FildeshO(FildeshO*);
 void put_bytestring_FildeshO(FildeshO*, const unsigned char*, size_t);
 void putc_FildeshO(FildeshO*, char);
-void puts_FildeshO(FildeshO*, const char*);
+void putstr_FildeshO(FildeshO*, const char*);
 void print_int_FildeshO(FildeshO*, int);
 void print_double_FildeshO(FildeshO*, double);
+void repeat_byte_FildeshO(FildeshO*, unsigned char, size_t);
 
 Fildesh_fd fildesh_arg_open_writeonly(const char*);
 FildeshO* open_FildeshOF(const char* filename);
@@ -120,6 +124,7 @@ const char* filename_FildeshOF(FildeshO*);
 
 
 char* fildesh_parse_int(int* ret, const char* in);
+char* fildesh_parse_unsigned(unsigned* ret, const char* in);
 char* fildesh_parse_double(double* ret, const char* in);
 #define FILDESH_INT_BASE10_SIZE_MAX (1 + (unsigned)(CHAR_BIT*sizeof(int)) / 3 + 1)
 unsigned fildesh_encode_int_base10(char*, Fildesh_fd);
@@ -324,8 +329,21 @@ realloc_less_FildeshA_(void* at, Fildesh_lgsize* p_allocated_lgcount,
 
 
 /* Inlines.*/
+static inline
+  size_t
+fildesh_size_of_lgcount(size_t size, Fildesh_lgsize lgcount) {
+  if (lgcount == 0) {return 0;}
+  return size << (lgcount - 1);
+}
+
 static inline FildeshX default_FildeshX() {FildeshX tmp = DEFAULT_FildeshX; return tmp;}
 static inline FildeshO default_FildeshO() {FildeshO tmp = DEFAULT_FildeshO; return tmp;}
+static inline size_t allocated_size_of_FildeshX(const FildeshX* x) {
+  return fildesh_size_of_lgcount(1, x->alloc_lgsize);
+}
+static inline size_t allocated_size_of_FildeshO(const FildeshO* o) {
+  return fildesh_size_of_lgcount(1, o->alloc_lgsize);
+}
 static inline void truncate_FildeshX(FildeshX* x) {x->off = 0; x->size = 0;}
 static inline void truncate_FildeshO(FildeshO* o) {o->off = 0; o->size = 0;}
 static inline bool peek_char_FildeshX(FildeshX* in, char guess) {
@@ -338,6 +356,23 @@ static inline bool peek_byte_FildeshX(FildeshX* in, unsigned char guess) {
 }
 static inline FildeshX until_byte_FildeshX(FildeshX* in, unsigned char delim) {
   return until_char_FildeshX(in, (char)delim);
+}
+static inline void putslice_FildeshO(FildeshO* out, const FildeshX slice) {
+  put_bytestring_FildeshO(
+      out, (const unsigned char*)&slice.at[slice.off], slice.size - slice.off);
+}
+/* Deprecated. Use putstr_FildeshO().*/
+static inline void puts_FildeshO(FildeshO* out, const char* s) {putstr_FildeshO(out, s);}
+
+static inline FildeshX memref_FildeshX(const void* s, size_t n) {
+  FildeshX slice = LITERAL_FildeshX("");
+  slice.at = (char*)s;
+  slice.size = n;
+  return slice;
+}
+#define literal_FildeshX(s)  memref_FildeshX((s), sizeof(s)-1)
+static inline FildeshX getslice_FildeshO(const FildeshO* oslice) {
+  return memref_FildeshX(&oslice->at[oslice->off], oslice->size - oslice->off);
 }
 
 static inline FildeshKV_id any_id_FildeshKV(const FildeshKV* map) {
@@ -366,13 +401,6 @@ static inline void remove_at_FildeshKV(FildeshKV* map, FildeshKV_id id) {
   ((T*) reserve_FildeshAlloc(alloc, (n)*sizeof(T), fildesh_alignof(T)))
 
 #define fildesh_nullid(id)  (!~(id))
-
-static inline
-  size_t
-fildesh_size_of_lgcount(size_t size, Fildesh_lgsize lgcount) {
-  if (lgcount == 0) {return 0;}
-  return size << (lgcount - 1);
-}
 
 /* Dynamic array inlines take up the rest of this file.*/
 

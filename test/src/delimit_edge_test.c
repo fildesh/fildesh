@@ -9,16 +9,12 @@ static
   void
 slicestr_long_delim_no_match_test()
 {
-  FildeshX in[1] = {DEFAULT_FildeshX};
+  FildeshX in[1] = {LITERAL_FildeshX("iamsomecontent")};
   FildeshX slice;
   size_t i;
-  char content[] = "iamsomecontent";
-  const size_t content_length = strlen(content);
+  const size_t content_length = in->size;
   const char delim[] = "iamaverylongdelimiter";
   const size_t delim_length = strlen(delim);
-
-  in->at = content;
-  in->size = content_length;
 
   /* Run the test with various offsets.*/
   for (i = 0; i < content_length; ++i) {

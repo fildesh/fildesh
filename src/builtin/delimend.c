@@ -41,7 +41,7 @@ fildesh_builtin_delimend_main(
          slice.at;
          slice = until_bytestring_FildeshX(in, delim, delim_size))
     {
-      put_bytestring_FildeshO(out, (const unsigned char*)slice.at, slice.size);
+      putslice_FildeshO(out, slice);
 
       if (skip_bytestring_FildeshX(in, NULL, delim_size)) {
         put_bytestring_FildeshO(out, delim, delim_size);

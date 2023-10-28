@@ -11,13 +11,13 @@ print_debug_FildeshKV_RBTREE(const FildeshKV* map, FildeshO* out)
   {
     size_t x = id/2;
     print_int_FildeshO(out, *(unsigned char*)key_at_FildeshKV(map, id));
-    puts_FildeshO(out, ": ");
-    puts_FildeshO(out, (RedColorOf(x) ? "red" : "black"));
+    putstr_FildeshO(out, ": ");
+    putstr_FildeshO(out, (RedColorOf(x) ? "red" : "black"));
     putc_FildeshO(out, ' ');
     print_int_FildeshO(out, (unsigned)x);
-    puts_FildeshO(out, " -> ");
+    putstr_FildeshO(out, " -> ");
     if (IsRoot(x)) {
-      puts_FildeshO(out, "NULL");
+      putstr_FildeshO(out, "NULL");
     }
     else {
       print_int_FildeshO(out, (unsigned)JointOf(x));
@@ -30,7 +30,7 @@ print_debug_FildeshKV_RBTREE(const FildeshKV* map, FildeshO* out)
 print_graphviz_FildeshKV_RBTREE(const FildeshKV* map, FildeshO* out)
 {
   FildeshKV_id_t id;
-  puts_FildeshO(out, "digraph tree {\n");
+  putstr_FildeshO(out, "digraph tree {\n");
 
   for (id = first_FildeshKV(map); !fildesh_nullid(id);
        id = next_at_FildeshKV(map, id))
@@ -39,14 +39,14 @@ print_graphviz_FildeshKV_RBTREE(const FildeshKV* map, FildeshO* out)
     if ((id & 1) != 0) {continue;}
     putc_FildeshO(out, 'q');
     print_int_FildeshO(out, (int)x);
-    puts_FildeshO(out, " [label = \"");
+    putstr_FildeshO(out, " [label = \"");
     print_int_FildeshO(out, *(unsigned char*)key_at_FildeshKV(map, id));
     if (IsBroadLeaf(x)) {
       putc_FildeshO(out, '!');
     }
-    puts_FildeshO(out, "\", color = \"");
-    puts_FildeshO(out, (RedColorOf(x) ? "red" : "black"));
-    puts_FildeshO(out, "\"];\n");
+    putstr_FildeshO(out, "\", color = \"");
+    putstr_FildeshO(out, (RedColorOf(x) ? "red" : "black"));
+    putstr_FildeshO(out, "\"];\n");
   }
 
   for (id = first_FildeshKV(map); !fildesh_nullid(id);
@@ -57,12 +57,12 @@ print_graphviz_FildeshKV_RBTREE(const FildeshKV* map, FildeshO* out)
     if (IsRoot(x)) {continue;}
     putc_FildeshO(out, 'q');
     print_int_FildeshO(out, (int)x);
-    puts_FildeshO(out, " -> q");
+    putstr_FildeshO(out, " -> q");
     print_int_FildeshO(out, (int)JointOf(x));
-    puts_FildeshO(out, ";\n");
+    putstr_FildeshO(out, ";\n");
   }
 
-  puts_FildeshO(out, "}\n");
+  putstr_FildeshO(out, "}\n");
 }
 
 static

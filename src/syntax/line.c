@@ -139,7 +139,7 @@ fildesh_syntax_parse_here_doc(
     if (skip_bytestring_FildeshX(&slice, (unsigned char*)term, term_length)) {
       break;
     }
-    put_bytestring_FildeshO(tmp_out, (unsigned char*)slice.at, slice.size);
+    putslice_FildeshO(tmp_out, slice);
     putc_FildeshO(tmp_out, '\n');
   }
   if (tmp_out->size > 0) {tmp_out->size -= 1;}
@@ -167,10 +167,8 @@ fildesh_syntax_sep_line(
       s = &s[i];
     }
     else if (s[0] == '"') {
-      FildeshX slice = DEFAULT_FildeshX;
+      FildeshX slice = memref_FildeshX(s, strlen(s));
       const char* emsg;
-      slice.size = strlen(s);
-      slice.at = s;
       slice.off = 1;
       truncate_FildeshO(tmp_out);
       emsg = parse_double_quoted_fildesh_string(&slice, tmp_out, map);
@@ -180,10 +178,9 @@ fildesh_syntax_sep_line(
       truncate_FildeshO(tmp_out);
     }
     else if (pfxeq_cstr("$(getenv ", s)) {
-      FildeshX in[1] = {DEFAULT_FildeshX};
+      FildeshX in[1];
       FildeshX slice;
-      in->at = s;
-      in->size = strlen(s);
+      *in = memref_FildeshX(s, strlen(s));
       in->off = strlen("$(getenv ");
       while_chars_FildeshX(in, " ");
       slice = until_char_FildeshX(in, ')');

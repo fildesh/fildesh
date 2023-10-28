@@ -75,7 +75,7 @@ cat_next_line(FildeshO* out, FildeshX* in)
   if (!s) {
     return true;
   }
-  puts_FildeshO(out, s);
+  putstr_FildeshO(out, s);
   flush_FildeshO(out);
   return (0 == out->size);
 }
@@ -157,7 +157,7 @@ fildesh_builtin_zec_main(unsigned argc, char** argv,
   }
 
   if (unless_arg && unless_arg[0]) {
-    puts_FildeshO(out, unless_arg);
+    putstr_FildeshO(out, unless_arg);
     close_FildeshO(out);
     return 0;
   }
