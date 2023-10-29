@@ -250,6 +250,11 @@ fildesh_builtin_elastic_pthread_main(unsigned argc, char** argv,
     }
     st->outfile->flush_lgsize = 0;  /* No automatic flushing.*/
   }
+  else {
+    /* Close stdout if it exists. We don't use it.*/
+    FildeshO* tmp_out = open_arg_FildeshOF(0, argv, outputv);
+    close_FildeshO(tmp_out);
+  }
   /**** END ARGUMENT_PARSING ****/
 
   reading_routine(in, wstates, wstate_count);

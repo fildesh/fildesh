@@ -1132,6 +1132,11 @@ FILDESH_POSIX_THREAD_CALLBACK(builtin_command_thread_fn, BuiltinCommandThreadArg
     }
     cmd->stdos = -1;
   }
+  /* Much like `cmd->stdis` and `cmd->stdos` above, we forget
+   * about all file descriptors and trust that the builtin will close them.
+   */
+  mpop_FildeshAT(cmd->is, count_of_FildeshAT(cmd->is));
+  mpop_FildeshAT(cmd->os, count_of_FildeshAT(cmd->os));
 
   if (false) {
     for (i = 0; i < argc; ++i) {
@@ -1147,10 +1152,8 @@ FILDESH_POSIX_THREAD_CALLBACK(builtin_command_thread_fn, BuiltinCommandThreadArg
     cmd->status = -1;
   }
 
-  /* `main_fn()` should have closed all files passed to it.*/
-  mpop_FildeshAT(cmd->is, count_of_FildeshAT(cmd->is));
-  mpop_FildeshAT(cmd->os, count_of_FildeshAT(cmd->os));
   for (i = 0; i < argc; ++i) {
+    /* Builtin should have freed everything.*/
     assert(!inputs[i]);
     assert(!outputs[i]);
   }
