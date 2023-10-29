@@ -25,6 +25,14 @@ cc_test(
 )
 
 fildesh_test(
+    name = "sxpb2json_test",
+    srcs = ["sxpb2json_test.fildesh"],
+    aliases = {
+        "sxpb2json": "//tool:sxpb2json",
+    },
+)
+
+fildesh_test(
     name = "sxpb2txtpb_test",
     srcs = ["sxpb2txtpb_test.fildesh"],
     aliases = {

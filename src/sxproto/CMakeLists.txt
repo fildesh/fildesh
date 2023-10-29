@@ -1,5 +1,6 @@
 
 add_library(sxproto_lib_obj OBJECT
+  "json.c"
   "parse_sxpb.c"
   "parse_sxpb.h"
   "schema.c"

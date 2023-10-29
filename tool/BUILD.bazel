@@ -73,6 +73,13 @@ cc_binary(
     visibility = ["//visibility:public"],
 )
 
+# The sxpb2json tool is used by rules_sxproto.
+alias(
+    name = "sxpb2json",
+    actual = "//src/builtin:sxpb2json",
+    visibility = ["//visibility:public"],
+)
+
 # The sxpb2txtpb tool is used by rules_sxproto.
 alias(
     name = "sxpb2txtpb",

@@ -12,6 +12,7 @@ exports_files([
     "oargz.c",
     "seq.c",
     "sponge.c",
+    "sxpb2json.c",
     "sxpb2txtpb.c",
     "time2sec.c",
     "transpose.c",
@@ -83,6 +84,13 @@ cc_binary(
     name = "sponge",
     srcs = ["sponge.c"],
     deps = ["//:fildesh_lib"],
+    visibility = ["//visibility:public"],
+)
+
+cc_binary(
+    name = "sxpb2json",
+    srcs = ["sxpb2json.c"],
+    deps = ["//:sxproto_lib"],
     visibility = ["//visibility:public"],
 )
 

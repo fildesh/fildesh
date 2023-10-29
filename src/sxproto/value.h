@@ -11,3 +11,7 @@ struct FildeshSxprotoValue {
   ~(FildeshSxpb_id)0, ~(FildeshSxpb_id)0, \
 }
 
+void
+print_quoted_sxpb_str_FildeshO(FildeshO* out, const char* s);
+void
+print_sxpb_literal_value_FildeshO(FildeshO* out, const FildeshSxprotoValue* e);

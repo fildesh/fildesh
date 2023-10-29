@@ -54,6 +54,7 @@ add_library(fildesh_builtin_lib_obj OBJECT
   "${PROJECT_SOURCE_DIR}/src/builtin/replace_string.c"
   "${PROJECT_SOURCE_DIR}/src/builtin/seq.c"
   "${PROJECT_SOURCE_DIR}/src/builtin/sponge.c"
+  "${PROJECT_SOURCE_DIR}/src/builtin/sxpb2json.c"
   "${PROJECT_SOURCE_DIR}/src/builtin/sxpb2txtpb.c"
   "${PROJECT_SOURCE_DIR}/src/builtin/time2sec.c"
   "${PROJECT_SOURCE_DIR}/src/builtin/transpose.c"

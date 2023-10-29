@@ -29,6 +29,9 @@ target_link_libraries(seq fildesh_lib)
 add_executable(sponge "sponge.c")
 target_link_libraries(sponge fildesh_lib)
 
+add_executable(sxpb2json "sxpb2json.c")
+target_link_libraries(sxpb2json sxproto_lib fildesh_lib)
+
 add_executable(sxpb2txtpb "sxpb2txtpb.c")
 target_link_libraries(sxpb2txtpb sxproto_lib fildesh_lib)
 

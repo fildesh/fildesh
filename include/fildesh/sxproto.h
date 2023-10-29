@@ -114,6 +114,8 @@ slurp_sxpb_close_FildeshX(
     const FildeshSxprotoField* schema,
     FildeshO* err_out);
 void
+print_json_FildeshO(FildeshO* out, FildeshSxpb* sxpb);
+void
 print_txtpb_FildeshO(FildeshO* out, FildeshSxpb* sxpb);
 /* Leaves output file open.*/
 /* Deprecated. Use print_txtpb_FildeshO().*/

@@ -135,3 +135,33 @@ lone_subfield_at_FildeshSxpb_to_str(
   return true;
 }
 
+  void
+print_quoted_sxpb_str_FildeshO(FildeshO* out, const char* s)
+{
+  size_t i;
+  putc_FildeshO(out, '"');
+  for (i = 0; s[i] != '\0'; ++i) {
+    switch (s[i]) {
+      case '"':   putstr_FildeshO(out, "\\\"");  break;
+      case '\\':  putstr_FildeshO(out, "\\\\");  break;
+      case '\n':  putstr_FildeshO(out, "\\n");  break;
+      default:    putc_FildeshO(out, s[i]);  break;
+    }
+  }
+  putc_FildeshO(out, '"');
+}
+
+  void
+print_sxpb_literal_value_FildeshO(FildeshO* out, const FildeshSxprotoValue* e)
+{
+  if (e->field_kind == FildeshSxprotoFieldKind_LITERAL_STRING) {
+    print_quoted_sxpb_str_FildeshO(out, e->text);
+  }
+  else if (e->text[0] == '+') {
+    putstr_FildeshO(out, &e->text[1]);
+  }
+  else {
+    putstr_FildeshO(out, e->text);
+  }
+}
+

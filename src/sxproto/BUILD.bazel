@@ -2,6 +2,7 @@
 cc_library(
     name = "sxproto_lib",
     srcs = [
+        "json.c",
         "parse_sxpb.c",
         "parse_sxpb.h",
         "schema.c",

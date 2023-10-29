@@ -64,6 +64,9 @@ static int fildesh_main_sponge(unsigned argc, char** argv) {
 static int fildesh_main_oargz(unsigned argc, char** argv) {
   return fildesh_builtin_oargz_main(argc, argv, NULL, NULL);
 }
+static int fildesh_main_sxpb2json(unsigned argc, char** argv) {
+  return fildesh_builtin_sxpb2json_main(argc, argv, NULL, NULL);
+}
 static int fildesh_main_sxpb2txtpb(unsigned argc, char** argv) {
   return fildesh_builtin_sxpb2txtpb_main(argc, argv, NULL, NULL);
 }
@@ -121,6 +124,7 @@ int (* fildesh_builtin_threadsafe_fn_lookup(const char* name)
     {"replace_string", fildesh_builtin_replace_string_main},
     {"seq", fildesh_builtin_seq_main},
     {"sponge", fildesh_builtin_sponge_main},
+    {"sxpb2json", fildesh_builtin_sxpb2json_main},
     {"sxpb2txtpb", fildesh_builtin_sxpb2txtpb_main},
     {"time2sec", fildesh_builtin_time2sec_main},
     {"transpose", fildesh_builtin_transpose_main},
@@ -169,6 +173,7 @@ int (* fildesh_builtin_main_fn_lookup(const char* name)
     {"seq", fildesh_main_seq},
     {"sponge", fildesh_main_sponge},
     {"ssh-all", main_ssh_all},
+    {"sxpb2json", fildesh_main_sxpb2json},
     {"sxpb2txtpb", fildesh_main_sxpb2txtpb},
     {"time2sec", fildesh_main_time2sec},
     {"transpose", fildesh_main_transpose},
