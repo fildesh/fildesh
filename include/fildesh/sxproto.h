@@ -130,11 +130,11 @@ lookup_subfield_at_FildeshSxpb(
     FildeshSxpbIT m,
     const char* k);
 FildeshSxpbIT
-ensure_field_at_FildeshSxpb(
-    FildeshSxpb* sxpb,
-    FildeshSxpbIT m,
-    const char* k,
-    FildeshSxprotoFieldKind kind);
+first_at_FildeshSxpb(const FildeshSxpb* sxpb, FildeshSxpbIT it);
+FildeshSxpbIT
+next_at_FildeshSxpb(const FildeshSxpb* sxpb, FildeshSxpbIT it);
+void
+remove_at_FildeshSxpb(FildeshSxpb* sxpb, FildeshSxpbIT it);
 
 const char*
 name_at_FildeshSxpb(const FildeshSxpb* sxpb, FildeshSxpbIT it);
@@ -164,14 +164,24 @@ bool
 lone_subfield_at_FildeshSxpb_to_str(
     const char** dst, const FildeshSxpb* sxpb, FildeshSxpbIT it, const char* name);
 
+FildeshSxpbIT
+ensure_message_subfield_at_FildeshSxpb(
+    FildeshSxpb* sxpb, FildeshSxpbIT it, const char* k);
+FildeshSxpbIT
+assign_bool_subfield_at_FildeshSxpb(
+    FildeshSxpb* sxpb, FildeshSxpbIT it, const char* k, bool v);
+FildeshSxpbIT
+assign_str_subfield_at_FildeshSxpb(
+    FildeshSxpb* sxpb, FildeshSxpbIT it, const char* k, const char* v);
 
-FildeshSxpbIT
-first_at_FildeshSxpb(const FildeshSxpb* sxpb, FildeshSxpbIT it);
-FildeshSxpbIT
-next_at_FildeshSxpb(const FildeshSxpb* sxpb, FildeshSxpbIT it);
 
 static inline bool nullish_FildeshSxpbIT(FildeshSxpbIT pos) {
   return fildesh_nullid(pos.cons_id);
+}
+static inline FildeshSxpbIT FildeshSxpbIT_of_NULL() {
+  FildeshSxpbIT it = DEFAULT_FildeshSxpbIT;
+  it.field_kind = FildeshSxprotoFieldKind_UNKNOWN;
+  return it;
 }
 static inline FildeshSxpbIT top_of_FildeshSxpb(const FildeshSxpb* sxpb) {
   FildeshSxpbIT pos = DEFAULT_FildeshSxpbIT;

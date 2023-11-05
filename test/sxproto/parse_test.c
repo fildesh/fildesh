@@ -100,6 +100,7 @@ static void parse_field_test() {
   assert(good); \
   assert(info->line_count == 0); \
   assert(info->column_count == strlen(text)); \
+  remove_at_FildeshSxpb(sxpb, first_at_FildeshSxpb(sxpb, top_of_FildeshSxpb(sxpb))); \
   info->column_count = 0; \
 } while (0)
 

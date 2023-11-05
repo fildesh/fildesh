@@ -52,6 +52,8 @@ parse_failure_test()
       "((a) (x 5))");
   XPT("Manyof cannot hold nameless message values yet.",
       "(((a)) (() (x 5)))");
+  XPT("Duplicate field name. Use array syntax for repeated fields.",
+      "(x 5) (x 6)");
   XPT("Unexpected message.",
       "((a) 5 (() (a 1)))");
   XPT("Unexpected literal type.",

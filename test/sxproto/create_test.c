@@ -1,31 +1,34 @@
 #include <fildesh/sxproto.h>
 
 #include <assert.h>
+#include <string.h>
 
 static void create_test() {
   FildeshSxpb* sxpb = open_FildeshSxpb();
-  FildeshSxpbIT pos_m, pos_e;
+  FildeshSxpbIT m_it, it;
 
-  pos_m = ensure_field_at_FildeshSxpb(
-      sxpb, top_of_FildeshSxpb(sxpb),
-      "m",
-      FildeshSxprotoFieldKind_MESSAGE);
-  assert(!nullish_FildeshSxpbIT(pos_m));
+  m_it = ensure_message_subfield_at_FildeshSxpb(
+      sxpb, top_of_FildeshSxpb(sxpb), "m");
+  assert(!nullish_FildeshSxpbIT(m_it));
 
-  pos_e = ensure_field_at_FildeshSxpb(
-      sxpb, pos_m, "i",
-      FildeshSxprotoFieldKind_LITERAL);
+  it = assign_bool_subfield_at_FildeshSxpb(
+      sxpb, m_it, "b", true);
+  assert(bool_value_at_FildeshSxpb(sxpb, it));
+  it = assign_bool_subfield_at_FildeshSxpb(
+      sxpb, m_it, "b", false);
+  assert(!bool_value_at_FildeshSxpb(sxpb, it));
 
-  pos_e = ensure_field_at_FildeshSxpb(
-      sxpb, pos_m, "f",
-      FildeshSxprotoFieldKind_LITERAL);
+  it = assign_str_subfield_at_FildeshSxpb(
+      sxpb, m_it, "s", "my string");
+  assert(0 == strcmp("my string", str_value_at_FildeshSxpb(sxpb, it)));
 
-  pos_e = ensure_field_at_FildeshSxpb(
-      sxpb, pos_m, "s",
-      FildeshSxprotoFieldKind_LITERAL);
+  it = assign_str_subfield_at_FildeshSxpb(
+      sxpb, m_it, "t", "my second string");
+  assert(0 == strcmp("my second string", str_value_at_FildeshSxpb(sxpb, it)));
 
-  pos_e = lookup_subfield_at_FildeshSxpb(sxpb, pos_m, "s");
-  assert(!nullish_FildeshSxpbIT(pos_e));
+  remove_at_FildeshSxpb(sxpb, it);
+  it = lookup_subfield_at_FildeshSxpb(sxpb, m_it, "t");
+  assert(nullish_FildeshSxpbIT(it));
 
   close_FildeshSxpb(sxpb);
 }
