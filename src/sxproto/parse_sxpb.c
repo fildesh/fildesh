@@ -422,11 +422,11 @@ parse_field_FildeshSxpbInfo(
           syntax_error(info, "Expected field to be an array.");
           return false;
         }
-        if (field->lo == 0) {
-          elem_kind = (FildeshSxprotoFieldKind)field->hi;
+        if (field->subfields) {
+          elem_kind = FildeshSxprotoFieldKind_MESSAGE;
         }
         else {
-          elem_kind = FildeshSxprotoFieldKind_MESSAGE;
+          elem_kind = (FildeshSxprotoFieldKind)field->hi;
         }
       }
       else {

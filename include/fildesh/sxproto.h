@@ -28,78 +28,57 @@ struct FildeshSxpb {
 
 struct FildeshSxprotoField {
   const char* name;
-  FildeshSxprotoFieldKind kind;
-  intptr_t lo;
+  const FildeshSxprotoField* subfields;
   uintptr_t hi;
+  intptr_t lo;
+  FildeshSxprotoFieldKind kind;
 };
+#define FILL_FildeshSxprotoField_MESSAGE(subfields) \
+  subfields, sizeof(subfields)/sizeof(FildeshSxprotoField), \
+  0, FildeshSxprotoFieldKind_MESSAGE
+#define DECLARE_TOPLEVEL_FildeshSxprotoField(schema, subfields) \
+  static FildeshSxprotoField schema[] = { \
+    {NULL, FILL_FildeshSxprotoField_MESSAGE(subfields)}, \
+  }
+bool
+lone_toplevel_initialization_FildeshSxprotoField(FildeshSxprotoField* schema);
+
 #define FILL_DEFAULT_FildeshSxprotoField_STRING \
-  FildeshSxprotoFieldKind_LITERAL_STRING, 0, 0
+  NULL, 0, 0, FildeshSxprotoFieldKind_LITERAL_STRING
 #define FILL_DEFAULT_FildeshSxprotoField_BOOL \
-  FildeshSxprotoFieldKind_LITERAL_BOOL, 0, 0
+  NULL, 0, 0, FildeshSxprotoFieldKind_LITERAL_BOOL
 #define FILL_DEFAULT_FildeshSxprotoField_FLOAT \
-  FildeshSxprotoFieldKind_LITERAL_FLOAT, 0, 0
+  NULL, 0, 0, FildeshSxprotoFieldKind_LITERAL_FLOAT
 
 #define FILL_DEFAULT_FildeshSxprotoField_STRINGS \
-  FildeshSxprotoFieldKind_ARRAY, 0, \
-  (size_t)FildeshSxprotoFieldKind_LITERAL_STRING
+  NULL, (size_t)FildeshSxprotoFieldKind_LITERAL_STRING, \
+  0, FildeshSxprotoFieldKind_ARRAY
 #define FILL_DEFAULT_FildeshSxprotoField_INTS \
-  FildeshSxprotoFieldKind_ARRAY, 0, \
-  (size_t)FildeshSxprotoFieldKind_LITERAL_INT
+  NULL, (size_t)FildeshSxprotoFieldKind_LITERAL_INT, \
+  0, FildeshSxprotoFieldKind_ARRAY
 #define FILL_DEFAULT_FildeshSxprotoField_FLOATS \
-  FildeshSxprotoFieldKind_ARRAY, 0, \
-  (size_t)FildeshSxprotoFieldKind_LITERAL_FLOAT
+  NULL, (size_t)FildeshSxprotoFieldKind_LITERAL_FLOAT, \
+  0, FildeshSxprotoFieldKind_ARRAY
 
-#define FILL_UNKNOWN_FildeshSxprotoField_MESSAGE \
-  FildeshSxprotoFieldKind_MESSAGE, 0, (uintptr_t)NULL
-#define FILL_UNKNOWN_FildeshSxprotoField_MANYOF \
-  FildeshSxprotoFieldKind_MANYOF, 0, (uintptr_t)NULL
-#define recurse_unknowns_FildeshSxprotoField_MESSAGE(subfields) \
-  recurse_unknowns_FildeshSxprotoField_(\
-      subfields, sizeof(subfields)/sizeof(FildeshSxprotoField),\
-      FildeshSxprotoFieldKind_MESSAGE)
-#define recurse_unknowns_FildeshSxprotoField_MANYOF(subfields) \
-  recurse_unknowns_FildeshSxprotoField_(\
-      subfields, sizeof(subfields)/sizeof(FildeshSxprotoField),\
-      FildeshSxprotoFieldKind_MANYOF)
-static inline void recurse_unknowns_FildeshSxprotoField_(
-    FildeshSxprotoField* subfields, unsigned n, FildeshSxprotoFieldKind kind) {
-  unsigned i;
-  for (i = 0; i < n; ++i) {
-    if (subfields[i].kind == kind && subfields[i].lo == 0) {
-      subfields[i].lo = n;
-      subfields[i].hi = (uintptr_t)subfields;
-    }
-  }
-}
+#define FILL_RECURSIVE_FildeshSxprotoField_MESSAGE \
+  NULL, 0, 0, FildeshSxprotoFieldKind_MESSAGE
+#define FILL_RECURSIVE_FildeshSxprotoField_MANYOF \
+  NULL, 0, 0, FildeshSxprotoFieldKind_MANYOF
+#define FILL_DEFAULT_FildeshSxprotoField_ALIAS \
+  NULL, 0, 0, FildeshSxprotoFieldKind_UNKNOWN
 
-#define FILL_UNKNOWN_FildeshSxprotoField_ALIAS \
-  FildeshSxprotoFieldKind_UNKNOWN, 0, (uintptr_t)NULL
-#define alias_FildeshSxprotoField_FIELDS(subfields, alias, name) \
-  alias_FildeshSxprotoField_FIELDS_( \
-      subfields, sizeof(subfields)/sizeof(FildeshSxprotoField), alias, name)
-void
-alias_FildeshSxprotoField_FIELDS_(
-    FildeshSxprotoField* subfields, unsigned n,
-    const char* alias, const char* name);
-
-#define FILL_FildeshSxprotoField_MESSAGE(subfields) \
-  FildeshSxprotoFieldKind_MESSAGE, \
-  sizeof(subfields)/sizeof(FildeshSxprotoField), \
-  (uintptr_t)subfields
 #define FILL_FildeshSxprotoField_MESSAGES(subfields) \
-  FildeshSxprotoFieldKind_ARRAY, \
-  sizeof(subfields)/sizeof(FildeshSxprotoField), \
-  (uintptr_t)subfields
+  subfields, sizeof(subfields)/sizeof(FildeshSxprotoField), \
+  0, FildeshSxprotoFieldKind_ARRAY
 #define FILL_FildeshSxprotoField_MANYOF(subfields) \
-  FildeshSxprotoFieldKind_MANYOF, \
-  sizeof(subfields)/sizeof(FildeshSxprotoField), \
-  (uintptr_t)subfields
+  subfields, sizeof(subfields)/sizeof(FildeshSxprotoField), \
+  0, FildeshSxprotoFieldKind_MANYOF
 #define FILL_FildeshSxprotoField_INT(lo, hi) \
-  FildeshSxprotoFieldKind_LITERAL_INT, lo, hi
+  NULL, hi, lo, FildeshSxprotoFieldKind_LITERAL_INT
 #define FILL_FildeshSxprotoField_FLOAT(lo, hi) \
-  FildeshSxprotoFieldKind_LITERAL_FLOAT, lo, hi
+  NULL, hi, lo, FildeshSxprotoFieldKind_LITERAL_FLOAT
 #define FILL_FildeshSxprotoField_STRING(lo, hi) \
-  FildeshSxprotoFieldKind_LITERAL_STRING, lo, hi
+  NULL, hi, lo, FildeshSxprotoFieldKind_LITERAL_STRING
 
 
 struct FildeshSxpbIT {
