@@ -21,20 +21,20 @@ foreach (f ${plain_example_test_list})
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
     COMMAND
     comparispawn "${CMAKE_CURRENT_SOURCE_DIR}/${f}.txt"
-    ${fildesh_exe} -f "example/${f}.fildesh"
-    )
+    "${Fildesh_EXECUTABLE}" -f "example/${f}.fildesh"
+  )
 endforeach ()
 
 add_test(NAME example_hello_test
   WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
   COMMAND
   comparispawn "${PROJECT_SOURCE_DIR}/test/expect/literal_hello.txt"
-  ${fildesh_exe} -f "example/hello.fildesh"
-  )
+  "${Fildesh_EXECUTABLE}" -f "example/hello.fildesh"
+)
 
 add_test(NAME example_args2_test
   WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
   COMMAND
   comparispawn "${CMAKE_CURRENT_SOURCE_DIR}/args2.txt"
-  ${fildesh_exe} -f "example/args.fildesh" 2 7
-  )
+  "${Fildesh_EXECUTABLE}" -f "example/args.fildesh" 2 7
+)

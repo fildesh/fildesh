@@ -14,7 +14,7 @@ sponge_inherited_delay() {
     } 3>&1 | {
       # Sponge eats up the tee'd text and waits for the above commands to exit
       # because the `sleep` block hasn't closed its stdout.
-      $sponge /dev/fd/4
+      "$sponge" /dev/fd/4
     }
   } 4>&1
 }
