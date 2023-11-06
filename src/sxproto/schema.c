@@ -1,5 +1,6 @@
 #include <fildesh/sxproto.h>
 
+#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -11,23 +12,39 @@ compare_FildeshSxprotoField_(const void* a, const void* b)
                 ((const FildeshSxprotoField*)b)->name);
 }
 
+static
+  const FildeshSxprotoField*
+subfield_of_FildeshSxprotoField_FIELDS_(
+    const FildeshSxprotoField* subfields, unsigned n, const char* name)
+{
+  FildeshSxprotoField needle = {"", FILL_DEFAULT_FildeshSxprotoField_BOOL};
+  needle.name = name;
+  return (const FildeshSxprotoField*) bsearch(
+      &needle, subfields, n, sizeof(const FildeshSxprotoField),
+      compare_FildeshSxprotoField_);
+}
+
   const FildeshSxprotoField*
 subfield_of_FildeshSxprotoField(const FildeshSxprotoField* schema, const char* name)
 {
-  FildeshSxprotoField needle = {"", FILL_DEFAULT_FildeshSxprotoField_BOOL};
-  const FildeshSxprotoField* subfield;
-  needle.name = name;
-  subfield = (const FildeshSxprotoField*) bsearch(
-      &needle, (const FildeshSxprotoField*)schema->hi,
-      schema->lo, sizeof(const FildeshSxprotoField),
-      compare_FildeshSxprotoField_);
+  const FildeshSxprotoField* subfield = subfield_of_FildeshSxprotoField_FIELDS_(
+      (const FildeshSxprotoField*)schema->hi, schema->lo, name);
   if (subfield && subfield->kind == FildeshSxprotoFieldKind_UNKNOWN) {
-    needle.name = (const char*)subfield->hi;
-    subfield = (const FildeshSxprotoField*) bsearch(
-        &needle, (const FildeshSxprotoField*)schema->hi,
-        schema->lo, sizeof(const FildeshSxprotoField),
-        compare_FildeshSxprotoField_);
+    subfield = (const FildeshSxprotoField*)subfield->hi;
   }
   return subfield;
 }
 
+  void
+alias_FildeshSxprotoField_FIELDS_(
+    FildeshSxprotoField* subfields, unsigned n,
+    const char* alias, const char* name)
+{
+  const FildeshSxprotoField* name_field = (FildeshSxprotoField*)
+    subfield_of_FildeshSxprotoField_FIELDS_(subfields, n, name);
+  FildeshSxprotoField* alias_field = (FildeshSxprotoField*)
+    subfield_of_FildeshSxprotoField_FIELDS_(subfields, n, alias);
+  assert(name_field);
+  assert(alias_field);
+  alias_field->hi = (uintptr_t)name_field;
+}

@@ -72,6 +72,15 @@ static inline void recurse_unknowns_FildeshSxprotoField_(
   }
 }
 
+#define FILL_UNKNOWN_FildeshSxprotoField_ALIAS \
+  FildeshSxprotoFieldKind_UNKNOWN, 0, (uintptr_t)NULL
+#define alias_FildeshSxprotoField_FIELDS(subfields, alias, name) \
+  alias_FildeshSxprotoField_FIELDS_( \
+      subfields, sizeof(subfields)/sizeof(FildeshSxprotoField), alias, name)
+void
+alias_FildeshSxprotoField_FIELDS_(
+    FildeshSxprotoField* subfields, unsigned n,
+    const char* alias, const char* name);
 
 #define FILL_FildeshSxprotoField_MESSAGE(subfields) \
   FildeshSxprotoFieldKind_MESSAGE, \
@@ -91,8 +100,6 @@ static inline void recurse_unknowns_FildeshSxprotoField_(
   FildeshSxprotoFieldKind_LITERAL_FLOAT, lo, hi
 #define FILL_FildeshSxprotoField_STRING(lo, hi) \
   FildeshSxprotoFieldKind_LITERAL_STRING, lo, hi
-#define FILL_FildeshSxprotoField_ALIAS(name) \
-  FildeshSxprotoFieldKind_UNKNOWN, 0, (uintptr_t)name
 
 
 struct FildeshSxpbIT {

@@ -14,10 +14,11 @@ sxproto_schema()
   static FildeshSxprotoField predicates_manyof[] = {
     {"", FILL_FildeshSxprotoField_STRING(1, INT_MAX)},
     {"b", FILL_DEFAULT_FildeshSxprotoField_BOOL},
+    {"b_alias", FILL_UNKNOWN_FildeshSxprotoField_ALIAS},
     {"or", FILL_UNKNOWN_FildeshSxprotoField_MANYOF},
     {"u", FILL_FildeshSxprotoField_INT(0, 1)},
   };
-  static const FildeshSxprotoField toplevel_fields[] = {
+  static FildeshSxprotoField toplevel_fields[] = {
     {"a", FILL_DEFAULT_FildeshSxprotoField_FLOATS},
     {"b", FILL_DEFAULT_FildeshSxprotoField_BOOL},
     {"cons", FILL_FildeshSxprotoField_MESSAGE(m_fields)},
@@ -26,16 +27,18 @@ sxproto_schema()
     {"n", FILL_FildeshSxprotoField_INT(0, INT_MAX)},
     {"predicates", FILL_FildeshSxprotoField_MANYOF(predicates_manyof)},
     {"s", FILL_FildeshSxprotoField_STRING(1, 64)},
-    {"s_alternate_name", FILL_FildeshSxprotoField_ALIAS("s")},
+    {"s_alternate_name", FILL_UNKNOWN_FildeshSxprotoField_ALIAS},
   };
   static const FildeshSxprotoField toplevel_message = {
     "", FILL_FildeshSxprotoField_MESSAGE(toplevel_fields)
   };
-  static bool unknowns_fixed = false;
-  if (!unknowns_fixed) {
-    unknowns_fixed = true;
+  static bool initialized = false;
+  if (!initialized) {
+    initialized = true;
     recurse_unknowns_FildeshSxprotoField_MESSAGE(m_fields);
     recurse_unknowns_FildeshSxprotoField_MANYOF(predicates_manyof);
+    alias_FildeshSxprotoField_FIELDS(predicates_manyof, "b_alias", "b");
+    alias_FildeshSxprotoField_FIELDS(toplevel_fields, "s_alternate_name", "s");
   }
   return &toplevel_message;
 }
@@ -58,7 +61,7 @@ parse_with_schema_test()
      (b false)\n\
      (((or))\n\
       (b 1)\n\
-      (b 0)\n\
+      (b_alias 0)\n\
       (u 1)\n\
       (u 0)))\n\
     ((a) 0.5e1 4 30e-1 2.e0 1)\n\
