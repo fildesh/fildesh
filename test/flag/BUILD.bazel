@@ -1,4 +1,4 @@
-load("//:def.bzl", "fildesh_test")
+load("//tool/bazel:fildesh.bzl", "fildesh_test")
 
 fildesh_test(
     name = "named_arg_test",
