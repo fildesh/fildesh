@@ -1,27 +1,4 @@
-# Public Bazel rules/macros (except for the ones starting with underscores).
-#
-# This would be in @rules_fildesh//fildesh:defs.bzl
-# if such a @rules_fildesh repository existed!
-
-def spawn_test(
-    name,
-    binary, args=[], data=[],
-    expect_failure=False,
-    size="small",
-    **kwargs):
-  spawn_args = []
-  if expect_failure:
-    spawn_args += ["!"]
-  spawn_args += ["$(location " + binary + ")"]
-
-  native.cc_test(
-      name = name,
-      srcs = ["@fildesh//tool:spawn.c"],
-      args = spawn_args + args,
-      data = [binary] + data,
-      size = size,
-      **kwargs)
-
+load("//tool/bazel:spawn.bzl", "spawn_test")
 
 def fildesh_test(
     name, srcs,

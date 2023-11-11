@@ -1,4 +1,4 @@
-load("@fildesh//:def.bzl", "spawn_test")
+load("//tool/bazel:spawn.bzl", "spawn_test")
 
 def fildesh_expect_test(name, srcs, expect,
                         data=[], args=[],

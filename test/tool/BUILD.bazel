@@ -1,5 +1,4 @@
-load("//:def.bzl", "spawn_test")
-load("//tool:spawn.bzl", "fildespawn_test")
+load("//tool/bazel:spawn.bzl", "fildespawn_test", "spawn_test")
 
 cc_binary(
     name = "success",

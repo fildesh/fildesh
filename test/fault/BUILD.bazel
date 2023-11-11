@@ -1,5 +1,5 @@
 load("//:def.bzl", "fildesh_test")
-load("//tool:spawn.bzl", "fildesh_failure_test")
+load("//test/fault:fault.bzl", "fildesh_failure_test")
 
 fildesh_test(
     name = "barrier_bail_test",
