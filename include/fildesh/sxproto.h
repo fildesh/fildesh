@@ -103,9 +103,6 @@ void
 print_json_FildeshO(FildeshO* out, FildeshSxpb* sxpb);
 void
 print_txtpb_FildeshO(FildeshO* out, FildeshSxpb* sxpb);
-/* Leaves output file open.*/
-/* Deprecated. Use print_txtpb_FildeshO().*/
-bool sxproto2textproto(FildeshX* in, FildeshO* out, FildeshO* err_out);
 
 const char*
 ensure_name_FildeshSxpb(FildeshSxpb* sxpb, const char* s, size_t n);

@@ -132,16 +132,3 @@ print_txtpb_FildeshO(FildeshO* out, FildeshSxpb* sxpb)
       0);
   putc_FildeshO(out, '\n');
 }
-
-/* Leaves output files open.*/
-/* Deprecated. Use print_txtpb_FildeshO().*/
-bool sxproto2textproto(FildeshX* in, FildeshO* out, FildeshO* err_out)
-{
-  FildeshSxpb* sxpb = slurp_sxpb_close_FildeshX(in, NULL, err_out);
-  if (!sxpb) {
-    return false;
-  }
-  print_txtpb_FildeshO(out, sxpb);
-  close_FildeshSxpb(sxpb);
-  return true;
-}

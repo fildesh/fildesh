@@ -296,12 +296,6 @@ void assign_at_FildeshKV(FildeshKV*, FildeshKV_id, const void*, size_t);
 void assign_memref_at_FildeshKV(FildeshKV*, FildeshKV_id, const void*);
 void close_FildeshKV(FildeshKV*);
 
-/* Deprecated. Use DEFAULT_FildeshKV_VTable.*/
-extern const FildeshKV_VTable DEFAULT_SINGLE_LIST_FildeshKV_VTable;
-/* Deprecated. Use DEFAULT_FildeshKV.*/
-#define DEFAULT_FildeshKV_SINGLE_LIST \
-{ NULL, NULL, 0, 0, &DEFAULT_SINGLE_LIST_FildeshKV_VTable }
-
 
 struct FildeshA {
   void* at;
@@ -356,8 +350,6 @@ static inline void putslice_FildeshO(FildeshO* out, const FildeshX slice) {
   put_bytestring_FildeshO(
       out, (const unsigned char*)&slice.at[slice.off], slice.size - slice.off);
 }
-/* Deprecated. Use putstr_FildeshO().*/
-static inline void puts_FildeshO(FildeshO* out, const char* s) {putstr_FildeshO(out, s);}
 
 static inline FildeshX FildeshX_of_bytestring(const unsigned char* s, size_t n) {
   DECLARE_STRLIT_FildeshX(in, "");

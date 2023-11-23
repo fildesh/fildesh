@@ -87,14 +87,6 @@ alias(
     visibility = ["//visibility:public"],
 )
 
-# Use //tool:sxpb2txtpb instead.
-# TODO(#142): Remove in v0.2.0.
-alias(
-    name = "sxproto2textproto",
-    actual = "//src/builtin:sxpb2txtpb",
-    visibility = ["//visibility:public"],
-)
-
 
 ################################################################################
 ## Tool library.

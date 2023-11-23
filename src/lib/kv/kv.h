@@ -7,6 +7,8 @@ static const FildeshKV_id_t FildeshKV_NULL_ID = ~(size_t)0;
 
 BEGIN_EXTERN_C
 
+extern const FildeshKV_VTable DEFAULT_SINGLE_LIST_FildeshKV_VTable;
+#define DEFAULT_FildeshKV_SINGLE_LIST { NULL, NULL, 0, 0, &DEFAULT_SINGLE_LIST_FildeshKV_VTable }
 extern const FildeshKV_VTable DEFAULT_BSTREE_FildeshKV_VTable;
 #define DEFAULT_FildeshKV_BSTREE { NULL, NULL, 0, 0, &DEFAULT_BSTREE_FildeshKV_VTable }
 extern const FildeshKV_VTable DEFAULT_RBTREE_FildeshKV_VTable;
