@@ -24,13 +24,8 @@ init_SymVal (SymVal* v)
   SymVal*
 getf_fildesh_SymVal(FildeshKV* map, const char* s)
 {
-  FildeshKV_id_t id = ensuref_FildeshKV(map, s, strlen(s)+1);
+  FildeshKV_id id = ensuref_FildeshKV(map, s, strlen(s)+1);
   SymVal* x = (SymVal*) value_at_FildeshKV(map, id);
-  if ((s[0] == '#' || isdigit(s[0])) && s[1] == '\0') {
-    /* TODO(#99): Remove in v0.2.0.*/
-    fildesh_log_warningf("For forward compatibility, please read positional arg %s via a flag.", s);
-  }
-
   if (!x) {
     x = fildesh_allocate(SymVal, 1, map->alloc);
     init_SymVal(x);
@@ -42,7 +37,7 @@ getf_fildesh_SymVal(FildeshKV* map, const char* s)
   SymVal*
 declare_fildesh_SymVal(FildeshKV* map, SymValKind kind, const char* name)
 {
-  FildeshKV_id_t id = ensuref_FildeshKV(map, name, strlen(name)+1);
+  FildeshKV_id id = ensuref_FildeshKV(map, name, strlen(name)+1);
   SymVal* x = (SymVal*) value_at_FildeshKV(map, id);
   if (!x) {
     x = fildesh_allocate(SymVal, 1, map->alloc);
@@ -60,7 +55,7 @@ declare_fildesh_SymVal(FildeshKV* map, SymValKind kind, const char* name)
   SymValKind
 parse_fildesh_SymVal_arg(char* s, bool firstarg)
 {
-  unsigned i, o;
+  unsigned o;
   SymValKind kind = NSymValKinds;
 
   if (firstarg && s[0] == '|') {
@@ -79,22 +74,6 @@ parse_fildesh_SymVal_arg(char* s, bool firstarg)
   }
 
   if (!(s[0] == '$' && s[1] == '('))  return NSymValKinds;
-
-  i = count_non_ws (s);
-  if (s[i] == '\0') {
-    unsigned n = i-1;
-    /* TODO(#98): Remove in v0.2.0.*/
-    fildesh_log_warningf("For forward compatibility, please change %s to use the $(XA ...) syntax.", s);
-
-    if (s[n] != ')')
-      return NSymValKinds;
-
-    i = 2;
-    n -= 2;
-    memmove (s, &s[i], n);
-    s[n] = '\0';
-    return HereDocVal;
-  }
 
   /* Offset into string.*/
   o = 2;
@@ -137,24 +116,13 @@ parse_fildesh_SymVal_arg(char* s, bool firstarg)
   }
   else if (s[o] == 'H')
   {
-    if (s[o+1] == 'F') {
-      /* TODO(#97): Remove in v0.2.0.*/
-      fildesh_log_warning("For forward compatibility, please change $(HF ...) to the $(XF ...) syntax.");
-      kind = IDescFileVal;
-    }
-    else if (s[o+1] == ':') {
-      /* TODO(#94): Remove in v0.2.0.*/
-      fildesh_log_warning("For forward compatibility, please change $(H: ...) to the $(> ...) syntax.");
-      kind = HereDocVal;
-    }
-    else {
-      kind = HereDocVal;
-    }
+    kind = HereDocVal;
   }
 
   if (kind != NSymValKinds)
   {
-    unsigned n;
+    unsigned i, n;
+    i = count_non_ws(s);
     i += count_ws (&s[i]);
     n = strcspn (&s[i], ")");
     if (s[i+n] == ')')

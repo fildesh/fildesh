@@ -114,23 +114,6 @@ fildesh_syntax_parse_here_doc(
   FildeshX slice;
   truncate_FildeshO(tmp_out);
 
-  /* Check for the single-line case.
-   * TODO(#94): Disallow this in the future.
-   */
-  if (term[3] == ':')
-  {
-    char* s;
-    term = strchr(term, ')');
-    if (!term) {
-      return strdup_FildeshAlloc(alloc, "");
-    }
-    term = &term[1];
-    term = &term[count_ws(term)];
-    s = strdup_FildeshAlloc(alloc, term);
-    trim_trailing_ws(s);
-    return s;
-  }
-
   for (slice = sliceline_FildeshX(in);
        slice.at;
        slice = sliceline_FildeshX(in))
