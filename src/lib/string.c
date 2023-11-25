@@ -104,7 +104,7 @@ fildesh_encode_int_base10(char* buf, int q)
 }
 
   unsigned
-fildesh_encode_fd_path(char* buf, fildesh_fd_t fd)
+fildesh_encode_fd_path(char* buf, Fildesh_fd fd)
 {
   static const char prefix[] = "/dev/fd/";
   unsigned n = strlen(prefix);

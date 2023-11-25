@@ -10,14 +10,14 @@
 typedef struct FildeshOF FildeshOF;
 struct FildeshOF {
   FildeshO base;
-  fildesh_fd_t fd;
+  Fildesh_fd fd;
   char* filename;
 };
 
 
 static inline
   void
-fd_write_FildeshO(FildeshO* o, fildesh_fd_t fd)
+fd_write_FildeshO(FildeshO* o, Fildesh_fd fd)
 {
   o->off += fildesh_compat_fd_write(fd, &o->at[o->off], o->size - o->off);
 }
@@ -165,7 +165,7 @@ open_sibling_FildeshOF(const char* sibling, const char* filename)
   return NULL;
 }
 
-  fildesh_fd_t
+  Fildesh_fd
 fildesh_arg_open_writeonly(const char* filename)
 {
   static const char dev_stdout[] = "/dev/stdout";
@@ -192,7 +192,7 @@ fildesh_arg_open_writeonly(const char* filename)
 }
 
   FildeshO*
-open_fd_FildeshO(fildesh_fd_t fd)
+open_fd_FildeshO(Fildesh_fd fd)
 {
   char filename[FILDESH_FD_PATH_SIZE_MAX];
   unsigned filename_size;

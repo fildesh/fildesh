@@ -37,7 +37,7 @@ show_usage()
  **/
 static
   int
-pipe_to_file(fildesh_fd_t fd, const char* name)
+pipe_to_file(Fildesh_fd fd, const char* name)
 {
   FildeshX* in = open_fd_FildeshX(fd);
   FildeshO* out = NULL;
@@ -77,7 +77,7 @@ pipe_to_file(fildesh_fd_t fd, const char* name)
 
 static
   char*
-readin_fd(FildeshO* buf, fildesh_fd_t fd, bool scrap_newline)
+readin_fd(FildeshO* buf, Fildesh_fd fd, bool scrap_newline)
 {
   FildeshX* in = open_fd_FildeshX(fd);
   char* s = slurp_FildeshX(in);
@@ -100,10 +100,10 @@ fildesh_builtin_execfd_main(unsigned argc, char** argv,
   unsigned argi;
   unsigned off = 0;
   unsigned i;
-  fildesh_fd_t stdin_fd = 0;
-  fildesh_fd_t stdout_fd = 1;
-  DECLARE_DEFAULT_FildeshAT(fildesh_fd_t, fds_to_inherit);
-  DECLARE_DEFAULT_FildeshAT(fildesh_fd_t, exitfds);
+  Fildesh_fd stdin_fd = 0;
+  Fildesh_fd stdout_fd = 1;
+  DECLARE_DEFAULT_FildeshAT(Fildesh_fd, fds_to_inherit);
+  DECLARE_DEFAULT_FildeshAT(Fildesh_fd, exitfds);
   DECLARE_DEFAULT_FildeshAT(const char*, spawn_argv);
   FildeshAlloc* alloc = open_FildeshAlloc();
   FildeshO* status_out = NULL;
@@ -135,7 +135,7 @@ fildesh_builtin_execfd_main(unsigned argc, char** argv,
         exstatus = 73;
       }
     } else if (0 == strcmp(argv[argi], "-inheritfd")) {
-      fildesh_fd_t fd = -1;
+      Fildesh_fd fd = -1;
       if (fildesh_parse_int(&fd, argv[++argi]) && fd >= 0) {
         push_FildeshAT(fds_to_inherit, fd);
       } else {
@@ -143,7 +143,7 @@ fildesh_builtin_execfd_main(unsigned argc, char** argv,
         exstatus = 64;
       }
     } else if (0 == strcmp(argv[argi], "-waitfd")) {
-      fildesh_fd_t fd = -1;
+      Fildesh_fd fd = -1;
       if (fildesh_parse_int(&fd, argv[++argi]) && fd >= 0) {
         wait_close_FildeshX(open_fd_FildeshX(fd));
       } else {
@@ -151,7 +151,7 @@ fildesh_builtin_execfd_main(unsigned argc, char** argv,
         exstatus = 64;
       }
     } else if (0 == strcmp(argv[argi], "-exitfd")) {
-      fildesh_fd_t fd = -1;
+      Fildesh_fd fd = -1;
       if (fildesh_parse_int(&fd, argv[++argi]) && fd >= 0) {
         push_FildeshAT(exitfds, fildesh_compat_fd_claim(fd));
       } else {

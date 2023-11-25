@@ -156,7 +156,7 @@ handle_read_write(IOState** ios, struct pollfd** pollfds) {
 
 static
   int
-setfd_nonblock(fildesh_fd_t fd)
+setfd_nonblock(Fildesh_fd fd)
 {
   int istat;
   istat = fcntl(fd, F_GETFD);
