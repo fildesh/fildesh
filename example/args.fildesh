@@ -1,22 +1,17 @@
 #!/usr/bin/env fildesh
 
-$(> greet) 'Hello! My name is: ' $(XA 0) \
-  "\nYou provided " $(XA #) " arguments." \
-  "\nThe first two are '" $(XA 1) "' and '" $(XA 2) "'."
+(: given_msg Str
+ (++
+  "Given:"
+  " --offset=" (?? .self.opt.offset "")
+  " --limit=" (?? .self.opt.limit "")
+ ))
 
-(: default_beg Str "1")
-(: default_end Str "5")
+(: offset Str (?? .self.opt.offset "1"))
+(: limit Str (?? .self.opt.limit "5"))
+(: intent_msg Str (++ "Let's count from " offset " to " limit))
 
-
-$(O beg) zec -unless $(XA 1) / $(XA default_beg) /
-$(O end) zec -unless $(XA 2) / $(XA default_end) /
-
-$(> beg) $(XA beg)
-$(> end) $(XA end)
-
-$(> msg) "Let's count from " $(XA beg) ' to ' $(XA end) '.'
-
-|< seq $(XA beg) $(XA end)
-|- zec / $(XA greet) "\n" $(XA msg) "\n" / -
+|< seq "${offset}" "${limit}"
+|- zec / "${given_msg}\n${intent_msg}.\n" / -
 |> stdout
 

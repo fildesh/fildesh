@@ -36,5 +36,19 @@ add_test(NAME example_args2_test
   WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
   COMMAND
   comparispawn "${CMAKE_CURRENT_SOURCE_DIR}/args2.txt"
-  "${Fildesh_EXECUTABLE}" -f "example/args.fildesh" 2 7
+  "${Fildesh_EXECUTABLE}" -f "example/args.fildesh"
+  "--offset=2" "--limit=7"
+)
+
+add_test(NAME example_args_forkonly_test COMMAND
+  comparispawn "${CMAKE_CURRENT_SOURCE_DIR}/args.txt"
+  "${Fildesh_EXECUTABLE}" -forkonly -f
+  "${CMAKE_CURRENT_SOURCE_DIR}/args_forkonly_test.fildesh"
+)
+
+add_test(NAME example_args2_forkonly_test COMMAND
+  comparispawn "${CMAKE_CURRENT_SOURCE_DIR}/args2.txt"
+  "${Fildesh_EXECUTABLE}" -forkonly -f
+  "${CMAKE_CURRENT_SOURCE_DIR}/args_forkonly_test.fildesh"
+  "--offset=2" "--limit=7"
 )

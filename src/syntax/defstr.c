@@ -34,10 +34,6 @@ static
   SymVal*
 lookup_SymVal(FildeshKV* map, const char* s)
 {
-  if ((s[0] == '#' || isdigit(s[0])) && s[1] == '\0') {
-    /* TODO(#99): Remove in v0.2.0.*/
-    fildesh_log_warningf("For forward compatibility, please read positional arg %s via a flag.", s);
-  }
   return (SymVal*) lookup_value_FildeshKV(map, s, strlen(s)+1);
 }
 
@@ -249,9 +245,6 @@ parse_fildesh_string_definition(
   if (emsg) {
     if (!emsg[0]) {return "idk";}
     return emsg;
-  }
-  if (tmp_out->size == 0) {
-    return "Expected a closing paren.";
   }
   skip_blank_bytes(in, text_nlines);
   if (!skipstr_FildeshX(in, ")")) {

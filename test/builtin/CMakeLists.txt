@@ -81,8 +81,10 @@ set_property(TARGET builtin_execfd_cat_test
 add_test(NAME builtin_execfd_cat_test COMMAND
   builtin_execfd_cat_test "$<TARGET_FILE:shout>")
 
-add_test(NAME builtin_execfd_script_test COMMAND
-  fildesh -f "${CMAKE_CURRENT_SOURCE_DIR}/execfd_script_test.fildesh" "$<TARGET_FILE:zec>")
+add_test(NAME builtin_execfd_script_test COMMAND fildesh -f
+  "${CMAKE_CURRENT_SOURCE_DIR}/execfd_script_test.fildesh"
+  "--input_exe=$<TARGET_FILE:zec>"
+)
 
 #### expect_failure
 

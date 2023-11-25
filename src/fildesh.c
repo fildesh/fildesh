@@ -1458,7 +1458,6 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
                              FildeshX** inputv, FildeshO** outputv)
 {
   char* fildesh_exe = argv[0];
-  DECLARE_DEFAULT_FildeshAT(const char*, script_args);
   Command** cmds = NULL;
   bool use_stdin = true;
   FildeshX* script_in = NULL;
@@ -1667,7 +1666,6 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
       }
       use_stdin = false;
       if (!arg) {
-        push_FildeshAT(script_args, "/dev/fd/something");
         script_in = open_arg_FildeshXF(argi-1, argv, inputv);
         if (!script_in) {
           fildesh_log_errorf("Cannot read script from builtin.");
@@ -1681,7 +1679,6 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
       {
         cmd_hookup->stdin_fd = -1;
       }
-      push_FildeshAT(script_args, arg);
       script_in = open_arg_FildeshXF(argi-1, argv, inputv);
       if (!script_in) {
         fildesh_compat_errno_trace();
@@ -1699,7 +1696,6 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
         &argv[argi], &cmd_hookup->map, cmd_hookup->stdargs,  tmp_out);
   }
   if (exiting || exstatus != 0) {
-    close_FildeshAT(script_args);
     close_FildeshKV(alias_map);
     free_CommandHookup(cmd_hookup, &istat);
     close_FildeshAlloc(global_alloc);
@@ -1717,56 +1713,7 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
   if (use_stdin) {
     script_in = open_arg_FildeshXF(0, argv, inputv);
     cmd_hookup->stdin_fd = -1;
-    push_FildeshAT(script_args, "/dev/stdin");
   }
-
-  while (argi < argc) {
-    const char* arg = argv[argi++];
-    push_FildeshAT(script_args, arg);
-  }
-
-  if (count_of_FildeshAT(script_args) > 0) {
-    /* TODO(#99): Remove in v0.2.0.*/
-    SymVal* sym;
-    Command* cmd = grow1_FildeshAT(cmds);
-    truncate_FildeshO(tmp_out);
-    print_int_FildeshO(tmp_out, (int)(count_of_FildeshAT(script_args)-1));
-
-    init_Command(cmd, global_alloc);
-    cmd->kind = HereDocCommand;
-    cmd->line_num = 0;
-    cmd->line = strdup_FildeshAlloc(global_alloc, "#");
-    cmd->doc = strdup_FildeshO(tmp_out, global_alloc);
-
-    sym = declare_fildesh_SymVal(&cmd_hookup->map, HereDocVal, cmd->line);
-    assert(sym);
-    sym->as.here_doc = cmd->doc;
-
-    while (count_of_FildeshAT(script_args) < 10) {
-      push_FildeshAT(script_args, "");
-    }
-  }
-
-  for (i = 0; i < count_of_FildeshAT(script_args); ++i) {
-    /* TODO(#99): Remove in v0.2.0.*/
-    SymVal* sym;
-    Command* cmd = grow1_FildeshAT(cmds);
-
-    truncate_FildeshO(tmp_out);
-    print_int_FildeshO(tmp_out, (int)i);
-
-    init_Command(cmd, global_alloc);
-    cmd->kind = HereDocCommand;
-    cmd->line_num = 0;
-    cmd->line = strdup_FildeshO(tmp_out, global_alloc);
-    cmd->doc = strdup_FildeshAlloc(global_alloc, (*script_args)[i]);
-
-    sym = declare_fildesh_SymVal(&cmd_hookup->map, HereDocVal, cmd->line);
-    assert(sym);
-    sym->as.here_doc = cmd->doc;
-  }
-  close_FildeshAT(script_args);
-
   if (cmd_hookup->stdin_fd == 0) {
     cmd_hookup->stdin_fd = fildesh_compat_fd_claim(cmd_hookup->stdin_fd);
   }

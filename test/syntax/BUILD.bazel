@@ -73,13 +73,13 @@ fildesh_test(
 fildesh_test(
     name = "executable_bytes_oxf_test",
     srcs = ["executable_bytes_oxf_test.fildesh"],
-    args = ["$(location //src/builtin:zec)"],
+    args = ["--input_exe=$(location //src/builtin:zec)"],
     data = ["//src/builtin:zec"],
 )
 fildesh_test(
     name = "executable_bytes_ofxf_test",
     srcs = ["executable_bytes_ofxf_test.fildesh"],
-    args = ["$(location //src/builtin:zec)"],
+    args = ["--input_exe=$(location //src/builtin:zec)"],
     data = ["//src/builtin:zec"],
 )
 

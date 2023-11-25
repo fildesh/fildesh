@@ -1,7 +1,9 @@
 # Like //test/builtin:execfd_test
 # but without the extra parameter args.
 
-$(O exe) zec $(XA 1) / /
+(: executable_bytes_file Filename .self.opt.input_exe)
+
+$(O exe) zec / / $(XOF executable_bytes_file)
 $(O expect) zec / "hello there world" /
 
 |< $(XF exe) / "hello" " there " "world" /

@@ -122,7 +122,7 @@ cc_test(
 fildesh_test(
     name = "execfd_script_test",
     srcs = ["execfd_script_test.fildesh"],
-    args = ["$(location //src/builtin:zec)"],
+    args = ["--input_exe=$(location //src/builtin:zec)"],
     data = ["//src/builtin:zec"],
 )
 

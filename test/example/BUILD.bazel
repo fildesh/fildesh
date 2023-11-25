@@ -12,9 +12,27 @@ fildesh_expect_test(
     srcs = ["//example:args.fildesh"],
     expect = "args2.txt",
     args = [
-        "2",
-        "7",
+        "--offset=2",
+        "--limit=7",
     ],
+)
+
+fildesh_expect_test(
+    name = "args_forkonly_test",
+    srcs = ["args_forkonly_test.fildesh"],
+    expect = "args.txt",
+    forkonly = True,
+)
+
+fildesh_expect_test(
+    name = "args2_forkonly_test",
+    srcs = ["args_forkonly_test.fildesh"],
+    expect = "args2.txt",
+    args = [
+        "--offset=2",
+        "--limit=7",
+    ],
+    forkonly = True,
 )
 
 fildesh_expect_test(
