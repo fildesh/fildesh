@@ -7,8 +7,8 @@
 
 typedef struct PipemFnArg PipemFnArg;
 struct PipemFnArg {
-  fildesh_compat_fd_t stdin_fd;
-  fildesh_compat_fd_t stdout_fd;
+  Fildesh_fd stdin_fd;
+  Fildesh_fd stdout_fd;
   const char* input_query;
   const char* argv[20];
   unsigned argc;
@@ -28,7 +28,7 @@ FILDESH_TOOL_PIPEM_CALLBACK(run_query_bestmatch, in_fd, out_fd, PipemFnArg*, st)
   }
   else {
     int istat;
-    fildesh_compat_fd_t extra_fds[] = {-1, -1};
+    Fildesh_fd extra_fds[] = {-1, -1};
     extra_fds[0] = in_fd;
     fildesh_encode_fd_path(st->fd_arg, in_fd);
     istat = fildesh_compat_fd_spawnvp_wait(

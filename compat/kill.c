@@ -13,7 +13,7 @@
 #include "include/fildesh/fildesh_compat_sh.h"
 
   int
-fildesh_compat_sh_kill(fildesh_compat_pid_t pid)
+fildesh_compat_sh_kill(FildeshCompat_pid pid)
 {
   int istat = -1;
 #ifdef _MSC_VER

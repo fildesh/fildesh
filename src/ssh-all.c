@@ -35,10 +35,10 @@ static
 spawn_ssh(const char* ssh_exe, const char* cmd, const char* host)
 {
   int istat;
-  fildesh_compat_fd_t source_fd = -1;
-  fildesh_compat_fd_t fd_to_remote = -1;
+  Fildesh_fd source_fd = -1;
+  Fildesh_fd fd_to_remote = -1;
   FildeshO* to_remote = NULL;
-  fildesh_compat_pid_t pid;
+  FildeshCompat_pid pid;
 
   istat = fildesh_compat_fd_pipe(&fd_to_remote, &source_fd);
   assert(istat == 0);

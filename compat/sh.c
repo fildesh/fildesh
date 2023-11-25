@@ -49,10 +49,10 @@ fildesh_compat_sh_free_escaped_argv(char** argv)
   free(argv);
 }
 
-  fildesh_compat_pid_t
+  FildeshCompat_pid
 fildesh_compat_sh_spawn(const char* const* argv)
 {
-  fildesh_compat_pid_t pid;
+  FildeshCompat_pid pid;
 #ifdef _MSC_VER
   char** escaped_argv = fildesh_compat_sh_escape_argv_for_windows(argv);
   pid = _spawnvp(_P_NOWAIT, argv[0], escaped_argv);
@@ -85,7 +85,7 @@ fildesh_compat_sh_exec(const char* const* argv)
 }
 
   int
-fildesh_compat_sh_wait(fildesh_compat_pid_t pid)
+fildesh_compat_sh_wait(FildeshCompat_pid pid)
 {
   int istat = -1;
 #ifdef _MSC_VER

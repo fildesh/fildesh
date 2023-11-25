@@ -52,7 +52,7 @@ struct Command
   DECLARE_FildeshAT(char*, args);
   DECLARE_FildeshAT(char*, tmp_files);
   pthread_t thread;
-  fildesh_compat_pid_t pid;
+  FildeshCompat_pid pid;
   int status;
   fildesh_fd_t stdis; /**< Standard input stream.**/
   DECLARE_FildeshAT(int, is); /**< Input streams.**/
@@ -168,15 +168,15 @@ close_Command (Command* cmd)
 }
 
 static
-  fildesh_compat_fd_t*
+  Fildesh_fd*
 build_fds_to_inherit_Command(Command* cmd)
 {
   size_t i, off;
-  fildesh_compat_fd_t* fds = (fildesh_compat_fd_t*)
-    malloc(sizeof(fildesh_compat_fd_t) *
-           (count_of_FildeshAT(cmd->is) +
-            count_of_FildeshAT(cmd->os) +
-            1));
+  Fildesh_fd* fds = (Fildesh_fd*) malloc(
+      sizeof(Fildesh_fd) *
+      (count_of_FildeshAT(cmd->is) +
+       count_of_FildeshAT(cmd->os) +
+       1));
 
   off = 0;
   for (i = 0; i < count_of_FildeshAT(cmd->is); ++i) {
@@ -1403,7 +1403,7 @@ spawn_commands(const char* fildesh_exe, Command** cmds,
         fildesh_log_errorf("Could not pthread_create(). File: %s", (*argv)[0]);
       }
     } else {
-      fildesh_compat_fd_t* fds_to_inherit =
+      Fildesh_fd* fds_to_inherit =
         build_fds_to_inherit_Command(cmd);
       cmd->pid = fildesh_compat_fd_spawnvp(
           cmd->stdis, cmd->stdos, 2, fds_to_inherit, (const char**)(*argv));

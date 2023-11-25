@@ -19,17 +19,17 @@ run_with_line(const char* fildesh_exe, unsigned argc, const char** argv,
   /* We create a new stdin for the spawned process.
    * It inherits stdout too, but we want to reuse it.
    */
-  fildesh_compat_fd_t source_fd = -1;
+  Fildesh_fd source_fd = -1;
   const char** actual_argv;
   int istat;
   unsigned offset = 0;
   unsigned argi = 0;
   const char* spawned_exe_name = "/dev/null";
   FildeshO* to_spawned = NULL;
-  fildesh_compat_pid_t pid;
+  FildeshCompat_pid pid;
 
   {
-    fildesh_compat_fd_t to_spawned_fd = -1;
+    Fildesh_fd to_spawned_fd = -1;
     istat = fildesh_compat_fd_pipe(&to_spawned_fd, &source_fd);
     if (istat != 0) {fildesh_compat_errno_trace(); return;}
     to_spawned = open_fd_FildeshO(to_spawned_fd);

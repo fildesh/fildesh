@@ -11,7 +11,7 @@ struct PipemCallbackArg {
 };
 
 FILDESH_TOOL_PIPEM_CALLBACK(run_fildesh, in_fd, out_fd, PipemCallbackArg*, st) {
-  fildesh_compat_fd_t fds_to_inherit[] = {-1, -1, -1};
+  Fildesh_fd fds_to_inherit[] = {-1, -1, -1};
   char in_fd_arg[FILDESH_FD_PATH_SIZE_MAX];
   char out_fd_arg[FILDESH_FD_PATH_SIZE_MAX];
   int istat;

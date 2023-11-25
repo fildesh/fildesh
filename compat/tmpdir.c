@@ -27,7 +27,7 @@
 #include <sys/types.h>
 
 
-static size_t pid_to_little_hex(char* s, fildesh_compat_pid_t pid) {
+static size_t pid_to_little_hex(char* s, FildeshCompat_pid pid) {
   size_t n = 0;
   do {
     s[n] = fildesh_compat_string_hexchar((unsigned)(pid & 0xf));
@@ -45,9 +45,9 @@ fildesh_compat_file_mktmpdir(const char* hint)
 {
   const char* v = 0;
 #ifdef _MSC_VER
-  fildesh_compat_pid_t pid = _getpid();
+  FildeshCompat_pid pid = _getpid();
 #else
-  fildesh_compat_pid_t pid = getpid();
+  FildeshCompat_pid pid = getpid();
 #endif
   char* buf;
   size_t hint_length;

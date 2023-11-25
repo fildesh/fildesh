@@ -8,8 +8,8 @@
 typedef struct PipemFnArg PipemFnArg;
 struct PipemFnArg {
   unsigned tee_index;
-  fildesh_compat_fd_t stdin_fd;
-  fildesh_compat_fd_t* tee_fds;
+  Fildesh_fd stdin_fd;
+  Fildesh_fd* tee_fds;
   char* elastic_argv[10];
   size_t expect_size;
   const char* expect_string;
@@ -51,7 +51,7 @@ FILDESH_TOOL_PIPEM_CALLBACK(run_expect_elastic, in_fd, out_fd, PipemFnArg*, st) 
 
 int main(int argc, char** argv) {
   PipemFnArg st[1];
-  fildesh_compat_fd_t tee_fds[] = {1, 1, 1, -1};
+  Fildesh_fd tee_fds[] = {1, 1, 1, -1};
 
   assert(argc == 2);
 
