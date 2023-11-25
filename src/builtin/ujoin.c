@@ -70,7 +70,7 @@ setup_lookup_table(FildeshX* in, const char* delim,
 {
   LineJoin** joins = NULL;
   size_t join_count = 0;
-  fildesh_lgsize_t join_lgcount = 0;
+  Fildesh_lgsize join_lgcount = 0;
   const unsigned delim_sz = delim ? strlen(delim) : 0;
   char* s;
 

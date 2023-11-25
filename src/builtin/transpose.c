@@ -18,7 +18,7 @@ struct TransposeLine {
   static void
 parse_row(
     FildeshX* row_in, TransposeLine* row,
-    char*** fields_buf, fildesh_lgsize_t* field_lgcount,
+    char*** fields_buf, Fildesh_lgsize* field_lgcount,
     const unsigned char* delim, bool pad, FildeshAlloc* alloc)
 {
   FildeshX field;
@@ -61,8 +61,8 @@ fildesh_builtin_transpose_main(unsigned argc, char** argv,
   size_t line_count = 0;
   TransposeLine* mat = NULL;
   char** fields_buf = NULL;
-  fildesh_lgsize_t line_lgcount = 0;
-  fildesh_lgsize_t field_lgcount = 0;
+  Fildesh_lgsize line_lgcount = 0;
+  Fildesh_lgsize field_lgcount = 0;
   int exstatus = 0;
 
   for (i = 1; i < argc && exstatus == 0; ++i) {

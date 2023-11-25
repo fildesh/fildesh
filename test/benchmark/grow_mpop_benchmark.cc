@@ -9,7 +9,7 @@ static void BM_PushPop_FildeshA(benchmark::State& state) {
   for (auto _ : state) {
 		unsigned char* at = NULL;
 		size_t count = 0;
-		fildesh_lgsize_t allocated_lgcount = 0;
+		Fildesh_lgsize allocated_lgcount = 0;
 		for (int i = 0; i < state.range(0); ++i) {
 			*static_cast<unsigned char*>(
           grow_FildeshA_((void**)(&at), &count, &allocated_lgcount, 1, 1))

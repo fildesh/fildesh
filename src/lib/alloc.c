@@ -43,7 +43,7 @@ reserve_FildeshAlloc(FildeshAlloc* alloc, size_t size, size_t alignment)
 {
   uintptr_t p;
   const size_t mask = ~(alignment-1);
-  fildesh_lgsize_t i = alloc->block_count-1;
+  Fildesh_lgsize i = alloc->block_count-1;
   while (alloc->sizes[i] <= size) {
     create_block_FildeshAlloc(alloc);
     i = alloc->block_count-1;
