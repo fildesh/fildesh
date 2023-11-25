@@ -9,9 +9,6 @@ typedef intptr_t FildeshCompat_pid;
 typedef pid_t FildeshCompat_pid;
 #endif
 
-/* Deprecated. Use FildeshCompat_pid.*/
-typedef FildeshCompat_pid fildesh_compat_pid_t;
-
 char**
 fildesh_compat_sh_escape_argv_for_windows(const char* const* argv);
 void

@@ -25,13 +25,6 @@ typedef uint8_t Fildesh_lgsize;
 #define FILDESH_LGSIZE_MAX UCHAR_MAX
 typedef size_t FildeshKV_id;
 
-/* Deprecated. Use Fildesh_fd.*/
-typedef Fildesh_fd fildesh_fd_t;
-/* Deprecated. Use Fildesh_lgsize.*/
-typedef Fildesh_lgsize fildesh_lgsize_t;
-/* Deprecated. Use FildeshKV_id.*/
-typedef FildeshKV_id FildeshKV_id_t;
-
 #ifndef BEGIN_EXTERN_C
 # ifdef __cplusplus
 #  define BEGIN_EXTERN_C extern "C" {

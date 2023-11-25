@@ -3,8 +3,6 @@
 #include <stddef.h>
 
 typedef int FildeshCompat_fd;
-/* Deprecated. Use FildeshCompat_fd.*/
-typedef FildeshCompat_fd fildesh_compat_fd_t;
 int
 fildesh_compat_fd_close(FildeshCompat_fd fd);
 int
