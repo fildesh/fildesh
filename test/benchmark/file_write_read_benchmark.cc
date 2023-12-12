@@ -7,6 +7,7 @@
 
 #include <fildesh/istream.hh>
 #include <fildesh/ostream.hh>
+#include <fildesh/string.hh>
 extern "C" {
 #include "include/fildesh/fildesh_compat_file.h"
 }
@@ -223,6 +224,24 @@ static void BM_FileReadLines_fgets(benchmark::State& state) {
   fildesh_compat_file_rm(filename.c_str());
 }
 BENCHMARK(BM_FileReadLines_fgets)->THIS_BENCHMARK_RANGE;
+
+
+static void BM_FileReadLines_std_string(benchmark::State& state) {
+  const std::string filename = temporary_file_name("ReadLines_std_string", state.range(0));
+  write_seq_file(filename, state.range(0));
+  std::string text;
+  fildesh::slurp_file_to_string(text, filename.c_str());
+  for (auto _ : state) {
+    size_t offset = 0;
+		for (int i = 0; i < state.range(0); ++i) {
+      assert(offset < text.size());
+      offset = text.find_first_of('\n', offset)+1;
+		}
+    assert(offset == text.size());
+  }
+  fildesh_compat_file_rm(filename.c_str());
+}
+BENCHMARK(BM_FileReadLines_std_string)->THIS_BENCHMARK_RANGE;
 
 
 // Run the benchmark

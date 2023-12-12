@@ -38,6 +38,16 @@ inline FildeshO& operator<<(FildeshO& out, std::string_view s) {
 
 namespace fildesh {
 
+inline bool slurp_file_to_string(std::string& text, const char* filename) {
+  FildeshX* in = open_FildeshXF(filename);
+  bool good = (in && slurp_FildeshX(in));
+  const char* s = (in && in->at ? in->at : "");
+  size_t n = (in ? in->size : 0);
+  text.assign(s, n);
+  close_FildeshX(in);
+  return good;
+}
+
 class ostringstream : public ostream
 {
 public:

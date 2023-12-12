@@ -27,6 +27,9 @@ static void append_assign_test() {
   assert(0 == s.compare("betaga"));
 #endif  // defined(__cpp_lib_string_view)
   close_FildeshO(oslice);
+
+  s = "text that should be cleared";
+  fildesh::slurp_file_to_string(s, "/dev/null");
 }
 
 static void ostringstream_test() {
