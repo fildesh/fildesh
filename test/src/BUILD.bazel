@@ -1,4 +1,4 @@
-load("//tool/bazel:spawn.bzl", "spawn_test")
+load("//tool/bazel:spawn_test.bzl", "spawn_test")
 
 cc_binary(
     name = "chatty",

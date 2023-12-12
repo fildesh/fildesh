@@ -1,4 +1,4 @@
-load("//tool/bazel:fildesh.bzl", "fildesh_test")
+load("//tool/bazel:fildesh_test.bzl", "fildesh_test")
 
 cc_test(
     name = "create_test",
@@ -27,15 +27,11 @@ cc_test(
 fildesh_test(
     name = "sxpb2json_test",
     srcs = ["sxpb2json_test.fildesh"],
-    aliases = {
-        "sxpb2json": "//tool:sxpb2json",
-    },
+    tool_by_alias = {"sxpb2json": "//tool:sxpb2json"},
 )
 
 fildesh_test(
     name = "sxpb2txtpb_test",
     srcs = ["sxpb2txtpb_test.fildesh"],
-    aliases = {
-        "sxpb2txtpb": "//tool:sxpb2txtpb",
-    },
+    tool_by_alias = {"sxpb2txtpb": "//tool:sxpb2txtpb"},
 )

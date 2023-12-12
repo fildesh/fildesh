@@ -1,6 +1,6 @@
 load("//test/example:example.bzl", "fildesh_expect_test")
-load("//tool/bazel:fildesh.bzl", "fildesh_test")
-load("//tool/bazel:spawn.bzl", "spawn_test")
+load("//tool/bazel:fildesh_test.bzl", "fildesh_test")
+load("//tool/bazel:spawn_test.bzl", "spawn_test")
 
 #### add
 
@@ -122,8 +122,7 @@ cc_test(
 fildesh_test(
     name = "execfd_script_test",
     srcs = ["execfd_script_test.fildesh"],
-    args = ["--input_exe=$(location //tool:shout)"],
-    data = ["//tool:shout"],
+    input_by_option = {"input_exe": "//tool:shout"},
 )
 
 #### expect_failure
@@ -257,7 +256,7 @@ cc_binary(
 fildesh_test(
     name = "echocat_test",
     srcs = ["echocat_test.fildesh"],
-    aliases = {"echocat": ":echocat"}
+    tool_by_alias = {"echocat": ":echocat"},
 )
 
 cc_test(
@@ -360,7 +359,7 @@ cc_test(
 fildesh_test(
     name = "xargz_alias_test",
     srcs = ["xargz_alias_test.fildesh"],
-    aliases = {"shout": "//tool:shout"},
+    tool_by_alias = {"shout": "//tool:shout"},
 )
 
 #### xpipe

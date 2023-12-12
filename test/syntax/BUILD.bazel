@@ -1,9 +1,9 @@
-load("//tool/bazel:fildesh.bzl", "fildesh_test")
+load("//tool/bazel:fildesh_test.bzl", "fildesh_test")
 
 fildesh_test(
     name = "alias_ofxf_test",
     srcs = ["alias_ofxf_test.fildesh"],
-    aliases = {
+    tool_by_alias = {
         "expectish": "//tool:expectish",
         "shout": "//tool:shout",
     },
@@ -73,14 +73,12 @@ fildesh_test(
 fildesh_test(
     name = "executable_bytes_oxf_test",
     srcs = ["executable_bytes_oxf_test.fildesh"],
-    args = ["--input_exe=$(location //tool:shout)"],
-    data = ["//tool:shout"],
+    input_by_option = {"input_exe": "//tool:shout"},
 )
 fildesh_test(
     name = "executable_bytes_ofxf_test",
     srcs = ["executable_bytes_ofxf_test.fildesh"],
-    args = ["--input_exe=$(location //tool:shout)"],
-    data = ["//tool:shout"],
+    input_by_option = {"input_exe": "//tool:shout"},
 )
 
 fildesh_test(

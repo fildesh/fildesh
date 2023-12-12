@@ -56,6 +56,13 @@ cc_binary(
     visibility = ["//visibility:public"],
 )
 
+# The most advanced one. It's the main project binary!
+alias(
+    name = "fildesh",
+    actual = "//src/bin:fildesh",
+    visibility = ["//visibility:public"],
+)
+
 
 ################################################################################
 ## Code and data.

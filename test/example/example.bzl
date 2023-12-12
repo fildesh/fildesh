@@ -1,4 +1,4 @@
-load("//tool/bazel:spawn.bzl", "spawn_test")
+load("//tool/bazel:spawn_test.bzl", "spawn_test")
 
 def fildesh_expect_test(name, srcs, expect,
                         data=[], args=[],
@@ -9,16 +9,16 @@ def fildesh_expect_test(name, srcs, expect,
     fildesh_options += ["-forkonly"]
   spawn_test(
       name = name,
-      binary = "@fildesh//tool:comparispawn",
+      binary = "//tool:comparispawn",
       args = [
           "$(location " + expect + ")",
-          "$(location @fildesh//:fildesh)",
+          "$(location //tool:fildesh)",
       ] + fildesh_options + [
           "-f", "$(location " + srcs[0] + ")",
       ] + args,
       data = [
           expect,
-          "@fildesh//:fildesh",
+          "//tool:fildesh",
       ] + srcs + data,
       **kwargs,
   )
