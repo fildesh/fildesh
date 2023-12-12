@@ -65,7 +65,7 @@ fildesh_syntax_parse_flags(
       }
       break;
     }
-    putstr_FildeshO(tmp_out, ".self.opt.");
+    putstrlit_FildeshO(tmp_out, ".self.opt.");
     v = getopt_FildeshO(tmp_out, args[i], args[i+1]);
     if (!v) {
       fildesh_log_errorf("Expected a value for flag: %s", args[i]);

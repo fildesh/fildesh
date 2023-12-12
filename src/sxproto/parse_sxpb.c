@@ -13,11 +13,11 @@ syntax_error(const FildeshSxpbInfo* info, const char* msg)
 {
   FildeshO* const out = info->err_out;
   if (!out) {return;}
-  putstr_FildeshO(out, "Line ");
+  putstrlit_FildeshO(out, "Line ");
   print_int_FildeshO(out, (int)(info->line_count+1));
-  putstr_FildeshO(out, " column ");
+  putstrlit_FildeshO(out, " column ");
   print_int_FildeshO(out, (int)(info->column_count+1));
-  putstr_FildeshO(out, ": ");
+  putstrlit_FildeshO(out, ": ");
   putstr_FildeshO(out, msg);
   putc_FildeshO(out, '\n');
   flush_FildeshO(out);
@@ -489,12 +489,12 @@ parse_field_FildeshSxpbInfo(
       }
       else if (skipstr_FildeshX(in, "true")) {
         truncate_FildeshO(oslice);
-        putstr_FildeshO(oslice, "true");
+        putstrlit_FildeshO(oslice, "true");
         tmp_kind = FildeshSxprotoFieldKind_LITERAL_BOOL;
       }
       else if (skipstr_FildeshX(in, "false")) {
         truncate_FildeshO(oslice);
-        putstr_FildeshO(oslice, "false");
+        putstrlit_FildeshO(oslice, "false");
         tmp_kind = FildeshSxprotoFieldKind_LITERAL_BOOL;
       }
       else if (peek_chars_FildeshX(in, "0123456789+-.")) {
@@ -532,11 +532,11 @@ parse_field_FildeshSxpbInfo(
         /* Upgrade type.*/
         if (oslice->size == 2 && oslice->at[0] == '+' && oslice->at[1] == '1') {
           truncate_FildeshO(oslice);
-          putstr_FildeshO(oslice, "true");
+          putstrlit_FildeshO(oslice, "true");
         }
         else if (oslice->size == 2 && oslice->at[0] == '+' && oslice->at[1] == '0') {
           truncate_FildeshO(oslice);
-          putstr_FildeshO(oslice, "false");
+          putstrlit_FildeshO(oslice, "false");
         }
         else {
           syntax_error(info, "Expected a bool, not an int.");

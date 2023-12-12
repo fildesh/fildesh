@@ -343,6 +343,9 @@ static inline void putslice_FildeshO(FildeshO* out, const FildeshX slice) {
   put_bytestring_FildeshO(
       out, (const unsigned char*)&slice.at[slice.off], slice.size - slice.off);
 }
+#define fildesh_bytestrlit(s)  (const unsigned char*)(s), sizeof(s)-1
+#define putstrlit_FildeshO(out, s) \
+  put_bytestring_FildeshO(out, fildesh_bytestrlit(s))
 
 static inline FildeshX FildeshX_of_bytestring(const unsigned char* s, size_t n) {
   DECLARE_STRLIT_FildeshX(in, "");
@@ -350,7 +353,6 @@ static inline FildeshX FildeshX_of_bytestring(const unsigned char* s, size_t n) 
   in->size = n;
   return *in;
 }
-#define fildesh_bytestrlit(s)  (const unsigned char*)(s), sizeof(s)-1
 #define FildeshX_of_strlit(s)  FildeshX_of_bytestring(fildesh_bytestrlit(s))
 static inline FildeshX getslice_FildeshX(const FildeshX* in) {
   return FildeshX_of_bytestring(

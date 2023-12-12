@@ -1511,7 +1511,7 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
     }
     else if (eq_cstr (arg, "-version")) {
       FildeshO* out = open_FildeshOF("/dev/stdout");
-      putstr_FildeshO(out, fildesh_bin_version);
+      putstrlit_FildeshO(out, fildesh_bin_version);
       putc_FildeshO(out, '\n');
       close_FildeshO(out);
       exiting = true;

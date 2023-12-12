@@ -25,7 +25,7 @@ int main() {
   /* Write out initial file.*/
   out = open_FildeshOF(initial_filename);
   assert(out);
-  putstr_FildeshO(out, "i am the initial file\n");
+  putstrlit_FildeshO(out, "i am the initial file\n");
   close_FildeshO(out);
   /* Read back initial file.*/
   in = open_FildeshXF(initial_filename);
@@ -39,7 +39,7 @@ int main() {
   out = open_sibling_FildeshOF(initial_filename, "sibling_file_test_sibling.txt");
   assert(out);
   sibling_filename = fildesh_compat_string_duplicate(filename_FildeshOF(out));
-  putstr_FildeshO(out, "i am the sibling file\n");
+  putstrlit_FildeshO(out, "i am the sibling file\n");
   close_FildeshO(out);
   /* Assertions about sibling filename.*/
   assert(sibling_filename);

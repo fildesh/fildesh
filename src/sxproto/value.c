@@ -180,9 +180,9 @@ print_quoted_sxpb_str_FildeshO(FildeshO* out, const char* s)
   putc_FildeshO(out, '"');
   for (i = 0; s[i] != '\0'; ++i) {
     switch (s[i]) {
-      case '"':   putstr_FildeshO(out, "\\\"");  break;
-      case '\\':  putstr_FildeshO(out, "\\\\");  break;
-      case '\n':  putstr_FildeshO(out, "\\n");  break;
+      case '"':   putstrlit_FildeshO(out, "\\\"");  break;
+      case '\\':  putstrlit_FildeshO(out, "\\\\");  break;
+      case '\n':  putstrlit_FildeshO(out, "\\n");  break;
       default:    putc_FildeshO(out, s[i]);  break;
     }
   }
