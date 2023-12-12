@@ -34,8 +34,10 @@ static void append_assign_test() {
 
 static void ostringstream_test() {
   fildesh::ostringstream oss;
+  assert(0 == strcmp(oss.c_str(), ""));
 
   oss << '1' << "2" << 3;
+  assert(0 == strcmp(oss.c_str(), "123"));
   assert(oss.str() == "123");
 #ifdef __cpp_lib_string_view
   assert(oss.view() == "123");

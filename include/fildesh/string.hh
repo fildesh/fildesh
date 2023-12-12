@@ -56,7 +56,12 @@ public:
     , oslice_(default_FildeshO())
   {}
 
-  std::string str() {
+  char* c_str() {
+    putc_FildeshO(&oslice_, '\0');
+    oslice_.size -= 1;
+    return &oslice_.at[oslice_.off];
+  }
+  std::string str() const {
     return make_string(oslice_);
   }
 #ifdef __cpp_lib_string_view
