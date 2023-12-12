@@ -102,8 +102,8 @@ cc_test(
     ],
     defines = ["UNIT_TESTING"],
     deps = ["//:fildesh_lib", "//:fildesh_tool_lib"],
-    data = ["//src/builtin:zec"],
-    args = ["$(location //src/builtin:zec)"],
+    data = ["//tool:shout"],
+    args = ["$(location //tool:shout)"],
 )
 
 cc_test(
@@ -122,8 +122,8 @@ cc_test(
 fildesh_test(
     name = "execfd_script_test",
     srcs = ["execfd_script_test.fildesh"],
-    args = ["--input_exe=$(location //src/builtin:zec)"],
-    data = ["//src/builtin:zec"],
+    args = ["--input_exe=$(location //tool:shout)"],
+    data = ["//tool:shout"],
 )
 
 #### expect_failure

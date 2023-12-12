@@ -62,21 +62,20 @@ int main(int argc, char** argv) {
     "-exe", "replace_with_tmp_exe",
     "-stdin", "/dev/null",
     "-stdout", "replace_with_stdout_file",
-    "x_a_x_a_x_a",
+    "x_a_x_a_x",
     "--",
     "replace_with_fd",
-    "/",
+    "-",
     "replace_with_fd",
-    " there ",
+    "there",
     "replace_with_fd",
-    "/",
     NULL,
   };
   const char* output_directory = getenv("TEST_TMPDIR");
   PipemFnArg st[1];
   char* input_data = NULL;
   size_t input_size;
-  const char expect_data[] = "hello there world";
+  const char expect_data[] = "hello there world\n";
   const size_t expect_size = strlen(expect_data);
   char* output_data = NULL;
   size_t output_size;

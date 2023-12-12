@@ -40,11 +40,11 @@ add_test(NAME syntax_escape_string_test COMMAND fildesh -f
 
 add_test(NAME syntax_executable_bytes_oxf_test COMMAND fildesh -f
   "${CMAKE_CURRENT_SOURCE_DIR}/executable_bytes_oxf_test.fildesh"
-  "--input_exe=$<TARGET_FILE:zec>"
+  "--input_exe=${FildeshTool_shout_EXECUTABLE}"
 )
 add_test(NAME syntax_executable_bytes_ofxf_test COMMAND fildesh -f
   "${CMAKE_CURRENT_SOURCE_DIR}/executable_bytes_ofxf_test.fildesh"
-  "--input_exe=$<TARGET_FILE:zec>"
+  "--input_exe=${FildeshTool_shout_EXECUTABLE}"
 )
 
 add_test(NAME syntax_expect_failure_oxf_test COMMAND fildesh -f

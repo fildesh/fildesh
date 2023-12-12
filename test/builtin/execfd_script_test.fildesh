@@ -5,8 +5,8 @@
 $(O exe) zec / / $(XOF executable_bytes_file)
 $(O hello) zec / "hello" /
 $(O world) zec / "world" /
-$(O expect) zec / "hello there world" /
+$(O expect) zec / "hello there world\n" /
 
-|< $(XF exe) / $(XA hello) " there " $(XA world) /
+|< $(XF exe) - $(XA hello) "there" $(XA world)
 |- cmp $(XF expect)
 |> stdout

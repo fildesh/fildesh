@@ -1,17 +1,20 @@
 
+set(FildeshTool_shout_EXECUTABLE "$<TARGET_FILE:shout>")
+set(FildeshTool_spawn_EXECUTABLE "$<TARGET_FILE:spawn>")
+
+# Sorted by dependence.
 add_subdirectory(compat)
-add_subdirectory(lib)
-add_subdirectory(cc)
 add_subdirectory(tool)
+add_subdirectory(lib)
 add_subdirectory(src)
-add_subdirectory(syntax)
+add_subdirectory(sxproto)
+add_subdirectory(cc)
+add_subdirectory(fuzz)
 
-set (zec_exe "$<TARGET_FILE:zec>")
-
+# Sorted by name.
 add_subdirectory(benchmark)
 add_subdirectory(builtin)
 add_subdirectory(example)
 add_subdirectory(fault)
 add_subdirectory(flag)
-add_subdirectory(fuzz)
-add_subdirectory(sxproto)
+add_subdirectory(syntax)

@@ -72,18 +72,21 @@ set_property(TARGET builtin_execfd_test
   APPEND PROPERTY COMPILE_DEFINITIONS UNIT_TESTING)
 add_test(NAME builtin_execfd_test COMMAND
   "${CMAKE_COMMAND}" -E env "TEST_TMPDIR=${CMAKE_CURRENT_BINARY_DIR}"
-  "$<TARGET_FILE:builtin_execfd_test>" "$<TARGET_FILE:zec>")
+  "$<TARGET_FILE:builtin_execfd_test>"
+  "${FildeshTool_shout_EXECUTABLE}"
+)
 
 add_executable(builtin_execfd_cat_test "execfd_cat_test.c" "${PROJECT_SOURCE_DIR}/src/execfd.c")
 target_link_libraries(builtin_execfd_cat_test fildesh_lib fildesh_tool_lib)
 set_property(TARGET builtin_execfd_cat_test
   APPEND PROPERTY COMPILE_DEFINITIONS UNIT_TESTING)
-add_test(NAME builtin_execfd_cat_test COMMAND
-  builtin_execfd_cat_test "$<TARGET_FILE:shout>")
+add_test(NAME builtin_execfd_cat_test COMMAND builtin_execfd_cat_test
+  "${FildeshTool_shout_EXECUTABLE}"
+)
 
 add_test(NAME builtin_execfd_script_test COMMAND fildesh -f
   "${CMAKE_CURRENT_SOURCE_DIR}/execfd_script_test.fildesh"
-  "--input_exe=$<TARGET_FILE:zec>"
+  "--input_exe=${FildeshTool_shout_EXECUTABLE}"
 )
 
 #### expect_failure
@@ -208,14 +211,17 @@ add_test(NAME builtin_void_test COMMAND builtin_void_test "$<TARGET_FILE:void>")
 
 add_executable(builtin_waitdo_test "waitdo_test.c")
 target_link_libraries(builtin_waitdo_test fildesh_lib fildesh_tool_lib)
-add_test(NAME builtin_waitdo_test COMMAND
-  builtin_waitdo_test "$<TARGET_FILE:waitdo>" "$<TARGET_FILE:shout>")
+add_test(NAME builtin_waitdo_test COMMAND builtin_waitdo_test
+  "$<TARGET_FILE:waitdo>"
+  "${FildeshTool_shout_EXECUTABLE}"
+)
 
 #### xargz
 
-add_test(NAME builtin_xargz_alias_test COMMAND
-  fildesh -alias "shout=$<TARGET_FILE:shout>" -f
-  "${CMAKE_CURRENT_SOURCE_DIR}/xargz_alias_test.fildesh")
+add_test(NAME builtin_xargz_alias_test COMMAND ${Fildesh_EXECUTABLE}
+  -alias "shout=${FildeshTool_shout_EXECUTABLE}"
+  -f "${CMAKE_CURRENT_SOURCE_DIR}/xargz_alias_test.fildesh"
+)
 
 #### xpipe
 
@@ -232,5 +238,6 @@ add_test(NAME builtin_zec_cat_test COMMAND
 # Only CMake test here that actually uses `spawn`.
 # However, Bazel tests rely on it heavily.
 add_test(NAME builtin_zec_nop_test COMMAND
-  spawn ${zec_exe} "/" "/"
-  )
+  ${FildeshTool_spawn_EXECUTABLE}
+  "$<TARGET_FILE:zec>" "/" "/"
+)

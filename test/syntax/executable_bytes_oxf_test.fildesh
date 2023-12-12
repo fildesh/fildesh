@@ -4,9 +4,9 @@
 (: executable_bytes_file Filename .self.opt.input_exe)
 
 $(O exe) zec / / $(XOF executable_bytes_file)
-$(O expect) zec / "hello there world" /
+$(O expect) zec / "hello there world\n" /
 
-|< $(XF exe) / "hello" " there " "world" /
+|< $(XF exe) - "hello" "there" "world"
 |- cmp $(XF expect)
 |> stdout
 
