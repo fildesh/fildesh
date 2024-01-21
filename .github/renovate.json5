@@ -10,5 +10,8 @@
     // Group version update PRs into one.
     "groupName": "all dependencies",
     "groupSlug": "all-dependencies",
+  }, {
+    "matchDatasources": ["github-runners"],
+    "enabled": false,
   }],
 }

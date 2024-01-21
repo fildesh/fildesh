@@ -64,6 +64,6 @@ jobs:
         --final_dst=${{runner.workspace}}/bld/pkg/final
 
     - name: Upload Package Artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         path: ${{runner.workspace}}/bld/pkg/final/
