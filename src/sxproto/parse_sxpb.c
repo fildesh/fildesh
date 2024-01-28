@@ -277,10 +277,6 @@ insert_next_FildeshSxpb(
   const char* text;
   FildeshSxpbIT m_it = DEFAULT_FildeshSxpbIT;
 
-  if (cons_kind == FildeshSxprotoFieldKind_MESSAGE && text_slice.size == 0) {
-    syntax_error(info, "Message expects named fields inside it.");
-    return FildeshSxpbIT_of_NULL();
-  }
   if (cons_kind == FildeshSxprotoFieldKind_ARRAY &&
       text_slice.size > 0 &&
       (kind == FildeshSxprotoFieldKind_UNKNOWN ||
@@ -362,8 +358,8 @@ parse_field_FildeshSxpbInfo(
 
   if (nesting_depth == 0) {
     if (oslice->size == 0) {
-      field_kind = FildeshSxprotoFieldKind_MESSAGE;
-      field = schema;
+      syntax_error(info, "Denote empty message in array as (()), not ().");
+      return false;
     }
     else if (peek_chars_FildeshX(in, "()")) {
       field_kind = FildeshSxprotoFieldKind_MESSAGE;
@@ -374,10 +370,6 @@ parse_field_FildeshSxpbInfo(
   }
   else if (nesting_depth == 1) {
     if (oslice->size == 0) {
-      if (peek_chars_FildeshX(in, ")")) {
-        syntax_error(info, "Denote empty message in array as (), not (()).");
-        return false;
-      }
       field_kind = FildeshSxprotoFieldKind_MESSAGE;
       field = schema;
     }

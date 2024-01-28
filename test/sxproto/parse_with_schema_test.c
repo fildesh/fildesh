@@ -65,7 +65,7 @@ parse_with_schema_test()
     (cons (car \"first\") (cdr (car \"second\") (cdr (car \"third\") (cdr))))\n\
     ((messages)\n\
      (() (car \"schwam\"))\n\
-     ()\n\
+     (())\n\
      (() (\"car\" \"doo\") (cdr (car \"two and heif\"))))\n\
     ";
   DECLARE_STRLIT_FildeshX(in, content);
