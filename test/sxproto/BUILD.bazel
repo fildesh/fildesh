@@ -1,6 +1,18 @@
 load("//tool/bazel:fildesh_test.bzl", "fildesh_test")
 
 cc_test(
+    name = "append_test",
+    srcs = ["append_test.c"],
+    deps = ["//:sxproto_lib"],
+)
+
+cc_test(
+    name = "assign_test",
+    srcs = ["assign_test.c"],
+    deps = ["//:sxproto_lib"],
+)
+
+cc_test(
     name = "create_test",
     srcs = ["create_test.c"],
     deps = ["//:sxproto_lib"],

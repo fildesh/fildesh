@@ -106,6 +106,13 @@ print_txtpb_FildeshO(FildeshO* out, FildeshSxpb* sxpb);
 
 const char*
 ensure_name_FildeshSxpb(FildeshSxpb* sxpb, const char* s, size_t n);
+FildeshSxpbIT ensure_message_subfield_at_FildeshSxpb(FildeshSxpb*, FildeshSxpbIT, const char*);
+FildeshSxpbIT ensure_array_subfield_at_FildeshSxpb(FildeshSxpb*, FildeshSxpbIT, const char*);
+FildeshSxpbIT ensure_manyof_subfield_at_FildeshSxpb(FildeshSxpb*, FildeshSxpbIT, const char*);
+FildeshSxpbIT ensure_bool_subfield_at_FildeshSxpb(FildeshSxpb*, FildeshSxpbIT, const char*);
+FildeshSxpbIT ensure_int_subfield_at_FildeshSxpb(FildeshSxpb*, FildeshSxpbIT, const char*);
+FildeshSxpbIT ensure_float_subfield_at_FildeshSxpb(FildeshSxpb*, FildeshSxpbIT, const char*);
+FildeshSxpbIT ensure_string_subfield_at_FildeshSxpb(FildeshSxpb*, FildeshSxpbIT, const char*);
 
 FildeshSxpbIT
 lookup_subfield_at_FildeshSxpb(
@@ -123,7 +130,6 @@ const char*
 name_at_FildeshSxpb(const FildeshSxpb* sxpb, FildeshSxpbIT it);
 const FildeshSxprotoField*
 subfield_of_FildeshSxprotoField(const FildeshSxprotoField* schema, const char* name);
-
 
 bool
 bool_value_at_FildeshSxpb(const FildeshSxpb* sxpb, FildeshSxpbIT it);
@@ -148,15 +154,22 @@ lone_subfield_at_FildeshSxpb_to_str(
     const char** dst, const FildeshSxpb* sxpb, FildeshSxpbIT it, const char* name);
 
 FildeshSxpbIT
-ensure_message_subfield_at_FildeshSxpb(
-    FildeshSxpb* sxpb, FildeshSxpbIT it, const char* k);
-FildeshSxpbIT
 assign_bool_subfield_at_FildeshSxpb(
     FildeshSxpb* sxpb, FildeshSxpbIT it, const char* k, bool v);
 FildeshSxpbIT
 assign_str_subfield_at_FildeshSxpb(
     FildeshSxpb* sxpb, FildeshSxpbIT it, const char* k, const char* v);
 
+void
+assign_at_FildeshSxpb(
+    FildeshSxpb* sxpb, FildeshSxpbIT it,
+    const char* optional_field_name,
+    const FildeshSxpb* src_sxpb, FildeshSxpbIT src_it);
+FildeshSxpbIT
+append_at_FildeshSxpb(
+    FildeshSxpb* sxpb, FildeshSxpbIT it,
+    const char* optional_field_name,
+    const FildeshSxpb* src_sxpb, FildeshSxpbIT src_it);
 
 static inline bool nullish_FildeshSxpbIT(FildeshSxpbIT pos) {
   return fildesh_nullid(pos.cons_id);

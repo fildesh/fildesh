@@ -16,6 +16,9 @@ print_quoted_sxpb_str_FildeshO(FildeshO* out, const char* s);
 void
 print_sxpb_literal_value_FildeshO(FildeshO* out, const FildeshSxprotoValue* e);
 
+const char*
+default_value_text_FildeshSxpb(FildeshSxpb* sxpb, FildeshSxprotoFieldKind kind);
+
 FildeshSxpbIT
 direct_insert_first_FildeshSxpb(
     FildeshSxpb* sxpb,

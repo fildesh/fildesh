@@ -1,4 +1,14 @@
 
+add_executable(sxproto_append_test
+  "append_test.c")
+target_link_libraries(sxproto_append_test ${FildeshSxproto_LIBRARIES})
+add_test(NAME sxproto_append_test COMMAND sxproto_append_test)
+
+add_executable(sxproto_assign_test
+  "assign_test.c")
+target_link_libraries(sxproto_assign_test ${FildeshSxproto_LIBRARIES})
+add_test(NAME sxproto_assign_test COMMAND sxproto_assign_test)
+
 add_executable(sxproto_create_test
   "create_test.c")
 target_link_libraries(sxproto_create_test ${FildeshSxproto_LIBRARIES})

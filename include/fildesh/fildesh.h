@@ -328,8 +328,9 @@ static inline size_t allocated_size_of_FildeshO(const FildeshO* o) {
 }
 static inline void truncate_FildeshX(FildeshX* x) {x->off = 0; x->size = 0;}
 static inline void truncate_FildeshO(FildeshO* o) {o->off = 0; o->size = 0;}
+static inline bool avail_FildeshX(const FildeshX* x) {return x->off < x->size;}
 static inline bool peek_char_FildeshX(FildeshX* in, char guess) {
-  if (in->off < in->size) {return (in->at[in->off] == guess);}
+  if (avail_FildeshX(in)) {return (in->at[in->off] == guess);}
   if (0 < read_FildeshX(in)) {return (in->at[in->off] == guess);}
   return false;
 }
