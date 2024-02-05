@@ -19,6 +19,11 @@ fildesh_test(
 )
 
 fildesh_test(
+    name = "comment_test",
+    srcs = ["comment_test.fildesh"],
+)
+
+fildesh_test(
     name = "concatenate_axfxax_test",
     srcs = ["concatenate_axfxax_test.fildesh"],
 )

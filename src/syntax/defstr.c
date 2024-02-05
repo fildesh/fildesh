@@ -19,14 +19,23 @@ static
   bool
 skip_blank_bytes(FildeshX* in, size_t* text_nlines)
 {
-  size_t i;
-  FildeshX slice = while_chars_FildeshX(in, fildesh_compat_string_blank_bytes);
-  for (i = 0; i < slice.size; ++i) {
-    if (slice.at[i] == '\n') {
-      *text_nlines += 1;
+  bool skipped_any = false;
+  while (true) {
+    size_t i;
+    FildeshX slice = while_chars_FildeshX(in, fildesh_compat_string_blank_bytes);
+    if (slice.size > 0) {skipped_any = true;}
+    for (i = 0; i < slice.size; ++i) {
+      if (slice.at[i] == '\n') {
+        *text_nlines += 1;
+      }
     }
+    if (!peek_char_FildeshX(in, '#')) {
+      break;
+    }
+    until_char_FildeshX(in, '\n');
+    skipped_any = true;
   }
-  return (slice.size > 0);
+  return skipped_any;
 }
 
 
