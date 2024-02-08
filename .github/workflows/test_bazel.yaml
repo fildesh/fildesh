@@ -20,9 +20,9 @@ jobs:
         key: ${{ runner.os }}-bazel
 
     - name: Bazel Setup
-      uses: jwlawson/actions-setup-bazel@v1
+      uses: jwlawson/actions-setup-bazel@v2
       with:
-        bazel-version: '6'
+        bazel-version: 'latest'
 
     - name: Checkout
       uses: actions/checkout@v4
@@ -72,9 +72,9 @@ jobs:
         path: ~/.cache/bazel
         key: ${{ runner.os }}-bazel
     - name: Bazel Setup
-      uses: jwlawson/actions-setup-bazel@v1
+      uses: jwlawson/actions-setup-bazel@v2
       with:
-        bazel-version: '6'
+        bazel-version: 'latest'
     - name: Checkout
       uses: actions/checkout@v4
     - name: Build
@@ -100,8 +100,9 @@ jobs:
         path: ~/.cache/bazel
         key: ${{ runner.os }}-bazel
     - name: Setup bazel
-      uses: jwlawson/actions-setup-bazel@v1
+      uses: jwlawson/actions-setup-bazel@v2
       with:
+        # Bazel 7 coverage output looks low to Coveralls, so use Bazel 6.
         bazel-version: '6'
     - name: Checkout
       uses: actions/checkout@v4
@@ -126,9 +127,9 @@ jobs:
       fail-fast: false
     steps:
     - name: Bazel Setup
-      uses: jwlawson/actions-setup-bazel@v1
+      uses: jwlawson/actions-setup-bazel@v2
       with:
-        bazel-version: '6'
+        bazel-version: 'latest'
     - name: Checkout
       uses: actions/checkout@v4
     - name: Fuzz
@@ -144,7 +145,7 @@ jobs:
       fail-fast: false
     steps:
     - name: Bazel Setup
-      uses: jwlawson/actions-setup-bazel@v1
+      uses: jwlawson/actions-setup-bazel@v2
       with:
         bazel-version: '4.2.2'
     - name: Checkout
