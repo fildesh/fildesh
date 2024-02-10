@@ -76,20 +76,20 @@ pipe_to_file(Fildesh_fd fd, const char* name)
 
 
 static
-  char*
+  void
 readin_fd(FildeshO* buf, Fildesh_fd fd, bool scrap_newline)
 {
   FildeshX* in = open_fd_FildeshX(fd);
-  char* s = slurp_FildeshX(in);
-  if (scrap_newline && in->size >= 1 && s[in->size-1] == '\n') {
-    s[in->size-1] = '\0';
-    if (in->size >= 2 && s[in->size-2] == '\r') {
-      s[in->size-2] = '\0';
+  if (!in) {return;}
+  slurp_FildeshX(in);
+  if (scrap_newline && in->size >= 1 && in->at[in->size-1] == '\n') {
+    in->size -= 1;
+    if (in->size >= 1 && in->at[in->size-1] == '\r') {
+      in->size -= 1;
     }
   }
-  putstr_FildeshO(buf, s);
+  putslice_FildeshO(buf, *in);
   close_FildeshX(in);
-  return s;
 }
 
   int

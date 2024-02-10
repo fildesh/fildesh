@@ -93,13 +93,13 @@ lcs_count(
 static
   unsigned
 matching_line(const char* query,
+              const unsigned query_width,
               char* const* lines, unsigned line_count,
               const unsigned* key_widths, unsigned* a)
 {
   unsigned max_count = 0;
   unsigned min_key_width = 1;
   unsigned match_index = 0;
-  unsigned query_width = strlen(query);
   unsigned i;
 
   for (i = 0; i < line_count; ++i) {
@@ -131,7 +131,6 @@ fildesh_builtin_bestmatch_main(
   FildeshX* lookup_in = NULL;
   FildeshX* stream_in = NULL;
   FildeshO* out = NULL;
-  char* s;
   const char* delim = "\t";
   char** lines = NULL;
   unsigned line_count = 0;
@@ -200,8 +199,9 @@ fildesh_builtin_bestmatch_main(
   }
 
   if (exstatus == 0) {
-    char* buf = slurp_FildeshX(lookup_in);
-    lines = split_lines(buf, &line_count);
+    slurp_FildeshX(lookup_in);
+    *grow_FildeshX(lookup_in, 1) = '\0';
+    lines = split_lines(lookup_in->at, &line_count);
     if (!lines) {exstatus = 71;}
     key_widths = (unsigned*)malloc(line_count * sizeof(unsigned));
     if (!key_widths) {exstatus = 71;}
@@ -220,10 +220,14 @@ fildesh_builtin_bestmatch_main(
   }
 
   if (exstatus == 0) {
-    for (s = getline_FildeshX(stream_in); s;
-         s = getline_FildeshX(stream_in))
+    FildeshX slice;
+    for (slice = sliceline_FildeshX(stream_in);
+         slice.at;
+         slice = sliceline_FildeshX(stream_in))
     {
-      unsigned i = matching_line(s, lines, line_count, key_widths, lcs_array);
+      unsigned i = matching_line(
+          slice.at, (unsigned)slice.size,
+          lines, line_count, key_widths, lcs_array);
       putstr_FildeshO(out, lines[i]);
       putc_FildeshO(out, '\n');
     }

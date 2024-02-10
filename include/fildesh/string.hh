@@ -40,12 +40,15 @@ namespace fildesh {
 
 inline bool slurp_file_to_string(std::string& text, const char* filename) {
   FildeshX* in = open_FildeshXF(filename);
-  bool good = (in && slurp_FildeshX(in));
-  const char* s = (in && in->at ? in->at : "");
-  size_t n = (in ? in->size : 0);
-  text.assign(s, n);
+  slurp_FildeshX(in);
+  if (in && in->at) {
+    text.assign(in->at, in->size);
+  }
+  else {
+    text.clear();
+  }
   close_FildeshX(in);
-  return good;
+  return !!in;
 }
 
 class ostringstream : public ostream
