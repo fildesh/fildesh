@@ -70,7 +70,8 @@ run_with_line(const char* fildesh_exe, unsigned argc, const char** argv,
 main_xpipe(unsigned argc, char** argv)
 {
   FildeshX* in = NULL;
-  const char* s;
+  FildeshX slice;
+  FildeshO oss[1] = {DEFAULT_FildeshO};
   unsigned argi = 1;
 
   if (argi >= argc) {
@@ -84,10 +85,17 @@ main_xpipe(unsigned argc, char** argv)
     return 1;
   }
 
-  for (s = getline_FildeshX(in); s; s = getline_FildeshX(in)) {
-    run_with_line(argv[0], argc - argi, (const char**)&argv[argi], s);
+  for (slice = sliceline_FildeshX(in);
+       slice.at;
+       slice = sliceline_FildeshX(in))
+  {
+    truncate_FildeshO(oss);
+    putslice_FildeshO(oss, slice);
+    putc_FildeshO(oss, '\0');
+    run_with_line(argv[0], argc - argi, (const char**)&argv[argi], oss->at);
   }
 
   close_FildeshX(in);
+  close_FildeshO(oss);
   return 0;
 }

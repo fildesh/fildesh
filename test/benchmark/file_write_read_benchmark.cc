@@ -166,8 +166,8 @@ static void BM_FileReadLines_FildeshXF(benchmark::State& state) {
   for (auto _ : state) {
     FildeshX* in = open_FildeshXF(filename.c_str());
 		for (int i = 0; i < state.range(0); ++i) {
-      const char* line = getline_FildeshX(in);
-      assert(line);
+      FildeshX slice = sliceline_FildeshX(in);
+      assert(avail_FildeshX(&slice));
 		}
     close_FildeshX(in);
   }
