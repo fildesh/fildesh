@@ -21,6 +21,17 @@ FildeshX* open_FildeshXA() {
 }
 
 
+  int
+fildesh_compare_bytestring(
+    const unsigned char* a, size_t m,
+    const unsigned char* b, size_t n)
+{
+  return (
+      m == n
+      ? (n > 0 ? memcmp(a, b, n) : 0)
+      : (m < n ? -1 : 1));
+}
+
   char*
 fildesh_parse_int(int* ret, const char* in)
 {

@@ -61,32 +61,37 @@ int main(int argc, char** argv)
   memcpy(grow_FildeshX(actual_in, output_size), output_data, output_size);
 
   for (line_id = 1; all_match; ++line_id) {
-    const char* expect_s = getline_FildeshX(expect_in);
-    const char* actual_s = getline_FildeshX(actual_in);
+    FildeshX expect_slice = sliceline_FildeshX(expect_in);
+    FildeshX actual_slice = sliceline_FildeshX(actual_in);
 
-    if (!expect_s || !actual_s) {
-      if (expect_s) {
+    if (!avail_FildeshX(&expect_slice) || !avail_FildeshX(&actual_slice)) {
+      if (avail_FildeshX(&expect_slice)) {
         all_match = false;
         fprintf(stderr,
                 "ERROR from comparispawn: No line %u present.\n"
-                " Expected: %s\n",
-                line_id, expect_s);
+                " Expected: %.*s\n",
+                line_id, (int)expect_slice.size, expect_slice.at);
       }
-      if (actual_s) {
+      if (avail_FildeshX(&actual_slice)) {
         all_match = false;
         fprintf(stderr,
                 "ERROR from comparispawn: Extra line %u.\n"
-                " Got: %s\n",
-                line_id, actual_s);
+                " Got: %.*s\n",
+                line_id, (int)actual_slice.size, actual_slice.at);
       }
       break;
     }
-    if (0 != strcmp(expect_s, actual_s)) {
+    if (0 != fildesh_compare_bytestring(
+            bytestring_of_FildeshX(&expect_slice),
+            bytestring_of_FildeshX(&actual_slice)))
+    {
       all_match = false;
       fprintf(stderr,
               "ERROR from comparispawn: Difference found on line %u.\n"
-              " Expected: %s\n Got: %s\n",
-              line_id, expect_s, actual_s);
+              " Expected: %.*s\n Got: %.*s\n",
+              line_id,
+              (int)expect_slice.size, expect_slice.at,
+              (int)actual_slice.size, actual_slice.at);
     }
   }
   free(output_data);

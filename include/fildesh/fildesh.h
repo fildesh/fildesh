@@ -117,6 +117,9 @@ FildeshO* open_arg_FildeshOF(unsigned argi, char** argv, FildeshO** outputv);
 const char* filename_FildeshOF(FildeshO*);
 
 
+int
+fildesh_compare_bytestring(const unsigned char*, size_t,
+                           const unsigned char*, size_t);
 char* fildesh_parse_int(int* ret, const char* in);
 char* fildesh_parse_unsigned(unsigned* ret, const char* in);
 char* fildesh_parse_double(double* ret, const char* in);
@@ -340,9 +343,10 @@ static inline bool peek_byte_FildeshX(FildeshX* in, unsigned char guess) {
 static inline FildeshX until_byte_FildeshX(FildeshX* in, unsigned char delim) {
   return until_char_FildeshX(in, (char)delim);
 }
+#define bytestring_of_FildeshX(in) \
+  (const unsigned char*)&(in)->at[(in)->off], (in)->size - (in)->off
 static inline void putslice_FildeshO(FildeshO* out, const FildeshX slice) {
-  put_bytestring_FildeshO(
-      out, (const unsigned char*)&slice.at[slice.off], slice.size - slice.off);
+  put_bytestring_FildeshO(out, bytestring_of_FildeshX(&slice));
 }
 #define fildesh_bytestrlit(s)  (const unsigned char*)(s), sizeof(s)-1
 #define putstrlit_FildeshO(out, s) \
