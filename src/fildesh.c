@@ -683,6 +683,17 @@ transfer_map_entries(FildeshKV* map, FildeshKV* add_map, const Command* cmd)
 }
 
 static
+  bool
+zero_argv_SymValKind(SymValKind kind)
+{
+  return (
+      kind == IDescVal || kind == ODescVal || kind == IODescVal ||
+      kind == IFutureDescVal || kind == OFutureDescVal ||
+      kind == IFutureDescFileVal || kind == OFutureDescFileVal ||
+      kind == ODescStatusVal);
+}
+
+static
   int
 setup_commands(Command** cmds, CommandHookup* cmd_hookup)
 {
@@ -696,8 +707,7 @@ setup_commands(Command** cmds, CommandHookup* cmd_hookup)
        command_index < count_of_FildeshAT(cmds) && istat == 0;
        ++command_index)
   {
-    unsigned arg_q = 0;
-    unsigned arg_r = 0;
+    unsigned arg_q, arg_r;
     Command* cmd = &(*cmds)[command_index];
 
     /* The command defines a HERE document.*/
@@ -717,38 +727,44 @@ setup_commands(Command** cmds, CommandHookup* cmd_hookup)
 
     for (arg_r = 0; arg_r < count_of_FildeshAT(cmd->args) && istat == 0; ++ arg_r) {
       char* arg = (*cmd->args)[arg_r];
-      if (arg_q == 0 && eq_cstr("stdin", arg)) {
+      const bool on_argv = !zero_argv_SymValKind(
+          peek_fildesh_SymVal_arg(arg, (arg_r == 0)));
+
+      if (eq_cstr("stdin", arg)) {
         cmd->kind = StdinCommand;
         cmd->stdis = cmd_hookup->stdin_fd;
         cmd_hookup->stdin_fd = -1;
         if (cmd->stdis < 0) {
           FailBreak(cmd, "Cannot have multiple stdin commands", arg);
         }
-        break;
+        assert(on_argv);
       }
-      else if (arg_q == 0 && eq_cstr("stdout", arg)) {
+      else if (eq_cstr("stdout", arg)) {
         cmd->kind = StdoutCommand;
         cmd->stdos = cmd_hookup->stdout_fd;
         cmd_hookup->stdout_fd = -1;
         if (cmd->stdos < 0) {
           FailBreak(cmd, "Cannot have multiple stdout commands", arg);
         }
-        break;
+        assert(on_argv);
       }
-      else if (arg_q == 0 && eq_cstr("stderr", arg)) {
+      else if (eq_cstr("stderr", arg)) {
         cmd->kind = StderrCommand;
-        break;
+        assert(on_argv);
       }
-      else if (arg_q == 0 && eq_cstr("stdargz", arg)) {
+      else if (eq_cstr("stdargz", arg)) {
         unsigned i;
         (*cmd->args)[arg_r] = (char*)"oargz";
         push_FildeshAT(cmd->args, (char*) "--");
         for (i = 0; i < count_of_FildeshAT(cmd_hookup->stdargs); ++i) {
           push_FildeshAT(cmd->args, (char*)(*cmd_hookup->stdargs)[i]);
         }
+        assert(on_argv);
       }
+      if (on_argv) {break;}
     }
 
+    arg_q = 0;
     for (arg_r = 0; arg_r < count_of_FildeshAT(cmd->args) && istat == 0; ++ arg_r)
     {
       char* arg = (*cmd->args)[arg_r];
@@ -879,6 +895,7 @@ setup_commands(Command** cmds, CommandHookup* cmd_hookup)
             cmd->stdis = fd;
           }
           else {
+            assert(kind == IDescFileVal);
             (*cmd->args)[arg_q] = filename;
             if (arg_q == 0)
               cmd->exec_doc = sym->as.here_doc;

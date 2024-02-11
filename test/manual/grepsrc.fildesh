@@ -1,0 +1,6 @@
+#!/usr/bin/env fildesh
+
+(: pattern Str .self.opt.e)
+
+|< grep -E -e "${pattern}" -R compat include src test tool
+|> stdout

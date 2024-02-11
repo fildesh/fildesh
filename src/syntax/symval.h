@@ -39,6 +39,8 @@ getf_fildesh_SymVal(FildeshKV* map, const char* s);
 SymVal*
 declare_fildesh_SymVal(FildeshKV* map, SymValKind kind, const char* name);
 SymValKind
+peek_fildesh_SymVal_arg(const char* s, bool firstarg);
+SymValKind
 parse_fildesh_SymVal_arg(char* s, bool firstarg);
 
 #endif

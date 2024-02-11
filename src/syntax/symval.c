@@ -53,7 +53,7 @@ declare_fildesh_SymVal(FildeshKV* map, SymValKind kind, const char* name)
 }
 
   SymValKind
-parse_fildesh_SymVal_arg(char* s, bool firstarg)
+peek_fildesh_SymVal_arg(const char* s, bool firstarg)
 {
   unsigned o;
   SymValKind kind = NSymValKinds;
@@ -65,11 +65,6 @@ parse_fildesh_SymVal_arg(char* s, bool firstarg)
       kind = ODescVal;
     else if (s[1] == '>')
       kind = IDescVal;
-
-    if (kind != NSymValKinds) {
-      s[0] = '-';
-      s[1] = '\0';
-    }
     return kind;
   }
 
@@ -118,9 +113,21 @@ parse_fildesh_SymVal_arg(char* s, bool firstarg)
   {
     kind = HereDocVal;
   }
+  return kind;
+}
 
-  if (kind != NSymValKinds)
-  {
+  SymValKind
+parse_fildesh_SymVal_arg(char* s, bool firstarg)
+{
+  SymValKind kind = peek_fildesh_SymVal_arg(s, firstarg);
+  if (kind == NSymValKinds) {
+    /* Nothing.*/
+  }
+  else if (firstarg && s[0] == '|') {
+    s[0] = '-';
+    s[1] = '\0';
+  }
+  else {
     unsigned i, n;
     i = count_non_ws(s);
     i += count_ws (&s[i]);
