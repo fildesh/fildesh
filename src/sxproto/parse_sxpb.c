@@ -565,7 +565,7 @@ slurp_sxpb_close_FildeshX(
   info->err_out = err_out;
 
   for (skip_separation(in, info);
-       peek_char_FildeshX(in, '(');
+       avail_FildeshX(in) && peek_char_FildeshX(in, '(');
        skip_separation(in, info))
   {
     if (!parse_field_FildeshSxpbInfo(info, schema, in, sxpb, p_it, oslice)) {
