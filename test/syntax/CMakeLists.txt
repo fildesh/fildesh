@@ -80,6 +80,9 @@ add_test(NAME syntax_redefine_hxahxfhxh_test COMMAND fildesh -f
 
 add_test(NAME syntax_stderr_ooox_test COMMAND fildesh -f
   "${CMAKE_CURRENT_SOURCE_DIR}/stderr_ooox_test.fildesh")
+add_test(NAME syntax_stdout_ooox_test COMMAND ${Fildesh_EXECUTABLE}
+  -f "${CMAKE_CURRENT_SOURCE_DIR}/stdout_ooox_test.fildesh"
+)
 
 add_test(NAME syntax_tmpfile_xofxof_test COMMAND fildesh -f
   "${CMAKE_CURRENT_SOURCE_DIR}/tmpfile_xofxof_test.fildesh")

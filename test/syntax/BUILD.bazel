@@ -135,6 +135,10 @@ fildesh_test(
     name = "stderr_ooox_test",
     srcs = ["stderr_ooox_test.fildesh"],
 )
+fildesh_test(
+    name = "stdout_ooox_test",
+    srcs = ["stdout_ooox_test.fildesh"],
+)
 
 fildesh_test(
     name = "tmpfile_xofxof_test",

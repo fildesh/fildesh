@@ -815,10 +815,10 @@ setup_commands(Command** cmds, CommandHookup* cmd_hookup)
         fildesh_compat_fd_close(sym->as.file_desc);
 
         if (sym->ios_idx < count_of_FildeshAT(last->os)) {
-          fildesh_compat_fd_move_to((*last->os)[sym->ios_idx], cmd->stdos);
+          fildesh_compat_fd_copy_to((*last->os)[sym->ios_idx], cmd->stdos);
         }
         else {
-          fildesh_compat_fd_move_to(last->stdos, cmd->stdos);
+          fildesh_compat_fd_copy_to(last->stdos, cmd->stdos);
         }
         sym->kind = NSymValKinds;
         cmd->stdos = -1;
@@ -1743,6 +1743,7 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
 
   fildesh_compat_errno_trace();
   while (exstatus == 0 && script_in) {
+    const Fildesh_fd stdout_fd = cmd_hookup->stdout_fd;
     FildeshAlloc* scope_alloc = open_FildeshAlloc();
     istat = parse_file(
         cmd_hookup,
@@ -1810,6 +1811,7 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
     if (exstatus == 0) {
       exstatus = istat;
     }
+    cmd_hookup->stdout_fd = stdout_fd;
   }
   close_FildeshX(script_in);  /* Just in case we missed it.*/
   free_CommandHookup(cmd_hookup, &istat);

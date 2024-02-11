@@ -134,8 +134,9 @@ fildesh_compat_fd_duplicate(FildeshCompat_fd fd)
   return newfd;
 }
 
-static int
-fildesh_compat_fd_copy_to(FildeshCompat_fd dst, FildeshCompat_fd src)
+static
+  int
+fildesh_compat_fd_copy_to_(FildeshCompat_fd dst, FildeshCompat_fd src)
 {
   int istat;
   if (dst == src) {return 0;}
@@ -148,6 +149,26 @@ fildesh_compat_fd_copy_to(FildeshCompat_fd dst, FildeshCompat_fd src)
 }
 
   int
+fildesh_compat_fd_copy_to(FildeshCompat_fd dst, FildeshCompat_fd src)
+{
+  int istat;
+  if (dst == src) {return 0;}
+  /* Acquire exclusive lock because there could be stdio.*/
+  FILDESH_COMPAT_FD_ENTER_EXCLUSIVE;
+  istat = fildesh_compat_fd_copy_to_(dst, src);
+  if (istat >= 0) {
+    if (dst <= 2) {
+      istat = fildesh_compat_fd_inherit(dst);
+    } else {
+      istat = fildesh_compat_fd_cloexec(dst);
+    }
+    if (istat != 0) {fildesh_compat_fd_close(dst);}
+  }
+  FILDESH_COMPAT_FD_LEAVE_EXCLUSIVE;
+  return istat;
+}
+
+  int
 fildesh_compat_fd_move_to(FildeshCompat_fd dst, FildeshCompat_fd oldfd)
 {
   int istat = 0;
@@ -157,7 +178,7 @@ fildesh_compat_fd_move_to(FildeshCompat_fd dst, FildeshCompat_fd oldfd)
   /* Acquire exclusive lock because there could be stdio.*/
   FILDESH_COMPAT_FD_ENTER_EXCLUSIVE;
 
-  istat = fildesh_compat_fd_copy_to(dst, oldfd);
+  istat = fildesh_compat_fd_copy_to_(dst, oldfd);
   if (0 != fildesh_compat_fd_close(oldfd)) {
     if (istat == 0) {
       fildesh_compat_fd_close(dst);
@@ -373,9 +394,9 @@ static int fildesh_compat_fd_inherit_empty_stdio(int fd)
 #endif
   if (istat != 0) {return -1;}
   if (fd == 0) {
-    istat = fildesh_compat_fd_copy_to(0, fds[0]);
+    istat = fildesh_compat_fd_copy_to_(0, fds[0]);
   } else {
-    istat = fildesh_compat_fd_copy_to(fd, fds[1]);
+    istat = fildesh_compat_fd_copy_to_(fd, fds[1]);
   }
   if (istat != 0 || fds[0] != fd) {
     fildesh_compat_fd_close(fds[0]);
@@ -399,7 +420,7 @@ fildesh_compat_fd_spawnvp_setup_stdio(
     /* Nothing. Already inherited.*/
   } else {
     assert(stdin_fd >= 3);
-    istat = fildesh_compat_fd_copy_to(0, stdin_fd);
+    istat = fildesh_compat_fd_copy_to_(0, stdin_fd);
     if (istat != 0) {return -100;}
     istat = fildesh_compat_fd_close(stdin_fd);
   }
@@ -410,10 +431,10 @@ fildesh_compat_fd_spawnvp_setup_stdio(
     /* Nothing. Already inherited.*/
   } else if (stdout_fd == 2) {
     assert(stderr_fd == 2);
-    istat = fildesh_compat_fd_copy_to(1, 2);
+    istat = fildesh_compat_fd_copy_to_(1, 2);
   } else {
     assert(stdout_fd >= 3);
-    istat = fildesh_compat_fd_copy_to(1, stdout_fd);
+    istat = fildesh_compat_fd_copy_to_(1, stdout_fd);
     if (istat != 0) {return -110;}
     istat = fildesh_compat_fd_close(stdout_fd);
   }
@@ -422,12 +443,12 @@ fildesh_compat_fd_spawnvp_setup_stdio(
     istat = fildesh_compat_fd_inherit_empty_stdio(2);
   } else if (stderr_fd == 1) {
     assert(stdout_fd == 1);
-    istat = fildesh_compat_fd_copy_to(2, 1);
+    istat = fildesh_compat_fd_copy_to_(2, 1);
   } else if (stderr_fd == 2) {
     /* Nothing. Already inherited.*/
   } else {
     assert(stderr_fd >= 3);
-    istat = fildesh_compat_fd_copy_to(2, stderr_fd);
+    istat = fildesh_compat_fd_copy_to_(2, stderr_fd);
     if (istat != 0) {return -120;}
     istat = fildesh_compat_fd_close(stderr_fd);
   }

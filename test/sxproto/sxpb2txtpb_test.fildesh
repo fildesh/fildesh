@@ -24,7 +24,7 @@ $(O expect) oargz -- "${scalar_expect}"
 |< oargz -- "${scalar_content}"
 |- sxpb2txtpb
 |- cmp $(XF expect)
-|> stderr
+|> stdout
 
 
 $(barrier)
@@ -45,7 +45,7 @@ $(O expect) oargz -- "${message_expect}"
 |< oargz -- "${message_content}"
 |- sxpb2txtpb
 |- cmp $(XF expect)
-|> stderr
+|> stdout
 
 
 $(barrier)
@@ -62,7 +62,7 @@ $(O expect) oargz -- "${empty_message_expect}"
 |< oargz -- "${empty_message_content}"
 |- sxpb2txtpb
 |- cmp $(XF expect)
-|> stderr
+|> stdout
 
 
 $(barrier)
@@ -97,7 +97,7 @@ $(O expect) oargz -- "${array_expect}"
 |< oargz -- "${array_content}"
 |- sxpb2txtpb
 |- cmp $(XF expect)
-|> stderr
+|> stdout
 
 
 $(barrier)
@@ -174,5 +174,5 @@ $(O expect) oargz -- "${manyof_expect}"
 |< oargz -- "${manyof_content}"
 |- sxpb2txtpb
 |- cmp $(XF expect)
-|> stderr
+|> stdout
 
