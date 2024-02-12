@@ -48,9 +48,38 @@ static void ostringstream_test() {
   assert(oss.str() == "456");
 }
 
+static void sibling_pathname_test() {
+  std::string s;
+  s = fildesh::sibling_pathname(NULL, "path/to/b.txt");
+  assert(s == "path/to/b.txt");
+  s = fildesh::sibling_pathname("path/to/", "b.txt");
+  assert(s == "path/to/b.txt");
+  s = fildesh::sibling_pathname("path/to/a.txt", "b.txt");
+  assert(s == "path/to/b.txt");
+  s = fildesh::sibling_pathname("path/to/a.txt", "./b.txt");
+  assert(s == "path/to/b.txt");
+
+  s = fildesh::sibling_pathname("path/to", "b.txt");
+  assert(s == "path/b.txt");
+  s = fildesh::sibling_pathname("a.txt", "b.txt");
+  assert(s == "b.txt");
+  s = fildesh::sibling_pathname("path/to/a.txt", "/tmp/b.txt");
+  assert(s == "/tmp/b.txt");
+  s = fildesh::sibling_pathname("path/to/a.txt", "-");
+  assert(s == "-");
+
+  fildesh::ostringstream oss;
+  oss << "path/to/a.txt";
+  oss.c_struct()->off += 2;
+  sibling_pathname_bytestring_FildeshO(
+      oss.c_struct(), (const unsigned char*)"b.txt", 5);
+  assert(oss.str() == "th/to/b.txt");
+}
+
 int main() {
   append_assign_test();
   ostringstream_test();
+  sibling_pathname_test();
   return 0;
 }
 

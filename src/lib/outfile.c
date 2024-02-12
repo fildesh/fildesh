@@ -130,22 +130,16 @@ open_sibling_FildeshOF(const char* sibling, const char* filename)
   }
 
   *of = default_FildeshOF();
-  if (filename[0] != '/' && sibling) {
-    size_t sibling_dirlen = 0;
-    if (sibling) {
-      char* p = strrchr(sibling, '/');
-      if (p) {
-        sibling_dirlen = (size_t)(p - sibling) + 1;
-      }
+  {
+    FildeshO oss[1] = {DEFAULT_FildeshO};
+    if (sibling) {putstr_FildeshO(oss, sibling);}
+    sibling_pathname_bytestring_FildeshO(
+        oss, (const unsigned char*)filename, filename_length);
+    if (oss->size > 0) {
+      putc_FildeshO(oss, '\0');
+      of->filename = fildesh_compat_string_duplicate(oss->at);
     }
-    of->filename = malloc(sibling_dirlen + filename_length + 1);
-    if (of->filename) {
-      memcpy(of->filename, sibling, sibling_dirlen);
-      memcpy(&of->filename[sibling_dirlen], filename, filename_length+1);
-    }
-  }
-  else {
-    of->filename = fildesh_compat_string_duplicate(filename);
+    close_FildeshO(oss);
   }
 
   if (of->filename) {

@@ -105,6 +105,8 @@ void putstr_FildeshO(FildeshO*, const char*);
 void print_int_FildeshO(FildeshO*, int);
 void print_double_FildeshO(FildeshO*, double);
 void repeat_byte_FildeshO(FildeshO*, unsigned char, size_t);
+void sibling_pathname_bytestring_FildeshO(
+    FildeshO* sibling, const unsigned char* filename, size_t filename_size);
 
 Fildesh_fd fildesh_arg_open_writeonly(const char*);
 FildeshO* open_FildeshOF(const char* filename);
