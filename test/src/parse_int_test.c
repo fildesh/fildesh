@@ -11,7 +11,7 @@ parse_int_easy_test()
 {
   int got = 0;
   bool good;
-  FildeshX in[1] = {LITERAL_FildeshX("5 -10\n 0  98654  3216 +200")};
+  DECLARE_STRLIT_FildeshX(in, "5 -10\n 0  98654  3216 +200");
 
   good = parse_int_FildeshX(in, &got);
   assert(good);
@@ -47,7 +47,7 @@ parse_unsigned_test()
 {
   unsigned got = 0;
   bool good;
-  FildeshX in[1] = {LITERAL_FildeshX("0 1 65535 +200 -200")};
+  DECLARE_STRLIT_FildeshX(in, "0 1 65535 +200 -200");
 
   good = parse_unsigned_FildeshX(in, &got);
   assert(good);

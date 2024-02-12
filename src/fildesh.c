@@ -52,20 +52,20 @@ struct Command
   DECLARE_FildeshAT(char*, args);
   DECLARE_FildeshAT(char*, tmp_files);
   pthread_t thread;
-  fildesh_compat_pid_t pid;
+  FildeshCompat_pid pid;
   int status;
-  fildesh_fd_t stdis; /**< Standard input stream.**/
+  Fildesh_fd stdis; /**< Standard input stream.**/
   DECLARE_FildeshAT(int, is); /**< Input streams.**/
-  fildesh_fd_t stdos; /**< Standard output stream.**/
+  Fildesh_fd stdos; /**< Standard output stream.**/
   DECLARE_FildeshAT(int, os); /**< Output streams.**/
   /* Exit status stream.**/
-  fildesh_fd_t status_fd;
+  Fildesh_fd status_fd;
   /** File descriptor to close upon exit.**/
   DECLARE_FildeshAT(int, exit_fds);
   /** If >= 0, this is a file descriptor that will
    * close when the program command is safe to run.
    **/
-  fildesh_fd_t exec_fd;
+  Fildesh_fd exec_fd;
   /** Whether exec_fd actually has bytes, rather than just used for signaling.*/
   bool exec_fd_has_bytes;
   /** If != NULL, this is the contents of a file to execute.**/
@@ -88,8 +88,8 @@ struct CommandHookup {
   unsigned tmpfile_count;
   FildeshKV map;
   FildeshKV add_map; /* Temporarily hold new symbols for the current line.*/
-  fildesh_fd_t stdin_fd;
-  fildesh_fd_t stdout_fd;
+  Fildesh_fd stdin_fd;
+  Fildesh_fd stdout_fd;
   DECLARE_FildeshAT(const char*, stdargs);
   /* Stderr stays at fd 2 but should be closed explicitly if we dup2 over it.*/
   bool stderr_fd_opened;
@@ -168,15 +168,15 @@ close_Command (Command* cmd)
 }
 
 static
-  fildesh_compat_fd_t*
+  Fildesh_fd*
 build_fds_to_inherit_Command(Command* cmd)
 {
   size_t i, off;
-  fildesh_compat_fd_t* fds = (fildesh_compat_fd_t*)
-    malloc(sizeof(fildesh_compat_fd_t) *
-           (count_of_FildeshAT(cmd->is) +
-            count_of_FildeshAT(cmd->os) +
-            1));
+  Fildesh_fd* fds = (Fildesh_fd*) malloc(
+      sizeof(Fildesh_fd) *
+      (count_of_FildeshAT(cmd->is) +
+       count_of_FildeshAT(cmd->os) +
+       1));
 
   off = 0;
   for (i = 0; i < count_of_FildeshAT(cmd->is); ++i) {
@@ -251,7 +251,7 @@ new_CommandHookup(FildeshAlloc* alloc)
 }
 
 static void free_CommandHookup(CommandHookup* cmd_hookup, int* istat) {
-  FildeshKV_id_t id;
+  FildeshKV_id id;
   FildeshKV* map = &cmd_hookup->map;
   for (id = first_FildeshKV(map);
        !fildesh_nullid(id);
@@ -309,20 +309,20 @@ static char* lace_strdup(const char* s) {
   return fildesh_compat_string_duplicate(s);
 }
 
-static char* strdup_fd_Command(Command* cmd, fildesh_fd_t fd)
+static char* strdup_fd_Command(Command* cmd, Fildesh_fd fd)
 {
   char buf[FILDESH_INT_BASE10_SIZE_MAX];
   fildesh_encode_int_base10(buf, fd);
   return strdup_FildeshAlloc(cmd->alloc, buf);
 }
 
-static char* lace_fd_strdup(fildesh_fd_t fd) {
+static char* lace_fd_strdup(Fildesh_fd fd) {
   char buf[FILDESH_INT_BASE10_SIZE_MAX];
   fildesh_encode_int_base10(buf, fd);
   return lace_strdup(buf);
 }
 
-static char* lace_fd_path_strdup(fildesh_fd_t fd) {
+static char* lace_fd_path_strdup(Fildesh_fd fd) {
   char buf[FILDESH_FD_PATH_SIZE_MAX];
   fildesh_encode_fd_path(buf, fd);
   return lace_strdup(buf);
@@ -330,7 +330,7 @@ static char* lace_fd_path_strdup(fildesh_fd_t fd) {
 
 
 static void ensure_strmap(FildeshKV* map, char* k, char* v) {
-  const FildeshKV_id_t id = ensure_FildeshKV(map, k, strlen(k)+1);
+  const FildeshKV_id id = ensure_FildeshKV(map, k, strlen(k)+1);
   assign_at_FildeshKV(map, id, v, strlen(v)+1);
 }
 
@@ -641,10 +641,10 @@ write_heredoc_tmpfile(Command* cmd, CommandHookup* cmd_hookup, const char* doc)
 }
 
 static
-  fildesh_fd_t
+  Fildesh_fd
 pipe_from_elastic(Command* elastic_cmd)
 {
-  fildesh_fd_t fd[2];
+  Fildesh_fd fd[2];
   if (0 != fildesh_compat_fd_pipe(&fd[1], &fd[0])) {
     return -1;
   }
@@ -664,14 +664,14 @@ static
 transfer_map_entries(FildeshKV* map, FildeshKV* add_map, const Command* cmd)
 {
   int istat = 0;
-  FildeshKV_id_t add_id;
+  FildeshKV_id add_id;
   for (add_id = any_id_FildeshKV(add_map);
        !fildesh_nullid(add_id);
        add_id = any_id_FildeshKV(add_map))
   {
     const char* add_key = (const char*) key_at_FildeshKV(add_map, add_id);
     const SymVal* add_sym = (const SymVal*) value_at_FildeshKV(add_map, add_id);
-    const FildeshKV_id_t id = ensure_FildeshKV( map, add_key, size_of_key_at_FildeshKV(add_map, add_id));
+    const FildeshKV_id id = ensure_FildeshKV( map, add_key, size_of_key_at_FildeshKV(add_map, add_id));
     const SymVal* sym = (const SymVal*) value_at_FildeshKV(map, id);
     if (sym && !(sym->kind==NSymValKinds || sym->kind==HereDocVal || sym->kind==DefVal)) {
       FailBreak(cmd, "Trying to overwrite an existing stream variable", add_key);
@@ -680,6 +680,17 @@ transfer_map_entries(FildeshKV* map, FildeshKV* add_map, const Command* cmd)
     remove_at_FildeshKV(add_map, add_id);
   }
   return istat;
+}
+
+static
+  bool
+zero_argv_SymValKind(SymValKind kind)
+{
+  return (
+      kind == IDescVal || kind == ODescVal || kind == IODescVal ||
+      kind == IFutureDescVal || kind == OFutureDescVal ||
+      kind == IFutureDescFileVal || kind == OFutureDescFileVal ||
+      kind == ODescStatusVal);
 }
 
 static
@@ -696,8 +707,7 @@ setup_commands(Command** cmds, CommandHookup* cmd_hookup)
        command_index < count_of_FildeshAT(cmds) && istat == 0;
        ++command_index)
   {
-    unsigned arg_q = 0;
-    unsigned arg_r = 0;
+    unsigned arg_q, arg_r;
     Command* cmd = &(*cmds)[command_index];
 
     /* The command defines a HERE document.*/
@@ -717,38 +727,44 @@ setup_commands(Command** cmds, CommandHookup* cmd_hookup)
 
     for (arg_r = 0; arg_r < count_of_FildeshAT(cmd->args) && istat == 0; ++ arg_r) {
       char* arg = (*cmd->args)[arg_r];
-      if (arg_q == 0 && eq_cstr("stdin", arg)) {
+      const bool on_argv = !zero_argv_SymValKind(
+          peek_fildesh_SymVal_arg(arg, (arg_r == 0)));
+
+      if (eq_cstr("stdin", arg)) {
         cmd->kind = StdinCommand;
         cmd->stdis = cmd_hookup->stdin_fd;
         cmd_hookup->stdin_fd = -1;
         if (cmd->stdis < 0) {
           FailBreak(cmd, "Cannot have multiple stdin commands", arg);
         }
-        break;
+        assert(on_argv);
       }
-      else if (arg_q == 0 && eq_cstr("stdout", arg)) {
+      else if (eq_cstr("stdout", arg)) {
         cmd->kind = StdoutCommand;
         cmd->stdos = cmd_hookup->stdout_fd;
         cmd_hookup->stdout_fd = -1;
         if (cmd->stdos < 0) {
           FailBreak(cmd, "Cannot have multiple stdout commands", arg);
         }
-        break;
+        assert(on_argv);
       }
-      else if (arg_q == 0 && eq_cstr("stderr", arg)) {
+      else if (eq_cstr("stderr", arg)) {
         cmd->kind = StderrCommand;
-        break;
+        assert(on_argv);
       }
-      else if (arg_q == 0 && eq_cstr("stdargz", arg)) {
+      else if (eq_cstr("stdargz", arg)) {
         unsigned i;
         (*cmd->args)[arg_r] = (char*)"oargz";
         push_FildeshAT(cmd->args, (char*) "--");
         for (i = 0; i < count_of_FildeshAT(cmd_hookup->stdargs); ++i) {
           push_FildeshAT(cmd->args, (char*)(*cmd_hookup->stdargs)[i]);
         }
+        assert(on_argv);
       }
+      if (on_argv) {break;}
     }
 
+    arg_q = 0;
     for (arg_r = 0; arg_r < count_of_FildeshAT(cmd->args) && istat == 0; ++ arg_r)
     {
       char* arg = (*cmd->args)[arg_r];
@@ -769,13 +785,13 @@ setup_commands(Command** cmds, CommandHookup* cmd_hookup)
           (*cmd->args)[arg_q] = sym->as.here_doc;
         }
         else if (sym->kind == ODescVal) {
-          fildesh_fd_t fd = sym->as.file_desc;
+          Fildesh_fd fd = sym->as.file_desc;
           sym->kind = NSymValKinds;
           add_iarg_Command (cmd, fd, true);
           (*cmd->args)[arg_q] = NULL;
         }
         else if (sym->kind == DefVal) {
-          fildesh_fd_t fd = pipe_from_elastic(&(*cmds)[sym->cmd_idx]);
+          Fildesh_fd fd = pipe_from_elastic(&(*cmds)[sym->cmd_idx]);
           if (fd < 0) {
             FailBreak(cmd, "Failed to create pipe for variable", arg);
           }
@@ -799,10 +815,10 @@ setup_commands(Command** cmds, CommandHookup* cmd_hookup)
         fildesh_compat_fd_close(sym->as.file_desc);
 
         if (sym->ios_idx < count_of_FildeshAT(last->os)) {
-          fildesh_compat_fd_move_to((*last->os)[sym->ios_idx], cmd->stdos);
+          fildesh_compat_fd_copy_to((*last->os)[sym->ios_idx], cmd->stdos);
         }
         else {
-          fildesh_compat_fd_move_to(last->stdos, cmd->stdos);
+          fildesh_compat_fd_copy_to(last->stdos, cmd->stdos);
         }
         sym->kind = NSymValKinds;
         cmd->stdos = -1;
@@ -879,6 +895,7 @@ setup_commands(Command** cmds, CommandHookup* cmd_hookup)
             cmd->stdis = fd;
           }
           else {
+            assert(kind == IDescFileVal);
             (*cmd->args)[arg_q] = filename;
             if (arg_q == 0)
               cmd->exec_doc = sym->as.here_doc;
@@ -977,7 +994,7 @@ setup_commands(Command** cmds, CommandHookup* cmd_hookup)
                kind == ODescStatusVal ||
                kind == ODescFileVal)
       {
-        fildesh_fd_t fd[2];
+        Fildesh_fd fd[2];
         SymVal* sym = declare_fildesh_SymVal(add_map, ODescVal, arg);
         if (!sym) {istat = -1; break;}
         sym->cmd_idx = command_index;
@@ -1005,7 +1022,7 @@ setup_commands(Command** cmds, CommandHookup* cmd_hookup)
       }
       else if (kind == IFutureDescVal || kind == IFutureDescFileVal)
       {
-        fildesh_fd_t fd[2];
+        Fildesh_fd fd[2];
         SymVal* sym = declare_fildesh_SymVal(add_map, IFutureDescVal, arg);
         if (!sym) {istat = -1; break;}
         sym->cmd_idx = command_index;
@@ -1132,6 +1149,11 @@ FILDESH_POSIX_THREAD_CALLBACK(builtin_command_thread_fn, BuiltinCommandThreadArg
     }
     cmd->stdos = -1;
   }
+  /* Much like `cmd->stdis` and `cmd->stdos` above, we forget
+   * about all file descriptors and trust that the builtin will close them.
+   */
+  mpop_FildeshAT(cmd->is, count_of_FildeshAT(cmd->is));
+  mpop_FildeshAT(cmd->os, count_of_FildeshAT(cmd->os));
 
   if (false) {
     for (i = 0; i < argc; ++i) {
@@ -1147,10 +1169,8 @@ FILDESH_POSIX_THREAD_CALLBACK(builtin_command_thread_fn, BuiltinCommandThreadArg
     cmd->status = -1;
   }
 
-  /* `main_fn()` should have closed all files passed to it.*/
-  mpop_FildeshAT(cmd->is, count_of_FildeshAT(cmd->is));
-  mpop_FildeshAT(cmd->os, count_of_FildeshAT(cmd->os));
   for (i = 0; i < argc; ++i) {
+    /* Builtin should have freed everything.*/
     assert(!inputs[i]);
     assert(!outputs[i]);
   }
@@ -1220,7 +1240,7 @@ add_inheritfd_flags_Command(char*** argv, Command* cmd, bool inprocess) {
      * - The fds providing input arguments. See inprocess else clause.
      */
     for (i = 0; i < count_of_FildeshAT(cmd->is); ++i) {
-      const fildesh_fd_t fd = (*cmd->is)[i];
+      const Fildesh_fd fd = (*cmd->is)[i];
       if (fd != cmd->exec_fd) {
         push_FildeshAT(argv, lace_strdup("-inheritfd") );
         push_FildeshAT(argv, lace_fd_strdup(fd) );
@@ -1230,7 +1250,7 @@ add_inheritfd_flags_Command(char*** argv, Command* cmd, bool inprocess) {
      * - The fds that must be closed on exit.
      */
     for (i = 0; i < count_of_FildeshAT(cmd->os); ++i) {
-      const fildesh_fd_t fd = (*cmd->os)[i];
+      const Fildesh_fd fd = (*cmd->os)[i];
       bool inherit = true;
       unsigned j;
       for (j = 0; j < count_of_FildeshAT(cmd->exit_fds) && inherit; ++j) {
@@ -1400,7 +1420,7 @@ spawn_commands(const char* fildesh_exe, Command** cmds,
         fildesh_log_errorf("Could not pthread_create(). File: %s", (*argv)[0]);
       }
     } else {
-      fildesh_compat_fd_t* fds_to_inherit =
+      Fildesh_fd* fds_to_inherit =
         build_fds_to_inherit_Command(cmd);
       cmd->pid = fildesh_compat_fd_spawnvp(
           cmd->stdis, cmd->stdos, 2, fds_to_inherit, (const char**)(*argv));
@@ -1455,7 +1475,6 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
                              FildeshX** inputv, FildeshO** outputv)
 {
   char* fildesh_exe = argv[0];
-  DECLARE_DEFAULT_FildeshAT(const char*, script_args);
   Command** cmds = NULL;
   bool use_stdin = true;
   FildeshX* script_in = NULL;
@@ -1509,7 +1528,7 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
     }
     else if (eq_cstr (arg, "-version")) {
       FildeshO* out = open_FildeshOF("/dev/stdout");
-      putstr_FildeshO(out, fildesh_bin_version);
+      putstrlit_FildeshO(out, fildesh_bin_version);
       putc_FildeshO(out, '\n');
       close_FildeshO(out);
       exiting = true;
@@ -1583,7 +1602,7 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
     }
     else if (eq_cstr (arg, "-stdin")) {
       const char* stdin_filepath = argv[argi++];
-      fildesh_fd_t fd = fildesh_arg_open_readonly(stdin_filepath);
+      Fildesh_fd fd = fildesh_arg_open_readonly(stdin_filepath);
       if (fd >= 0) {
         istat = fildesh_compat_fd_move_to(cmd_hookup->stdin_fd, fd);
         if (istat != 0) {
@@ -1597,7 +1616,7 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
     }
     else if (eq_cstr (arg, "-stdout")) {
       const char* stdout_filepath = argv[argi++];
-      fildesh_fd_t fd = fildesh_arg_open_writeonly(stdout_filepath);
+      Fildesh_fd fd = fildesh_arg_open_writeonly(stdout_filepath);
       if (fd == 2) {
         fildesh_log_error("The -stdout flag does not support redirecting to stderr.");
         exstatus = 64;
@@ -1615,7 +1634,7 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
     }
     else if (eq_cstr (arg, "-stderr")) {
       const char* stderr_filepath = argv[argi++];
-      fildesh_fd_t fd = -1;
+      Fildesh_fd fd = -1;
       if (0 == strcmp("-", stderr_filepath) ||
           0 == strcmp("/dev/stdout", stderr_filepath) ||
           0 == strcmp("/dev/fd/1", stderr_filepath))
@@ -1664,7 +1683,6 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
       }
       use_stdin = false;
       if (!arg) {
-        push_FildeshAT(script_args, "/dev/fd/something");
         script_in = open_arg_FildeshXF(argi-1, argv, inputv);
         if (!script_in) {
           fildesh_log_errorf("Cannot read script from builtin.");
@@ -1678,7 +1696,6 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
       {
         cmd_hookup->stdin_fd = -1;
       }
-      push_FildeshAT(script_args, arg);
       script_in = open_arg_FildeshXF(argi-1, argv, inputv);
       if (!script_in) {
         fildesh_compat_errno_trace();
@@ -1696,7 +1713,6 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
         &argv[argi], &cmd_hookup->map, cmd_hookup->stdargs,  tmp_out);
   }
   if (exiting || exstatus != 0) {
-    close_FildeshAT(script_args);
     close_FildeshKV(alias_map);
     free_CommandHookup(cmd_hookup, &istat);
     close_FildeshAlloc(global_alloc);
@@ -1714,56 +1730,7 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
   if (use_stdin) {
     script_in = open_arg_FildeshXF(0, argv, inputv);
     cmd_hookup->stdin_fd = -1;
-    push_FildeshAT(script_args, "/dev/stdin");
   }
-
-  while (argi < argc) {
-    const char* arg = argv[argi++];
-    push_FildeshAT(script_args, arg);
-  }
-
-  if (count_of_FildeshAT(script_args) > 0) {
-    /* TODO(#99): Remove in v0.2.0.*/
-    SymVal* sym;
-    Command* cmd = grow1_FildeshAT(cmds);
-    truncate_FildeshO(tmp_out);
-    print_int_FildeshO(tmp_out, (int)(count_of_FildeshAT(script_args)-1));
-
-    init_Command(cmd, global_alloc);
-    cmd->kind = HereDocCommand;
-    cmd->line_num = 0;
-    cmd->line = strdup_FildeshAlloc(global_alloc, "#");
-    cmd->doc = strdup_FildeshO(tmp_out, global_alloc);
-
-    sym = declare_fildesh_SymVal(&cmd_hookup->map, HereDocVal, cmd->line);
-    assert(sym);
-    sym->as.here_doc = cmd->doc;
-
-    while (count_of_FildeshAT(script_args) < 10) {
-      push_FildeshAT(script_args, "");
-    }
-  }
-
-  for (i = 0; i < count_of_FildeshAT(script_args); ++i) {
-    /* TODO(#99): Remove in v0.2.0.*/
-    SymVal* sym;
-    Command* cmd = grow1_FildeshAT(cmds);
-
-    truncate_FildeshO(tmp_out);
-    print_int_FildeshO(tmp_out, (int)i);
-
-    init_Command(cmd, global_alloc);
-    cmd->kind = HereDocCommand;
-    cmd->line_num = 0;
-    cmd->line = strdup_FildeshO(tmp_out, global_alloc);
-    cmd->doc = strdup_FildeshAlloc(global_alloc, (*script_args)[i]);
-
-    sym = declare_fildesh_SymVal(&cmd_hookup->map, HereDocVal, cmd->line);
-    assert(sym);
-    sym->as.here_doc = cmd->doc;
-  }
-  close_FildeshAT(script_args);
-
   if (cmd_hookup->stdin_fd == 0) {
     cmd_hookup->stdin_fd = fildesh_compat_fd_claim(cmd_hookup->stdin_fd);
   }
@@ -1776,6 +1743,7 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
 
   fildesh_compat_errno_trace();
   while (exstatus == 0 && script_in) {
+    const Fildesh_fd stdout_fd = cmd_hookup->stdout_fd;
     FildeshAlloc* scope_alloc = open_FildeshAlloc();
     istat = parse_file(
         cmd_hookup,
@@ -1843,6 +1811,7 @@ fildesh_builtin_fildesh_main(unsigned argc, char** argv,
     if (exstatus == 0) {
       exstatus = istat;
     }
+    cmd_hookup->stdout_fd = stdout_fd;
   }
   close_FildeshX(script_in);  /* Just in case we missed it.*/
   free_CommandHookup(cmd_hookup, &istat);

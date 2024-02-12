@@ -1,33 +1,8 @@
-#include "src/sxproto/value.h"
-
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
 
-static
-  void
-write_txtpb_literal(FildeshO* out, const FildeshSxprotoValue* e)
-{
-  if (e->field_kind == FildeshSxprotoFieldKind_LITERAL_STRING) {
-    size_t i;
-    putc_FildeshO(out, '"');
-    for (i = 0; e->text[i] != '\0'; ++i) {
-      switch (e->text[i]) {
-        case '"':   putstr_FildeshO(out, "\\\"");  break;
-        case '\\':  putstr_FildeshO(out, "\\\\");  break;
-        case '\n':  putstr_FildeshO(out, "\\n");  break;
-        default:    putc_FildeshO(out, e->text[i]);  break;
-      }
-    }
-    putc_FildeshO(out, '"');
-  }
-  else if (e->text[0] == '+') {
-    putstr_FildeshO(out, &e->text[1]);
-  }
-  else {
-    putstr_FildeshO(out, e->text);
-  }
-}
+#include "src/sxproto/value.h"
 
 static void
 write_txtpb_FildeshO(
@@ -51,29 +26,29 @@ write_txtpb_FildeshO(
       putstr_FildeshO(out, e->text);
       if (e->field_kind == FildeshSxprotoFieldKind_MESSAGE) {
         if (fildesh_nullid(e->elem)) {
-          putstr_FildeshO(out, " {}");
+          putstrlit_FildeshO(out, " {}");
         }
         else {
-          putstr_FildeshO(out, " {");
+          putstrlit_FildeshO(out, " {");
           write_txtpb_FildeshO(out, sxpb, sub_it, indent_level+1);
           NEWLINE_INDENT(indent_level);
           putc_FildeshO(out, '}');
         }
       }
       else if (e->field_kind == FildeshSxprotoFieldKind_ARRAY) {
-        putstr_FildeshO(out, ": [");
+        putstrlit_FildeshO(out, ": [");
         write_txtpb_FildeshO(out, sxpb, sub_it, indent_level);
         putc_FildeshO(out, ']');
       }
       else if (e->field_kind == FildeshSxprotoFieldKind_MANYOF) {
-        putstr_FildeshO(out, " {values: [");
+        putstrlit_FildeshO(out, " {values: [");
         write_txtpb_FildeshO(out, sxpb, sub_it, indent_level);
-        putstr_FildeshO(out, "]}");
+        putstrlit_FildeshO(out, "]}");
       }
       else {
         assert(!fildesh_nullid(e->elem));
-        putstr_FildeshO(out, ": ");
-        write_txtpb_literal(out, &(*sxpb->values)[e->elem]);
+        putstrlit_FildeshO(out, ": ");
+        print_sxpb_literal_value_FildeshO(out, &(*sxpb->values)[e->elem]);
       }
     }
     else if (m->field_kind == FildeshSxprotoFieldKind_ARRAY) {
@@ -85,13 +60,13 @@ write_txtpb_FildeshO(
           putc_FildeshO(out, '}');
         }
         else {
-          putstr_FildeshO(out, "}, ");
+          putstrlit_FildeshO(out, "}, ");
         }
       }
       else {
-        write_txtpb_literal(out, e);
+        print_sxpb_literal_value_FildeshO(out, e);
         if (!fildesh_nullid(e->next)) {
-          putstr_FildeshO(out, ", ");
+          putstrlit_FildeshO(out, ", ");
         }
       }
     }
@@ -102,10 +77,10 @@ write_txtpb_FildeshO(
       if (e->field_kind == FildeshSxprotoFieldKind_MESSAGE) {
         putstr_FildeshO(out, e->text);
         if (fildesh_nullid(e->elem)) {
-          putstr_FildeshO(out, " {}");
+          putstrlit_FildeshO(out, " {}");
         }
         else {
-          putstr_FildeshO(out, " {");
+          putstrlit_FildeshO(out, " {");
           write_txtpb_FildeshO(out, sxpb, sub_it, indent_level+2);
           NEWLINE_INDENT(indent_level+1);
           putc_FildeshO(out, '}');
@@ -113,26 +88,26 @@ write_txtpb_FildeshO(
       }
       else if (e->field_kind == FildeshSxprotoFieldKind_ARRAY) {
         putstr_FildeshO(out, e->text);
-        putstr_FildeshO(out, ": [");
+        putstrlit_FildeshO(out, ": [");
         write_txtpb_FildeshO(out, sxpb, sub_it, indent_level+1);
         putc_FildeshO(out, ']');
       }
       else if (e->field_kind == FildeshSxprotoFieldKind_MANYOF) {
         putstr_FildeshO(out, e->text);
-        putstr_FildeshO(out, " {values: [");
+        putstrlit_FildeshO(out, " {values: [");
         write_txtpb_FildeshO(out, sxpb, sub_it, indent_level+1);
-        putstr_FildeshO(out, "]}");
+        putstrlit_FildeshO(out, "]}");
       }
       else {
         if (fildesh_nullid(e->elem)) {
-          putstr_FildeshO(out, "value: ");
-          write_txtpb_literal(out, e);
+          putstrlit_FildeshO(out, "value: ");
+          print_sxpb_literal_value_FildeshO(out, e);
         }
         else {
           assert(e->field_kind == FildeshSxprotoFieldKind_LITERAL);
           putstr_FildeshO(out, e->text);
-          putstr_FildeshO(out, ": ");
-          write_txtpb_literal(out, &(*sxpb->values)[e->elem]);
+          putstrlit_FildeshO(out, ": ");
+          print_sxpb_literal_value_FildeshO(out, &(*sxpb->values)[e->elem]);
         }
       }
 
@@ -141,7 +116,7 @@ write_txtpb_FildeshO(
         putc_FildeshO(out, '}');
       }
       else {
-        putstr_FildeshO(out, "}, ");
+        putstrlit_FildeshO(out, "}, ");
       }
     }
     it.elem_id = e->next;
@@ -156,17 +131,4 @@ print_txtpb_FildeshO(FildeshO* out, FildeshSxpb* sxpb)
       top_of_FildeshSxpb(sxpb),
       0);
   putc_FildeshO(out, '\n');
-}
-
-/* Leaves output files open.*/
-/* Deprecated. Use print_txtpb_FildeshO().*/
-bool sxproto2textproto(FildeshX* in, FildeshO* out, FildeshO* err_out)
-{
-  FildeshSxpb* sxpb = slurp_sxpb_close_FildeshX(in, NULL, err_out);
-  if (!sxpb) {
-    return false;
-  }
-  print_txtpb_FildeshO(out, sxpb);
-  close_FildeshSxpb(sxpb);
-  return true;
 }

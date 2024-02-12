@@ -9,35 +9,35 @@ sxproto_schema()
 {
   static FildeshSxprotoField m_fields[] = {
     {"car", FILL_DEFAULT_FildeshSxprotoField_STRING},
-    {"cdr", FILL_UNKNOWN_FildeshSxprotoField_MESSAGE},
+    {"cdr", FILL_RECURSIVE_FildeshSxprotoField_MESSAGE},
   };
   static FildeshSxprotoField predicates_manyof[] = {
     {"", FILL_FildeshSxprotoField_STRING(1, INT_MAX)},
     {"b", FILL_DEFAULT_FildeshSxprotoField_BOOL},
-    {"or", FILL_UNKNOWN_FildeshSxprotoField_MANYOF},
+    {"b_alias", FILL_DEFAULT_FildeshSxprotoField_ALIAS},
     {"u", FILL_FildeshSxprotoField_INT(0, 1)},
+    {"or", FILL_RECURSIVE_FildeshSxprotoField_MANYOF},
   };
-  static const FildeshSxprotoField toplevel_fields[] = {
-    {"a", FILL_DEFAULT_FildeshSxprotoField_FLOATS},
+  static FildeshSxprotoField toplevel_fields[] = {
     {"b", FILL_DEFAULT_FildeshSxprotoField_BOOL},
-    {"cons", FILL_FildeshSxprotoField_MESSAGE(m_fields)},
-    {"f", FILL_FildeshSxprotoField_FLOAT(0, 10)},
-    {"messages", FILL_FildeshSxprotoField_MESSAGES(m_fields)},
     {"n", FILL_FildeshSxprotoField_INT(0, INT_MAX)},
+    {"f", FILL_FildeshSxprotoField_FLOAT(0, 10)},
+    {"a", FILL_DEFAULT_FildeshSxprotoField_FLOATS},
+    {"cons", FILL_FildeshSxprotoField_MESSAGE(m_fields)},
+    {"messages", FILL_FildeshSxprotoField_MESSAGES(m_fields)},
     {"predicates", FILL_FildeshSxprotoField_MANYOF(predicates_manyof)},
     {"s", FILL_FildeshSxprotoField_STRING(1, 64)},
-    {"s_alternate_name", FILL_FildeshSxprotoField_ALIAS("s")},
+    {"s_alternate_name", FILL_DEFAULT_FildeshSxprotoField_ALIAS},
   };
-  static const FildeshSxprotoField toplevel_message = {
-    "", FILL_FildeshSxprotoField_MESSAGE(toplevel_fields)
-  };
-  static bool unknowns_fixed = false;
-  if (!unknowns_fixed) {
-    unknowns_fixed = true;
-    recurse_unknowns_FildeshSxprotoField_MESSAGE(m_fields);
-    recurse_unknowns_FildeshSxprotoField_MANYOF(predicates_manyof);
+  DECLARE_TOPLEVEL_FildeshSxprotoField(schema, toplevel_fields);
+  DECLARE_TOPLEVEL_FildeshSxprotoField(schema_dupe, toplevel_fields);
+
+  /* We test something that shares the same data.*/
+  if (lone_toplevel_initialization_FildeshSxprotoField(schema_dupe)) {
+    return NULL;
   }
-  return &toplevel_message;
+  lone_toplevel_initialization_FildeshSxprotoField(schema);
+  return schema;
 }
 
 static
@@ -58,19 +58,21 @@ parse_with_schema_test()
      (b false)\n\
      (((or))\n\
       (b 1)\n\
-      (b 0)\n\
+      (b_alias 0)\n\
       (u 1)\n\
       (u 0)))\n\
     ((a) 0.5e1 4 30e-1 2.e0 1)\n\
     (cons (car \"first\") (cdr (car \"second\") (cdr (car \"third\") (cdr))))\n\
     ((messages)\n\
      (() (car \"schwam\"))\n\
-     ()\n\
+     (())\n\
      (() (\"car\" \"doo\") (cdr (car \"two and heif\"))))\n\
     ";
-  FildeshX in[1] = {LITERAL_FildeshX(content)};
+  DECLARE_STRLIT_FildeshX(in, content);
   FildeshO* err_out = open_FildeshOF("/dev/stderr");
-  const FildeshSxprotoField* const schema = sxproto_schema();
+  const FildeshSxprotoField* const schema = (
+      (void)sxproto_schema(),
+      sxproto_schema());
   FildeshSxpb* const sxpb = slurp_sxpb_close_FildeshX(in, schema, err_out);
   const FildeshSxpbIT top_it = top_of_FildeshSxpb(sxpb);
   FildeshSxpbIT it;

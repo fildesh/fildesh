@@ -72,7 +72,7 @@ bool all_done(IOState** ios)
 
 static
   int
-setfd_async(fildesh_fd_t fd)
+setfd_async(Fildesh_fd fd)
 {
   int istat;
   istat = fcntl(fd, F_GETFD);
@@ -101,7 +101,7 @@ main_elastic_aio(unsigned argc, char** argv)
   while (argi < argc) {
     const char* arg = argv[argi++];
     IOState* io;
-    fildesh_fd_t fd;
+    Fildesh_fd fd;
 
     if (0 == strcmp(arg, "-x")) {
       if (argi == argc) {
@@ -138,7 +138,7 @@ main_elastic_aio(unsigned argc, char** argv)
 
   /* Default input is stdin.*/
   if ((*ios)[0].aio.aio_fildes == -1) {
-    fildesh_fd_t fd = fildesh_arg_open_readonly("-");
+    Fildesh_fd fd = fildesh_arg_open_readonly("-");
     IOState* io = &(*ios)[0];
     io->aio.aio_fildes = fd;
     if (0 > setfd_async(fd)) {
@@ -149,7 +149,7 @@ main_elastic_aio(unsigned argc, char** argv)
   }
   /* Default output is stdout.*/
   if (count_of_FildeshAT(ios) == 1) {
-    fildesh_fd_t fd = fildesh_arg_open_writeonly("-");
+    Fildesh_fd fd = fildesh_arg_open_writeonly("-");
     IOState* io = grow1_FildeshAT(ios);
     *io = default_IOState();
     io->aio.aio_fildes = fd;
@@ -309,7 +309,7 @@ main_elastic_aio(unsigned argc, char** argv)
   }
 
   for (i = 0; i < count_of_FildeshAT(ios); ++i) {
-    fildesh_fd_t fd = (*ios)[i].aio.aio_fildes;
+    Fildesh_fd fd = (*ios)[i].aio.aio_fildes;
     if ((*ios)[i].pending) {
       aio_cancel(fd, &(*ios)[i].aio);
     }

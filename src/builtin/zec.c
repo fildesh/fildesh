@@ -71,11 +71,11 @@ static
   bool
 cat_next_line(FildeshO* out, FildeshX* in)
 {
-  char* s = getline_FildeshX(in);
-  if (!s) {
+  FildeshX slice = sliceline_FildeshX(in);
+  if (!slice.at) {
     return true;
   }
-  putstr_FildeshO(out, s);
+  putslice_FildeshO(out, slice);
   flush_FildeshO(out);
   return (0 == out->size);
 }

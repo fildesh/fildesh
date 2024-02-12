@@ -43,7 +43,7 @@ fildesh_builtin_replace_string_main(unsigned argc, char** argv,
   }
 
   while (exstatus == 0 && 0 < read_FildeshX(in)) {
-    FildeshX slice = memref_FildeshX(&in->at[in->off], in->size - in->off);
+    FildeshX slice = getslice_FildeshX(in);
     FildeshX span;
     for (span = until_bytestring_FildeshX(&slice, needle, needle_size);
          span.at;

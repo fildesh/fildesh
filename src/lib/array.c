@@ -20,11 +20,13 @@ clear_FildeshAT(void* p)
 }
 
   void*
-realloc_more_FildeshA_(void* at, fildesh_lgsize_t* p_allocated_lgcount,
-                       const size_t element_size, const size_t count)
+realloc_more_FildeshA_(
+    void* at, Fildesh_lgsize*
+    p_allocated_lgcount,
+    const size_t element_size,
+    const size_t count)
 {
-  fildesh_lgsize_t allocated_lgcount = *p_allocated_lgcount;
-
+  Fildesh_lgsize allocated_lgcount = *p_allocated_lgcount;
   if (allocated_lgcount == 0) {
     allocated_lgcount = 1;
   }
@@ -39,10 +41,13 @@ realloc_more_FildeshA_(void* at, fildesh_lgsize_t* p_allocated_lgcount,
 }
 
   void*
-realloc_less_FildeshA_(void* at, fildesh_lgsize_t* p_allocated_lgcount,
-                       const size_t element_size, const size_t count)
+realloc_less_FildeshA_(
+    void* at,
+    Fildesh_lgsize* p_allocated_lgcount,
+    const size_t element_size,
+    const size_t count)
 {
-  fildesh_lgsize_t allocated_lgcount = *p_allocated_lgcount;
+  Fildesh_lgsize allocated_lgcount = *p_allocated_lgcount;
   do {
     allocated_lgcount -= 1;
   } while ((allocated_lgcount >= 3) && ((count >> (allocated_lgcount - 3)) == 0));

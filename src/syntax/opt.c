@@ -26,9 +26,8 @@ static
 getopt_FildeshO(FildeshO* out, const char* const flag, const char* const arg)
 {
   const char* s;
-  /* TODO(#99): Make these 2 cases return NULL v0.2.0.*/
-  if (flag[0] != '-') {return flag;}
-  if (flag[1] == '\0') {return flag;}
+  if (flag[0] != '-') {return NULL;}
+  if (flag[1] == '\0') {return NULL;}
 
   s = &flag[1];
   if (flag[1] == '-') {
@@ -66,16 +65,11 @@ fildesh_syntax_parse_flags(
       }
       break;
     }
-    putstr_FildeshO(tmp_out, ".self.opt.");
+    putstrlit_FildeshO(tmp_out, ".self.opt.");
     v = getopt_FildeshO(tmp_out, args[i], args[i+1]);
     if (!v) {
       fildesh_log_errorf("Expected a value for flag: %s", args[i]);
       return 64;
-    }
-    if (tmp_out->size == 10) {
-      /* TODO(#99): Remove in v0.2.0.*/
-      assert(v == args[i] || v == args[i+1]);
-      break;
     }
     if (v == args[i+1]) {
       i += 1;

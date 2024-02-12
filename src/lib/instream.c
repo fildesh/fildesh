@@ -11,9 +11,15 @@ static inline bool sliced_FildeshX(const FildeshX* slice) {
   return (slice->at && (slice->alloc_lgsize == 0));
 }
 
-static inline FildeshX slice_FildeshX(FildeshX* in, size_t beg_off, size_t end_off) {
-  assert(beg_off <= end_off);
-  return memref_FildeshX(&in->at[beg_off], end_off - beg_off);
+static inline
+  FildeshX
+slice_FildeshX(const FildeshX* in, size_t beg_off, size_t end_off)
+{
+  FildeshX slice = *in;
+  slice.off = beg_off;
+  slice.size = end_off;
+  assert(slice.off <= slice.size);
+  return getslice_FildeshX(&slice);
 }
 
   size_t
@@ -58,6 +64,7 @@ grow_FildeshX(FildeshX* in, size_t capac)
 flush_FildeshX(FildeshX* x)
 {
   assert(x->off <= x->size);
+  assert(!sliced_FildeshX(x));
   if (x->off > 0) {
     if (x->off == x->size) {
       truncate_FildeshX(x);
@@ -66,9 +73,6 @@ flush_FildeshX(FildeshX* x)
       x->size -= x->off;
       memmove(x->at, &x->at[x->off], x->size);
       x->off = 0;
-    }
-    if (sliced_FildeshX(x)) {
-      x->at[x->size] = '\0';
     }
   }
 }
@@ -86,22 +90,16 @@ maybe_flush_FildeshX(FildeshX* x)
   flush_FildeshX(x);
 }
 
-static
-  char*
-cstr_of_FildeshX(FildeshX* in)
-{
-  assert(!sliced_FildeshX(in));
-  *grow_FildeshX(in, 1) = '\0';
-  in->size -= 1;
-  return &in->at[in->off];
-}
-
-  char*
+  void
 slurp_FildeshX(FildeshX* in)
 {
+  if (!in) {return;}
   maybe_flush_FildeshX(in);
   while (read_FildeshX(in) > 0) {/* Yummy.*/}
-  return cstr_of_FildeshX(in);
+  if (in->vt && in->vt->close_fn) {
+    in->vt->close_fn(in);
+  }
+  in->flush_lgsize = 0;
 }
 
   void
@@ -314,19 +312,15 @@ skip_bytestring_FildeshX(FildeshX* in, const unsigned char* s, size_t n)
 slicechr_FildeshX(FildeshX* in, char delim)
 {
   FildeshX slice;
-  assert(!sliced_FildeshX(in));
   slice = until_char_FildeshX(in, delim);
   if (slice.at) {
     if (in->off < in->size) {
-      in->at[in->off] = '\0';
       in->off += 1;
     }
     else {
       size_t slice_offset = (size_t) (slice.at - in->at);
-      cstr_of_FildeshX(in);
       slice.at = &in->at[slice_offset];
     }
-    assert(slice.at[slice.size] == '\0');
   }
   return slice;
 }
@@ -339,7 +333,6 @@ sliceline_FildeshX(FildeshX* in)
   /* Ignore carriage returns.*/
   if (slice.size > 0 && slice.at[slice.size-1] == '\r') {
     slice.size -= 1;
-    slice.at[slice.size] = '\0';
   }
   return slice;
 }
@@ -348,64 +341,14 @@ sliceline_FildeshX(FildeshX* in)
   FildeshX
 slicestr_FildeshX(FildeshX* in, const char* delim)
 {
-  FildeshX slice = DEFAULT_FildeshX;
-  size_t delim_length = strlen(delim);
-  char* s = NULL;
-  size_t ret_off;
-
-  assert(!sliced_FildeshX(in));
-  assert(delim_length > 0);
-
-  maybe_flush_FildeshX(in);
-  ret_off = in->off;
-
-  while (in->off + delim_length > in->size) {
-    if (0 == read_FildeshX(in)) {
-      break;
-    }
+  const size_t delim_size = strlen(delim);
+  FildeshX slice = until_bytestring_FildeshX(
+      in, (const unsigned char*)delim, delim_size);
+  if (avail_FildeshX(in)) {
+    in->off += delim_size;
+    assert(in->off <= in->size);
   }
-  if (in->off + delim_length <= in->size) {
-    s = strstr(cstr_of_FildeshX(in), delim);
-    while (!s) {
-      in->off = in->size + 1 - delim_length;
-      if (0 == read_FildeshX(in)) {
-        break;
-      }
-      s = strstr(cstr_of_FildeshX(in), delim);
-    }
-  }
-
-  if (ret_off == in->size) {
-    return slice;  /* Empty.*/
-  }
-  assert(in->at[in->size] == '\0');
-
-  if (s) {
-    in->off = delim_length + (s - in->at);
-    slice = slice_FildeshX(in, ret_off, in->off-delim_length);
-    slice.at[slice.size] = '\0';
-  } else {
-    in->off = in->size;
-    slice = slice_FildeshX(in, ret_off, in->size);
-  }
-  assert(slice.at[slice.size] == '\0');
   return slice;
-}
-
-/** Get line, return string.**/
-  char*
-getline_FildeshX(FildeshX* in)
-{
-  FildeshX slice = sliceline_FildeshX(in);
-  return slice.at;
-}
-
-/** Get string up to a delimiter. Push offset past delimiter.**/
-  char*
-gets_FildeshX(FildeshX* in, const char* delim)
-{
-  FildeshX slice = slicestr_FildeshX(in, delim);
-  return slice.at;
 }
 
   bool

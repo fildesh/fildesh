@@ -52,7 +52,7 @@ read_MockFildeshXF(MockFildeshXF* xf) {
 }
 
   void
-param2_test_getline(unsigned chunk_size, fildesh_lgsize_t flush_lgsize) {
+param2_test_getline(unsigned chunk_size, Fildesh_lgsize flush_lgsize) {
   static const char* const lines[] = {
     "this is the first line",
     "this is the second line",
@@ -62,35 +62,42 @@ param2_test_getline(unsigned chunk_size, fildesh_lgsize_t flush_lgsize) {
     NULL,
   };
   MockFildeshXF xf[1] = { DEFAULT_MockFildeshXF };
-  char* line;
+  FildeshX* const in = &xf->x;
+  FildeshX slice;
   xf->chunk_size = chunk_size;
   xf->x.flush_lgsize = flush_lgsize;
   xf->lines = lines;
 
-  line = getline_FildeshX(&xf->x);
-  assert(0 == strcmp(lines[0], line));
+  slice = sliceline_FildeshX(in);
+  assert(skipstr_FildeshX(&slice, lines[0]));
+  assert(!avail_FildeshX(&slice));
 
-  line = getline_FildeshX(&xf->x);
-  assert(0 == strcmp(lines[1], line));
+  slice = sliceline_FildeshX(in);
+  assert(skipstr_FildeshX(&slice, lines[1]));
+  assert(!avail_FildeshX(&slice));
 
-  line = getline_FildeshX(&xf->x);
-  assert(0 == strcmp(lines[2], line));
+  slice = sliceline_FildeshX(in);
+  assert(skipstr_FildeshX(&slice, lines[2]));
+  assert(!avail_FildeshX(&slice));
 
-  line = getline_FildeshX(&xf->x);
-  assert(0 == strcmp(lines[3], line));
+  slice = sliceline_FildeshX(in);
+  assert(skipstr_FildeshX(&slice, lines[3]));
+  assert(!avail_FildeshX(&slice));
 
-  line = getline_FildeshX(&xf->x);
-  assert(0 == strcmp(lines[4], line));
+  slice = sliceline_FildeshX(in);
+  assert(skipstr_FildeshX(&slice, lines[4]));
+  assert(!avail_FildeshX(&slice));
 
-  line = getline_FildeshX(&xf->x);
-  assert(!line);
+  slice = sliceline_FildeshX(in);
+  assert(!slice.at);
+  assert(!avail_FildeshX(in));
 
-  close_FildeshX(&xf->x);
+  close_FildeshX(in);
 }
 
 int main() {
   unsigned chunk_size;
-  fildesh_lgsize_t flush_lgsize;
+  Fildesh_lgsize flush_lgsize;
 
   for (chunk_size = 1; chunk_size < 20; ++chunk_size) {
     for (flush_lgsize = 0; flush_lgsize < 4; ++flush_lgsize) {

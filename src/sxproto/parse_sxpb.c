@@ -13,11 +13,11 @@ syntax_error(const FildeshSxpbInfo* info, const char* msg)
 {
   FildeshO* const out = info->err_out;
   if (!out) {return;}
-  putstr_FildeshO(out, "Line ");
+  putstrlit_FildeshO(out, "Line ");
   print_int_FildeshO(out, (int)(info->line_count+1));
-  putstr_FildeshO(out, " column ");
+  putstrlit_FildeshO(out, " column ");
   print_int_FildeshO(out, (int)(info->column_count+1));
-  putstr_FildeshO(out, ": ");
+  putstrlit_FildeshO(out, ": ");
   putstr_FildeshO(out, msg);
   putc_FildeshO(out, '\n');
   flush_FildeshO(out);
@@ -272,15 +272,11 @@ insert_next_FildeshSxpb(
     const FildeshSxpbInfo* info)
 {
   const FildeshX text_slice = getslice_FildeshO(text_oslice);
-  FildeshSxpbIT e_it = DEFAULT_FildeshSxpbIT;
-  FildeshSxprotoValue v = DEFAULT_FildeshSxprotoValue;
   FildeshSxprotoValue* const m = &(*sxpb->values)[p_it.cons_id];
   const FildeshSxprotoFieldKind cons_kind = m->field_kind;
+  const char* text;
+  FildeshSxpbIT m_it = DEFAULT_FildeshSxpbIT;
 
-  if (cons_kind == FildeshSxprotoFieldKind_MESSAGE && text_slice.size == 0) {
-    syntax_error(info, "Message expects named fields inside it.");
-    return e_it;
-  }
   if (cons_kind == FildeshSxprotoFieldKind_ARRAY &&
       text_slice.size > 0 &&
       (kind == FildeshSxprotoFieldKind_UNKNOWN ||
@@ -290,58 +286,33 @@ insert_next_FildeshSxpb(
        kind == FildeshSxprotoFieldKind_MANYOF))
   {
     syntax_error(info, "Array cannot hold fields.");
-    return e_it;
+    return FildeshSxpbIT_of_NULL();
   }
   if (cons_kind == FildeshSxprotoFieldKind_MANYOF && text_slice.size == 0) {
     syntax_error(info, "Manyof cannot hold nameless message values yet.");
+    return FildeshSxpbIT_of_NULL();
+  }
+
+  text = ensure_name_FildeshSxpb(sxpb, text_slice.at, text_slice.size);
+  m_it.cons_id = p_it.cons_id;
+
+  if (cons_kind == FildeshSxprotoFieldKind_MESSAGE) {
+    FildeshSxpbIT e_it = direct_ensure_subfield_FildeshSxpb(
+        sxpb, m_it, text, text_slice.size);
+    if (e_it.field_kind != FildeshSxprotoFieldKind_UNKNOWN) {
+      syntax_error(info, "Duplicate field name. Use array syntax for repeated fields.");
+      return FildeshSxpbIT_of_NULL();
+    }
+    e_it.field_kind = kind;
+    (*sxpb->values)[e_it.elem_id].field_kind = kind;
     return e_it;
   }
-
-  e_it.field_kind = kind;
-  e_it.cons_id = p_it.cons_id;
-  e_it.elem_id = count_of_FildeshAT(sxpb->values);
-  v.text = ensure_name_FildeshSxpb(sxpb, text_slice.at, text_slice.size);
-  v.field_kind = kind;
-
   if (fildesh_nullid(m->elem)) {
-    m->elem = e_it.elem_id;
+    assert(fildesh_nullid(p_it.elem_id));
+    return direct_insert_first_FildeshSxpb(sxpb, m_it, text, kind);
   }
-  else if (cons_kind == FildeshSxprotoFieldKind_MESSAGE) {
-    FildeshSxprotoValue* p = NULL;
-    FildeshSxprotoValue* x = &(*sxpb->values)[m->elem];
-    do {
-      int sign = 1;
-      const size_t n = strlen(x->text);
-      if (text_slice.size < n) {sign = -1;}
-      else if (text_slice.size == n) {sign = memcmp(text_slice.at, x->text, n);}
-      else {sign = 1;}
-
-      if (sign < 0) {break;}
-      p = x;
-      x = NULL;
-      if (!fildesh_nullid(p->next)) {
-        x = &(*sxpb->values)[p->next];
-      }
-      /* Continuing when sign == 0 lets us add to repeated fields.*/
-    } while (x);
-
-    if (!p) {
-      v.next = m->elem;
-      m->elem = e_it.elem_id;
-    }
-    else {
-      v.next = p->next;
-      p->next = e_it.elem_id;
-    }
-  }
-  else {
-    FildeshSxprotoValue* p = &(*sxpb->values)[p_it.elem_id];
-    v.next = p->next;
-    p->next = e_it.elem_id;
-  }
-  /* Wait until end to modify array to avoid invalidating `m` pointer.*/
-  push_FildeshAT(sxpb->values, v);
-  return e_it;
+  assert(!fildesh_nullid(p_it.elem_id));
+  return direct_insert_next_FildeshSxpb(sxpb, p_it, text, kind);
 }
 
 static FildeshSxpbIT freshtail_FildeshSxpb(
@@ -387,8 +358,8 @@ parse_field_FildeshSxpbInfo(
 
   if (nesting_depth == 0) {
     if (oslice->size == 0) {
-      field_kind = FildeshSxprotoFieldKind_MESSAGE;
-      field = schema;
+      syntax_error(info, "Denote empty message in array as (()), not ().");
+      return false;
     }
     else if (peek_chars_FildeshX(in, "()")) {
       field_kind = FildeshSxprotoFieldKind_MESSAGE;
@@ -399,10 +370,6 @@ parse_field_FildeshSxpbInfo(
   }
   else if (nesting_depth == 1) {
     if (oslice->size == 0) {
-      if (peek_chars_FildeshX(in, ")")) {
-        syntax_error(info, "Denote empty message in array as (), not (()).");
-        return false;
-      }
       field_kind = FildeshSxprotoFieldKind_MESSAGE;
       field = schema;
     }
@@ -447,11 +414,11 @@ parse_field_FildeshSxpbInfo(
           syntax_error(info, "Expected field to be an array.");
           return false;
         }
-        if (field->lo == 0) {
-          elem_kind = (FildeshSxprotoFieldKind)field->hi;
+        if (field->subfields) {
+          elem_kind = FildeshSxprotoFieldKind_MESSAGE;
         }
         else {
-          elem_kind = FildeshSxprotoFieldKind_MESSAGE;
+          elem_kind = (FildeshSxprotoFieldKind)field->hi;
         }
       }
       else {
@@ -514,12 +481,12 @@ parse_field_FildeshSxpbInfo(
       }
       else if (skipstr_FildeshX(in, "true")) {
         truncate_FildeshO(oslice);
-        putstr_FildeshO(oslice, "true");
+        putstrlit_FildeshO(oslice, "true");
         tmp_kind = FildeshSxprotoFieldKind_LITERAL_BOOL;
       }
       else if (skipstr_FildeshX(in, "false")) {
         truncate_FildeshO(oslice);
-        putstr_FildeshO(oslice, "false");
+        putstrlit_FildeshO(oslice, "false");
         tmp_kind = FildeshSxprotoFieldKind_LITERAL_BOOL;
       }
       else if (peek_chars_FildeshX(in, "0123456789+-.")) {
@@ -557,11 +524,11 @@ parse_field_FildeshSxpbInfo(
         /* Upgrade type.*/
         if (oslice->size == 2 && oslice->at[0] == '+' && oslice->at[1] == '1') {
           truncate_FildeshO(oslice);
-          putstr_FildeshO(oslice, "true");
+          putstrlit_FildeshO(oslice, "true");
         }
         else if (oslice->size == 2 && oslice->at[0] == '+' && oslice->at[1] == '0') {
           truncate_FildeshO(oslice);
-          putstr_FildeshO(oslice, "false");
+          putstrlit_FildeshO(oslice, "false");
         }
         else {
           syntax_error(info, "Expected a bool, not an int.");
@@ -598,7 +565,7 @@ slurp_sxpb_close_FildeshX(
   info->err_out = err_out;
 
   for (skip_separation(in, info);
-       peek_char_FildeshX(in, '(');
+       avail_FildeshX(in) && peek_char_FildeshX(in, '(');
        skip_separation(in, info))
   {
     if (!parse_field_FildeshSxpbInfo(info, schema, in, sxpb, p_it, oslice)) {

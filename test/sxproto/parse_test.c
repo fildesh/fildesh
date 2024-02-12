@@ -9,7 +9,7 @@ static void parse_string_test() {
   FildeshO oslice[1] = {DEFAULT_FildeshO};
 
 #define expectparse(expect, text) do { \
-  FildeshX slice = literal_FildeshX(text); \
+  FildeshX slice = FildeshX_of_strlit(text); \
   bool good = parse_string_FildeshSxpbInfo(info, &slice, oslice); \
   assert(good); \
   putc_FildeshO(oslice, '\0'); \
@@ -34,7 +34,7 @@ static void parse_number_test() {
   info->err_out = open_FildeshOF("/dev/stderr");
 
 #define expectparse(expect, text) do { \
-  FildeshX slice = literal_FildeshX(text); \
+  FildeshX slice = FildeshX_of_strlit(text); \
   bool good = parse_number_FildeshSxpbInfo(info, &slice, oslice); \
   assert(good); \
   putc_FildeshO(oslice, '\0'); \
@@ -62,7 +62,7 @@ static void parse_name_test() {
   FildeshO oslice[1] = {DEFAULT_FildeshO};
 
 #define expectparse(expect, expect_depth, text) do { \
-  FildeshX slice = literal_FildeshX(text); \
+  FildeshX slice = FildeshX_of_strlit(text); \
   unsigned nesting_depth = 0; \
   bool good = parse_name_FildeshSxpbInfo(info, &slice, oslice, &nesting_depth); \
   assert(good); \
@@ -95,11 +95,12 @@ static void parse_field_test() {
   info->err_out = open_FildeshOF("/dev/stderr");
 
 #define tryparse(text) do { \
-  FildeshX slice = literal_FildeshX(text); \
+  FildeshX slice = FildeshX_of_strlit(text); \
   bool good = parse_field_FildeshSxpbInfo(info, NULL,  &slice, sxpb, p_it, oslice); \
   assert(good); \
   assert(info->line_count == 0); \
   assert(info->column_count == strlen(text)); \
+  remove_at_FildeshSxpb(sxpb, first_at_FildeshSxpb(sxpb, top_of_FildeshSxpb(sxpb))); \
   info->column_count = 0; \
 } while (0)
 
@@ -110,7 +111,7 @@ static void parse_field_test() {
   tryparse("(m (x 5) (\"y\" 7) (z 12))");
   tryparse("((a) 1 2 3 4 5)");
   tryparse("(((b)) 1 2 3 4 5)");
-  tryparse("((a) (() (x 5)) (() (y 7)) () (() (z 12)))");
+  tryparse("((a) (() (x 5)) (() (y 7)) (()) (() (z 12)))");
 
 #undef tryparse
   close_FildeshO(oslice);

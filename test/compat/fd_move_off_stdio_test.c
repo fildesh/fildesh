@@ -2,9 +2,9 @@
 #include <assert.h>
 
 int main() {
-  fildesh_compat_fd_t new_stdin;
-  fildesh_compat_fd_t new_stdout;
-  fildesh_compat_fd_t fd;
+  FildeshCompat_fd new_stdin;
+  FildeshCompat_fd new_stdout;
+  FildeshCompat_fd fd;
 
   new_stdin = fildesh_compat_fd_claim(0);
   new_stdout = fildesh_compat_fd_claim(1);

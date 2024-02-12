@@ -19,14 +19,23 @@ static
   bool
 skip_blank_bytes(FildeshX* in, size_t* text_nlines)
 {
-  size_t i;
-  FildeshX slice = while_chars_FildeshX(in, fildesh_compat_string_blank_bytes);
-  for (i = 0; i < slice.size; ++i) {
-    if (slice.at[i] == '\n') {
-      *text_nlines += 1;
+  bool skipped_any = false;
+  while (true) {
+    size_t i;
+    FildeshX slice = while_chars_FildeshX(in, fildesh_compat_string_blank_bytes);
+    if (slice.size > 0) {skipped_any = true;}
+    for (i = 0; i < slice.size; ++i) {
+      if (slice.at[i] == '\n') {
+        *text_nlines += 1;
+      }
     }
+    if (!peek_char_FildeshX(in, '#')) {
+      break;
+    }
+    until_char_FildeshX(in, '\n');
+    skipped_any = true;
   }
-  return (slice.size > 0);
+  return skipped_any;
 }
 
 
@@ -34,10 +43,6 @@ static
   SymVal*
 lookup_SymVal(FildeshKV* map, const char* s)
 {
-  if ((s[0] == '#' || isdigit(s[0])) && s[1] == '\0') {
-    /* TODO(#99): Remove in v0.2.0.*/
-    fildesh_log_warningf("For forward compatibility, please read positional arg %s via a flag.", s);
-  }
   return (SymVal*) lookup_value_FildeshKV(map, s, strlen(s)+1);
 }
 
@@ -249,9 +254,6 @@ parse_fildesh_string_definition(
   if (emsg) {
     if (!emsg[0]) {return "idk";}
     return emsg;
-  }
-  if (tmp_out->size == 0) {
-    return "Expected a closing paren.";
   }
   skip_blank_bytes(in, text_nlines);
   if (!skipstr_FildeshX(in, ")")) {

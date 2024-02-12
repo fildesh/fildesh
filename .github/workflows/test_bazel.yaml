@@ -13,16 +13,16 @@ jobs:
 
     steps:
     - name: Cache Setup
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       id: cache-bazel
       with:
         path: ~/.cache/bazel
         key: ${{ runner.os }}-bazel
 
     - name: Bazel Setup
-      uses: jwlawson/actions-setup-bazel@v1
+      uses: jwlawson/actions-setup-bazel@v2
       with:
-        bazel-version: '6'
+        bazel-version: 'latest'
 
     - name: Checkout
       uses: actions/checkout@v4
@@ -44,7 +44,7 @@ jobs:
         //...
 
     - name: Upload Test Results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: failure()
       with:
         name: Test Results (${{ matrix.platform }})
@@ -66,15 +66,15 @@ jobs:
       fail-fast: false
     steps:
     - name: Cache Setup
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       id: cache-bazel
       with:
         path: ~/.cache/bazel
         key: ${{ runner.os }}-bazel
     - name: Bazel Setup
-      uses: jwlawson/actions-setup-bazel@v1
+      uses: jwlawson/actions-setup-bazel@v2
       with:
-        bazel-version: '6'
+        bazel-version: 'latest'
     - name: Checkout
       uses: actions/checkout@v4
     - name: Build
@@ -94,14 +94,15 @@ jobs:
       fail-fast: false
     steps:
     - name: Cache Setup
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       id: cache-bazel
       with:
         path: ~/.cache/bazel
         key: ${{ runner.os }}-bazel
     - name: Setup bazel
-      uses: jwlawson/actions-setup-bazel@v1
+      uses: jwlawson/actions-setup-bazel@v2
       with:
+        # Bazel 7 coverage output looks low to Coveralls, so use Bazel 6.
         bazel-version: '6'
     - name: Checkout
       uses: actions/checkout@v4
@@ -126,9 +127,9 @@ jobs:
       fail-fast: false
     steps:
     - name: Bazel Setup
-      uses: jwlawson/actions-setup-bazel@v1
+      uses: jwlawson/actions-setup-bazel@v2
       with:
-        bazel-version: '6'
+        bazel-version: 'latest'
     - name: Checkout
       uses: actions/checkout@v4
     - name: Fuzz
@@ -144,7 +145,7 @@ jobs:
       fail-fast: false
     steps:
     - name: Bazel Setup
-      uses: jwlawson/actions-setup-bazel@v1
+      uses: jwlawson/actions-setup-bazel@v2
       with:
         bazel-version: '4.2.2'
     - name: Checkout

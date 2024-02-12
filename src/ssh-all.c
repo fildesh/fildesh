@@ -35,10 +35,10 @@ static
 spawn_ssh(const char* ssh_exe, const char* cmd, const char* host)
 {
   int istat;
-  fildesh_compat_fd_t source_fd = -1;
-  fildesh_compat_fd_t fd_to_remote = -1;
+  Fildesh_fd source_fd = -1;
+  Fildesh_fd fd_to_remote = -1;
   FildeshO* to_remote = NULL;
-  fildesh_compat_pid_t pid;
+  FildeshCompat_pid pid;
 
   istat = fildesh_compat_fd_pipe(&fd_to_remote, &source_fd);
   assert(istat == 0);
@@ -68,8 +68,9 @@ main_ssh_all(unsigned argc, char** argv)
 {
   unsigned argi = 1;
   FildeshX* in = NULL;
+  FildeshX slice;
+  FildeshO oss[1] = {DEFAULT_FildeshO};
   const char* ssh_exe = "ssh";
-  char* line;
 
   if (argv[argi] && 0 == strcmp(argv[argi], "-ssh")) {
     argi += 1;
@@ -87,23 +88,26 @@ main_ssh_all(unsigned argc, char** argv)
   argi += 1;
   if (argi + 1 != argc)  show_usage_and_exit ();
 
-  for (line = getline_FildeshX(in);
-       line;
-       line = getline_FildeshX(in))
+  for (slice = sliceline_FildeshX(in);
+       slice.at;
+       slice = sliceline_FildeshX(in))
   {
-    int q = 0;
-    int r = strlen (line);
-    while (q < r && strchr(fildesh_compat_string_blank_bytes, line[q]  )) {++q;}
-    while (r > q && strchr(fildesh_compat_string_blank_bytes, line[r-1])) {--r;}
+    while_chars_FildeshX(&slice, fildesh_compat_string_blank_bytes);
+    while (avail_FildeshX(&slice) &&
+           strchr(fildesh_compat_string_blank_bytes, slice.at[slice.size-1]))
+    {
+      slice.size -= 1;
+    }
 
-    if (r == q)  continue;
-    line[r] = '\0';
-    line = &line[q];
-
-    spawn_ssh(ssh_exe, argv[argi], line);
+    if (!avail_FildeshX(&slice)) {continue;}
+    truncate_FildeshO(oss);
+    putslice_FildeshO(oss, slice);
+    putc_FildeshO(oss, '\0');
+    spawn_ssh(ssh_exe, argv[argi], oss->at);
   }
 
   close_FildeshX(in);
+  close_FildeshO(oss);
   return 0;
 }
 

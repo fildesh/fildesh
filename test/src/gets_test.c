@@ -40,7 +40,11 @@ read_MockFildeshXF(MockFildeshXF* xf) {
 }
 
   void
-param3_test_gets(unsigned chunk_size, fildesh_lgsize_t flush_lgsize, const char* delim) {
+param3_test_gets(
+    unsigned chunk_size,
+    Fildesh_lgsize flush_lgsize,
+    const char* delim)
+{
   static const char* const lines[] = {
     "this is the first line",
     "this is the second line",
@@ -49,7 +53,8 @@ param3_test_gets(unsigned chunk_size, fildesh_lgsize_t flush_lgsize, const char*
     "this is the fifth line",
   };
   MockFildeshXF xf[1] = { DEFAULT_MockFildeshXF };
-  char* line;
+  FildeshX* const in = &xf->x;
+  FildeshX slice;
   xf->chunk_size = chunk_size;
   xf->x.flush_lgsize = flush_lgsize;
   xf->content = (char*)malloc((30+strlen(delim))*5+1);
@@ -60,24 +65,30 @@ param3_test_gets(unsigned chunk_size, fildesh_lgsize_t flush_lgsize, const char*
           lines[3], delim,
           lines[4]);
 
-  line = gets_FildeshX(&xf->x, delim);
-  assert(0 == strcmp(lines[0], line));
-  assert(allocated_size_of_FildeshX(&xf->x) >= xf->x.size);
+  slice = slicestr_FildeshX(in, delim);
+  assert(skipstr_FildeshX(&slice, lines[0]));
+  assert(!avail_FildeshX(&slice));
+  assert(allocated_size_of_FildeshX(in) >= in->size);
 
-  line = gets_FildeshX(&xf->x, delim);
-  assert(0 == strcmp(lines[1], line));
+  slice = slicestr_FildeshX(in, delim);
+  assert(skipstr_FildeshX(&slice, lines[1]));
+  assert(!avail_FildeshX(&slice));
 
-  line = gets_FildeshX(&xf->x, delim);
-  assert(0 == strcmp(lines[2], line));
+  slice = slicestr_FildeshX(in, delim);
+  assert(skipstr_FildeshX(&slice, lines[2]));
+  assert(!avail_FildeshX(&slice));
 
-  line = gets_FildeshX(&xf->x, delim);
-  assert(0 == strcmp(lines[3], line));
+  slice = slicestr_FildeshX(in, delim);
+  assert(skipstr_FildeshX(&slice, lines[3]));
+  assert(!avail_FildeshX(&slice));
 
-  line = gets_FildeshX(&xf->x, delim);
-  assert(0 == strcmp(lines[4], line));
+  slice = slicestr_FildeshX(in, delim);
+  assert(skipstr_FildeshX(&slice, lines[4]));
+  assert(!avail_FildeshX(&slice));
 
-  line = gets_FildeshX(&xf->x, delim);
-  assert(!line);
+  slice = slicestr_FildeshX(in, delim);
+  assert(!slice.at);
+  assert(!avail_FildeshX(in));
 
   close_FildeshX(&xf->x);
   free(xf->content);
@@ -85,7 +96,7 @@ param3_test_gets(unsigned chunk_size, fildesh_lgsize_t flush_lgsize, const char*
 
 int main() {
   unsigned chunk_size;
-  fildesh_lgsize_t flush_lgsize;
+  Fildesh_lgsize flush_lgsize;
   unsigned delim_index;
   static const char* const delims[] = {
     "IAMA delimiter AMA",

@@ -3,10 +3,10 @@
 #include <stddef.h>
 
 typedef int FildeshCompat_fd;
-/* Deprecated. Use FildeshCompat_fd.*/
-typedef FildeshCompat_fd fildesh_compat_fd_t;
 int
 fildesh_compat_fd_close(FildeshCompat_fd fd);
+int
+fildesh_compat_fd_copy_to(FildeshCompat_fd dst, FildeshCompat_fd src);
 int
 fildesh_compat_fd_move_to(FildeshCompat_fd dst, FildeshCompat_fd oldfd);
 FildeshCompat_fd

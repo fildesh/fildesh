@@ -10,5 +10,11 @@
     // Group version update PRs into one.
     "groupName": "all dependencies",
     "groupSlug": "all-dependencies",
+  }, {
+    "matchManagers": ["bazel-module"],
+    "enabled": false,
+  }, {
+    "matchDatasources": ["github-runners"],
+    "enabled": false,
   }],
 }

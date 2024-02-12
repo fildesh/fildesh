@@ -15,7 +15,7 @@ LLVMFuzzerTestOneInput(const uint8_t data[], size_t size) {
   }
 
   {
-    FildeshX in = memref_FildeshX(data, size);
+    FildeshX in = FildeshX_of_bytestring(data, size);
     FildeshSxpb* sxpb = slurp_sxpb_close_FildeshX(&in, NULL, err_out);
     if (sxpb) {
       print_txtpb_FildeshO(out, sxpb);

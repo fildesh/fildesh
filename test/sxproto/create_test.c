@@ -1,36 +1,64 @@
 #include <fildesh/sxproto.h>
 
 #include <assert.h>
+#include <string.h>
 
-static void create_test() {
+static void create_in_message_test() {
   FildeshSxpb* sxpb = open_FildeshSxpb();
-  FildeshSxpbIT pos_m, pos_e;
+  FildeshSxpbIT m_it, it;
 
-  pos_m = ensure_field_at_FildeshSxpb(
-      sxpb, top_of_FildeshSxpb(sxpb),
-      "m",
-      FildeshSxprotoFieldKind_MESSAGE);
-  assert(!nullish_FildeshSxpbIT(pos_m));
+  m_it = ensure_message_subfield_at_FildeshSxpb(
+      sxpb, top_of_FildeshSxpb(sxpb), "m");
+  assert(!nullish_FildeshSxpbIT(m_it));
 
-  pos_e = ensure_field_at_FildeshSxpb(
-      sxpb, pos_m, "i",
-      FildeshSxprotoFieldKind_LITERAL);
+  it = ensure_array_subfield_at_FildeshSxpb(sxpb, m_it, "some_array");
+  assert(!nullish_FildeshSxpbIT(it));
+  it = lookup_subfield_at_FildeshSxpb(sxpb, m_it, "some_array");
+  assert(!nullish_FildeshSxpbIT(it));
+  assert(nullish_FildeshSxpbIT(first_at_FildeshSxpb(sxpb, it)));
 
-  pos_e = ensure_field_at_FildeshSxpb(
-      sxpb, pos_m, "f",
-      FildeshSxprotoFieldKind_LITERAL);
+  it = ensure_manyof_subfield_at_FildeshSxpb(sxpb, m_it, "some_manyof");
+  assert(!nullish_FildeshSxpbIT(it));
+  it = lookup_subfield_at_FildeshSxpb(sxpb, m_it, "some_manyof");
+  assert(!nullish_FildeshSxpbIT(it));
+  assert(nullish_FildeshSxpbIT(first_at_FildeshSxpb(sxpb, it)));
 
-  pos_e = ensure_field_at_FildeshSxpb(
-      sxpb, pos_m, "s",
-      FildeshSxprotoFieldKind_LITERAL);
+  it = ensure_bool_subfield_at_FildeshSxpb(sxpb, m_it, "b");
+  assert(!bool_value_at_FildeshSxpb(sxpb, it));
+  it = assign_bool_subfield_at_FildeshSxpb(sxpb, m_it, "b", true);
+  assert(bool_value_at_FildeshSxpb(sxpb, it));
+  it = assign_bool_subfield_at_FildeshSxpb(sxpb, m_it, "b", false);
+  assert(!bool_value_at_FildeshSxpb(sxpb, it));
+  it = assign_bool_subfield_at_FildeshSxpb(sxpb, m_it, "b", true);
+  assert(bool_value_at_FildeshSxpb(sxpb, it));
+  it = ensure_bool_subfield_at_FildeshSxpb(sxpb, m_it, "b");
+  assert(bool_value_at_FildeshSxpb(sxpb, it));
 
-  pos_e = lookup_subfield_at_FildeshSxpb(sxpb, pos_m, "s");
-  assert(!nullish_FildeshSxpbIT(pos_e));
+  it = ensure_int_subfield_at_FildeshSxpb(sxpb, m_it, "i");
+  assert(0 == unsigned_value_at_FildeshSxpb(sxpb, it));
+
+  it = ensure_float_subfield_at_FildeshSxpb(sxpb, m_it, "f");
+  assert(0.0f == float_value_at_FildeshSxpb(sxpb, it));
+
+  it = ensure_string_subfield_at_FildeshSxpb(sxpb, m_it, "s");
+  assert(0 == strlen(str_value_at_FildeshSxpb(sxpb, it)));
+  it = assign_str_subfield_at_FildeshSxpb(sxpb, m_it, "s", "my string");
+  assert(0 == strcmp("my string", str_value_at_FildeshSxpb(sxpb, it)));
+  it = ensure_string_subfield_at_FildeshSxpb(sxpb, m_it, "s");
+  assert(0 == strcmp("my string", str_value_at_FildeshSxpb(sxpb, it)));
+
+  it = assign_str_subfield_at_FildeshSxpb(
+      sxpb, m_it, "t", "my second string");
+  assert(0 == strcmp("my second string", str_value_at_FildeshSxpb(sxpb, it)));
+
+  remove_at_FildeshSxpb(sxpb, it);
+  it = lookup_subfield_at_FildeshSxpb(sxpb, m_it, "t");
+  assert(nullish_FildeshSxpbIT(it));
 
   close_FildeshSxpb(sxpb);
 }
 
 int main() {
-  create_test();
+  create_in_message_test();
   return 0;
 }

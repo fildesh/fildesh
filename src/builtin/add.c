@@ -56,9 +56,15 @@ fildesh_builtin_add_main(unsigned argc, char** argv,
   }
 
   for (slice = sliceline_FildeshX(in);
-       slice.size > 0;
+       slice.at;
        slice = sliceline_FildeshX(in)) {
-    if (slice.size == strcspn(slice.at, ".Ee")) {
+    bool on_int;
+    {
+      FildeshX cpslice = getslice_FildeshX(&slice);
+      FildeshX islice = until_chars_FildeshX(&cpslice, ".Ee");
+      on_int = (slice.size == islice.size);
+    }
+    if (on_int) {
       int x = sum_int_line(&slice);
       print_int_FildeshO(out, x);
       putc_FildeshO(out, '\n');

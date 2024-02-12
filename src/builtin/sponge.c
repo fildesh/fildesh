@@ -11,7 +11,6 @@ fildesh_builtin_sponge_main(unsigned argc, char** argv,
                          FildeshX** inputv, FildeshO** outputv)
 {
   FildeshX* in = NULL;
-  char* data = NULL;
   FildeshO* out = NULL;
   int exstatus = 0;
 
@@ -27,10 +26,8 @@ fildesh_builtin_sponge_main(unsigned argc, char** argv,
   }
 
   if (exstatus == 0) {
-    data = slurp_FildeshX(in);
-  }
+    slurp_FildeshX(in);
 
-  if (data) {
     if (argc == 2) {
       out = open_arg_FildeshOF(1, argv, outputv);
       if (!out) {
@@ -46,9 +43,7 @@ fildesh_builtin_sponge_main(unsigned argc, char** argv,
     }
   }
   if (exstatus == 0) {
-    memcpy(grow_FildeshO(out, in->size),
-           in->at,
-           in->size);
+    putslice_FildeshO(out, *in);
   }
 
   close_FildeshX(in);

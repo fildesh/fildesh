@@ -71,16 +71,16 @@ FILDESH_POSIX_THREAD_CALLBACK(consume_thread_fn, FildeshToolPipemOutput*, arg)
   size_t
 fildesh_tool_pipem(
     size_t input_size, const char* input_data,
-    void (*fn)(fildesh_compat_fd_t,fildesh_compat_fd_t,void*), void* arg,
+    void (*fn)(FildeshCompat_fd,FildeshCompat_fd,void*), void* arg,
     char** output_storage)
 {
   int istat;
-  fildesh_compat_fd_t source_fd = -1;
-  fildesh_compat_fd_t produce_fd = -1;
+  FildeshCompat_fd source_fd = -1;
+  FildeshCompat_fd produce_fd = -1;
   pthread_t produce_thread;
   FildeshToolPipemInput produce_thread_arg;
-  fildesh_compat_fd_t sink_fd = -1;
-  fildesh_compat_fd_t consume_fd = -1;
+  FildeshCompat_fd sink_fd = -1;
+  FildeshCompat_fd consume_fd = -1;
   pthread_t consume_thread;
   FildeshToolPipemOutput consume_thread_arg;
 #ifndef _MSC_VER

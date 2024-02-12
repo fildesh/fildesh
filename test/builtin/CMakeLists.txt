@@ -1,7 +1,7 @@
 
 #add_test(NAME elastic_catfile_test COMMAND
 #  comparispawn "${CMAKE_CURRENT_SOURCE_DIR}/hello_newline.txt"
-#  ${fildesh_exe} --
+#  "${Fildesh_EXECUTABLE}" --
 #  "|< zec"
 #  "|- waitdo -- rm -f ${CMAKE_CURRENT_BINARY_DIR}/elastic_catfile_output.txt"
 #  "|- waitdo -- elastic -x ${CMAKE_CURRENT_SOURCE_DIR}/hello_newline.txt -o ${CMAKE_CURRENT_BINARY_DIR}/elastic_catfile_output.txt"
@@ -43,13 +43,13 @@ add_test(NAME builtin_cmp_diff_test COMMAND spawn ! "$<TARGET_FILE:cmp>"
 
 add_test(NAME builtin_elastic_cat_test COMMAND
   comparispawn "${CMAKE_CURRENT_SOURCE_DIR}/hello_newline.txt"
-  ${fildesh_exe} -f "${CMAKE_CURRENT_SOURCE_DIR}/elastic_cat.fildesh"
-  )
+  "${Fildesh_EXECUTABLE}" -f "${CMAKE_CURRENT_SOURCE_DIR}/elastic_cat.fildesh"
+)
 
 add_test(NAME builtin_elastic_tee_test COMMAND
   comparispawn "${CMAKE_CURRENT_SOURCE_DIR}/hello_newline_x2.txt"
-  ${fildesh_exe} -f "${CMAKE_CURRENT_SOURCE_DIR}/elastic_tee.fildesh"
-  )
+  "${Fildesh_EXECUTABLE}" -f "${CMAKE_CURRENT_SOURCE_DIR}/elastic_tee.fildesh"
+)
 
 add_executable(builtin_elastic_alt_tee_test "elastic_alt_tee_test.c")
 target_link_libraries(builtin_elastic_alt_tee_test fildesh_lib fildesh_tool_lib)
@@ -72,17 +72,22 @@ set_property(TARGET builtin_execfd_test
   APPEND PROPERTY COMPILE_DEFINITIONS UNIT_TESTING)
 add_test(NAME builtin_execfd_test COMMAND
   "${CMAKE_COMMAND}" -E env "TEST_TMPDIR=${CMAKE_CURRENT_BINARY_DIR}"
-  "$<TARGET_FILE:builtin_execfd_test>" "$<TARGET_FILE:zec>")
+  "$<TARGET_FILE:builtin_execfd_test>"
+  "${FildeshTool_shout_EXECUTABLE}"
+)
 
 add_executable(builtin_execfd_cat_test "execfd_cat_test.c" "${PROJECT_SOURCE_DIR}/src/execfd.c")
 target_link_libraries(builtin_execfd_cat_test fildesh_lib fildesh_tool_lib)
 set_property(TARGET builtin_execfd_cat_test
   APPEND PROPERTY COMPILE_DEFINITIONS UNIT_TESTING)
-add_test(NAME builtin_execfd_cat_test COMMAND
-  builtin_execfd_cat_test "$<TARGET_FILE:shout>")
+add_test(NAME builtin_execfd_cat_test COMMAND builtin_execfd_cat_test
+  "${FildeshTool_shout_EXECUTABLE}"
+)
 
-add_test(NAME builtin_execfd_script_test COMMAND
-  fildesh -f "${CMAKE_CURRENT_SOURCE_DIR}/execfd_script_test.fildesh" "$<TARGET_FILE:zec>")
+add_test(NAME builtin_execfd_script_test COMMAND fildesh -f
+  "${CMAKE_CURRENT_SOURCE_DIR}/execfd_script_test.fildesh"
+  "--input_exe=${FildeshTool_shout_EXECUTABLE}"
+)
 
 #### expect_failure
 
@@ -102,17 +107,22 @@ add_test(NAME builtin_expect_failure_test COMMAND
 
 add_test(NAME builtin_fildesh_as_add_test COMMAND
   comparispawn "${CMAKE_CURRENT_SOURCE_DIR}/summed_integers.txt"
-  "${fildesh_exe}" -stdin "${CMAKE_CURRENT_SOURCE_DIR}/integers.txt"
+  "${Fildesh_EXECUTABLE}"
+  -stdin "${CMAKE_CURRENT_SOURCE_DIR}/integers.txt"
   -as add
-  )
+)
 
 add_executable(builtin_fildesh_cli_hello_test "fildesh_cli_hello_test.c")
 target_link_libraries(builtin_fildesh_cli_hello_test fildesh_lib fildesh_tool_lib)
-add_test(NAME builtin_fildesh_cli_hello_test COMMAND builtin_fildesh_cli_hello_test "${fildesh_exe}")
+add_test(NAME builtin_fildesh_cli_hello_test COMMAND
+  builtin_fildesh_cli_hello_test "${Fildesh_EXECUTABLE}"
+)
 
 add_executable(builtin_fildesh_usage_test "fildesh_usage_test.c")
 target_link_libraries(builtin_fildesh_usage_test fildesh_compat_lib)
-add_test(NAME builtin_fildesh_usage_test COMMAND builtin_fildesh_usage_test "${fildesh_exe}")
+add_test(NAME builtin_fildesh_usage_test COMMAND
+  builtin_fildesh_usage_test "${Fildesh_EXECUTABLE}"
+)
 
 #### godo
 
@@ -201,14 +211,17 @@ add_test(NAME builtin_void_test COMMAND builtin_void_test "$<TARGET_FILE:void>")
 
 add_executable(builtin_waitdo_test "waitdo_test.c")
 target_link_libraries(builtin_waitdo_test fildesh_lib fildesh_tool_lib)
-add_test(NAME builtin_waitdo_test COMMAND
-  builtin_waitdo_test "$<TARGET_FILE:waitdo>" "$<TARGET_FILE:shout>")
+add_test(NAME builtin_waitdo_test COMMAND builtin_waitdo_test
+  "$<TARGET_FILE:waitdo>"
+  "${FildeshTool_shout_EXECUTABLE}"
+)
 
 #### xargz
 
-add_test(NAME builtin_xargz_alias_test COMMAND
-  fildesh -alias "shout=$<TARGET_FILE:shout>" -f
-  "${CMAKE_CURRENT_SOURCE_DIR}/xargz_alias_test.fildesh")
+add_test(NAME builtin_xargz_alias_test COMMAND ${Fildesh_EXECUTABLE}
+  -alias "shout=${FildeshTool_shout_EXECUTABLE}"
+  -f "${CMAKE_CURRENT_SOURCE_DIR}/xargz_alias_test.fildesh"
+)
 
 #### xpipe
 
@@ -219,11 +232,12 @@ add_test(NAME builtin_xpipe_nested_test COMMAND fildesh -f
 
 add_test(NAME builtin_zec_cat_test COMMAND
   comparispawn "${CMAKE_CURRENT_SOURCE_DIR}/hello_newline.txt"
-  ${fildesh_exe} -f "${CMAKE_CURRENT_SOURCE_DIR}/zec_cat.fildesh"
-  )
+  "${Fildesh_EXECUTABLE}" -f "${CMAKE_CURRENT_SOURCE_DIR}/zec_cat.fildesh"
+)
 
 # Only CMake test here that actually uses `spawn`.
 # However, Bazel tests rely on it heavily.
 add_test(NAME builtin_zec_nop_test COMMAND
-  spawn ${zec_exe} "/" "/"
-  )
+  ${FildeshTool_spawn_EXECUTABLE}
+  "$<TARGET_FILE:zec>" "/" "/"
+)

@@ -1,4 +1,4 @@
-load("//tool:optional_setting.bzl", "optional_setting")
+load("//tool/bazel:optional_setting.bzl", "optional_setting")
 
 
 optional_setting(

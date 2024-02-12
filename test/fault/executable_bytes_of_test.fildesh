@@ -3,10 +3,12 @@
 # so the output file would be interpreted as the program to execute.
 # Totally nonsensical.
 
-$(OF exe) zec $(XA 1) / /
-$(O expect) zec / "hello there world" /
+(: executable_bytes_file Filename .self.opt.input_exe)
 
-|< $(XF exe) / "hello" " there " "world" /
+$(OF exe) zec / / $(XOF executable_bytes_file)
+$(O expect) zec / "hello there world\n" /
+
+|< $(XF exe) - "hello" "there" "world"
 |- cmp $(XF expect)
 |> stdout
 

@@ -89,7 +89,7 @@ fildesh_compat_fd_inherit(int fd)
 }
 
   int
-fildesh_compat_fd_close(fildesh_compat_fd_t fd)
+fildesh_compat_fd_close(FildeshCompat_fd fd)
 {
   int istat;
   assert(fd >= 0);
@@ -98,18 +98,20 @@ fildesh_compat_fd_close(fildesh_compat_fd_t fd)
 #else
   istat = _close(fd);
 #endif
+#ifndef NDEBUG
   if (istat != 0) {
     int e = fildesh_compat_errno_trace();
     /* File descriptor should be valid.*/
     assert(istat == 0 || e != EBADF);
   }
+#endif
   if (istat != 0) {return -1;}
   return 0;
 }
 
 static
-  fildesh_compat_fd_t
-fildesh_compat_fd_duplicate(fildesh_compat_fd_t fd)
+  FildeshCompat_fd
+fildesh_compat_fd_duplicate(FildeshCompat_fd fd)
 {
   int newfd;
 #ifndef _MSC_VER
@@ -132,8 +134,9 @@ fildesh_compat_fd_duplicate(fildesh_compat_fd_t fd)
   return newfd;
 }
 
-static int
-fildesh_compat_fd_copy_to(fildesh_compat_fd_t dst, fildesh_compat_fd_t src)
+static
+  int
+fildesh_compat_fd_copy_to_(FildeshCompat_fd dst, FildeshCompat_fd src)
 {
   int istat;
   if (dst == src) {return 0;}
@@ -146,7 +149,27 @@ fildesh_compat_fd_copy_to(fildesh_compat_fd_t dst, fildesh_compat_fd_t src)
 }
 
   int
-fildesh_compat_fd_move_to(fildesh_compat_fd_t dst, fildesh_compat_fd_t oldfd)
+fildesh_compat_fd_copy_to(FildeshCompat_fd dst, FildeshCompat_fd src)
+{
+  int istat;
+  if (dst == src) {return 0;}
+  /* Acquire exclusive lock because there could be stdio.*/
+  FILDESH_COMPAT_FD_ENTER_EXCLUSIVE;
+  istat = fildesh_compat_fd_copy_to_(dst, src);
+  if (istat >= 0) {
+    if (dst <= 2) {
+      istat = fildesh_compat_fd_inherit(dst);
+    } else {
+      istat = fildesh_compat_fd_cloexec(dst);
+    }
+    if (istat != 0) {fildesh_compat_fd_close(dst);}
+  }
+  FILDESH_COMPAT_FD_LEAVE_EXCLUSIVE;
+  return istat;
+}
+
+  int
+fildesh_compat_fd_move_to(FildeshCompat_fd dst, FildeshCompat_fd oldfd)
 {
   int istat = 0;
   assert(dst >= 0);
@@ -155,7 +178,7 @@ fildesh_compat_fd_move_to(fildesh_compat_fd_t dst, fildesh_compat_fd_t oldfd)
   /* Acquire exclusive lock because there could be stdio.*/
   FILDESH_COMPAT_FD_ENTER_EXCLUSIVE;
 
-  istat = fildesh_compat_fd_copy_to(dst, oldfd);
+  istat = fildesh_compat_fd_copy_to_(dst, oldfd);
   if (0 != fildesh_compat_fd_close(oldfd)) {
     if (istat == 0) {
       fildesh_compat_fd_close(dst);
@@ -177,12 +200,12 @@ fildesh_compat_fd_move_to(fildesh_compat_fd_t dst, fildesh_compat_fd_t oldfd)
 }
 
 static
-  fildesh_compat_fd_t
-fildesh_compat_fd_move_off_stdio(fildesh_compat_fd_t fd)
+  FildeshCompat_fd
+fildesh_compat_fd_move_off_stdio(FildeshCompat_fd fd)
 {
   unsigned i;
   int e = 0;
-  fildesh_compat_fd_t fds[4] = {-1, -1, -1, -1};
+  FildeshCompat_fd fds[4] = {-1, -1, -1, -1};
   MAYBE_ASSERT_NOT_STDERR(fd);
   if (fd < 0 || fd > 2) {return fd;}
   fds[0] = fd;
@@ -214,8 +237,8 @@ fildesh_compat_fd_move_off_stdio(fildesh_compat_fd_t fd)
   return fd;
 }
 
-  fildesh_compat_fd_t
-fildesh_compat_fd_claim(fildesh_compat_fd_t fd)
+  FildeshCompat_fd
+fildesh_compat_fd_claim(FildeshCompat_fd fd)
 {
   FILDESH_COMPAT_FD_ENTER_SHARED;
   fd = fildesh_compat_fd_move_off_stdio(fd);
@@ -238,10 +261,10 @@ fildesh_compat_fd_claim(fildesh_compat_fd_t fd)
   return fd;
 }
 
-  fildesh_compat_fd_t
+  FildeshCompat_fd
 fildesh_compat_file_open_readonly(const char* filename)
 {
-  fildesh_compat_fd_t fd;
+  FildeshCompat_fd fd;
   int flags;
   FILDESH_COMPAT_FD_ENTER_SHARED;
 #ifndef _MSC_VER
@@ -264,10 +287,10 @@ fildesh_compat_file_open_readonly(const char* filename)
   return fd;
 }
 
-  fildesh_compat_fd_t
+  FildeshCompat_fd
 fildesh_compat_file_open_writeonly(const char* filename)
 {
-  fildesh_compat_fd_t fd;
+  FildeshCompat_fd fd;
   int flags, mode;
   FILDESH_COMPAT_FD_ENTER_SHARED;
 #ifndef _MSC_VER
@@ -297,8 +320,9 @@ fildesh_compat_file_open_writeonly(const char* filename)
 }
 
   int
-fildesh_compat_fd_pipe(fildesh_compat_fd_t* ret_produce,
-                    fildesh_compat_fd_t* ret_consume)
+fildesh_compat_fd_pipe(
+    FildeshCompat_fd* ret_produce,
+    FildeshCompat_fd* ret_consume)
 {
   int fds[2] = {-1, -1};
   int istat;
@@ -336,7 +360,7 @@ fildesh_compat_fd_pipe(fildesh_compat_fd_t* ret_produce,
 }
 
   size_t
-fildesh_compat_fd_write(fildesh_compat_fd_t fd, const void* data, size_t data_size)
+fildesh_compat_fd_write(FildeshCompat_fd fd, const void* data, size_t data_size)
 {
 #ifndef _MSC_VER
   ssize_t n = write(fd, data, data_size);
@@ -348,7 +372,7 @@ fildesh_compat_fd_write(fildesh_compat_fd_t fd, const void* data, size_t data_si
 }
 
   size_t
-fildesh_compat_fd_read(fildesh_compat_fd_t fd, void* buf, size_t buf_capacity)
+fildesh_compat_fd_read(FildeshCompat_fd fd, void* buf, size_t buf_capacity)
 {
 #ifndef _MSC_VER
   ssize_t n = read(fd, buf, buf_capacity);
@@ -370,9 +394,9 @@ static int fildesh_compat_fd_inherit_empty_stdio(int fd)
 #endif
   if (istat != 0) {return -1;}
   if (fd == 0) {
-    istat = fildesh_compat_fd_copy_to(0, fds[0]);
+    istat = fildesh_compat_fd_copy_to_(0, fds[0]);
   } else {
-    istat = fildesh_compat_fd_copy_to(fd, fds[1]);
+    istat = fildesh_compat_fd_copy_to_(fd, fds[1]);
   }
   if (istat != 0 || fds[0] != fd) {
     fildesh_compat_fd_close(fds[0]);
@@ -384,9 +408,10 @@ static int fildesh_compat_fd_inherit_empty_stdio(int fd)
 }
 
 static int
-fildesh_compat_fd_spawnvp_setup_stdio(fildesh_compat_fd_t stdin_fd,
-                                      fildesh_compat_fd_t stdout_fd,
-                                      fildesh_compat_fd_t stderr_fd)
+fildesh_compat_fd_spawnvp_setup_stdio(
+    FildeshCompat_fd stdin_fd,
+    FildeshCompat_fd stdout_fd,
+    FildeshCompat_fd stderr_fd)
 {
   int istat = 0;
   if (stdin_fd < 0) {
@@ -395,7 +420,7 @@ fildesh_compat_fd_spawnvp_setup_stdio(fildesh_compat_fd_t stdin_fd,
     /* Nothing. Already inherited.*/
   } else {
     assert(stdin_fd >= 3);
-    istat = fildesh_compat_fd_copy_to(0, stdin_fd);
+    istat = fildesh_compat_fd_copy_to_(0, stdin_fd);
     if (istat != 0) {return -100;}
     istat = fildesh_compat_fd_close(stdin_fd);
   }
@@ -406,10 +431,10 @@ fildesh_compat_fd_spawnvp_setup_stdio(fildesh_compat_fd_t stdin_fd,
     /* Nothing. Already inherited.*/
   } else if (stdout_fd == 2) {
     assert(stderr_fd == 2);
-    istat = fildesh_compat_fd_copy_to(1, 2);
+    istat = fildesh_compat_fd_copy_to_(1, 2);
   } else {
     assert(stdout_fd >= 3);
-    istat = fildesh_compat_fd_copy_to(1, stdout_fd);
+    istat = fildesh_compat_fd_copy_to_(1, stdout_fd);
     if (istat != 0) {return -110;}
     istat = fildesh_compat_fd_close(stdout_fd);
   }
@@ -418,12 +443,12 @@ fildesh_compat_fd_spawnvp_setup_stdio(fildesh_compat_fd_t stdin_fd,
     istat = fildesh_compat_fd_inherit_empty_stdio(2);
   } else if (stderr_fd == 1) {
     assert(stdout_fd == 1);
-    istat = fildesh_compat_fd_copy_to(2, 1);
+    istat = fildesh_compat_fd_copy_to_(2, 1);
   } else if (stderr_fd == 2) {
     /* Nothing. Already inherited.*/
   } else {
     assert(stderr_fd >= 3);
-    istat = fildesh_compat_fd_copy_to(2, stderr_fd);
+    istat = fildesh_compat_fd_copy_to_(2, stderr_fd);
     if (istat != 0) {return -120;}
     istat = fildesh_compat_fd_close(stderr_fd);
   }
@@ -432,10 +457,11 @@ fildesh_compat_fd_spawnvp_setup_stdio(fildesh_compat_fd_t stdin_fd,
 }
 
 static void
-fildesh_compat_fd_spawnvp_cleanup_stdio(fildesh_compat_fd_t stdin_fd,
-                                        fildesh_compat_fd_t stdout_fd,
-                                        fildesh_compat_fd_t stderr_fd,
-                                     int status)
+fildesh_compat_fd_spawnvp_cleanup_stdio(
+    FildeshCompat_fd stdin_fd,
+    FildeshCompat_fd stdout_fd,
+    FildeshCompat_fd stderr_fd,
+    int status)
 {
   if (status != -100 && stdin_fd != 0) {
     fildesh_compat_fd_close(0);
@@ -457,14 +483,15 @@ fildesh_compat_fd_spawnvp_cleanup_stdio(fildesh_compat_fd_t stdin_fd,
   }
 }
 
-  fildesh_compat_pid_t
-fildesh_compat_fd_spawnvp(fildesh_compat_fd_t stdin_fd,
-                          fildesh_compat_fd_t stdout_fd,
-                          fildesh_compat_fd_t stderr_fd,
-                          const fildesh_compat_fd_t* fds_to_inherit,
-                          const char* const* argv)
+  FildeshCompat_pid
+fildesh_compat_fd_spawnvp(
+    FildeshCompat_fd stdin_fd,
+    FildeshCompat_fd stdout_fd,
+    FildeshCompat_fd stderr_fd,
+    const FildeshCompat_fd* fds_to_inherit,
+    const char* const* argv)
 {
-  fildesh_compat_pid_t pid = -1;
+  FildeshCompat_pid pid = -1;
   int e = 0;
   int istat = 0;
   unsigned i;
@@ -510,12 +537,13 @@ fildesh_compat_fd_spawnvp(fildesh_compat_fd_t stdin_fd,
   return pid;
 }
 
-  fildesh_compat_pid_t
-fildesh_compat_fd_spawnlp(fildesh_compat_fd_t stdin_fd,
-                          fildesh_compat_fd_t stdout_fd,
-                          fildesh_compat_fd_t stderr_fd,
-                          const fildesh_compat_fd_t* fds_to_inherit,
-                          const char* cmd, ...)
+  FildeshCompat_pid
+fildesh_compat_fd_spawnlp(
+    FildeshCompat_fd stdin_fd,
+    FildeshCompat_fd stdout_fd,
+    FildeshCompat_fd stderr_fd,
+    const FildeshCompat_fd* fds_to_inherit,
+    const char* cmd, ...)
 {
   const unsigned max_argc = 50;
   const char* argv[51];
@@ -535,25 +563,27 @@ fildesh_compat_fd_spawnlp(fildesh_compat_fd_t stdin_fd,
 }
 
   int
-fildesh_compat_fd_spawnvp_wait(fildesh_compat_fd_t stdin_fd,
-                               fildesh_compat_fd_t stdout_fd,
-                               fildesh_compat_fd_t stderr_fd,
-                               const fildesh_compat_fd_t* fds_to_inherit,
-                               const char* const* argv)
+fildesh_compat_fd_spawnvp_wait(
+    FildeshCompat_fd stdin_fd,
+    FildeshCompat_fd stdout_fd,
+    FildeshCompat_fd stderr_fd,
+    const FildeshCompat_fd* fds_to_inherit,
+    const char* const* argv)
 
 {
-  fildesh_compat_pid_t pid = fildesh_compat_fd_spawnvp(
+  FildeshCompat_pid pid = fildesh_compat_fd_spawnvp(
       stdin_fd, stdout_fd, stderr_fd, fds_to_inherit, argv);
   if (pid < 0) {return -1;}
   return fildesh_compat_sh_wait(pid);
 }
 
   int
-fildesh_compat_fd_spawnlp_wait(fildesh_compat_fd_t stdin_fd,
-                               fildesh_compat_fd_t stdout_fd,
-                               fildesh_compat_fd_t stderr_fd,
-                               const fildesh_compat_fd_t* fds_to_inherit,
-                               const char* cmd, ...)
+fildesh_compat_fd_spawnlp_wait(
+    FildeshCompat_fd stdin_fd,
+    FildeshCompat_fd stdout_fd,
+    FildeshCompat_fd stderr_fd,
+    const FildeshCompat_fd* fds_to_inherit,
+    const char* cmd, ...)
 {
   const unsigned max_argc = 50;
   const char* argv[51];

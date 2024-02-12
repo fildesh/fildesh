@@ -11,7 +11,7 @@
 typedef struct FildeshXF FildeshXF;
 struct FildeshXF {
   FildeshX base;
-  fildesh_fd_t fd;
+  Fildesh_fd fd;
   /* unsigned basename_offset; */
   char* filename;
 };
@@ -83,9 +83,9 @@ static inline FildeshX* open_urandom_FildeshX() {
 }
 
 
-static fildesh_fd_t fildesh_open_null_readonly() {
-  fildesh_compat_fd_t fd = -1;
-  fildesh_compat_fd_t tmp_fd = -1;
+static Fildesh_fd fildesh_open_null_readonly() {
+  Fildesh_fd fd = -1;
+  Fildesh_fd tmp_fd = -1;
   int istat;
   istat = fildesh_compat_fd_pipe(&tmp_fd, &fd);
   if (istat != 0) {return -1;}
@@ -96,7 +96,7 @@ static fildesh_fd_t fildesh_open_null_readonly() {
 
 static FildeshX* open_null_FildeshXF() {
   FildeshXF* xf;
-  fildesh_compat_fd_t fd = fildesh_open_null_readonly();
+  Fildesh_fd fd = fildesh_open_null_readonly();
   if (fd < 0) {return NULL;}
   xf = (FildeshXF*) malloc(sizeof(FildeshXF));
   if (!xf) {return NULL;}
@@ -142,22 +142,16 @@ open_sibling_FildeshXF(const char* sibling, const char* filename)
   }
 
   *xf = default_FildeshXF();
-  if (filename[0] != '/' && sibling) {
-    size_t sibling_dirlen = 0;
-    if (sibling) {
-      char* p = strrchr(sibling, '/');
-      if (p) {
-        sibling_dirlen = (size_t)(p - sibling) + 1;
-      }
+  {
+    FildeshO oss[1] = {DEFAULT_FildeshO};
+    if (sibling) {putstr_FildeshO(oss, sibling);}
+    sibling_pathname_bytestring_FildeshO(
+        oss, (const unsigned char*)filename, filename_length);
+    if (oss->size > 0) {
+      putc_FildeshO(oss, '\0');
+      xf->filename = fildesh_compat_string_duplicate(oss->at);
     }
-    xf->filename = malloc(sibling_dirlen + filename_length + 1);
-    if (xf->filename) {
-      memcpy(xf->filename, sibling, sibling_dirlen);
-      memcpy(&xf->filename[sibling_dirlen], filename, filename_length+1);
-    }
-  }
-  else {
-    xf->filename = fildesh_compat_string_duplicate(filename);
+    close_FildeshO(oss);
   }
 
   if (xf->filename) {
@@ -177,7 +171,7 @@ open_sibling_FildeshXF(const char* sibling, const char* filename)
   return NULL;
 }
 
-  fildesh_fd_t
+  Fildesh_fd
 fildesh_arg_open_readonly(const char* filename)
 {
   static const char dev_stdin[] = "/dev/stdin";
@@ -204,7 +198,7 @@ fildesh_arg_open_readonly(const char* filename)
 }
 
   FildeshX*
-open_fd_FildeshX(fildesh_fd_t fd)
+open_fd_FildeshX(Fildesh_fd fd)
 {
   char filename[FILDESH_FD_PATH_SIZE_MAX];
   unsigned filename_size;

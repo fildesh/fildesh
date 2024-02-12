@@ -87,21 +87,21 @@ fildesh_builtin_cmp_main(unsigned argc, char** argv,
 
   equal = equal && (lhs->off == lhs->size && rhs->off == rhs->size);
   if (!equal && out) {
-    putstr_FildeshO(out, "Difference after ");
+    putstrlit_FildeshO(out, "Difference after ");
     print_int_FildeshO(out, (int)byte_count);
-    putstr_FildeshO(out, " bytes (");
+    putstrlit_FildeshO(out, " bytes (");
     if (lhs->off < lhs->size) {
       print_int_FildeshO(out, (int)(unsigned)lhs->at[lhs->off]);
     } else {
-      putstr_FildeshO(out, "EOF");
+      putstrlit_FildeshO(out, "EOF");
     }
-    putstr_FildeshO(out, " != ");
+    putstrlit_FildeshO(out, " != ");
     if (rhs->off < rhs->size) {
       print_int_FildeshO(out, (int)(unsigned)rhs->at[rhs->off]);
     } else {
-      putstr_FildeshO(out, "EOF");
+      putstrlit_FildeshO(out, "EOF");
     }
-    putstr_FildeshO(out, ").\n");
+    putstrlit_FildeshO(out, ").\n");
   }
 
   close_FildeshX(lhs);

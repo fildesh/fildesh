@@ -11,13 +11,13 @@ print_debug_FildeshKV_RBTREE(const FildeshKV* map, FildeshO* out)
   {
     size_t x = id/2;
     print_int_FildeshO(out, *(unsigned char*)key_at_FildeshKV(map, id));
-    putstr_FildeshO(out, ": ");
+    putstrlit_FildeshO(out, ": ");
     putstr_FildeshO(out, (RedColorOf(x) ? "red" : "black"));
     putc_FildeshO(out, ' ');
     print_int_FildeshO(out, (unsigned)x);
-    putstr_FildeshO(out, " -> ");
+    putstrlit_FildeshO(out, " -> ");
     if (IsRoot(x)) {
-      putstr_FildeshO(out, "NULL");
+      putstrlit_FildeshO(out, "NULL");
     }
     else {
       print_int_FildeshO(out, (unsigned)JointOf(x));
@@ -30,7 +30,7 @@ print_debug_FildeshKV_RBTREE(const FildeshKV* map, FildeshO* out)
 print_graphviz_FildeshKV_RBTREE(const FildeshKV* map, FildeshO* out)
 {
   FildeshKV_id_t id;
-  putstr_FildeshO(out, "digraph tree {\n");
+  putstrlit_FildeshO(out, "digraph tree {\n");
 
   for (id = first_FildeshKV(map); !fildesh_nullid(id);
        id = next_at_FildeshKV(map, id))
@@ -39,14 +39,14 @@ print_graphviz_FildeshKV_RBTREE(const FildeshKV* map, FildeshO* out)
     if ((id & 1) != 0) {continue;}
     putc_FildeshO(out, 'q');
     print_int_FildeshO(out, (int)x);
-    putstr_FildeshO(out, " [label = \"");
+    putstrlit_FildeshO(out, " [label = \"");
     print_int_FildeshO(out, *(unsigned char*)key_at_FildeshKV(map, id));
     if (IsBroadLeaf(x)) {
       putc_FildeshO(out, '!');
     }
-    putstr_FildeshO(out, "\", color = \"");
+    putstrlit_FildeshO(out, "\", color = \"");
     putstr_FildeshO(out, (RedColorOf(x) ? "red" : "black"));
-    putstr_FildeshO(out, "\"];\n");
+    putstrlit_FildeshO(out, "\"];\n");
   }
 
   for (id = first_FildeshKV(map); !fildesh_nullid(id);
@@ -57,12 +57,12 @@ print_graphviz_FildeshKV_RBTREE(const FildeshKV* map, FildeshO* out)
     if (IsRoot(x)) {continue;}
     putc_FildeshO(out, 'q');
     print_int_FildeshO(out, (int)x);
-    putstr_FildeshO(out, " -> q");
+    putstrlit_FildeshO(out, " -> q");
     print_int_FildeshO(out, (int)JointOf(x));
-    putstr_FildeshO(out, ";\n");
+    putstrlit_FildeshO(out, ";\n");
   }
 
-  putstr_FildeshO(out, "}\n");
+  putstrlit_FildeshO(out, "}\n");
 }
 
 static

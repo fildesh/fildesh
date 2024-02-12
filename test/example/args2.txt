@@ -1,6 +1,4 @@
-Hello! My name is: example/args.fildesh
-You provided 2 arguments.
-The first two are '2' and '7'.
+Given: --offset=2 --limit=7
 Let's count from 2 to 7.
 2
 3

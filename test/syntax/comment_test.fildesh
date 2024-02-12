@@ -1,0 +1,16 @@
+
+(: s Str
+ # This should be ignored.
+ (++ # And this.
+  # This too.
+  # This doubly so.
+  "hello"# Even this.
+  " " # Lots of comments.
+  "world"
+  # So many comments!
+ )# Wow.
+)
+
+|< zec / "hello world" /
+|- cmp - $(XF s)
+|> stdout

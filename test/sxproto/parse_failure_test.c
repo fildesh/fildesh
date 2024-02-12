@@ -6,7 +6,7 @@
 
 
 #define XPT(expect, text)  do { \
-  FildeshX in[1] = {LITERAL_FildeshX(text)}; \
+  DECLARE_STRLIT_FildeshX(in, text); \
   FildeshSxpb* sxpb; \
   sxpb = slurp_sxpb_close_FildeshX(in, NULL, oslice); \
   assert(!sxpb); \
@@ -34,10 +34,8 @@ parse_failure_test()
       "(((u)");
   XPT("Expected closing paren after array name.",
       "((");
-  XPT("Denote empty message in array as (), not (()).",
-      "((a) (()))");
-  XPT("Message expects named fields inside it.",
-      "(");
+  XPT("Denote empty message in array as (()), not ().",
+      "((a) ())");
   XPT("Literal field can only hold 1 value.",
       "(k 1 2)");
   XPT("Expected closing double quote.",
@@ -52,6 +50,8 @@ parse_failure_test()
       "((a) (x 5))");
   XPT("Manyof cannot hold nameless message values yet.",
       "(((a)) (() (x 5)))");
+  XPT("Duplicate field name. Use array syntax for repeated fields.",
+      "(x 5) (x 6)");
   XPT("Unexpected message.",
       "((a) 5 (() (a 1)))");
   XPT("Unexpected literal type.",

@@ -9,6 +9,10 @@ endif()
 add_test(NAME syntax_coalesce_undefined_test COMMAND fildesh -f
   "${CMAKE_CURRENT_SOURCE_DIR}/coalesce_undefined_test.fildesh")
 
+add_test(NAME syntax_comment_test COMMAND ${Fildesh_EXECUTABLE}
+  -f "${CMAKE_CURRENT_SOURCE_DIR}/comment_test.fildesh"
+)
+
 add_test(NAME syntax_concatenate_axfxax_test COMMAND fildesh -f
   "${CMAKE_CURRENT_SOURCE_DIR}/concatenate_axfxax_test.fildesh")
 add_test(NAME syntax_concatenate_hxfxax_test COMMAND fildesh -f
@@ -39,9 +43,13 @@ add_test(NAME syntax_escape_string_test COMMAND fildesh -f
   "${CMAKE_CURRENT_SOURCE_DIR}/escape_string_test.fildesh")
 
 add_test(NAME syntax_executable_bytes_oxf_test COMMAND fildesh -f
-  "${CMAKE_CURRENT_SOURCE_DIR}/executable_bytes_oxf_test.fildesh" "$<TARGET_FILE:zec>")
+  "${CMAKE_CURRENT_SOURCE_DIR}/executable_bytes_oxf_test.fildesh"
+  "--input_exe=${FildeshTool_shout_EXECUTABLE}"
+)
 add_test(NAME syntax_executable_bytes_ofxf_test COMMAND fildesh -f
-  "${CMAKE_CURRENT_SOURCE_DIR}/executable_bytes_ofxf_test.fildesh" "$<TARGET_FILE:zec>")
+  "${CMAKE_CURRENT_SOURCE_DIR}/executable_bytes_ofxf_test.fildesh"
+  "--input_exe=${FildeshTool_shout_EXECUTABLE}"
+)
 
 add_test(NAME syntax_expect_failure_oxf_test COMMAND fildesh -f
   "${CMAKE_CURRENT_SOURCE_DIR}/expect_failure_oxf_test.fildesh")
@@ -72,6 +80,9 @@ add_test(NAME syntax_redefine_hxahxfhxh_test COMMAND fildesh -f
 
 add_test(NAME syntax_stderr_ooox_test COMMAND fildesh -f
   "${CMAKE_CURRENT_SOURCE_DIR}/stderr_ooox_test.fildesh")
+add_test(NAME syntax_stdout_ooox_test COMMAND ${Fildesh_EXECUTABLE}
+  -f "${CMAKE_CURRENT_SOURCE_DIR}/stdout_ooox_test.fildesh"
+)
 
 add_test(NAME syntax_tmpfile_xofxof_test COMMAND fildesh -f
   "${CMAKE_CURRENT_SOURCE_DIR}/tmpfile_xofxof_test.fildesh")

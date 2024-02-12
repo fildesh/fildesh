@@ -1,4 +1,4 @@
-load("//:def.bzl", "fildesh_test")
+load("//tool/bazel:fildesh_test.bzl", "fildesh_test")
 
 fildesh_test(
     name = "named_arg_test",
@@ -46,6 +46,5 @@ fildesh_test(
 fildesh_test(
     name = "version_test",
     srcs = ["version_test.fildesh"],
-    args = ["--bazel_module_file=$(location //:MODULE.bazel)"],
-    data = ["//:MODULE.bazel"],
+    input_by_option = {"bazel_module_file": "//:MODULE.bazel"},
 )

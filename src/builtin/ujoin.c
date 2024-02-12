@@ -70,20 +70,19 @@ setup_lookup_table(FildeshX* in, const char* delim,
 {
   LineJoin** joins = NULL;
   size_t join_count = 0;
-  fildesh_lgsize_t join_lgcount = 0;
+  Fildesh_lgsize join_lgcount = 0;
   const unsigned delim_sz = delim ? strlen(delim) : 0;
-  char* s;
+  FildeshX slice;
 
-  for (s = getline_FildeshX(in);
-       s;
-       s = getline_FildeshX(in))
+  for (slice = sliceline_FildeshX(in);
+       /* Stop at EOS or empty line.*/
+       avail_FildeshX(&slice);
+       slice = sliceline_FildeshX(in))
   {
+    char* s;
     LineJoin* join;
 
-    /* Disregard a trailing empty line.*/
-    if (s[0] == '\0')  break;
-
-    s = strdup_FildeshAlloc(alloc, s);
+    s = strdup_FildeshX(&slice, alloc);
     join = fildesh_allocate(LineJoin, 1, alloc);
     *(LineJoin**) grow_FildeshA_((void**)&joins, &join_count, &join_lgcount,
                                  sizeof(LineJoin*), 1)
@@ -121,18 +120,26 @@ compare_lines(FildeshX* in, LineJoin** joins, size_t join_count,
   LineJoin** map = new_LineJoinMap(joins, join_count);
   const unsigned delim_sz = delim ? strlen(delim) : 0;
   unsigned line_no = 0;
-  char* line;
+  FildeshX slice;
+  FildeshO oss[1] = {DEFAULT_FildeshO};
 
-  for (line = getline_FildeshX(in);
-       line;
-       line = getline_FildeshX(in))
+  for (slice = sliceline_FildeshX(in);
+       slice.at;
+       slice = sliceline_FildeshX(in))
   {
-    char* field = line;
+    char* line;
+    char* field;
     char* payload;
     char nixed_char = '\0';
     LineJoin* join = NULL;
 
-    ++ line_no;
+    truncate_FildeshO(oss);
+    putslice_FildeshO(oss, slice);
+    putc_FildeshO(oss, '\0');
+
+    line_no += 1;
+    line = oss->at;
+    field = oss->at;
 
     if (delim) {
       payload = strstr(line, delim);
@@ -192,6 +199,7 @@ compare_lines(FildeshX* in, LineJoin** joins, size_t join_count,
     }
   }
   free(map);
+  close_FildeshO(oss);
 }
 
 

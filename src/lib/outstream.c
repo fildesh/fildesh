@@ -134,3 +134,34 @@ repeat_byte_FildeshO(FildeshO* out, unsigned char b, size_t n)
   memset(grow_FildeshO(out, n), b, n);
   maybe_flush_FildeshO(out);
 }
+
+  void
+sibling_pathname_bytestring_FildeshO(
+    FildeshO* sibling,
+    const unsigned char* filename,
+    size_t filename_size)
+{
+  assert(filename);
+  assert(sibling);
+  while (sibling->off < sibling->size && sibling->at[sibling->size-1] != '/') {
+    sibling->size -= 1;
+  }
+  if (sibling->off >= sibling->size ||
+      (filename_size > 0 && (char)filename[0] == '/') ||
+      (filename_size == 1 && (char)filename[0] == '-'))
+  {
+    truncate_FildeshO(sibling);
+    put_bytestring_FildeshO(sibling, filename, filename_size);
+    return;
+  }
+  if (sibling->off > 0) {
+    sibling->size = sibling->size - sibling->off;
+    memmove(sibling->at, &sibling->at[sibling->off], sibling->size);
+    sibling->off = 0;
+  }
+  if (filename_size >= 2 && (char)filename[0] == '.' && (char)filename[1] == '/') {
+    filename = &filename[2];
+    filename_size -= 2;
+  }
+  put_bytestring_FildeshO(sibling, filename, filename_size);
+}

@@ -37,7 +37,11 @@ write_MockFildeshOF(MockFildeshOF* of) {
 
 
   void
-param3_test_puts(unsigned chunk_size, fildesh_lgsize_t flush_lgsize, const char* delim) {
+param3_test_putstr(
+    unsigned chunk_size,
+    Fildesh_lgsize flush_lgsize,
+    const char* delim)
+{
   static const char* const lines[] = {
     "this is the first line",
     "this is the second line",
@@ -58,8 +62,8 @@ param3_test_puts(unsigned chunk_size, fildesh_lgsize_t flush_lgsize, const char*
           lines[3], delim,
           lines[4]);
 
-  puts_FildeshO(o, lines[0]);
-  puts_FildeshO(o, delim);
+  putstr_FildeshO(o, lines[0]);
+  putstr_FildeshO(o, delim);
   assert(flush_lgsize == 0 || (o->size >> flush_lgsize) == 0);
   assert(allocated_size_of_FildeshO(o) >= o->size);
 
@@ -89,7 +93,7 @@ param3_test_puts(unsigned chunk_size, fildesh_lgsize_t flush_lgsize, const char*
 
 int main() {
   unsigned chunk_size;
-  fildesh_lgsize_t flush_lgsize;
+  Fildesh_lgsize flush_lgsize;
   unsigned delim_index;
   static const char* const delims[] = {
     "IAMA delimiter AMA",
@@ -104,7 +108,7 @@ int main() {
       for (delim_index = 0; delims[delim_index]; ++delim_index) {
         fprintf(stderr, "chunk_size:%u  flush_lgsize:%u delim:%s\n",
                 chunk_size, (unsigned)flush_lgsize, delims[delim_index]);
-        param3_test_puts(chunk_size, flush_lgsize, delims[delim_index]);
+        param3_test_putstr(chunk_size, flush_lgsize, delims[delim_index]);
       }
     }
   }

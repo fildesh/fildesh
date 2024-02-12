@@ -1,9 +1,9 @@
-load("//:def.bzl", "fildesh_test")
+load("//tool/bazel:fildesh_test.bzl", "fildesh_test")
 
 fildesh_test(
     name = "alias_ofxf_test",
     srcs = ["alias_ofxf_test.fildesh"],
-    aliases = {
+    tool_by_alias = {
         "expectish": "//tool:expectish",
         "shout": "//tool:shout",
     },
@@ -16,6 +16,11 @@ fildesh_test(
 fildesh_test(
     name = "coalesce_undefined_test",
     srcs = ["coalesce_undefined_test.fildesh"],
+)
+
+fildesh_test(
+    name = "comment_test",
+    srcs = ["comment_test.fildesh"],
 )
 
 fildesh_test(
@@ -73,14 +78,12 @@ fildesh_test(
 fildesh_test(
     name = "executable_bytes_oxf_test",
     srcs = ["executable_bytes_oxf_test.fildesh"],
-    args = ["$(location //src/builtin:zec)"],
-    data = ["//src/builtin:zec"],
+    input_by_option = {"input_exe": "//tool:shout"},
 )
 fildesh_test(
     name = "executable_bytes_ofxf_test",
     srcs = ["executable_bytes_ofxf_test.fildesh"],
-    args = ["$(location //src/builtin:zec)"],
-    data = ["//src/builtin:zec"],
+    input_by_option = {"input_exe": "//tool:shout"},
 )
 
 fildesh_test(
@@ -131,6 +134,10 @@ fildesh_test(
 fildesh_test(
     name = "stderr_ooox_test",
     srcs = ["stderr_ooox_test.fildesh"],
+)
+fildesh_test(
+    name = "stdout_ooox_test",
+    srcs = ["stdout_ooox_test.fildesh"],
 )
 
 fildesh_test(

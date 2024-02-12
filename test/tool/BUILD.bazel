@@ -1,5 +1,6 @@
-load("//:def.bzl", "spawn_test")
-load("//tool:spawn.bzl", "fildespawn_test")
+load("//test/tool:fildespawn_test.bzl", "fildespawn_test")
+load("//tool/bazel:fildesh_run.bzl", "fildesh_run")
+load("//tool/bazel:spawn_test.bzl", "spawn_test")
 
 cc_binary(
     name = "success",
@@ -145,5 +146,44 @@ cc_test(
     data = [
         ":failure",
         ":success",
+    ],
+)
+
+#### cembed & cswitch
+
+fildesh_run(
+    name = "embed_test_cembed_h",
+    input_by_option = {
+      "x_127": "//test/expect:literal_127.txt",
+      "x_hello": "//test/expect:literal_hello.txt",
+    },
+    output_by_option = {"o": ":embed_test.cembed.h"},
+    src_content = """
+(: literal_127_file Filename .self.opt.x_127)
+(: literal_hello_file Filename .self.opt.x_hello)
+(: out_file Filename .self.opt.o)
+cembed -o $(XOF out_file) $(XOF literal_127_file) $(XOF literal_hello_file)
+    """,
+    tool_by_alias = {"cembed": "//tool:cembed"},
+    testonly = 1,
+)
+
+fildesh_run(
+    name = "embed_test_cswitch_h",
+    input_by_xof = {"item_file": ":embed_test.txt"},
+    output_by_xof = {"out": ":embed_test.cswitch.h"},
+    src_content = """
+cswitch key -case-pfx "fn = item_" -x $(XOF item_file) -o $(XOF out)
+    """,
+    tool_by_alias = {"cswitch": "//tool:cswitch"},
+    testonly = 1,
+)
+
+cc_test(
+    name = "embed_test",
+    srcs = [
+        "embed_test.c",
+        ":embed_test.cembed.h",
+        ":embed_test.cswitch.h",
     ],
 )

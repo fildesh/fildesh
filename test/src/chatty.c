@@ -114,9 +114,9 @@ int main (int argc, char** argv)
     struct sockaddr_storage client_addr;
     socklen_t client_addr_nbytes = sizeof(client_addr);
     ssize_t nbytes = 0;
-    fildesh_compat_fd_t source_fd = -1;
-    fildesh_compat_fd_t fd_to_child = -1;
-    fildesh_compat_pid_t pid;
+    Fildesh_fd source_fd = -1;
+    Fildesh_fd fd_to_child = -1;
+    FildeshCompat_pid pid;
 
     istat = fildesh_compat_fd_pipe(&fd_to_child, &source_fd);
     if (istat != 0) {fildesh_compat_errno_trace(); return 1;}

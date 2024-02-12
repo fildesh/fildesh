@@ -4,19 +4,23 @@
 #include <string.h>
 
 int main() {
-  char* line;
   FildeshX* in = open_FildeshXF("test/src/read_file_lines_test.c");
+  FildeshX slice;
 
   assert(in);
 
-  line = getline_FildeshX(in);
-  assert(0 == strcmp("/* EXPECTED_AS_FIRST_LINE */", line));
+  slice = sliceline_FildeshX(in);
+  assert(0 == fildesh_compare_bytestring(
+          bytestring_of_FildeshX(&slice),
+          fildesh_bytestrlit("/* EXPECTED_AS_FIRST_LINE */")));
   do {
-    line = getline_FildeshX(in);
-    assert(line && "have not reached the expected last line yet");
-  } while (0 != strcmp("/* EXPECTED_AS_LAST_LINE */", line));
-  line = getline_FildeshX(in);
-  assert(!line && "no more lines expected");
+    slice = sliceline_FildeshX(in);
+    assert(slice.at && "have not reached the expected last line yet");
+  } while (0 != fildesh_compare_bytestring(
+          bytestring_of_FildeshX(&slice),
+          fildesh_bytestrlit("/* EXPECTED_AS_LAST_LINE */")));
+  slice = sliceline_FildeshX(in);
+  assert(!slice.at && "no more lines expected");
 
   close_FildeshX(in);
   return 0;

@@ -37,7 +37,7 @@ static void dev_null_test() {
 }
 
 static void getline_test() {
-  FildeshX content_in[1] = {LITERAL_FildeshX("hello\nworld")};
+  FildeshX content_in[1] = {FildeshX_of_strlit("hello\nworld")};
   fildesh::istream in(content_in);
 
   std::string line;
@@ -52,7 +52,7 @@ static void getline_test() {
 }
 
 static void parse_int_test() {
-  FildeshX content_in[1] = {LITERAL_FildeshX("127")};
+  FildeshX content_in[1] = {FildeshX_of_strlit("127")};
   fildesh::istream in(content_in);
   int x = -1;
   in >> x;

@@ -25,41 +25,44 @@ count_non_ws (const char* s)
 {
   return strcspn (s, fildesh_compat_string_blank_bytes);
 }
-  static unsigned
-trim_trailing_ws (char* s)
+static
+  void
+trim_trailing_bytes(FildeshX* x, const unsigned char* a, size_t n)
 {
-  unsigned n = strlen (s);
-  while (0 < n && strchr (fildesh_compat_string_blank_bytes, s[n-1]))  --n;
-  s[n] = '\0';
-  return n;
+  while (avail_FildeshX(x) && memchr(a, x->at[x->size-1], n)) {
+    x->size -= 1;
+  }
 }
 
 
   char*
 fildesh_syntax_parse_line(
-    FildeshX* xf, size_t* text_nlines,
+    FildeshX* in, size_t* text_nlines,
     FildeshAlloc* alloc, FildeshO* tmp_out)
 {
-  char* s;
+  FildeshX slice;
 
   truncate_FildeshO(tmp_out);
-  while ((s = getline_FildeshX(xf)))
+  for (slice = sliceline_FildeshX(in);
+       slice.at;
+       slice = sliceline_FildeshX(in))
   {
-    unsigned n;
     bool multiline = false;
     *text_nlines += 1;
 
-    s = &s[count_ws(s)];
-    if (s[0] == '#' || s[0] == '\0')  continue;
+    while_chars_FildeshX(&slice, fildesh_compat_string_blank_bytes);
+    if (!avail_FildeshX(&slice)) {continue;}
+    if (peek_char_FildeshX(&slice, '#')) {continue;}
 
-    n = trim_trailing_ws (s);
+    trim_trailing_bytes(
+        &slice, fildesh_bytestrlit(fildesh_compat_string_blank_bytes));
+    assert(avail_FildeshX(&slice));
 
-    multiline = s[n-1] == '\\';
-    if (multiline)
-      --n;
-
-    put_bytestring_FildeshO(tmp_out, (unsigned char*)s, n);
-
+    if (slice.at[slice.size-1] == '\\') {
+      multiline = true;
+      slice.size -= 1;
+    }
+    putslice_FildeshO(tmp_out, slice);
     if (!multiline)  break;
   }
   if (tmp_out->size == 0) {
@@ -114,23 +117,6 @@ fildesh_syntax_parse_here_doc(
   FildeshX slice;
   truncate_FildeshO(tmp_out);
 
-  /* Check for the single-line case.
-   * TODO(#94): Disallow this in the future.
-   */
-  if (term[3] == ':')
-  {
-    char* s;
-    term = strchr(term, ')');
-    if (!term) {
-      return strdup_FildeshAlloc(alloc, "");
-    }
-    term = &term[1];
-    term = &term[count_ws(term)];
-    s = strdup_FildeshAlloc(alloc, term);
-    trim_trailing_ws(s);
-    return s;
-  }
-
   for (slice = sliceline_FildeshX(in);
        slice.at;
        slice = sliceline_FildeshX(in))
@@ -167,7 +153,7 @@ fildesh_syntax_sep_line(
       s = &s[i];
     }
     else if (s[0] == '"') {
-      FildeshX slice = memref_FildeshX(s, strlen(s));
+      FildeshX slice = FildeshX_of_bytestring((unsigned char*)s, strlen(s));
       const char* emsg;
       slice.off = 1;
       truncate_FildeshO(tmp_out);
@@ -180,7 +166,7 @@ fildesh_syntax_sep_line(
     else if (pfxeq_cstr("$(getenv ", s)) {
       FildeshX in[1];
       FildeshX slice;
-      *in = memref_FildeshX(s, strlen(s));
+      *in = FildeshX_of_bytestring((unsigned char*)s, strlen(s));
       in->off = strlen("$(getenv ");
       while_chars_FildeshX(in, " ");
       slice = until_char_FildeshX(in, ')');

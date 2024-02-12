@@ -12,9 +12,9 @@ int fildesh_tool_spawn_main(unsigned argc, char** argv) {
   static const char stdin_claim_0[] = "stdin=claim:0";
   static const char stdout_claim_1[] = "stdout=claim:1";
 
-  fildesh_compat_fd_t stdin_fd = -1;
-  fildesh_compat_fd_t stdout_fd = -1;
-  fildesh_compat_fd_t stderr_fd = 2;
+  FildeshCompat_fd stdin_fd = -1;
+  FildeshCompat_fd stdout_fd = -1;
+  FildeshCompat_fd stderr_fd = 2;
   unsigned argi = 1;
   int exstatus = 0;
 

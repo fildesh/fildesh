@@ -20,7 +20,7 @@ LLVMFuzzerTestOneInput(const uint8_t data[], size_t size) {
 
   int* at = NULL;
   size_t count = 0;
-  fildesh_lgsize_t allocated_lgcount = 0;
+  Fildesh_lgsize allocated_lgcount = 0;
 
   for (i = 0; i < size * CHAR_BIT; ++i) {
     size_t j;

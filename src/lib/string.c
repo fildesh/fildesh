@@ -21,6 +21,17 @@ FildeshX* open_FildeshXA() {
 }
 
 
+  int
+fildesh_compare_bytestring(
+    const unsigned char* a, size_t m,
+    const unsigned char* b, size_t n)
+{
+  return (
+      m == n
+      ? (n > 0 ? memcmp(a, b, n) : 0)
+      : (m < n ? -1 : 1));
+}
+
   char*
 fildesh_parse_int(int* ret, const char* in)
 {
@@ -104,7 +115,7 @@ fildesh_encode_int_base10(char* buf, int q)
 }
 
   unsigned
-fildesh_encode_fd_path(char* buf, fildesh_fd_t fd)
+fildesh_encode_fd_path(char* buf, Fildesh_fd fd)
 {
   static const char prefix[] = "/dev/fd/";
   unsigned n = strlen(prefix);

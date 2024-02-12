@@ -38,6 +38,19 @@ inline FildeshO& operator<<(FildeshO& out, std::string_view s) {
 
 namespace fildesh {
 
+inline bool slurp_file_to_string(std::string& text, const char* filename) {
+  FildeshX* in = open_FildeshXF(filename);
+  slurp_FildeshX(in);
+  if (in && in->at) {
+    text.assign(in->at, in->size);
+  }
+  else {
+    text.clear();
+  }
+  close_FildeshX(in);
+  return !!in;
+}
+
 class ostringstream : public ostream
 {
 public:
@@ -46,7 +59,12 @@ public:
     , oslice_(default_FildeshO())
   {}
 
-  std::string str() {
+  char* c_str() {
+    putc_FildeshO(&oslice_, '\0');
+    oslice_.size -= 1;
+    return &oslice_.at[oslice_.off];
+  }
+  std::string str() const {
     return make_string(oslice_);
   }
 #ifdef __cpp_lib_string_view
@@ -60,6 +78,16 @@ public:
 private:
   FildeshO oslice_;
 };
+
+inline std::string sibling_pathname(const char* sibling, const char* filename) {
+  ostringstream oss;
+  if (sibling) {oss << sibling;}
+  sibling_pathname_bytestring_FildeshO(
+      oss.c_struct(),
+      (const unsigned char*)filename,
+      strlen(filename));
+  return oss.str();
+}
 
 }  // namespace fildesh
 #endif

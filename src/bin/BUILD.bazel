@@ -8,5 +8,5 @@ cc_binary(
     name = "fildesh",
     srcs = ["main.c"],
     deps = ["//src:fildesh_builtin_lib"],
-    visibility = ["//:__pkg__"],
+    visibility = ["//:__pkg__", "//tool:__pkg__"],
 )

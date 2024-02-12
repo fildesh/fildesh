@@ -1,10 +1,12 @@
 # Like executable_bytes_oxf_test.fildesh
 # but with an output file providing the executable bytes.
 
-zec -o $(OF exe) $(XA 1) / /
-$(O expect) zec / "hello there world" /
+(: executable_bytes_file Filename .self.opt.input_exe)
 
-|< $(XF exe) / "hello" " there " "world" /
+zec -o $(OF exe) / / $(XOF executable_bytes_file)
+$(O expect) zec / "hello there world\n" /
+
+|< $(XF exe) - "hello" "there" "world"
 |- cmp $(XF expect)
 |> stdout
 
