@@ -11,6 +11,14 @@ add_executable(fuzz_kv_ensure_smoke_test
 target_link_libraries(fuzz_kv_ensure_smoke_test fildesh_lib)
 add_test(NAME fuzz_kv_ensure_smoke_test COMMAND fuzz_kv_ensure_smoke_test)
 
+#add_executable(fuzz_kv_brbtree_fuzz_test
+#  "brbtree_fuzz_test.c"
+#  "${CMAKE_SOURCE_DIR}/test/fuzz/fuzz_main.c"
+#  "kv_fuzz_common.c"
+#  "kv_fuzz_common.h")
+#target_link_libraries(fuzz_kv_brbtree_fuzz_test kv_validation_lib)
+#add_test(NAME fuzz_kv_brbtree_fuzz_test COMMAND fuzz_kv_brbtree_fuzz_test)
+
 add_executable(fuzz_kv_brbtree_smoke_test
   "brbtree_smoke_test.c"
   "brbtree_fuzz_test.c"

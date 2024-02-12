@@ -15,6 +15,16 @@ cc_smoke_test(
     deps = ["//:fildesh_lib"],
 )
 
+#cc_fuzz_test(
+#    name = "brbtree_fuzz_test",
+#    srcs = [
+#        "brbtree_fuzz_test.c",
+#        "kv_fuzz_common.c",
+#        "kv_fuzz_common.h",
+#    ],
+#    deps = ["//test/lib/kv:kv_validation_lib"],
+#    max_guesses = 50000,
+#)
 cc_smoke_test(
     name = "brbtree_smoke_test",
     srcs = [
