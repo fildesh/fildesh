@@ -373,8 +373,14 @@ parse_field_FildeshSxpbInfo(
       field_kind = FildeshSxprotoFieldKind_MESSAGE;
       field = schema;
     }
-    else {
+    else if (!peek_char_FildeshX(in, '(')) {
       field_kind = FildeshSxprotoFieldKind_ARRAY;
+    }
+    else if (peek_bytestring_FildeshX(in, fildesh_bytestrlit("(()"))) {
+      field_kind = FildeshSxprotoFieldKind_ARRAY;
+    }
+    else {
+      field_kind = FildeshSxprotoFieldKind_MANYOF;
     }
   }
   else {
@@ -464,7 +470,10 @@ parse_field_FildeshSxpbInfo(
       }
       if (field_kind != FildeshSxprotoFieldKind_MESSAGE) {
         p_it = freshtail_FildeshSxpb(sxpb, p_it);
-        assert((*sxpb->values)[p_it.elem_id].field_kind != FildeshSxprotoFieldKind_ARRAY);
+        assert(
+            (field_kind != FildeshSxprotoFieldKind_ARRAY ||
+             (*sxpb->values)[p_it.elem_id].field_kind != field_kind)
+            && "Arrays cannot be nested.");
       }
     }
     else {

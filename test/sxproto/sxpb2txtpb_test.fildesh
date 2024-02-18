@@ -103,15 +103,14 @@ $(O expect) oargz -- "${array_expect}"
 $(barrier)
 
 (: manyof_content Str """
-(((expressions))
+((expressions)
 
  (value true)
- true
 
  (not (value false))
 
- (or ((values) (() (value false)) (() (value true))))
- (((or)) (value false) (value true))
+ ((or) (() (value false)) (() (value true)))
+ ((or) (value false) (value true))
  (((or)) false true)
 
  (((or))
@@ -121,53 +120,49 @@ $(barrier)
 )
 """)
 (: manyof_expect Str """
-expressions {values: [{
-  value: true
-}, {
+expressions: [{
   value: true
 }, {
   not {
     value: false
   }
 }, {
-  or {
-    values: [{
+  or: [{
+    value: false
+  }, {
+    value: true
+  }]
+}, {
+  or: [{
+    value: false
+  }, {
+    value: true
+  }]
+}, {
+  or: [{
+    value: false
+  }, {
+    value: true
+  }]
+}, {
+  or: [{
+    value: false
+  }, {
+    and: [{
+      value: true
+    }, {
+      value: false
+    }]
+  }, {
+    or: [{
+      value: false
+    }, {
       value: false
     }, {
       value: true
     }]
-  }
-}, {
-  or {values: [{
-    value: false
-  }, {
-    value: true
-  }]}
-}, {
-  or {values: [{
-    value: false
-  }, {
-    value: true
-  }]}
-}, {
-  or {values: [{
-    value: false
-  }, {
-    and {values: [{
-      value: true
-    }, {
-      value: false
-    }]}
-  }, {
-    or {values: [{
-      value: false
-    }, {
-      value: false
-    }, {
-      value: true
-    }]}
-  }]}
-}]}
+  }]
+}]
 """)
 
 $(O expect) oargz -- "${manyof_expect}"

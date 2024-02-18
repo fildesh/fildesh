@@ -351,6 +351,8 @@ static inline void putslice_FildeshO(FildeshO* out, const FildeshX slice) {
 #define fildesh_bytestrlit(s)  (const unsigned char*)(s), sizeof(s)-1
 #define putstrlit_FildeshO(out, s) \
   put_bytestring_FildeshO(out, fildesh_bytestrlit(s))
+#define bytestring_of_FildeshO(out) \
+  (const unsigned char*)&(out)->at[(out)->off], (out)->size - (out)->off
 
 static inline FildeshX FildeshX_of_bytestring(const unsigned char* s, size_t n) {
   DECLARE_STRLIT_FildeshX(in, "");

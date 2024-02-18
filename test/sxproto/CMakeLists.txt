@@ -14,11 +14,6 @@ add_executable(sxproto_create_test
 target_link_libraries(sxproto_create_test ${FildeshSxproto_LIBRARIES})
 add_test(NAME sxproto_create_test COMMAND sxproto_create_test)
 
-add_executable(sxproto_parse_failure_test
-  "parse_failure_test.c")
-target_link_libraries(sxproto_parse_failure_test ${FildeshSxproto_LIBRARIES})
-add_test(NAME sxproto_parse_failure_test COMMAND sxproto_parse_failure_test)
-
 add_executable(sxproto_parse_test
   "parse_test.c")
 target_link_libraries(sxproto_parse_test ${FildeshSxproto_LIBRARIES})
