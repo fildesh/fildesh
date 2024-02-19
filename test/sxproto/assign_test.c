@@ -18,7 +18,7 @@ assign_to_subfield_test()
     {"things", FILL_FildeshSxprotoField_MANYOF(things_manyof)},
   };
   static FildeshSxprotoField toplevel_fields[] = {
-    {"m", FILL_FildeshSxprotoField_MESSAGE(m_message)},
+    {"m", 1  FILL_FildeshSxprotoField_MESSAGE(m_message)},
   };
   DECLARE_TOPLEVEL_FildeshSxprotoField(toplevel_schema, toplevel_fields);
   FildeshX in[1];
@@ -32,6 +32,7 @@ assign_to_subfield_test()
 
   lone_toplevel_initialization_FildeshSxprotoField(toplevel_schema);
   message_schema = subfield_of_FildeshSxprotoField(toplevel_schema, "m");
+  assert(1 == tag_id_of_FildeshSxprotoField(message_schema));
 
   it = ensure_message_subfield_at_FildeshSxpb(
       sxpb, top_of_FildeshSxpb(sxpb), "dst_message");
