@@ -50,43 +50,6 @@ static void bestmatch_usage_tests(const char* fildesh_exe, const char* bad_filen
 }
 
 static void
-cmp_usage_tests(const char* fildesh_exe, const char* bad_filename)
-{
-  int istat;
-  istat = fildesh_compat_fd_spawnlp_wait(
-      0, 1, 2, NULL, fildesh_exe, "-as", "cmp",
-      "/dev/null", "/dev/null", NULL);
-  assert(istat == 0);
-
-  istat = fildesh_compat_fd_spawnlp_wait(
-      0, 1, 2, NULL, fildesh_exe, "-as", "cmp",
-      "-", NULL);
-  assert(istat == 64);
-
-  istat = fildesh_compat_fd_spawnlp_wait(
-      0, 1, 2, NULL, fildesh_exe, "-as", "cmp",
-      "/dev/null", "/dev/null", "too_many_files", NULL);
-  assert(istat == 64);
-
-  istat = fildesh_compat_fd_spawnlp_wait(
-      0, 1, 2, NULL, fildesh_exe, "-as", "cmp",
-      "-o", bad_filename, NULL);
-  assert(istat == 73);
-
-  /* First open should fail.*/
-  istat = fildesh_compat_fd_spawnlp_wait(
-      0, 1, 2, NULL, fildesh_exe, "-as", "cmp",
-      bad_filename, "-", NULL);
-  assert(istat == 66);
-
-  /* Second open should fail.*/
-  istat = fildesh_compat_fd_spawnlp_wait(
-      0, 1, 2, NULL, fildesh_exe, "-as", "cmp",
-      "-", "-", NULL);
-  assert(istat == 66);
-}
-
-static void
 elastic_pthread_usage_tests(const char* fildesh_exe, const char* bad_filename)
 {
   int istat;
@@ -141,6 +104,24 @@ execfd_usage_tests(const char* fildesh_exe, const char* bad_filename)
   istat = fildesh_compat_fd_spawnlp_wait(
       0, 1, 2, NULL, fildesh_exe, "-as", "execfd",
       "3", "--", "missing", "index", "three", NULL);
+  assert(istat == 64);
+}
+
+static void
+sxpb2json_usage_tests(const char* fildesh_exe) {
+  int istat;
+  istat = fildesh_compat_fd_spawnlp_wait(
+      0, 1, 2, NULL, fildesh_exe, "-as", "sxpb2json",
+      "unsupported_arg", NULL);
+  assert(istat == 64);
+}
+
+static void
+sxpb2txtpb_usage_tests(const char* fildesh_exe) {
+  int istat;
+  istat = fildesh_compat_fd_spawnlp_wait(
+      0, 1, 2, NULL, fildesh_exe, "-as", "sxpb2txtpb",
+      "unsupported_arg", NULL);
   assert(istat == 64);
 }
 
@@ -267,9 +248,10 @@ int main(int argc, char** argv) {
 
   add_usage_tests(fildesh_exe);
   bestmatch_usage_tests(fildesh_exe, bad_filename);
-  cmp_usage_tests(fildesh_exe, bad_filename);
   elastic_pthread_usage_tests(fildesh_exe, bad_filename);
   execfd_usage_tests(fildesh_exe, bad_filename);
+  sxpb2json_usage_tests(fildesh_exe);
+  sxpb2txtpb_usage_tests(fildesh_exe);
   time2sec_usage_tests(fildesh_exe);
   ujoin_usage_tests(fildesh_exe, bad_filename);
   xargz_usage_tests(fildesh_exe);

@@ -39,6 +39,14 @@ add_test(NAME builtin_cmp_diff_test COMMAND spawn ! "$<TARGET_FILE:cmp>"
   "${CMAKE_CURRENT_SOURCE_DIR}/hello_newline.txt"
   "${CMAKE_CURRENT_SOURCE_DIR}/hello_newline_x2.txt")
 
+add_executable(builtin_cmp_test
+  "cmp_test.c"
+  "${PROJECT_SOURCE_DIR}/src/builtin/cmp.c"
+)
+set_property(TARGET builtin_cmp_test
+  APPEND PROPERTY COMPILE_DEFINITIONS "UNIT_TESTING")
+target_link_libraries(builtin_cmp_test ${Fildesh_LIBRARIES})
+
 #### cmptxt
 
 add_executable(builtin_cmptxt_test

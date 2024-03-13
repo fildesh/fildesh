@@ -110,7 +110,7 @@ fildesh_builtin_cmp_main(unsigned argc, char** argv,
   return (equal ? 0 : 1);
 }
 
-#ifndef FILDESH_BUILTIN_LIBRARY
+#if !defined(FILDESH_BUILTIN_LIBRARY) && !defined(UNIT_TESTING)
 int main(int argc, char** argv) {
   return fildesh_builtin_cmp_main((unsigned)argc, argv, NULL, NULL);
 }
