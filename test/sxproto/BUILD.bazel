@@ -33,11 +33,17 @@ cc_test(
 fildesh_test(
     name = "sxpb2json_test",
     srcs = ["sxpb2json_test.fildesh"],
-    tool_by_alias = {"sxpb2json": "//tool:sxpb2json"},
+    input_by_option = {
+        "sxpb": "//test/sxproto/content:message.sxpb",
+        "json": "//test/sxproto/content:message.json",
+    },
 )
 
 fildesh_test(
     name = "sxpb2txtpb_test",
     srcs = ["sxpb2txtpb_test.fildesh"],
-    tool_by_alias = {"sxpb2txtpb": "//tool:sxpb2txtpb"},
+    input_by_option = {
+        "sxpb": "//test/sxproto/content:message.sxpb",
+        "txtpb": "//test/sxproto/content:message.txtpb",
+    },
 )

@@ -1,0 +1,5 @@
+exports_files([
+    "message.json",
+    "message.sxpb",
+    "message.txtpb",
+])

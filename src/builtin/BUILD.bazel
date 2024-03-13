@@ -3,6 +3,7 @@ exports_files([
     "add.c",
     "bestmatch.c",
     "cmp.c",
+    "cmptxt.c",
     "delimend.c",
     "elastic_pthread.c",
     "expect_failure.c",
@@ -21,6 +22,7 @@ exports_files([
     "zec.c",
 ], visibility = [
     "//test/builtin:__pkg__",
+    "//tool:__pkg__",
     "//src:__pkg__",
 ])
 

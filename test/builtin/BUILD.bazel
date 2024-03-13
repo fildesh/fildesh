@@ -55,6 +55,18 @@ spawn_test(
     ],
 )
 
+#### cmptxt
+
+cc_test(
+    name = "cmptxt_test",
+    srcs = [
+        "cmptxt_test.c",
+        "//src/builtin:cmptxt.c",
+    ],
+    defines = ["UNIT_TESTING"],
+    deps = ["//:fildesh_lib", "//:fildesh_tool_lib"],
+)
+
 #### elastic
 
 fildesh_expect_test(
@@ -330,12 +342,12 @@ fildesh_test(
 
 cc_test(
     name = "void_test",
-    args = ["$(location //src/builtin:void)"],
-    srcs = ["void_test.c"],
-    deps = [
-        "//:fildesh_tool_lib",
-        "//src/builtin:void",
+    srcs = [
+        "void_test.c",
+        "//src/builtin:void.c",
     ],
+    defines = ["UNIT_TESTING"],
+    deps = ["//:fildesh_lib", "//:fildesh_tool_lib"],
 )
 
 #### waitdo

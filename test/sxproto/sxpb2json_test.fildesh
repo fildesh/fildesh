@@ -1,73 +1,15 @@
 
 # There are several tests. Search for:
-# - scalar_content
-# - message_content
-# - empty_message_content
+# - message_sxpb
 # - array_content
 # - manyof_content
 
-(: scalar_content Str """
-; An integer.
-(i 5)
-; A float.
-(f 5.5)
-; A string.
-(s "hello")
-""")
-(: scalar_expect Str """
-{
-  "f": 5.5e+0,
-  "i": 5,
-  "s": "hello"
-}
-""")
+(: message_sxpb Filename .self.opt.sxpb)
+(: message_json Filename .self.opt.json)
 
-$(O expect) oargz -- "${scalar_expect}"
-|< oargz -- "${scalar_content}"
+|< zec / / $(XOF message_sxpb)
 |- sxpb2json
-|- cmp $(XF expect)
-|> stdout
-
-
-$(barrier)
-
-(: message_content Str """
-; A message holding the first 3 fields of the previous example.
-(m (i 5) (f 5.5) (s "hello"))
-""")
-(: message_expect Str """
-{
-  "m": {
-    "f": 5.5e+0,
-    "i": 5,
-    "s": "hello"
-  }
-}
-""")
-
-$(O expect) oargz -- "${message_expect}"
-|< oargz -- "${message_content}"
-|- sxpb2json
-|- cmp $(XF expect)
-|> stdout
-
-
-$(barrier)
-
-(: empty_message_content Str """
-; An empty message.
-(m)
-""")
-(: empty_message_expect Str """
-{
-  "m": {}
-}
-""")
-
-$(O expect) oargz -- "${empty_message_expect}"
-|< oargz -- "${empty_message_content}"
-|- sxpb2json
-|- cmp $(XF expect)
+|- cmptxt $(XOF message_json)
 |> stdout
 
 
@@ -86,7 +28,7 @@ $(barrier)
  (())
  (() (i 5) (f 5.5) (s "hello")))
 """)
-(: array_expect Str """
+(: array_expect Str """\
 {
   "my_strings": ["yo", "howdy", "sup"],
   "my_integers": [1, 2, 3],
@@ -127,7 +69,7 @@ $(barrier)
   (((or)) false false true))
 )
 """)
-(: manyof_expect Str """
+(: manyof_expect Str """\
 {
   "expressions": [{
     "value": true

@@ -12,9 +12,11 @@ write_txtpb_FildeshO(
     unsigned indent_level)
 {
 #define NEWLINE_INDENT(n)  do { \
-  putc_FildeshO(out, '\n'); \
+  if (newline_on) {putc_FildeshO(out, '\n');} \
+  else {newline_on = true;} \
   repeat_byte_FildeshO(out, ' ', 2*(n)); \
 } while (0)
+  bool newline_on = (it.cons_id != 0);
   const FildeshSxprotoValue* m = &(*sxpb->values)[it.cons_id];
   it.elem_id = m->elem;
   while (!fildesh_nullid(it.elem_id)) {

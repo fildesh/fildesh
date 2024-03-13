@@ -25,9 +25,13 @@ target_link_libraries(sxproto_parse_with_schema_test ${FildeshSxproto_LIBRARIES}
 add_test(NAME sxproto_parse_with_schema_test COMMAND sxproto_parse_with_schema_test)
 
 add_test(NAME sxpb2json_test COMMAND ${Fildesh_EXECUTABLE}
-  -alias "sxpb2json=$<TARGET_FILE:sxpb2json>"
-  -f "${CMAKE_CURRENT_SOURCE_DIR}/sxpb2json_test.fildesh")
+  -f "${CMAKE_CURRENT_SOURCE_DIR}/sxpb2json_test.fildesh"
+  "--sxpb=${CMAKE_CURRENT_SOURCE_DIR}/content/message.sxpb"
+  "--json=${CMAKE_CURRENT_SOURCE_DIR}/content/message.json"
+)
 
 add_test(NAME sxpb2txtpb_test COMMAND ${Fildesh_EXECUTABLE}
-  -alias "sxpb2txtpb=$<TARGET_FILE:sxpb2txtpb>"
-  -f "${CMAKE_CURRENT_SOURCE_DIR}/sxpb2txtpb_test.fildesh")
+  -f "${CMAKE_CURRENT_SOURCE_DIR}/sxpb2txtpb_test.fildesh"
+  "--sxpb=${CMAKE_CURRENT_SOURCE_DIR}/content/message.sxpb"
+  "--txtpb=${CMAKE_CURRENT_SOURCE_DIR}/content/message.txtpb"
+)

@@ -122,7 +122,7 @@ write_json_FildeshO(
   void
 print_json_FildeshO(FildeshO* out, FildeshSxpb* sxpb)
 {
-  putstrlit_FildeshO(out, "\n{");
+  putstrlit_FildeshO(out, "{");
   write_json_FildeshO(
       out, sxpb,
       top_of_FildeshSxpb(sxpb),
