@@ -26,12 +26,20 @@ add_test(NAME sxproto_parse_with_schema_test COMMAND sxproto_parse_with_schema_t
 
 add_test(NAME sxpb2json_test COMMAND ${Fildesh_EXECUTABLE}
   -f "${CMAKE_CURRENT_SOURCE_DIR}/sxpb2json_test.fildesh"
-  "--sxpb=${CMAKE_CURRENT_SOURCE_DIR}/content/message.sxpb"
-  "--json=${CMAKE_CURRENT_SOURCE_DIR}/content/message.json"
+  "--array_json=${CMAKE_CURRENT_SOURCE_DIR}/content/array.json"
+  "--array_sxpb=${CMAKE_CURRENT_SOURCE_DIR}/content/array.sxpb"
+  "--manyof_json=${CMAKE_CURRENT_SOURCE_DIR}/content/manyof.json"
+  "--manyof_sxpb=${CMAKE_CURRENT_SOURCE_DIR}/content/manyof.sxpb"
+  "--message_json=${CMAKE_CURRENT_SOURCE_DIR}/content/message.json"
+  "--message_sxpb=${CMAKE_CURRENT_SOURCE_DIR}/content/message.sxpb"
 )
 
 add_test(NAME sxpb2txtpb_test COMMAND ${Fildesh_EXECUTABLE}
   -f "${CMAKE_CURRENT_SOURCE_DIR}/sxpb2txtpb_test.fildesh"
-  "--sxpb=${CMAKE_CURRENT_SOURCE_DIR}/content/message.sxpb"
-  "--txtpb=${CMAKE_CURRENT_SOURCE_DIR}/content/message.txtpb"
+  "--array_sxpb=${CMAKE_CURRENT_SOURCE_DIR}/content/array.sxpb"
+  "--array_txtpb=${CMAKE_CURRENT_SOURCE_DIR}/content/array.txtpb"
+  "--manyof_sxpb=${CMAKE_CURRENT_SOURCE_DIR}/content/manyof.sxpb"
+  "--manyof_txtpb=${CMAKE_CURRENT_SOURCE_DIR}/content/manyof.txtpb"
+  "--message_sxpb=${CMAKE_CURRENT_SOURCE_DIR}/content/message.sxpb"
+  "--message_txtpb=${CMAKE_CURRENT_SOURCE_DIR}/content/message.txtpb"
 )

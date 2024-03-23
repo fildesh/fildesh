@@ -1,0 +1,43 @@
+expressions: [{
+  value: true
+}, {
+  not {
+    value: false
+  }
+}, {
+  or: [{
+    value: false
+  }, {
+    value: true
+  }]
+}, {
+  or: [{
+    value: false
+  }, {
+    value: true
+  }]
+}, {
+  or: [{
+    value: false
+  }, {
+    value: true
+  }]
+}, {
+  or: [{
+    value: false
+  }, {
+    and: [{
+      value: true
+    }, {
+      value: false
+    }]
+  }, {
+    or: [{
+      value: false
+    }, {
+      value: false
+    }, {
+      value: true
+    }]
+  }]
+}]
