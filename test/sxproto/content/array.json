@@ -1,0 +1,12 @@
+{
+  "my_strings": ["yo", "howdy", "sup"],
+  "my_integers": [1, 2, 3],
+  "my_messages": [{
+    "i": 5
+  }, {
+  }, {
+    "f": 5.5e+0,
+    "i": 5,
+    "s": "hello"
+  }]
+}

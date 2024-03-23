@@ -1,11 +1,11 @@
 
 # There are several tests. Search for:
 # - message_sxpb
-# - array_content
-# - manyof_content
+# - array_sxpb
+# - manyof_sxpb
 
-(: message_sxpb Filename .self.opt.sxpb)
-(: message_txtpb Filename .self.opt.txtpb)
+(: message_sxpb Filename .self.opt.message_sxpb)
+(: message_txtpb Filename .self.opt.message_txtpb)
 
 |< zec / / $(XOF message_sxpb)
 |- sxpb2txtpb
@@ -15,107 +15,22 @@
 
 $(barrier)
 
-(: array_content Str """
-; An array of integers.
-((my_integers) 1 2 3)
+(: array_sxpb Filename .self.opt.array_sxpb)
+(: array_txtpb Filename .self.opt.array_txtpb)
 
-; An array of strings.
-((my_strings) "yo" "howdy" "sup")
-
-; An array of 3 messages.
-((my_messages)
- (() (i 5))
- (())
- (() (i 5) (f 5.5) (s "hello")))
-""")
-(: array_expect Str """\
-my_strings: ["yo", "howdy", "sup"]
-my_integers: [1, 2, 3]
-my_messages: [{
-  i: 5
-}, {
-}, {
-  f: 5.5e+0
-  i: 5
-  s: "hello"
-}]
-""")
-
-$(O expect) oargz -- "${array_expect}"
-|< oargz -- "${array_content}"
+|< zec / / $(XOF array_sxpb)
 |- sxpb2txtpb
-|- cmp $(XF expect)
+|- cmptxt $(XOF array_txtpb)
 |> stdout
 
 
 $(barrier)
 
-(: manyof_content Str """
-((expressions)
+(: manyof_sxpb Filename .self.opt.manyof_sxpb)
+(: manyof_txtpb Filename .self.opt.manyof_txtpb)
 
- (value true)
-
- (not (value false))
-
- ((or) (() (value false)) (() (value true)))
- ((or) (value false) (value true))
- (((or)) false true)
-
- (((or))
-  false
-  (((and)) true false)
-  (((or)) false false true))
-)
-""")
-(: manyof_expect Str """\
-expressions: [{
-  value: true
-}, {
-  not {
-    value: false
-  }
-}, {
-  or: [{
-    value: false
-  }, {
-    value: true
-  }]
-}, {
-  or: [{
-    value: false
-  }, {
-    value: true
-  }]
-}, {
-  or: [{
-    value: false
-  }, {
-    value: true
-  }]
-}, {
-  or: [{
-    value: false
-  }, {
-    and: [{
-      value: true
-    }, {
-      value: false
-    }]
-  }, {
-    or: [{
-      value: false
-    }, {
-      value: false
-    }, {
-      value: true
-    }]
-  }]
-}]
-""")
-
-$(O expect) oargz -- "${manyof_expect}"
-|< oargz -- "${manyof_content}"
+|< zec / / $(XOF manyof_sxpb)
 |- sxpb2txtpb
-|- cmp $(XF expect)
+|- cmptxt $(XOF manyof_txtpb)
 |> stdout
 

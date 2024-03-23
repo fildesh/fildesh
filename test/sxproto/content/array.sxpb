@@ -1,0 +1,11 @@
+; An array of integers.
+((my_integers) 1 2 3)
+
+; An array of strings.
+((my_strings) "yo" "howdy" "sup")
+
+; An array of 3 messages.
+((my_messages)
+ (() (i 5))
+ (())
+ (() (i 5) (f 5.5) (s "hello")))

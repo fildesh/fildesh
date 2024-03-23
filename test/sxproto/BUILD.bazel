@@ -34,8 +34,12 @@ fildesh_test(
     name = "sxpb2json_test",
     srcs = ["sxpb2json_test.fildesh"],
     input_by_option = {
-        "sxpb": "//test/sxproto/content:message.sxpb",
-        "json": "//test/sxproto/content:message.json",
+        "array_json": "//test/sxproto/content:array.json",
+        "array_sxpb": "//test/sxproto/content:array.sxpb",
+        "manyof_json": "//test/sxproto/content:manyof.json",
+        "manyof_sxpb": "//test/sxproto/content:manyof.sxpb",
+        "message_json": "//test/sxproto/content:message.json",
+        "message_sxpb": "//test/sxproto/content:message.sxpb",
     },
 )
 
@@ -43,7 +47,11 @@ fildesh_test(
     name = "sxpb2txtpb_test",
     srcs = ["sxpb2txtpb_test.fildesh"],
     input_by_option = {
-        "sxpb": "//test/sxproto/content:message.sxpb",
-        "txtpb": "//test/sxproto/content:message.txtpb",
+        "array_sxpb": "//test/sxproto/content:array.sxpb",
+        "array_txtpb": "//test/sxproto/content:array.txtpb",
+        "manyof_sxpb": "//test/sxproto/content:manyof.sxpb",
+        "manyof_txtpb": "//test/sxproto/content:manyof.txtpb",
+        "message_sxpb": "//test/sxproto/content:message.sxpb",
+        "message_txtpb": "//test/sxproto/content:message.txtpb",
     },
 )
