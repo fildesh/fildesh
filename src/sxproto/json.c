@@ -4,6 +4,25 @@
 
 #include "src/sxproto/value.h"
 
+static
+  void
+print_json_literal_value_FildeshO(FildeshO* out, const FildeshSxprotoValue* e)
+{
+  if (e->field_kind != FildeshSxprotoFieldKind_LITERAL_FLOAT) {
+    print_sxpb_literal_value_FildeshO(out, e);
+    return;
+  }
+  if (e->text[0] == '-') {
+    putc_FildeshO(out, '-');
+  }
+  putc_FildeshO(out, e->text[1]);
+  putc_FildeshO(out, '.');
+  if (e->text[3] == 'e') {
+    putc_FildeshO(out, '0');
+  }
+  putstr_FildeshO(out, &e->text[3]);
+}
+
 static void
 write_json_FildeshO(
     FildeshO* out,
@@ -46,7 +65,7 @@ write_json_FildeshO(
       else {
         assert(!fildesh_nullid(e->elem));
         putstrlit_FildeshO(out, ": ");
-        print_sxpb_literal_value_FildeshO(out, &(*sxpb->values)[e->elem]);
+        print_json_literal_value_FildeshO(out, &(*sxpb->values)[e->elem]);
       }
     }
     else if (m->field_kind == FildeshSxprotoFieldKind_ARRAY) {
@@ -61,7 +80,7 @@ write_json_FildeshO(
         }
       }
       else {
-        print_sxpb_literal_value_FildeshO(out, e);
+        print_json_literal_value_FildeshO(out, e);
         if (pending_comma) {
           pending_comma = false;
           putstrlit_FildeshO(out, ", ");
@@ -95,13 +114,13 @@ write_json_FildeshO(
       else {
         if (fildesh_nullid(e->elem)) {
           putstrlit_FildeshO(out, "\"value\": ");
-          print_sxpb_literal_value_FildeshO(out, e);
+          print_json_literal_value_FildeshO(out, e);
         }
         else {
           assert(e->field_kind == FildeshSxprotoFieldKind_LITERAL);
           print_quoted_sxpb_str_FildeshO(out, e->text);
           putstrlit_FildeshO(out, ": ");
-          print_sxpb_literal_value_FildeshO(out, &(*sxpb->values)[e->elem]);
+          print_json_literal_value_FildeshO(out, &(*sxpb->values)[e->elem]);
         }
       }
 

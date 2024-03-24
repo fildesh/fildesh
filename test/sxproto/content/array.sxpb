@@ -1,6 +1,9 @@
 ; An array of integers.
 ((my_integers) 1 2 3)
 
+; An array of floats.
+((my_floats) 1. 10.e1 .001)
+
 ; An array of strings.
 ((my_strings) "yo" "howdy" "sup")
 
