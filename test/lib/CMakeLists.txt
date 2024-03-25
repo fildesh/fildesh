@@ -16,3 +16,8 @@ add_executable(lib_mascii_test
 target_link_libraries(lib_mascii_test fildesh_lib)
 add_test(NAME lib_mascii_test COMMAND lib_mascii_test)
 
+add_executable(lib_string_mascii_test
+  "string_test.c")
+target_link_libraries(lib_string_mascii_test fildesh_lib)
+add_test(NAME lib_string_mascii_test COMMAND lib_string_mascii_test)
+

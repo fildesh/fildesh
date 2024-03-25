@@ -35,6 +35,8 @@ add_executable(fuzz_parse_sxpb_smoke_test
   "parse_sxpb_fuzz_test.c"
   "parse_sxpb_smoke_test.c"
 )
+set_property(TARGET fuzz_parse_sxpb_smoke_test APPEND PROPERTY COMPILE_DEFINITIONS
+  "SMOKE_TEST_ON")
 target_link_libraries(fuzz_parse_sxpb_smoke_test ${FildeshSxproto_LIBRARIES})
 add_test(NAME fuzz_parse_sxpb_smoke_test COMMAND fuzz_parse_sxpb_smoke_test)
 

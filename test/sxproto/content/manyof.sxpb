@@ -1,0 +1,15 @@
+((expressions)
+
+ (value true)
+
+ (not (value false))
+
+ ((or) (() (value false)) (() (value true)))
+ ((or) (value false) (value true))
+ (((or)) false true)
+
+ (((or))
+  false
+  (((and)) true false)
+  (((or)) false false true))
+)

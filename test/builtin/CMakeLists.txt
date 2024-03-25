@@ -39,6 +39,16 @@ add_test(NAME builtin_cmp_diff_test COMMAND spawn ! "$<TARGET_FILE:cmp>"
   "${CMAKE_CURRENT_SOURCE_DIR}/hello_newline.txt"
   "${CMAKE_CURRENT_SOURCE_DIR}/hello_newline_x2.txt")
 
+#### cmptxt
+
+add_executable(builtin_cmptxt_test
+  "cmptxt_test.c"
+  "${PROJECT_SOURCE_DIR}/src/builtin/cmptxt.c"
+)
+set_property(TARGET builtin_cmptxt_test
+  APPEND PROPERTY COMPILE_DEFINITIONS "UNIT_TESTING")
+target_link_libraries(builtin_cmptxt_test ${Fildesh_LIBRARIES} fildesh_tool_lib)
+
 #### elastic
 
 add_test(NAME builtin_elastic_cat_test COMMAND
@@ -203,9 +213,14 @@ add_test(NAME builtin_ujoin_misdup_test COMMAND fildesh -f
 
 #### void
 
-add_executable(builtin_void_test "void_test.c")
-target_link_libraries(builtin_void_test fildesh_lib fildesh_tool_lib)
-add_test(NAME builtin_void_test COMMAND builtin_void_test "$<TARGET_FILE:void>")
+add_executable(builtin_void_test
+  "void_test.c"
+  "${PROJECT_SOURCE_DIR}/src/builtin/void.c"
+)
+set_property(TARGET builtin_void_test
+  APPEND PROPERTY COMPILE_DEFINITIONS "UNIT_TESTING")
+target_link_libraries(builtin_void_test ${Fildesh_LIBRARIES} fildesh_tool_lib)
+add_test(NAME builtin_void_test COMMAND builtin_void_test)
 
 #### waitdo
 

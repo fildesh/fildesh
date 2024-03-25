@@ -12,19 +12,25 @@ write_txtpb_FildeshO(
     unsigned indent_level)
 {
 #define NEWLINE_INDENT(n)  do { \
-  putc_FildeshO(out, '\n'); \
+  if (newline_on) {putc_FildeshO(out, '\n');} \
+  else {newline_on = true;} \
   repeat_byte_FildeshO(out, ' ', 2*(n)); \
 } while (0)
+  bool newline_on = (it.cons_id != 0);
   const FildeshSxprotoValue* m = &(*sxpb->values)[it.cons_id];
   it.elem_id = m->elem;
   while (!fildesh_nullid(it.elem_id)) {
     const FildeshSxprotoValue* const e = &(*sxpb->values)[it.elem_id];
     FildeshSxpbIT sub_it = DEFAULT_FildeshSxpbIT;
     sub_it.cons_id = it.elem_id;
-    if (m->field_kind == FildeshSxprotoFieldKind_MESSAGE) {
+    if (m->field_kind == FildeshSxprotoFieldKind_MESSAGE ||
+        m->field_kind == FildeshSxprotoFieldKind_LONEOF)
+    {
       NEWLINE_INDENT(indent_level);
       putstr_FildeshO(out, e->text);
-      if (e->field_kind == FildeshSxprotoFieldKind_MESSAGE) {
+      if (e->field_kind == FildeshSxprotoFieldKind_MESSAGE ||
+          e->field_kind == FildeshSxprotoFieldKind_LONEOF)
+      {
         if (fildesh_nullid(e->elem)) {
           putstrlit_FildeshO(out, " {}");
         }
@@ -35,15 +41,12 @@ write_txtpb_FildeshO(
           putc_FildeshO(out, '}');
         }
       }
-      else if (e->field_kind == FildeshSxprotoFieldKind_ARRAY) {
+      else if (e->field_kind == FildeshSxprotoFieldKind_ARRAY ||
+               e->field_kind == FildeshSxprotoFieldKind_MANYOF)
+      {
         putstrlit_FildeshO(out, ": [");
         write_txtpb_FildeshO(out, sxpb, sub_it, indent_level);
         putc_FildeshO(out, ']');
-      }
-      else if (e->field_kind == FildeshSxprotoFieldKind_MANYOF) {
-        putstrlit_FildeshO(out, " {values: [");
-        write_txtpb_FildeshO(out, sxpb, sub_it, indent_level);
-        putstrlit_FildeshO(out, "]}");
       }
       else {
         assert(!fildesh_nullid(e->elem));
@@ -52,7 +55,9 @@ write_txtpb_FildeshO(
       }
     }
     else if (m->field_kind == FildeshSxprotoFieldKind_ARRAY) {
-      if (e->field_kind == FildeshSxprotoFieldKind_MESSAGE) {
+      if (e->field_kind == FildeshSxprotoFieldKind_MESSAGE ||
+          e->field_kind == FildeshSxprotoFieldKind_LONEOF)
+      {
         putc_FildeshO(out, '{');
         write_txtpb_FildeshO(out, sxpb, sub_it, indent_level+1);
         NEWLINE_INDENT(indent_level);
@@ -74,7 +79,9 @@ write_txtpb_FildeshO(
       assert(m->field_kind == FildeshSxprotoFieldKind_MANYOF);
       putc_FildeshO(out, '{');
       NEWLINE_INDENT(indent_level+1);
-      if (e->field_kind == FildeshSxprotoFieldKind_MESSAGE) {
+      if (e->field_kind == FildeshSxprotoFieldKind_MESSAGE ||
+          e->field_kind == FildeshSxprotoFieldKind_LONEOF)
+      {
         putstr_FildeshO(out, e->text);
         if (fildesh_nullid(e->elem)) {
           putstrlit_FildeshO(out, " {}");
@@ -86,17 +93,13 @@ write_txtpb_FildeshO(
           putc_FildeshO(out, '}');
         }
       }
-      else if (e->field_kind == FildeshSxprotoFieldKind_ARRAY) {
+      else if (e->field_kind == FildeshSxprotoFieldKind_ARRAY ||
+               e->field_kind == FildeshSxprotoFieldKind_MANYOF)
+      {
         putstr_FildeshO(out, e->text);
         putstrlit_FildeshO(out, ": [");
         write_txtpb_FildeshO(out, sxpb, sub_it, indent_level+1);
         putc_FildeshO(out, ']');
-      }
-      else if (e->field_kind == FildeshSxprotoFieldKind_MANYOF) {
-        putstr_FildeshO(out, e->text);
-        putstrlit_FildeshO(out, " {values: [");
-        write_txtpb_FildeshO(out, sxpb, sub_it, indent_level+1);
-        putstrlit_FildeshO(out, "]}");
       }
       else {
         if (fildesh_nullid(e->elem)) {

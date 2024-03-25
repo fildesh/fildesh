@@ -103,6 +103,7 @@ void put_bytestring_FildeshO(FildeshO*, const unsigned char*, size_t);
 void putc_FildeshO(FildeshO*, char);
 void putstr_FildeshO(FildeshO*, const char*);
 void print_int_FildeshO(FildeshO*, int);
+void print_size_FildeshO(FildeshO*, size_t);
 void print_double_FildeshO(FildeshO*, double);
 void repeat_byte_FildeshO(FildeshO*, unsigned char, size_t);
 void sibling_pathname_bytestring_FildeshO(
@@ -124,7 +125,9 @@ char* fildesh_parse_int(int* ret, const char* in);
 char* fildesh_parse_unsigned(unsigned* ret, const char* in);
 char* fildesh_parse_double(double* ret, const char* in);
 #define FILDESH_INT_BASE10_SIZE_MAX (1 + (unsigned)(CHAR_BIT*sizeof(int)) / 3 + 1)
-unsigned fildesh_encode_int_base10(char*, Fildesh_fd);
+unsigned fildesh_encode_int_base10(char*, int);
+#define FILDESH_SIZE_BASE10_SIZE_MAX ((unsigned)(CHAR_BIT*sizeof(size_t)) / 3 + 1)
+unsigned fildesh_encode_size_base10(char*, size_t);
 #define FILDESH_FD_PATH_SIZE_MAX (8+FILDESH_INT_BASE10_SIZE_MAX)
 unsigned fildesh_encode_fd_path(char*, Fildesh_fd);
 
@@ -357,6 +360,8 @@ static inline void putslice_FildeshO(FildeshO* out, const FildeshX slice) {
 #define fildesh_bytestrlit(s)  (const unsigned char*)(s), sizeof(s)-1
 #define putstrlit_FildeshO(out, s) \
   put_bytestring_FildeshO(out, fildesh_bytestrlit(s))
+#define bytestring_of_FildeshO(out) \
+  (const unsigned char*)&(out)->at[(out)->off], (out)->size - (out)->off
 
 static inline FildeshX FildeshX_of_bytestring(const unsigned char* s, size_t n) {
   DECLARE_STRLIT_FildeshX(in, "");

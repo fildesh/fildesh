@@ -8,6 +8,7 @@ def cc_smoke_test(name, srcs, deps):
       name = name,
       srcs = srcs,
       deps = deps,
+      defines = ["SMOKE_TEST_ON"],
       size = "small",
   )
 

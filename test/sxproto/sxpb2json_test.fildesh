@@ -1,188 +1,48 @@
 
 # There are several tests. Search for:
-# - scalar_content
-# - message_content
-# - empty_message_content
-# - array_content
-# - manyof_content
+# - message_sxpb
+# - loneof_sxpb
+# - array_sxpb
+# - manyof_sxpb
 
-(: scalar_content Str """
-; An integer.
-(i 5)
-; A float.
-(f 5.5)
-; A string.
-(s "hello")
-""")
-(: scalar_expect Str """
-{
-  "f": 5.5e+0,
-  "i": 5,
-  "s": "hello"
-}
-""")
+(: message_sxpb Filename .self.opt.message_sxpb)
+(: message_json Filename .self.opt.message_json)
 
-$(O expect) oargz -- "${scalar_expect}"
-|< oargz -- "${scalar_content}"
+|< zec / / $(XOF message_sxpb)
 |- sxpb2json
-|- cmp $(XF expect)
+|- cmptxt $(XOF message_json)
 |> stdout
 
 
 $(barrier)
 
-(: message_content Str """
-; A message holding the first 3 fields of the previous example.
-(m (i 5) (f 5.5) (s "hello"))
-""")
-(: message_expect Str """
-{
-  "m": {
-    "f": 5.5e+0,
-    "i": 5,
-    "s": "hello"
-  }
-}
-""")
+(: loneof_sxpb Filename .self.opt.loneof_sxpb)
+(: loneof_json Filename .self.opt.loneof_json)
 
-$(O expect) oargz -- "${message_expect}"
-|< oargz -- "${message_content}"
+|< zec / / $(XOF loneof_sxpb)
 |- sxpb2json
-|- cmp $(XF expect)
+|- cmptxt $(XOF loneof_json)
 |> stdout
 
 
 $(barrier)
 
-(: empty_message_content Str """
-; An empty message.
-(m)
-""")
-(: empty_message_expect Str """
-{
-  "m": {}
-}
-""")
+(: array_sxpb Filename .self.opt.array_sxpb)
+(: array_json Filename .self.opt.array_json)
 
-$(O expect) oargz -- "${empty_message_expect}"
-|< oargz -- "${empty_message_content}"
+|< zec / / $(XOF array_sxpb)
 |- sxpb2json
-|- cmp $(XF expect)
+|- cmptxt $(XOF array_json)
 |> stdout
 
 
 $(barrier)
 
-(: array_content Str """
-; An array of integers.
-((my_integers) 1 2 3)
+(: manyof_sxpb Filename .self.opt.manyof_sxpb)
+(: manyof_json Filename .self.opt.manyof_json)
 
-; An array of strings.
-((my_strings) "yo" "howdy" "sup")
-
-; An array of 3 messages.
-((my_messages)
- (() (i 5))
- (())
- (() (i 5) (f 5.5) (s "hello")))
-""")
-(: array_expect Str """
-{
-  "my_strings": ["yo", "howdy", "sup"],
-  "my_integers": [1, 2, 3],
-  "my_messages": [{
-    "i": 5
-  }, {
-  }, {
-    "f": 5.5e+0,
-    "i": 5,
-    "s": "hello"
-  }]
-}
-""")
-
-$(O expect) oargz -- "${array_expect}"
-|< oargz -- "${array_content}"
+|< zec / / $(XOF manyof_sxpb)
 |- sxpb2json
-|- cmp $(XF expect)
-|> stdout
-
-
-$(barrier)
-
-(: manyof_content Str """
-(((expressions))
-
- (value true)
- true
-
- (not (value false))
-
- (or ((values) (() (value false)) (() (value true))))
- (((or)) (value false) (value true))
- (((or)) false true)
-
- (((or))
-  false
-  (((and)) true false)
-  (((or)) false false true))
-)
-""")
-(: manyof_expect Str """
-{
-  "expressions": {"values": [{
-    "value": true
-  }, {
-    "value": true
-  }, {
-    "not": {
-      "value": false
-    }
-  }, {
-    "or": {
-      "values": [{
-        "value": false
-      }, {
-        "value": true
-      }]
-    }
-  }, {
-    "or": {"values": [{
-      "value": false
-    }, {
-      "value": true
-    }]}
-  }, {
-    "or": {"values": [{
-      "value": false
-    }, {
-      "value": true
-    }]}
-  }, {
-    "or": {"values": [{
-      "value": false
-    }, {
-      "and": {"values": [{
-        "value": true
-      }, {
-        "value": false
-      }]}
-    }, {
-      "or": {"values": [{
-        "value": false
-      }, {
-        "value": false
-      }, {
-        "value": true
-      }]}
-    }]}
-  }]}
-}
-""")
-
-$(O expect) oargz -- "${manyof_expect}"
-|< oargz -- "${manyof_content}"
-|- sxpb2json
-|- cmp $(XF expect)
+|- cmptxt $(XOF manyof_json)
 |> stdout
 

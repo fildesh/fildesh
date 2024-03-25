@@ -1,0 +1,14 @@
+exports_files([
+    "array.json",
+    "array.sxpb",
+    "array.txtpb",
+    "loneof.json",
+    "loneof.sxpb",
+    "loneof.txtpb",
+    "manyof.json",
+    "manyof.sxpb",
+    "manyof.txtpb",
+    "message.json",
+    "message.sxpb",
+    "message.txtpb",
+])
