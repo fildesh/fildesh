@@ -12,6 +12,7 @@ enum FildeshSxprotoFieldKind {
   FildeshSxprotoFieldKind_UNKNOWN,
   FildeshSxprotoFieldKind_MESSAGE,
   FildeshSxprotoFieldKind_LITERAL,
+  FildeshSxprotoFieldKind_LONEOF,
   FildeshSxprotoFieldKind_ARRAY,
   FildeshSxprotoFieldKind_MANYOF,
   FildeshSxprotoFieldKind_LITERAL_STRING,
@@ -77,6 +78,10 @@ tag_id_of_FildeshSxprotoField(const FildeshSxprotoField* schema) {
 #define FILL_DEFAULT_FildeshSxprotoField_ALIAS \
   +0, FildeshSxprotoFieldKind_UNKNOWN, NULL, 0, 0
 
+#define FILL_FildeshSxprotoField_LONEOF(subfields) \
+  +0, FildeshSxprotoFieldKind_LONEOF, \
+  subfields, sizeof(subfields)/sizeof(FildeshSxprotoField), \
+  0
 #define FILL_FildeshSxprotoField_MESSAGES(subfields) \
   +0, FildeshSxprotoFieldKind_ARRAY, \
   subfields, sizeof(subfields)/sizeof(FildeshSxprotoField), \
@@ -121,6 +126,7 @@ ensure_name_FildeshSxpb(FildeshSxpb* sxpb, const char* s, size_t n);
 FildeshSxpbIT ensure_message_subfield_at_FildeshSxpb(FildeshSxpb*, FildeshSxpbIT, const char*);
 FildeshSxpbIT ensure_array_subfield_at_FildeshSxpb(FildeshSxpb*, FildeshSxpbIT, const char*);
 FildeshSxpbIT ensure_manyof_subfield_at_FildeshSxpb(FildeshSxpb*, FildeshSxpbIT, const char*);
+FildeshSxpbIT ensure_loneof_subfield_at_FildeshSxpb(FildeshSxpb*, FildeshSxpbIT, const char*);
 FildeshSxpbIT ensure_bool_subfield_at_FildeshSxpb(FildeshSxpb*, FildeshSxpbIT, const char*);
 FildeshSxpbIT ensure_int_subfield_at_FildeshSxpb(FildeshSxpb*, FildeshSxpbIT, const char*);
 FildeshSxpbIT ensure_float_subfield_at_FildeshSxpb(FildeshSxpb*, FildeshSxpbIT, const char*);

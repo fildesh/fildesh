@@ -101,6 +101,7 @@ static void parse_field_test() {
   assert(info->line_count == 0); \
   assert(info->column_count == strlen(text)); \
   remove_at_FildeshSxpb(sxpb, first_at_FildeshSxpb(sxpb, top_of_FildeshSxpb(sxpb))); \
+  assert(nullish_FildeshSxpbIT(first_at_FildeshSxpb(sxpb, top_of_FildeshSxpb(sxpb)))); \
   info->column_count = 0; \
 } while (0)
 
@@ -109,9 +110,12 @@ static void parse_field_test() {
   tryparse("(z 5.254)");
   tryparse("(m (x 5) (y 7) (z 12))");
   tryparse("(m (x 5) (\"y\" 7) (z 12))");
+  tryparse("((do_with x) 5)");
+  tryparse("((do_with m) (x 1) (y 2))");
+  tryparse("((do_with empty_m))");
   tryparse("((a) 1 2 3 4 5)");
-  tryparse("(((b)) 1 2 3 4 5)");
   tryparse("((a) (() (x 5)) (() (y 7)) (()) (() (z 12)))");
+  tryparse("(((b)) 1 2 3 4 5)");
 
 #undef tryparse
   close_FildeshO(oslice);

@@ -1,6 +1,7 @@
 
 # There are several tests. Search for:
 # - message_sxpb
+# - loneof_sxpb
 # - array_sxpb
 # - manyof_sxpb
 
@@ -10,6 +11,17 @@
 |< zec / / $(XOF message_sxpb)
 |- sxpb2txtpb
 |- cmptxt $(XOF message_txtpb)
+|> stdout
+
+
+$(barrier)
+
+(: loneof_sxpb Filename .self.opt.loneof_sxpb)
+(: loneof_txtpb Filename .self.opt.loneof_txtpb)
+
+|< zec / / $(XOF loneof_sxpb)
+|- sxpb2txtpb
+|- cmptxt $(XOF loneof_txtpb)
 |> stdout
 
 

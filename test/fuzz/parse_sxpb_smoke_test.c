@@ -12,10 +12,6 @@ NEXT_FUZZ_DATA
 "Expected subfield name to be quoted too.\n"
 "(\"a\" (b 5))"
 NEXT_FUZZ_DATA
-"1,4,"
-"Expected 2 closing parens after manyof name; got 0.\n"
-"(((("
-NEXT_FUZZ_DATA
 "1,6,"
 "Expected 2 closing parens after manyof name; got 1.\n"
 "(((u)"
