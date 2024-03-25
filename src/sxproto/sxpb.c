@@ -78,6 +78,10 @@ ensure_message_subfield_at_FildeshSxpb(FildeshSxpb* sxpb, FildeshSxpbIT it, cons
   return ensure_subfield_at_FildeshSxpb(sxpb, it, k, FildeshSxprotoFieldKind_MESSAGE);
 }
   FildeshSxpbIT
+ensure_loneof_subfield_at_FildeshSxpb(FildeshSxpb* sxpb, FildeshSxpbIT it, const char* k) {
+  return ensure_subfield_at_FildeshSxpb( sxpb, it, k, FildeshSxprotoFieldKind_LONEOF);
+}
+  FildeshSxpbIT
 ensure_array_subfield_at_FildeshSxpb(FildeshSxpb* sxpb, FildeshSxpbIT it, const char* k) {
   return ensure_subfield_at_FildeshSxpb(sxpb, it, k, FildeshSxprotoFieldKind_ARRAY);
 }
@@ -115,7 +119,8 @@ lookup_subfield_at_FildeshSxpb(
   assert(!nullish_FildeshSxpbIT(m));
   pos.elem_id = !fildesh_nullid(m.elem_id) ? m.elem_id : m.cons_id;
   e = &(*sxpb->values)[pos.elem_id];
-  assert(e->field_kind == FildeshSxprotoFieldKind_MESSAGE);
+  assert(e->field_kind == FildeshSxprotoFieldKind_MESSAGE ||
+         e->field_kind == FildeshSxprotoFieldKind_LONEOF);
 
   if (fildesh_nullid(e->elem)) {
     return pos;
@@ -194,6 +199,7 @@ name_at_FildeshSxpb(const FildeshSxpb* sxpb, FildeshSxpbIT it)
   assert(!nullish_FildeshSxpbIT(it));
   if (e->field_kind == FildeshSxprotoFieldKind_MESSAGE ||
       e->field_kind == FildeshSxprotoFieldKind_LITERAL ||
+      e->field_kind == FildeshSxprotoFieldKind_LONEOF ||
       e->field_kind == FildeshSxprotoFieldKind_ARRAY ||
       e->field_kind == FildeshSxprotoFieldKind_MANYOF)
   {

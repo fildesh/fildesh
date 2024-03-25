@@ -41,10 +41,14 @@ write_json_FildeshO(
     bool pending_comma = !fildesh_nullid(e->next);
     FildeshSxpbIT sub_it = DEFAULT_FildeshSxpbIT;
     sub_it.cons_id = it.elem_id;
-    if (m->field_kind == FildeshSxprotoFieldKind_MESSAGE) {
+    if (m->field_kind == FildeshSxprotoFieldKind_MESSAGE ||
+        m->field_kind == FildeshSxprotoFieldKind_LONEOF)
+    {
       NEWLINE_INDENT(indent_level);
       print_quoted_sxpb_str_FildeshO(out, e->text);
-      if (e->field_kind == FildeshSxprotoFieldKind_MESSAGE) {
+      if (e->field_kind == FildeshSxprotoFieldKind_MESSAGE ||
+          e->field_kind == FildeshSxprotoFieldKind_LONEOF)
+      {
         if (fildesh_nullid(e->elem)) {
           putstrlit_FildeshO(out, ": {}");
         }
@@ -69,7 +73,9 @@ write_json_FildeshO(
       }
     }
     else if (m->field_kind == FildeshSxprotoFieldKind_ARRAY) {
-      if (e->field_kind == FildeshSxprotoFieldKind_MESSAGE) {
+      if (e->field_kind == FildeshSxprotoFieldKind_MESSAGE ||
+          e->field_kind == FildeshSxprotoFieldKind_LONEOF)
+      {
         putc_FildeshO(out, '{');
         write_json_FildeshO(out, sxpb, sub_it, indent_level+1);
         NEWLINE_INDENT(indent_level);

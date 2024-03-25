@@ -11,6 +11,12 @@ static void create_in_message_test() {
       sxpb, top_of_FildeshSxpb(sxpb), "m");
   assert(!nullish_FildeshSxpbIT(m_it));
 
+  it = ensure_loneof_subfield_at_FildeshSxpb(sxpb, m_it, "some_loneof");
+  assert(!nullish_FildeshSxpbIT(it));
+  it = lookup_subfield_at_FildeshSxpb(sxpb, m_it, "some_loneof");
+  assert(!nullish_FildeshSxpbIT(it));
+  assert(nullish_FildeshSxpbIT(first_at_FildeshSxpb(sxpb, it)));
+
   it = ensure_array_subfield_at_FildeshSxpb(sxpb, m_it, "some_array");
   assert(!nullish_FildeshSxpbIT(it));
   it = lookup_subfield_at_FildeshSxpb(sxpb, m_it, "some_array");
