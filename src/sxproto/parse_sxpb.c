@@ -14,9 +14,9 @@ syntax_error(const FildeshSxpbInfo* info, const char* msg)
   FildeshO* const out = info->err_out;
   if (!out) {return;}
   putstrlit_FildeshO(out, "Line ");
-  print_int_FildeshO(out, (int)(info->line_count+1));
+  print_size_FildeshO(out, info->line_count+1);
   putstrlit_FildeshO(out, " column ");
-  print_int_FildeshO(out, (int)(info->column_count+1));
+  print_size_FildeshO(out, info->column_count+1);
   putstrlit_FildeshO(out, ": ");
   putstr_FildeshO(out, msg);
   putc_FildeshO(out, '\n');
@@ -209,13 +209,15 @@ parse_name_FildeshSxpbInfo(
     unsigned* ret_nesting_depth)
 {
   FildeshX slice;
-  unsigned nesting_depth = 0;
-  if (skipstr_FildeshSxpbInfo(info, in, "(")) {
-    nesting_depth = 1;
-    skip_separation(in, info);
+  unsigned nesting_depth = *ret_nesting_depth;
+  if (nesting_depth != 3) {
     if (skipstr_FildeshSxpbInfo(info, in, "(")) {
-      nesting_depth = 2;
+      nesting_depth = 1;
       skip_separation(in, info);
+      if (skipstr_FildeshSxpbInfo(info, in, "(")) {
+        nesting_depth = 2;
+        skip_separation(in, info);
+      }
     }
   }
   slice = until_chars_FildeshSxpbInfo(info, in, sxpb_delim_bytes);
@@ -239,23 +241,26 @@ parse_name_FildeshSxpbInfo(
   if (nesting_depth > 0) {
     skip_separation(in, info);
     if (skipstr_FildeshSxpbInfo(info, in, ")")) {
-      if (nesting_depth > 1) {
+      if (nesting_depth == 3) {
+        nesting_depth = 1;
+      }
+      else if (nesting_depth == 2) {
         skip_separation(in, info);
         if (!skipstr_FildeshSxpbInfo(info, in, ")")) {
           syntax_error(info, "Expected 2 closing parens after manyof name; got 1.");
           return false;
         }
       }
+      else {
+        assert(nesting_depth == 1);
+      }
     }
     else {
-      if (nesting_depth == 1) {
+      if (nesting_depth != 1) {
         syntax_error(info, "Expected closing paren after array name.");
         return false;
       }
-      else {
-        syntax_error(info, "Expected 2 closing parens after manyof name; got 0.");
-        return false;
-      }
+      nesting_depth = 3;
     }
   }
   *ret_nesting_depth = nesting_depth;
@@ -282,6 +287,7 @@ insert_next_FildeshSxpb(
       (kind == FildeshSxprotoFieldKind_UNKNOWN ||
        kind == FildeshSxprotoFieldKind_MESSAGE ||
        kind == FildeshSxprotoFieldKind_LITERAL ||
+       kind == FildeshSxprotoFieldKind_LONEOF ||
        kind == FildeshSxprotoFieldKind_ARRAY ||
        kind == FildeshSxprotoFieldKind_MANYOF))
   {
@@ -373,13 +379,51 @@ parse_field_FildeshSxpbInfo(
       field_kind = FildeshSxprotoFieldKind_MESSAGE;
       field = schema;
     }
-    else {
+    else if (!peek_char_FildeshX(in, '(')) {
       field_kind = FildeshSxprotoFieldKind_ARRAY;
     }
+    else if (peek_bytestring_FildeshX(in, fildesh_bytestrlit("(()"))) {
+      field_kind = FildeshSxprotoFieldKind_ARRAY;
+    }
+    else {
+      field_kind = FildeshSxprotoFieldKind_MANYOF;
+    }
+  }
+  else if (nesting_depth == 2) {
+    field_kind = FildeshSxprotoFieldKind_MANYOF;
   }
   else {
-    assert(nesting_depth == 2);
-    field_kind = FildeshSxprotoFieldKind_MANYOF;
+    assert(nesting_depth == 3);
+    field_kind = FildeshSxprotoFieldKind_LONEOF;
+    if (schema) {
+      assert(!field);
+      putc_FildeshO(oslice, '\0');
+      oslice->size -= 1;
+      field = subfield_of_FildeshSxprotoField(schema, oslice->at);
+      if (!field) {
+        syntax_error(info, "Unrecognized loneof name.");
+        return false;
+      }
+      schema = field;
+      field = NULL;
+    }
+    p_it = insert_next_FildeshSxpb(sxpb, p_it, field_kind, oslice, info);
+    if (nullish_FildeshSxpbIT(p_it)) {
+      return false;
+    }
+    p_it.cons_id = p_it.elem_id;
+    p_it.elem_id = ~(FildeshSxpb_id)0;
+    if (!parse_name_FildeshSxpbInfo(info, in, oslice, &nesting_depth)) {
+      return false;
+    }
+    assert(nesting_depth == 1);
+    skip_separation(in, info);
+    if (peek_chars_FildeshX(in, "()")) {
+      field_kind = FildeshSxprotoFieldKind_MESSAGE;
+    }
+    else {
+      field_kind = FildeshSxprotoFieldKind_LITERAL;
+    }
   }
   assert(field_kind != FildeshSxprotoFieldKind_UNKNOWN);
 
@@ -464,7 +508,10 @@ parse_field_FildeshSxpbInfo(
       }
       if (field_kind != FildeshSxprotoFieldKind_MESSAGE) {
         p_it = freshtail_FildeshSxpb(sxpb, p_it);
-        assert((*sxpb->values)[p_it.elem_id].field_kind != FildeshSxprotoFieldKind_ARRAY);
+        assert(
+            (field_kind != FildeshSxprotoFieldKind_ARRAY ||
+             (*sxpb->values)[p_it.elem_id].field_kind != field_kind)
+            && "Arrays cannot be nested.");
       }
     }
     else {

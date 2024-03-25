@@ -45,6 +45,7 @@ add_library(fildesh_builtin_lib_obj OBJECT
   "${PROJECT_SOURCE_DIR}/src/builtin/add.c"
   "${PROJECT_SOURCE_DIR}/src/builtin/bestmatch.c"
   "${PROJECT_SOURCE_DIR}/src/builtin/cmp.c"
+  "${PROJECT_SOURCE_DIR}/src/builtin/cmptxt.c"
   "${PROJECT_SOURCE_DIR}/src/builtin/delimend.c"
   "${PROJECT_SOURCE_DIR}/src/builtin/elastic_pthread.c"
   "${PROJECT_SOURCE_DIR}/src/builtin/expect_failure.c"

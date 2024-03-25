@@ -7,7 +7,7 @@ static
   void
 assign_to_subfield_test()
 {
-  static FildeshSxprotoField things_manyof[] = {
+  static FildeshSxprotoField thing_loneof[] = {
     {"f", FILL_FildeshSxprotoField_FLOAT(0, 10)},
     {"s", FILL_FildeshSxprotoField_STRING(1, 10)},
   };
@@ -15,10 +15,11 @@ assign_to_subfield_test()
     {"a", FILL_DEFAULT_FildeshSxprotoField_INTS},
     {"b", FILL_DEFAULT_FildeshSxprotoField_BOOL},
     {"i", FILL_FildeshSxprotoField_INT(0, 10)},
-    {"things", FILL_FildeshSxprotoField_MANYOF(things_manyof)},
+    {"thing", FILL_FildeshSxprotoField_LONEOF(thing_loneof)},
+    {"things", FILL_FildeshSxprotoField_MANYOF(thing_loneof)},
   };
   static FildeshSxprotoField toplevel_fields[] = {
-    {"m", FILL_FildeshSxprotoField_MESSAGE(m_message)},
+    {"m", 1  FILL_FildeshSxprotoField_MESSAGE(m_message)},
   };
   DECLARE_TOPLEVEL_FildeshSxprotoField(toplevel_schema, toplevel_fields);
   FildeshX in[1];
@@ -32,6 +33,7 @@ assign_to_subfield_test()
 
   lone_toplevel_initialization_FildeshSxprotoField(toplevel_schema);
   message_schema = subfield_of_FildeshSxprotoField(toplevel_schema, "m");
+  assert(1 == tag_id_of_FildeshSxprotoField(message_schema));
 
   it = ensure_message_subfield_at_FildeshSxpb(
       sxpb, top_of_FildeshSxpb(sxpb), "dst_message");
@@ -77,6 +79,17 @@ assign_to_subfield_test()
   assert(2 == unsigned_value_at_FildeshSxpb(
           sxpb, lookup_subfield_at_FildeshSxpb(sxpb, it, "i")));
 
+  /* dst_message.dst_a := ((() thing) (f 7.7)) */
+  *in = FildeshX_of_strlit("((thing f) 7.7)");
+  src_sxpb = slurp_sxpb_close_FildeshX(in, message_schema, err_out);
+  src_it = lookup_subfield_at_FildeshSxpb(
+      src_sxpb, top_of_FildeshSxpb(src_sxpb), "thing");
+  assign_at_FildeshSxpb(sxpb, it, "dst_thing", src_sxpb, src_it);
+  close_FildeshSxpb(src_sxpb);
+  dst_it = lookup_subfield_at_FildeshSxpb(sxpb, it, "dst_thing");
+  dst_it = first_at_FildeshSxpb(sxpb, dst_it);
+  assert(!nullish_FildeshSxpbIT(dst_it));
+
   /* dst_message.dst_a := ((()) 1 2 3) */
   *in = FildeshX_of_strlit("((a) 1 2 3)");
   src_sxpb = slurp_sxpb_close_FildeshX(in, message_schema, err_out);
@@ -88,8 +101,8 @@ assign_to_subfield_test()
   dst_it = first_at_FildeshSxpb(sxpb, dst_it);
   assert(!nullish_FildeshSxpbIT(dst_it));
 
-  /* dst_message.dst_a := (((())) (f 1.0) (s "2") (f 3.0)) */
-  *in = FildeshX_of_strlit("(((things)) (f 1.0) (s \"2\") (f 3.0))");
+  /* dst_message.dst_a := ((()) (f 1.0) (s "2") (f 3.0)) */
+  *in = FildeshX_of_strlit("((things) (f 1.0) (s \"2\") (f 3.0))");
   src_sxpb = slurp_sxpb_close_FildeshX(in, message_schema, err_out);
   src_it = lookup_subfield_at_FildeshSxpb(
       src_sxpb, top_of_FildeshSxpb(src_sxpb), "things");

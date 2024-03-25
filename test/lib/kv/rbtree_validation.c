@@ -14,13 +14,13 @@ print_debug_FildeshKV_RBTREE(const FildeshKV* map, FildeshO* out)
     putstrlit_FildeshO(out, ": ");
     putstr_FildeshO(out, (RedColorOf(x) ? "red" : "black"));
     putc_FildeshO(out, ' ');
-    print_int_FildeshO(out, (unsigned)x);
+    print_size_FildeshO(out, x);
     putstrlit_FildeshO(out, " -> ");
     if (IsRoot(x)) {
       putstrlit_FildeshO(out, "NULL");
     }
     else {
-      print_int_FildeshO(out, (unsigned)JointOf(x));
+      print_size_FildeshO(out, JointOf(x));
     }
     putc_FildeshO(out, '\n');
   }
@@ -38,7 +38,7 @@ print_graphviz_FildeshKV_RBTREE(const FildeshKV* map, FildeshO* out)
     size_t x = id/2;
     if ((id & 1) != 0) {continue;}
     putc_FildeshO(out, 'q');
-    print_int_FildeshO(out, (int)x);
+    print_size_FildeshO(out, x);
     putstrlit_FildeshO(out, " [label = \"");
     print_int_FildeshO(out, *(unsigned char*)key_at_FildeshKV(map, id));
     if (IsBroadLeaf(x)) {
@@ -56,9 +56,9 @@ print_graphviz_FildeshKV_RBTREE(const FildeshKV* map, FildeshO* out)
     if ((id & 1) != 0) {continue;}
     if (IsRoot(x)) {continue;}
     putc_FildeshO(out, 'q');
-    print_int_FildeshO(out, (int)x);
+    print_size_FildeshO(out, x);
     putstrlit_FildeshO(out, " -> q");
-    print_int_FildeshO(out, (int)JointOf(x));
+    print_size_FildeshO(out, JointOf(x));
     putstrlit_FildeshO(out, ";\n");
   }
 

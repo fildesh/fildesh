@@ -23,6 +23,7 @@ cc_library(
         "//src/builtin:add.c",
         "//src/builtin:bestmatch.c",
         "//src/builtin:cmp.c",
+        "//src/builtin:cmptxt.c",
         "//src/builtin:delimend.c",
         "//src/builtin:elastic_pthread.c",
         "//src/builtin:expect_failure.c",

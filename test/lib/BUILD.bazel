@@ -19,3 +19,9 @@ cc_test(
     size = "small",
 )
 
+cc_test(
+    name = "string_test",
+    srcs = ["string_test.c"],
+    deps = ["//:fildesh_lib"],
+    size = "small",
+)

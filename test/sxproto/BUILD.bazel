@@ -19,12 +19,6 @@ cc_test(
 )
 
 cc_test(
-    name = "parse_failure_test",
-    srcs = ["parse_failure_test.c"],
-    deps = ["//:sxproto_lib"],
-)
-
-cc_test(
     name = "parse_test",
     srcs = ["parse_test.c"],
     deps = ["//:sxproto_lib"],
@@ -39,11 +33,29 @@ cc_test(
 fildesh_test(
     name = "sxpb2json_test",
     srcs = ["sxpb2json_test.fildesh"],
-    tool_by_alias = {"sxpb2json": "//tool:sxpb2json"},
+    input_by_option = {
+        "array_json": "//test/sxproto/content:array.json",
+        "array_sxpb": "//test/sxproto/content:array.sxpb",
+        "loneof_json": "//test/sxproto/content:loneof.json",
+        "loneof_sxpb": "//test/sxproto/content:loneof.sxpb",
+        "manyof_json": "//test/sxproto/content:manyof.json",
+        "manyof_sxpb": "//test/sxproto/content:manyof.sxpb",
+        "message_json": "//test/sxproto/content:message.json",
+        "message_sxpb": "//test/sxproto/content:message.sxpb",
+    },
 )
 
 fildesh_test(
     name = "sxpb2txtpb_test",
     srcs = ["sxpb2txtpb_test.fildesh"],
-    tool_by_alias = {"sxpb2txtpb": "//tool:sxpb2txtpb"},
+    input_by_option = {
+        "array_sxpb": "//test/sxproto/content:array.sxpb",
+        "array_txtpb": "//test/sxproto/content:array.txtpb",
+        "loneof_sxpb": "//test/sxproto/content:loneof.sxpb",
+        "loneof_txtpb": "//test/sxproto/content:loneof.txtpb",
+        "manyof_sxpb": "//test/sxproto/content:manyof.sxpb",
+        "manyof_txtpb": "//test/sxproto/content:manyof.txtpb",
+        "message_sxpb": "//test/sxproto/content:message.sxpb",
+        "message_txtpb": "//test/sxproto/content:message.txtpb",
+    },
 )

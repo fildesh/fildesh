@@ -87,28 +87,33 @@ fildesh_parse_double(double* ret, const char* in)
 fildesh_encode_int_base10(char* buf, int q)
 {
   unsigned i, n;
-
-  if (q == 0) {
-    buf[0] = '0';
-    buf[1] = '\0';
-    return 1;
-  } else if (q < 0) {
-    q = -q;
-    buf[0] = '-';
-  } else {
-    buf[0] = '\0';
-  }
-
   i = FILDESH_INT_BASE10_SIZE_MAX-1;
-  while (q > 0) {
-    buf[--i] = '0' + (char)(q % 10);
-    q /= 10;
-  }
+  n = (q < 0 ? -q : q);
+  do {
+    buf[--i] = '0' + (char)(n % 10);
+    n /= 10;
+  } while (n > 0);
 
-  if (buf[0] == '-') {
+  if (q < 0) {
     buf[--i] = '-';
   }
   n = FILDESH_INT_BASE10_SIZE_MAX-1-i;
+  memmove(buf, &buf[i], n);
+  buf[n] = '\0';
+  return n;
+}
+
+  unsigned
+fildesh_encode_size_base10(char* buf, size_t q)
+{
+  unsigned i, n;
+  i = FILDESH_SIZE_BASE10_SIZE_MAX-1;
+  do {
+    buf[--i] = '0' + (char)(q % 10);
+    q /= 10;
+  } while (q > 0);
+
+  n = FILDESH_SIZE_BASE10_SIZE_MAX-1-i;
   memmove(buf, &buf[i], n);
   buf[n] = '\0';
   return n;

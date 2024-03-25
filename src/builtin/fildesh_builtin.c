@@ -37,6 +37,9 @@ static int fildesh_main_bestmatch(unsigned argc, char** argv) {
 static int fildesh_main_cmp(unsigned argc, char** argv) {
   return fildesh_builtin_cmp_main(argc, argv, NULL, NULL);
 }
+static int fildesh_main_cmptxt(unsigned argc, char** argv) {
+  return fildesh_builtin_cmptxt_main(argc, argv, NULL, NULL);
+}
 static int fildesh_main_delimend(unsigned argc, char** argv) {
   return fildesh_builtin_delimend_main(argc, argv, NULL, NULL);
 }
@@ -113,6 +116,7 @@ int (* fildesh_builtin_threadsafe_fn_lookup(const char* name)
     {"add", fildesh_builtin_add_main},
     {"bestmatch", fildesh_builtin_bestmatch_main},
     {"cmp", fildesh_builtin_cmp_main},
+    {"cmptxt", fildesh_builtin_cmptxt_main},
     {"delimend", fildesh_builtin_delimend_main},
 #ifdef FILDESH_PREFER_PTHREAD
     {"elastic", fildesh_builtin_elastic_pthread_main},
@@ -155,6 +159,7 @@ int (* fildesh_builtin_main_fn_lookup(const char* name)
     {"best-match", fildesh_main_bestmatch},
     {"bestmatch", fildesh_main_bestmatch},
     {"cmp", fildesh_main_cmp},
+    {"cmptxt", fildesh_main_cmptxt},
     {"delimend", fildesh_main_delimend},
     {"elastic", fildesh_main_elastic},
     {"elastic_pthread", fildesh_main_elastic_pthread},

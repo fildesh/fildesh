@@ -34,6 +34,13 @@ spawn_test(
     ],
 )
 spawn_test(
+    name = "comparispawn_failure_test",
+    expect_failure = True,
+    binary = "//tool:comparispawn",
+    args = ["/dev/null", "$(location :failure)"],
+    data = [":failure"],
+)
+spawn_test(
     name = "comparispawn_shout_hello_test",
     binary = "//tool:comparispawn",
     args = [

@@ -119,6 +119,16 @@ print_int_FildeshO(FildeshO* out, int q)
 }
 
   void
+print_size_FildeshO(FildeshO* out, size_t q)
+{
+  unsigned n = fildesh_encode_size_base10(
+      grow_FildeshO(out, FILDESH_SIZE_BASE10_SIZE_MAX),
+      q);
+  out->size -= FILDESH_SIZE_BASE10_SIZE_MAX - n;
+  maybe_flush_FildeshO(out);
+}
+
+  void
 print_double_FildeshO(FildeshO* out, double q)
 {
   char buf[50];

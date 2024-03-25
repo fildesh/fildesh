@@ -1,0 +1,10 @@
+; An integer.
+(i 5)
+; A float.
+(f 5.5)
+; A string.
+(s "hello")
+; A message holding the previous 3 fields.
+(m (i 5) (f 5.5) (s "hello"))
+; An empty message.
+(maybe_m)

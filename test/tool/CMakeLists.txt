@@ -10,6 +10,11 @@ add_test(NAME tool_comparispawn_diff_test COMMAND spawn !
   "$<TARGET_FILE:comparispawn>"
   "${PROJECT_SOURCE_DIR}/test/expect/literal_hello.txt"
   "$<TARGET_FILE:shout>" "-" "hel" "lo")
+add_test(NAME tool_comparispawn_failure_test COMMAND spawn !
+  "$<TARGET_FILE:comparispawn>"
+  "/dev/null"
+  "$<TARGET_FILE:failure>"
+)
 add_test(NAME tool_comparispawn_shout_hello_test COMMAND comparispawn
   "${PROJECT_SOURCE_DIR}/test/expect/literal_hello.txt"
   "$<TARGET_FILE:shout>" "-" "hello")

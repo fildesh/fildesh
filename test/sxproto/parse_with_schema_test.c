@@ -18,6 +18,10 @@ sxproto_schema()
     {"u", FILL_FildeshSxprotoField_INT(0, 1)},
     {"or", FILL_RECURSIVE_FildeshSxprotoField_MANYOF},
   };
+  static FildeshSxprotoField fruit_loneof[] = {
+    {"apple", FILL_DEFAULT_FildeshSxprotoField_BOOL},
+    {"banana", FILL_DEFAULT_FildeshSxprotoField_BOOL},
+  };
   static FildeshSxprotoField toplevel_fields[] = {
     {"b", FILL_DEFAULT_FildeshSxprotoField_BOOL},
     {"n", FILL_FildeshSxprotoField_INT(0, INT_MAX)},
@@ -28,6 +32,7 @@ sxproto_schema()
     {"predicates", FILL_FildeshSxprotoField_MANYOF(predicates_manyof)},
     {"s", FILL_FildeshSxprotoField_STRING(1, 64)},
     {"s_alternate_name", FILL_DEFAULT_FildeshSxprotoField_ALIAS},
+    {"fruit_as", FILL_FildeshSxprotoField_LONEOF(fruit_loneof)},
   };
   DECLARE_TOPLEVEL_FildeshSxprotoField(schema, toplevel_fields);
   DECLARE_TOPLEVEL_FildeshSxprotoField(schema_dupe, toplevel_fields);
@@ -67,6 +72,7 @@ parse_with_schema_test()
      (() (car \"schwam\"))\n\
      (())\n\
      (() (\"car\" \"doo\") (cdr (car \"two and heif\"))))\n\
+    ((fruit_as banana) true)\n\
     ";
   DECLARE_STRLIT_FildeshX(in, content);
   FildeshO* err_out = open_FildeshOF("/dev/stderr");
@@ -201,7 +207,7 @@ parse_with_schema_test()
   }
 
   it = lookup_subfield_at_FildeshSxpb(sxpb, top_it, "messages");
-    assert(0 == strcmp(name_at_FildeshSxpb(sxpb, it), "messages"));
+  assert(0 == strcmp(name_at_FildeshSxpb(sxpb, it), "messages"));
   {
     it = first_at_FildeshSxpb(sxpb, it);
     good = lone_subfield_at_FildeshSxpb_to_str(&tmp_s, sxpb, it, "car");
@@ -225,6 +231,14 @@ parse_with_schema_test()
 
     it = lookup_subfield_at_FildeshSxpb(sxpb, it, "cdr");
     assert(nullish_FildeshSxpbIT(it));
+  }
+
+  it = lookup_subfield_at_FildeshSxpb(sxpb, top_it, "fruit_as");
+  assert(0 == strcmp(name_at_FildeshSxpb(sxpb, it), "fruit_as"));
+  {
+    good = lone_subfield_at_FildeshSxpb_to_bool(&tmp_b, sxpb, it, "banana");
+    assert(good);
+    assert(tmp_b);
   }
 
   close_FildeshSxpb(sxpb);
