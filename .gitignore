@@ -5,4 +5,5 @@
 /MODULE.bazel.lock
 /out/
 /tags
+/.idx/
 /.vs*

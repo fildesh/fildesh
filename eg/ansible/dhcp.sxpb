@@ -1,0 +1,96 @@
+; file: dhpc_play.sxpb
+; An Ansible play in .sxpb format that configures a new Alpine Linux system to:
+; - forward IPv6 traffic like a router (see /etc/sysctl.conf)
+; - obtain an IPv6 address and prefix on eth0 via DHCP (see /etc/dhcpcd.conf)
+; - provide IPv6 addresses on eth1 via DHCP (see /etc/dnsmasq.conf)
+(name Configure network settings)
+(hosts all)
+(tasks (())
+ (()
+  (name Configure IPv6 forwarding.)
+  (ansible.builtin.copy
+   (dest /etc/sysctl.conf)
+   (content """
+net.ipv6.conf.default.forwarding=1
+net.ipv6.conf.all.forwarding=1
+""")
+   (owner root)
+   (group root)
+   (mode "0644")
+ ))
+ (()
+  (name Start sysctl for IPv6 forwarding.)
+  (ansible.builtin.service
+   (name sysctl)
+   (enabled +true)
+   (state started)
+ ))
+
+ (()
+  (name Install DHCP client.)
+  (community.general.apk
+   (name dhcpcd)
+   (state present)
+ ))
+ (()
+  (name Configure DHCP client.)
+  (register dhcpcd_conf_task)
+  (ansible.builtin.copy
+   (dest /etc/dhcpcd.conf)
+   (content """
+noipv6rs
+ipv6ra_noautoconf
+
+interface eth0
+  ipv6only
+  ipv6rs
+  ia_na 1
+  ia_pd 2 eth1/0/64
+
+interface eth1
+  ipv6only
+""")
+   (owner root)
+   (group root)
+   (mode "0644")
+ ))
+
+ (()
+  (name Install DHCP server)
+  (community.general.apk
+   (name dnsmasq)
+   (state present)
+ ))
+ (()
+  (name Configure DHCP server)
+  (register dnsmasq_conf_task)
+  (ansible.builtin.copy
+   (dest /etc/dnsmasq.conf)
+   ;dhcp-range=tag:eth1,::1,constructor:eth1,ra-names,1h
+   (content """
+interface=eth1
+dhcp-range=::100,::1ff,constructor:eth1,64,1h
+enable-ra
+""")
+   (owner root)
+   (group root)
+   (mode "0644")
+ ))
+ (()
+  (name Start DHCP server.)
+  (ansible.builtin.service
+   (name dnsmasq)
+   (enabled +true)
+   (state started)
+  )
+ )
+
+ (()
+  (name Restart networking if dhcpcd changed.)
+  (when dhcpcd_conf_task.changed or dnsmasq_conf_task.changed)
+  (ansible.builtin.service
+   (name networking)
+   (enabled +true)
+   (state restarted)
+ ))
+)

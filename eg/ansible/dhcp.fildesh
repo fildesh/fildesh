@@ -1,0 +1,26 @@
+#!/usr/bin/env fildesh
+
+(: host Str
+ (?? .self.opt.host
+  "route-2-host"))
+(: private_key_file Filepath
+ (?? .self.opt.privkey
+  (++ .self.env.HOME "/.ssh/ansible")))
+
+$(tmpfile ansible_playbook_file)
+|< splice / / dhcp.sxpb
+|- sxpb2yaml
+|- replace_string "\n" "\n  "
+|- replace_string "---\n " "---\n-"
+|> splice -o $(XOF ansible_playbook_file) / / -
+
+$(tmpfile inventory_file)
+splice -o $(XOF inventory_file) / "${host}\n" /
+
+$(barrier)
+
+|< ansible-playbook $(XOF ansible_playbook_file) \
+  --private-key $(XOF private_key_file) \
+  -u root -i $(XOF inventory_file)
+|> stdout
+

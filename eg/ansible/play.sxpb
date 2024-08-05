@@ -1,0 +1,74 @@
+(())
+(()
+ (name Configure network settings)
+ (hosts all)
+ (tasks (())
+  (()
+   (name Configure sysctl.)
+   (register sysctl_conf_task)
+   (ansible.builtin.copy
+    (dest /etc/sysctl.conf)
+    (owner root) (group root) (mode "0644")
+    (content """
+net.ipv6.conf.default.forwarding=1
+net.ipv6.conf.all.forwarding=1
+""")))
+  (()
+   (name Start sysctl.)
+   (ansible.builtin.service (name sysctl) (enabled +true) (state started))
+  )
+
+  (()
+   (name Install dhcpcd.)
+   (community.general.apk (name dhcpcd) (state present))
+  )
+  (()
+   (name Configure dhcpcd.)
+   (register dhcpcd_conf_task)
+   (ansible.builtin.copy
+    (dest /etc/dhcpcd.conf)
+    (owner root) (group root) (mode "0644")
+    (content """
+ipv6only
+noipv6rs
+ipv6ra_noautoconf
+
+interface eth0
+  ipv6rs
+  ia_na 1
+  ia_pd 2 eth1/0/64
+""")))
+
+  (()
+   (name Install radvd.)
+   (community.general.apk (name radvd) (state present))
+  )
+  (()
+   (name Start radvd.)
+   (ansible.builtin.service (name radvd) (enabled +true) (state started))
+  )
+  (()
+   (name Configure radvd.)
+   (ansible.builtin.copy
+    (dest /etc/radvd.conf)
+    (owner root) (group root) (mode "0644")
+    (content """
+interface eth1 {
+  AdvSendAdvert on;
+  prefix ::/64 {
+    AdvOnLink on;
+    AdvAutonomous on;
+  };
+};
+""")))
+
+  (()
+   (name Restart networking if configs changed.)
+   (when
+    sysctl_conf_task.changed or
+    dhcpcd_conf_task.changed or
+    radvd_conf_task.changed)
+   (ansible.builtin.service
+    (name networking) (enabled +true) (state restarted)
+  ))
+))

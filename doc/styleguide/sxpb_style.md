@@ -38,3 +38,31 @@ For a small example of valid edge cases, see [eg/ansible/motd.sxpb](../../eg/ans
 )
 (my_empty_array (()))
 ```
+
+### Nesting
+```
+; Dictionaries have uniquely-named fields.
+(my_map () (x a) (y b) (z c))
+; Messages are dictionaries that conform to a schema.
+; Think of them like objects conforming to a class.
+(my_msg (x a) (y b) (z c))
+; You can always write a message as a dict.
+(my_empty_msg)
+
+; Arrays are lists of elements.
+(my_array (()) a b c)
+; Sets are unordered arrays.
+; You can always write a set as an array (and vice-versa).
+(my_set () a b c)
+```
+
+### Extra
+```
+(fruit_map ()
+ (breakfast banana)
+ (snack apple)
+ (dessert cherry)
+)
+(my_array (()) apple banana cherry)
+(my_manyof (()) (breakfast apple) (breakfast banana) (breakfast cherry))
+```
