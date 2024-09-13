@@ -10,7 +10,7 @@
 #include <unistd.h>
 #include <sys/wait.h>
 
-/* #define FILDESH_LOG_TRACE_ON */
+#define FILDESH_LOG_TRACE_ON
 #include <fildesh/fildesh.h>
 
 #include "include/fildesh/fildesh_compat_errno.h"
@@ -163,7 +163,10 @@ main_elastic_aio(unsigned argc, char** argv)
     if (!x->pending && !x->done) {
       x->aio.aio_buf = *x->buf;
       x->aio.aio_nbytes = count_of_FildeshAT(x->buf);
-      istat = aio_read(&x->aio);
+      do {
+        fildesh_compat_errno_trace();
+        istat = aio_read(&x->aio);
+      } while (istat != 0 && EAGAIN == fildesh_compat_errno_clear());
       if (istat == 0) {
         x->pending = true;
       }
@@ -191,7 +194,10 @@ main_elastic_aio(unsigned argc, char** argv)
 
       o->aio.aio_buf = *o->buf;
       o->aio.aio_nbytes = count_of_FildeshAT(o->buf);
-      istat = aio_write(&o->aio);
+      do {
+        fildesh_compat_errno_trace();
+        istat = aio_write(&o->aio);
+      } while (istat != 0 && EAGAIN == fildesh_compat_errno_clear());
       if (istat == 0) {
         o->pending = true;
       }

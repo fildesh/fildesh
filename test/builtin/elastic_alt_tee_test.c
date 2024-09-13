@@ -1,9 +1,12 @@
-#include <fildesh/fildesh.h>
-#include "include/fildesh/fildesh_compat_fd.h"
-#include "fildesh_tool.h"
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+
+#define FILDESH_LOG_TRACE_ON
+#include <fildesh/fildesh.h>
+
+#include "include/fildesh_tool.h"
+#include "include/fildesh/fildesh_compat_fd.h"
 
 typedef struct PipemFnArg PipemFnArg;
 struct PipemFnArg {
