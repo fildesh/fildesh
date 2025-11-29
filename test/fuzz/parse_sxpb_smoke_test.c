@@ -20,6 +20,10 @@ NEXT_FUZZ_DATA
 "Strings must be quoted when field names are.\n"
 "(\"a\" () \"5\" \"6\" \"7\" 8)"
 NEXT_FUZZ_DATA
+"1,27,"
+"Strings must be quoted when field names are.\n"
+"(\"a\" (()) \"5\" \"6\" \"7\" (\"\" 8))"
+NEXT_FUZZ_DATA
 "1,8,"
 "Expected subfield name to be quoted too.\n"
 "(\"a\" (b 5))"
@@ -81,7 +85,11 @@ NEXT_FUZZ_DATA
 "(x 5) (x 6)"
 NEXT_FUZZ_DATA
 "1,11,"
-"Unexpected message.\n"
+"Unexpected string array element.\n"
+"(a (()) 5 (\"\" string))"
+NEXT_FUZZ_DATA
+"1,11,"
+"Unexpected message array element.\n"
 "(a (()) 5 (() (a 1)))"
 NEXT_FUZZ_DATA
 "1,10,"

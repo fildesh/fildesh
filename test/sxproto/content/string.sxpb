@@ -8,7 +8,7 @@
  string 2.
 )
 (array_mix_1 (()) unquoted string array)
-(array_mix_2 (()) "1" 2 3)
+(array_mix_2 (()) "1" 2 3 ("" 4) "5 6" ("" 7 8))
 (multiline_1 """\
 1
 "2"

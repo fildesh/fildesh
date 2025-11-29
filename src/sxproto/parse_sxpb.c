@@ -179,6 +179,32 @@ parse_concat_string_FildeshSxpbInfo(
   return parse_bare_string_FildeshSxpbInfo(info, in, oslice);
 }
 
+static
+  bool
+parse_string_field_content_FildeshSxpbInfo(
+    FildeshSxpbInfo* info,
+    FildeshX* in,
+    FildeshO* oslice)
+{
+  truncate_FildeshO(oslice);
+  if (!parse_concat_string_FildeshSxpbInfo(info, in, oslice)) {
+    return false;
+  }
+  for (skip_separation(in, info);
+       avail_FildeshX(in) && !peek_char_FildeshX(in, ')');
+       skip_separation(in, info))
+  {
+    if (peek_char_FildeshX(in, '(')) {
+      syntax_error(info, "Unexpected open paren in string.");
+      return false;
+    }
+    if (!parse_concat_string_FildeshSxpbInfo(info, in, oslice)) {
+      return false;
+    }
+  }
+  return true;
+}
+
 static void skip_leading_zeroes(FildeshX* in) {
   while (in->off < in->size && in->at[in->off] == '0') {
     in->off += 1;
@@ -269,6 +295,9 @@ on_array_content(FildeshX* in)
     return true;
   }
   if (peek_bytestring_FildeshX(in, fildesh_bytestrlit("(()"))) {
+    return true;
+  }
+  if (peek_bytestring_FildeshX(in, fildesh_bytestrlit("(\"\" "))) {
     return true;
   }
   return false;
@@ -650,25 +679,51 @@ parse_field_content_FildeshSxpbInfo(
       return false;
     }
     if (c0 == '(') {
+      bool is_anonymous_discriminated_string_element = false;
       assert(field_kind != FildeshSxprotoFieldKind_LITERAL);
       if (field_kind == FildeshSxprotoFieldKind_ARRAY) {
-        if (elem_kind == FildeshSxprotoFieldKind_UNKNOWN) {
+        if (peek_bytestring_FildeshX(in, fildesh_bytestrlit("(\"\" "))) {
+          is_anonymous_discriminated_string_element = true;
+          if (elem_kind == FildeshSxprotoFieldKind_UNKNOWN) {
+            elem_kind = FildeshSxprotoFieldKind_LITERAL_STRING;
+          }
+          else if (elem_kind != FildeshSxprotoFieldKind_LITERAL_STRING) {
+            syntax_error(info, "Unexpected string array element.");
+            return false;
+          }
+        }
+        else if (elem_kind == FildeshSxprotoFieldKind_UNKNOWN) {
           elem_kind = FildeshSxprotoFieldKind_MESSAGE;
         }
         else if (elem_kind != FildeshSxprotoFieldKind_MESSAGE) {
-          syntax_error(info, "Unexpected message.");
+          syntax_error(info, "Unexpected message array element.");
           return false;
         }
       }
-      if (!parse_field_FildeshSxpbInfo(info, schema, in, sxpb, p_it, oslice)) {
-        return false;
-      }
-      if (field_kind != FildeshSxprotoFieldKind_MESSAGE) {
-        p_it = freshtail_FildeshSxpb(sxpb, p_it);
-        if (field_kind == FildeshSxprotoFieldKind_ARRAY &&
-            p_it.field_kind == FildeshSxprotoFieldKind_ARRAY) {
-          syntax_error(info, "Arrays cannot be nested.");
+
+      if (is_anonymous_discriminated_string_element) {
+        skipstr_FildeshSxpbInfo(info, in, "(");
+        if (!parse_string_field_content_FildeshSxpbInfo(info, in, oslice)) {
           return false;
+        }
+        if (!skipstr_FildeshSxpbInfo(info, in, ")")) {
+          syntax_error(info, "Expected closing paren.");
+          return false;
+        }
+        p_it = insert_next_FildeshSxpb(sxpb, p_it, elem_kind, oslice, info);
+        assert(!fildesh_nullid(p_it.elem_id));
+      }
+      else {
+        if (!parse_field_FildeshSxpbInfo(info, schema, in, sxpb, p_it, oslice)) {
+          return false;
+        }
+        if (field_kind != FildeshSxprotoFieldKind_MESSAGE) {
+          p_it = freshtail_FildeshSxpb(sxpb, p_it);
+          if (field_kind == FildeshSxprotoFieldKind_ARRAY &&
+              p_it.field_kind == FildeshSxprotoFieldKind_ARRAY) {
+            syntax_error(info, "Arrays cannot be nested.");
+            return false;
+          }
         }
       }
     }
@@ -684,22 +739,15 @@ parse_field_content_FildeshSxpbInfo(
           (c0 == '.' && c1 != '-' && c1 != '+' && !('0' <= c1 && c1 <= '9')))
       {
         tmp_kind = FildeshSxprotoFieldKind_LITERAL_STRING;
-        truncate_FildeshO(oslice);
-        if (!parse_concat_string_FildeshSxpbInfo(info, in, oslice)) {
-          return false;
-        }
         if (field_kind == FildeshSxprotoFieldKind_LITERAL) {
-          for (skip_separation(in, info);
-               avail_FildeshX(in) && !peek_char_FildeshX(in, ')');
-               skip_separation(in, info))
-          {
-            if (peek_char_FildeshX(in, '(')) {
-              syntax_error(info, "Unexpected open paren in string.");
-              return false;
-            }
-            if (!parse_concat_string_FildeshSxpbInfo(info, in, oslice)) {
-              return false;
-            }
+          if (!parse_string_field_content_FildeshSxpbInfo(info, in, oslice)) {
+            return false;
+          }
+        }
+        else {
+          truncate_FildeshO(oslice);
+          if (!parse_concat_string_FildeshSxpbInfo(info, in, oslice)) {
+            return false;
           }
         }
       }

@@ -6,7 +6,7 @@
   "unquoted_1": "AA BB CC",
   "unquoted_2": "Unquoted string 2.",
   "array_mix_1": ["unquoted", "string", "array"],
-  "array_mix_2": ["1", "2", "3"],
+  "array_mix_2": ["1", "2", "3", "4", "5 6", "7 8"],
   "multiline_1": "1\n\"2\"\n3\n4",
   "empty_string": ""
 }

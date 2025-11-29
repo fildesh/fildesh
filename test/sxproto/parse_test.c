@@ -96,6 +96,7 @@ static void parse_name_test() {
   expectparse("", 0, "()");
   expectparse("", 0, "() (x 5)");
   expectparse("", 0, "() (() (x 5))");
+  expectparse("", 0, "\"\" anonymous discriminated string");
   /* Quoted names.*/
   expectparse("abc", 0, "\"abc\"");
   expectparse("(a\"bc", 1, "\"(a\\\"bc\" ()");
@@ -131,7 +132,12 @@ static void parse_field_test() {
   tryparse("((do_with m) (x 1) (y 2))");
   tryparse("((do_with empty_m))");
   tryparse("(a (()) 1 2 3 4 5)");
+  tryparse("(\"a\" (()) 1 2 3 4 5)");
   tryparse("(a (()) (() (x 5)) (() (y 7)) () (() (z 12)))");
+  tryparse("(a (()) x y z)");
+  tryparse("(a (()) (\"\" x) (\"\" y) (\"\" z))");
+  tryparse("(\"a\" (()) \"x\" \"y\" \"z\")");
+  tryparse("(\"a\" (()) (\"\" \"x\") (\"\" \"y\") (\"\" \"z\"))");
   tryparse("((a) (() (x 5)) (() (y 7)) () (() (z 12)))");
   tryparse("((b) 1 2 3 4 5)");
 
@@ -176,11 +182,51 @@ static void parse_string_field_test() {
   close_FildeshSxpb(sxpb);
 }
 
+static void parse_last_in_string_array_field_test() {
+  FildeshSxpbInfo info[1] = {DEFAULT_FildeshSxpbInfo};
+  FildeshO oslice[1] = {DEFAULT_FildeshO};
+  FildeshSxpb* sxpb = open_FildeshSxpb();
+  const FildeshSxpbIT p_it = top_of_FildeshSxpb(sxpb);
+  info->err_out = open_FildeshOF("/dev/stderr");
+
+#define expectparse(expect, text) do { \
+  FildeshX slice = FildeshX_of_strlit("(my_array (()) " text ")"); \
+  const char* result = NULL; \
+  FildeshSxpbIT it; \
+  assert(parse_field_FildeshSxpbInfo(info, NULL,  &slice, sxpb, p_it, oslice)); \
+  it = lookup_subfield_at_FildeshSxpb(sxpb, p_it, "my_array"); \
+  assert(!nullish_FildeshSxpbIT(it)); \
+  it = first_at_FildeshSxpb(sxpb, it); \
+  while (!nullish_FildeshSxpbIT(next_at_FildeshSxpb(sxpb, it))) { \
+    it = next_at_FildeshSxpb(sxpb, it); \
+  } \
+  result = str_value_at_FildeshSxpb(sxpb, it); \
+  fildesh_log_trace(result); \
+  assert(strlen(expect) == strlen(result)); \
+  assert(0 == memcmp(expect, result, strlen(expect))); \
+  remove_at_FildeshSxpb(sxpb, first_at_FildeshSxpb(sxpb, p_it)); \
+  assert(nullish_FildeshSxpbIT(first_at_FildeshSxpb(sxpb, p_it))); \
+  info->column_count = 0; \
+} while (0)
+
+  expectparse("hello", "hello");
+  expectparse("hello", "hi \"hello\"");
+  expectparse("fourty five", "(\"\" fourty five)");
+  expectparse("45", "(\"\" 44) (\"\" 45)");
+  expectparse("quoted", "(\"\" something) (\"\" \"quo\" ted)");
+
+#undef expectparse
+  close_FildeshO(oslice);
+  close_FildeshO(info->err_out);
+  close_FildeshSxpb(sxpb);
+}
+
 int main() {
   parse_string_test();
   parse_number_test();
   parse_name_test();
   parse_field_test();
   parse_string_field_test();
+  parse_last_in_string_array_field_test();
   return 0;
 }
