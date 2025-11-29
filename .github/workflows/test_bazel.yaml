@@ -58,7 +58,7 @@ jobs:
       uses: actions/upload-artifact@v4
       if: failure()
       with:
-        name: Test Results (${{ matrix.platform }})
+        name: failure-${{ matrix.platform }}
         path: |
           bazel-testlogs*/**/test.log
           bazel-bin*/src/*
@@ -69,6 +69,22 @@ jobs:
           !bazel-bin*/**/*.cppmap
           !bazel-bin*/**/*.params
           !bazel-bin*/**/*.runfiles*
+
+
+  test_with_oldish_bazel:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Bazel Setup
+      uses: jwlawson/actions-setup-bazel@v2
+      with:
+        bazel-version: "6"
+    - name: Checkout
+      uses: actions/checkout@v4
+    - name: Test
+      run: >
+        bazel test
+        --experimental_enable_bzlmod
+        -- //...
 
 
   test_with_old_bazel:

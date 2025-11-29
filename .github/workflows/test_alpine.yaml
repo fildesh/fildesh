@@ -1,0 +1,41 @@
+---
+name: Alpine
+on:
+  push:
+    branches:
+    - alpine
+    - stage
+
+jobs:
+  alpine:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+        - alpine_arch: x86
+        - alpine_arch: riscv64
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup latest Alpine Linux
+      uses: jirutka/setup-alpine@v1
+      with:
+        arch: ${{ matrix.alpine_arch }}
+        branch: edge
+        packages: >
+          build-base
+          cmake
+
+    - name: Generate Buildsystem
+      shell: alpine.sh {0}
+      run: cmake -B "bld" -D CMAKE_BUILD_TYPE=MinSizeRel
+
+    - name: Build
+      shell: alpine.sh {0}
+      run: cmake --build "bld"
+
+    - name: Test
+      shell: alpine.sh {0}
+      run: ctest --test-dir "bld" --timeout 10

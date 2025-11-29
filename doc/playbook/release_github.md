@@ -12,7 +12,7 @@ Also, do some [prework](#prework) on this machine if you haven't before.
 ### Create the Release
 
 1. Update version number in `MODULE.bazel` and `src/bin/version.h`.
-1. Commit that with a message like "Version 1.2.3".
+1. Commit that with a message like "update: Version 1.2.3".
 1. Just create the release on GitHub. Let it create a new tag v1.2.3.
    * Copy the previous release notes format.
 
