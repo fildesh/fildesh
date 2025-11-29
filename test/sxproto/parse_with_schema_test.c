@@ -222,8 +222,8 @@ array_test()
 
   it = lookup_subfield_at_FildeshSxpb(sxpb, top_it, "a");
   assert(0 == strcmp(name_at_FildeshSxpb(sxpb, it), "a"));
-  /* Message fields are stored in lexicographic order. This one is first.*/
-  assert(it.elem_id == first_at_FildeshSxpb(sxpb, top_it).elem_id);
+  /* Message fields are stored in input order. This one is last.*/
+  assert(it.elem_id != first_at_FildeshSxpb(sxpb, top_it).elem_id);
   /* Check all elements in the array.*/
   it = first_at_FildeshSxpb(sxpb, it);
   assert(!nullish_FildeshSxpbIT(it));

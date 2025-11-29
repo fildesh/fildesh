@@ -1,9 +1,9 @@
 ---
-f: 5.5e+0
 i: 5
-m:
-  f: -5.5e+0
-  i: -5
-  s: "goodbye"
+f: 5.5e+0
 s: "hello"
+m:
+  i: -5
+  f: -5.5e+0
+  s: "goodbye"
 empty_message: {}

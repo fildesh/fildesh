@@ -1,7 +1,7 @@
 ---
 services:
   app:
+    image: "fildesh"
     build:
       context: "../../bazel-bin"
       dockerfile: "../pkg/docker/Dockerfile"
-    image: "fildesh"

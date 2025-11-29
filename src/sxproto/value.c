@@ -401,14 +401,8 @@ direct_ensure_subfield_FildeshSxpb(
          x = (!fildesh_nullid(x->next) ? &(*sxpb->values)[x->next] : NULL))
     {
       const size_t n = strlen(x->text);
-      if (key_size < n) {
-        break;
-      }
       if (key_size == n) {
         int sign = memcmp(key, x->text, key_size);
-        if (sign < 0) {
-          break;
-        }
         if (sign == 0) {
           p_it.elem_id = x - *sxpb->values;
           p_it.field_kind = x->field_kind;

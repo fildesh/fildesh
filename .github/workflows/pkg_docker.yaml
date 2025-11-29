@@ -1,4 +1,5 @@
 ---
+name: "Docker Image"
 on:
   push:
     branches:
@@ -8,6 +9,10 @@ env:
   IMAGE_NAME: "${{ github.repository }}"
 jobs:
   build_and_push:
+    runs-on: "ubuntu-22.04"
+    permissions:
+      contents: "read"
+      packages: "write"
     steps:
       - name: "Bazel Setup"
         uses: "jwlawson/actions-setup-bazel@v2"
@@ -15,23 +20,18 @@ jobs:
           bazel-version: "latest"
       - name: "Checkout"
         uses: "actions/checkout@v4"
-      - run: "bazel build -c opt //:fildesh"
-        name: "Build"
+      - name: "Build"
+        run: "bazel build -c opt //:fildesh"
       - name: "Docker Login"
         uses: "docker/login-action@v3"
         with:
-          password: "${{ secrets.GITHUB_TOKEN }}"
           registry: "${{ env.REGISTRY }}"
           username: "${{ github.actor }}"
+          password: "${{ secrets.GITHUB_TOKEN }}"
       - name: "Build and Push Image"
         uses: "docker/build-push-action@v6"
         with:
+          context: "bazel-bin/"
           file: "pkg/docker/Dockerfile"
           push: true
           tags: "ghcr.io/fildesh/fildesh:latest"
-          context: "bazel-bin/"
-    runs-on: "ubuntu-20.04"
-    permissions:
-      contents: "read"
-      packages: "write"
-name: "Docker Image"

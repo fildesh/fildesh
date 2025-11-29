@@ -1,4 +1,8 @@
 ---
+my_integers:
+  - 1
+  - 2
+  - 3
 my_floats:
   - 1.0e+0
   - 1.0e+2
@@ -10,14 +14,10 @@ my_strings:
   - "ciao"
   - "adios"
   - "farewell"
-my_integers:
-  - 1
-  - 2
-  - 3
 my_messages:
   - i: 5
   - {}
-  - f: 5.5e+0
-    i: 5
+  - i: 5
+    f: 5.5e+0
     s: "hello"
 my_empty_array: []

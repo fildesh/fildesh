@@ -2,16 +2,16 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:base"],
   "packageRules": [{
+    "matchPackagePatterns": ["*"],
     "labels": ["dependencies"],
-    "groupName": "all dependencies",
-    "groupSlug": "all-dependencies",
     "matchUpdateTypes": ["major", "minor", "patch"],
-    "matchPackagePatterns": ["*"]
+    "groupName": "all dependencies",
+    "groupSlug": "all-dependencies"
   }, {
-    "enabled": false,
-    "matchManagers": ["bazel-module"]
+    "matchManagers": ["bazel-module"],
+    "enabled": false
   }, {
-    "enabled": false,
-    "matchDatasources": ["github-runners"]
+    "matchDatasources": ["github-runners"],
+    "enabled": false
   }]
 }
