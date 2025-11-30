@@ -8,7 +8,7 @@ DESCRIPTION="create nonlinear pipelines with file descriptors"
 HOMEPAGE="https://github.com/fildesh/fildesh"
 SRC_URI="https://github.com/fildesh/fildesh/releases/download/v${PV}/fildesh-${PV}.tar.gz -> ${P}.tar.gz"
 
-LICENSE="ISC"
+LICENSE="0BSD"
 SLOT="0/0"
 KEYWORDS="~amd64 ~arm ~arm64 ~x86"
 IUSE="vim-syntax"

@@ -1,7 +1,7 @@
 /** \file fildesh.c
  *
  * This code is written by Alex Klinkhamer.
- * It uses the ISC license (see the LICENSE file in the top-level directory).
+ * It uses the 0BSD license (see the LICENSE file in the top-level directory).
  **/
 #include <assert.h>
 #include <ctype.h>

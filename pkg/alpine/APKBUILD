@@ -6,13 +6,12 @@ pkgrel=0
 pkgdesc="Shell tool for creating nonlinear Unix pipelines"
 url="https://github.com/fildesh/fildesh"
 arch="all"
-license="ISC"
+license="0BSD"
 makedepends="
 	cmake
 	samurai
 "
 subpackages="
-	$pkgname-doc::noarch
 	$pkgname-vim::noarch
 "
 source="https://github.com/fildesh/fildesh/releases/download/v$pkgver/fildesh-$pkgver.tar.gz"
@@ -32,7 +31,6 @@ check() {
 package() {
 	DESTDIR="$pkgdir" cmake --install build --component bin
 	DESTDIR="$pkgdir" cmake --install build --component share_vim
-	install -m 644 -D LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
 
 vim() {
