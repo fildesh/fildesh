@@ -17,7 +17,7 @@ jobs:
         - alpine_arch: riscv64
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - name: Setup latest Alpine Linux
       uses: jirutka/setup-alpine@v1

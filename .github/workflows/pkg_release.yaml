@@ -9,7 +9,7 @@ jobs:
   release:
     runs-on: ubuntu-22.04
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - name: Create Build Environment
       run: >
@@ -58,6 +58,6 @@ jobs:
         --final_dst=${{runner.workspace}}/bld/pkg/final
 
     - name: Upload Package Artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         path: ${{runner.workspace}}/bld/pkg/final/

@@ -27,7 +27,7 @@ jobs:
 
     steps:
     - name: Cache Setup
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       id: cache-bazel
       with:
         path: ~/.cache/bazel
@@ -39,7 +39,7 @@ jobs:
         bazel-version: latest
 
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
 
     - name: Build
       run: >
@@ -55,7 +55,7 @@ jobs:
         ${{ matrix.bazel_test_argstr }}
 
     - name: Upload Test Results
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       if: failure()
       with:
         name: failure-${{ matrix.platform }}
@@ -79,7 +79,7 @@ jobs:
       with:
         bazel-version: "6"
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
     - name: Test
       run: >
         bazel test
@@ -95,7 +95,7 @@ jobs:
       with:
         bazel-version: "5.4.1"
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
     - name: Prepare
       run: touch WORKSPACE
     - name: Test
@@ -111,7 +111,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Cache Setup
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       id: cache-bazel
       with:
         path: ~/.cache/bazel
@@ -121,7 +121,7 @@ jobs:
       with:
         bazel-version: latest
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
     - name: Build
       run: >
         bazel build --config=linux_test_platform
@@ -137,7 +137,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Cache Setup
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       id: cache-bazel
       with:
         path: ~/.cache/bazel
@@ -147,7 +147,7 @@ jobs:
       with:
         bazel-version: latest
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
     - name: Coverage
       run: >
         bazel coverage --config=linux_test_platform
@@ -174,7 +174,7 @@ jobs:
       with:
         bazel-version: latest
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
     - name: Fuzz
       run: >
         bazel test --config=linux_test_platform
