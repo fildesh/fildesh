@@ -39,18 +39,39 @@ combination_test()
         FildeshKV_id_t id = ensure_FildeshKV(map, keys[idx], 1);
         assert(!value_at_FildeshKV(map, id));
         assign_at_FildeshKV(map, id, &idx, sizeof(unsigned));
-        assert(validate_FildeshKV_RBTREE(map));
+        validate_FildeshKV_RBTREE(map);
       }
       for (i = 0; i < nkeys; ++i) {
         const unsigned idx = (muls[mj] * i) % nkeys;
         FildeshKV_id_t id = lookup_FildeshKV(map, keys[idx], 1);
         assert(!fildesh_nullid(id));
         remove_at_FildeshKV(map, id);
-        assert(validate_FildeshKV_RBTREE(map));
+        validate_FildeshKV_RBTREE(map);
       }
     }
   }
 
+  close_FildeshKV(map);
+}
+
+static
+  void
+compress_test()
+{
+  unsigned i;
+  FildeshKV map[1] = {DEFAULT_FildeshKV_BROADLEAF_RBTREE};
+  for (i = 0; i < 256; ++i) {
+    unsigned char c = (unsigned char)i;
+    ensure_FildeshKV(map, &c, sizeof(c));
+  }
+#if 0
+  {
+    FildeshO* out = open_FildeshOF("/dev/stderr");
+    print_graphviz_FildeshKV_RBTREE(map, out); putc_FildeshO(out, '\n');
+    close_FildeshO(out);
+  }
+#endif
+  validate_growing_FildeshKV_BROADLEAF_RBTREE(map);
   close_FildeshKV(map);
 }
 
@@ -106,9 +127,49 @@ print_graphviz_test()
   close_FildeshO(out);
 }
 
+static
+  void
+debugging_test()
+{
+  FildeshKV_id_t id;
+  FildeshO* out = open_FildeshOF("/dev/stderr");
+  FildeshKV map[1] = {DEFAULT_FildeshKV_BROADLEAF_RBTREE};
+
+  puts_FildeshO(out, "BEGIN TEST\n");
+
+  ensure_FildeshKV(map, "\x01", 1);
+  print_debug_FildeshKV_RBTREE(map, out); putc_FildeshO(out, '\n'); flush_FildeshO(out);
+
+  ensure_FildeshKV(map, "\x05", 1);
+  print_debug_FildeshKV_RBTREE(map, out); putc_FildeshO(out, '\n'); flush_FildeshO(out);
+
+  ensure_FildeshKV(map, "\x04", 1);
+  print_debug_FildeshKV_RBTREE(map, out); putc_FildeshO(out, '\n'); flush_FildeshO(out);
+  ensure_FildeshKV(map, "\x02", 1);
+  print_debug_FildeshKV_RBTREE(map, out); putc_FildeshO(out, '\n'); flush_FildeshO(out);
+  ensure_FildeshKV(map, "\x01", 1);
+  print_debug_FildeshKV_RBTREE(map, out); putc_FildeshO(out, '\n'); flush_FildeshO(out);
+  id = lookup_FildeshKV(map, "\x05", 1);
+  remove_at_FildeshKV(map, id);
+  print_debug_FildeshKV_RBTREE(map, out); putc_FildeshO(out, '\n'); flush_FildeshO(out);
+  ensure_FildeshKV(map, "\x01", 1);
+  print_debug_FildeshKV_RBTREE(map, out); putc_FildeshO(out, '\n'); flush_FildeshO(out);
+  id = lookup_FildeshKV(map, "\x02", 1);
+  remove_at_FildeshKV(map, id);
+  print_debug_FildeshKV_RBTREE(map, out); putc_FildeshO(out, '\n'); flush_FildeshO(out);
+  validate_FildeshKV_RBTREE(map);
+  /* The "validate growing" function only works before removals.*/
+  /* validate_growing_FildeshKV_BROADLEAF_RBTREE(map); */
+
+  close_FildeshO(out);
+  close_FildeshKV(map);
+}
+
 int main() {
   combination_test();
+  compress_test();
   print_debug_test();
   print_graphviz_test();
+  debugging_test();
   return 0;
 }

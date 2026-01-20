@@ -101,7 +101,7 @@ add_FildeshKV_SINLGE_LIST(
   if (map->freelist_head > 0 &&
       0 == get_splitkexists_bit_FildeshKVE_size(map->at[0].size))
   {
-    if (populate_splitkv_FildeshKVE(
+    if (maybe_populate_splitkv_FildeshKVE(
             &map->at[0], ksize, k, 1, NULL, alloc)) {
       return 1;
     }

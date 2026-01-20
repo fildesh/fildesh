@@ -1,4 +1,4 @@
-#include "fuzz_common.h"
+#include "test/fuzz/fuzz_common.h"
 
 #include <fildesh/fildesh.h>
 

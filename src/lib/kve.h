@@ -27,7 +27,12 @@ struct FildeshKVE {
   uintptr_t kv[2];
 };
 
-#define DEFAULT_FildeshKVE  { 0, 0, { 0, 0 }, { 0, 0 } }
+#define FildeshKV_NULL_INDEX (~(size_t)0 >> 3)
+#define DEFAULT_FildeshKVE  { \
+  FildeshKV_NULL_INDEX, 0, \
+  { FildeshKV_NULL_INDEX, FildeshKV_NULL_INDEX }, \
+  { 0, 0 }, \
+}
 
 static inline FildeshKVE default_FildeshKVE() {
   FildeshKVE e = DEFAULT_FildeshKVE;
@@ -91,6 +96,14 @@ static inline void set0_red_bit_FildeshKVE(FildeshKVE* e) {
 }
 static inline void set1_red_bit_FildeshKVE(FildeshKVE* e) {
   e->joint |= red_bit_FildeshKVE_joint();
+}
+static inline void swap_red_bit_FildeshKVE(FildeshKVE* lhs, FildeshKVE* rhs) {
+  const size_t lhs_bit = get_red_bit_FildeshKVE_joint(lhs->joint);
+  const size_t rhs_bit = get_red_bit_FildeshKVE_joint(rhs->joint);
+  if (lhs_bit != rhs_bit) {
+    rhs->joint ^= red_bit_FildeshKVE_joint();
+    lhs->joint ^= red_bit_FildeshKVE_joint();
+  }
 }
 static inline void set0_vexists_bit_FildeshKVE(FildeshKVE* e) {
   e->joint &= ~vexists_bit_FildeshKVE_joint();
@@ -208,10 +221,35 @@ populate_empty_FildeshKVE(FildeshKVE* e,
                           size_t vsize, const void* v,
                           FildeshAlloc* alloc);
 bool
+maybe_populate_splitkv_FildeshKVE(
+    FildeshKVE* e,
+    size_t ksize, const void* k,
+    size_t vsize, const void* v,
+    FildeshAlloc* alloc);
+bool
+maybe_populate_demote_FildeshKVE(
+    FildeshKVE* e,
+    size_t ksize, const void* k,
+    size_t vsize, const void* v,
+    FildeshAlloc* alloc);
+void
 populate_splitkv_FildeshKVE(FildeshKVE* e,
                             size_t ksize, const void* k,
                             size_t vsize, const void* v,
                             FildeshAlloc* alloc);
+void
+populate_demote_FildeshKVE(FildeshKVE* e,
+                           size_t ksize, const void* k,
+                           size_t vsize, const void* v,
+                           FildeshAlloc* alloc);
+void
+move_kv_to_empty_FildeshKVE(FildeshKVE* dst, FildeshKVE* src);
+void
+move_splitkv_to_empty_FildeshKVE(FildeshKVE* dst, FildeshKVE* src);
+bool
+maybe_fuse_FildeshKVE(FildeshKVE* dst, unsigned side, const FildeshKVE* src);
+void
+fuse_FildeshKVE(FildeshKVE* dst, unsigned side, const FildeshKVE* src);
 void
 erase_k_FildeshKVE(FildeshKVE* e);
 void

@@ -53,6 +53,8 @@ cc_library(
         "//src/lib:kve.h",
         "//src/lib:kv.c",
         "//src/lib:kv.h",
+        "//src/lib:kv_broadleaf.c",
+        "//src/lib:kv_broadleaf.h",
         "//src/lib:kv_bstree.c",
         "//src/lib:kv_bstree.h",
         "//src/lib:kv_rbtree.c",

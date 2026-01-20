@@ -8,6 +8,8 @@ add_library(fildesh_lib_obj OBJECT
   "kve.h"
   "kv.c"
   "kv.h"
+  "kv_broadleaf.c"
+  "kv_broadleaf.h"
   "kv_bstree.c"
   "kv_bstree.h"
   "kv_rbtree.c"
