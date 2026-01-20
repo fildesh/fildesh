@@ -231,6 +231,64 @@ static FildeshKV_id_t insert_2_d2_sred(FildeshKV* map, size_t y, const FildeshKV
   return 2*x;
 }
 
+#if 0
+/** Insert on left. Shift to pop right.**/
+static FildeshKVE rshins_d2(FildeshKV* map, size_t b, const FildeshKVE* e) {
+  FildeshKVE result = DEFAULT_FildeshKVE;
+  if (IsBroadLeaf(b)) {
+    result = map->at[b];
+    promote_splitk_FildeshKVE(&result);
+    erase_splitk_FildeshKVE(&map->at[b]);
+    fuse_FildeshKVE(&map->at[b], 0, e);
+  }
+  else {
+    size_t y = SplitOf(b, 1);
+    result = map->at[y];
+    if (map->at[b].size > FildeshKVE_splitksize_max) {
+      map->at[y] = *e;
+      SubJoin(&y, &b);
+      Join(y, 1, b);
+      ColorBlack(y);
+      ColorRed(b);
+    }
+    else {
+      fuse_FildeshKVE(&map->at[b], 0, e);
+      reclaim_element_FildeshKV_SINGLE_LIST(map, y);
+    }
+  }
+  return result;
+}
+/** Insert on right. Shift to pop left.**/
+static FildeshKVE lshins_d2(FildeshKV* map, size_t b, const FildeshKVE* e) {
+  FildeshKVE result = DEFAULT_FildeshKVE;
+  if (IsBroadLeaf(b)) {
+    result = map->at[b];
+    erase_splitk_FildeshKVE(&result);
+    promote_splitk_FildeshKVE(&map->at[b]);
+    if (e->size > FildeshKVE_splitksize_max) {
+      size_t x = empty_add_FildeshKV_BSTREE(map);
+      map->at[x] = *e;
+      Join(b, 1, x);
+      ColorRed(x);
+    }
+    else {
+      fuse_FildeshKVE(&map->at[b], 1, e);
+    }
+  }
+  else {
+    size_t y = SplitOf(b, 1);
+    result = map->at[b];
+    map->at[b] = *e;
+    SubJoin(&y, &b);
+    Join(y, 1, b);
+    ColorBlack(y);
+    ColorRed(b);
+  }
+  return result;
+}
+#endif
+
+
 /** Oversized. LMiddle.**/
 static FildeshKVE lshins_1_d3_sred(FildeshKV* map, size_t y, const FildeshKVE* e) {
   const FildeshKVE g = map->at[y];

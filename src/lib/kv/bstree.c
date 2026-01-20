@@ -164,9 +164,14 @@ premove_FildeshKV_BSTREE(FildeshKV* map, size_t y)
     b = SplitOf(y, side);
 
     if (Nullish(SplitOf(b, oside))) {
+#if 1
       AssignSplit(b, oside, SplitOf(y, oside));
       AssignJoint(b, JointOf(y));
       LocalSwap(&y, &b);
+#else
+      AssignSplit(b, oside, SplitOf(y, oside));
+      SubJoin(&y, &b);
+#endif
       /* Update {b} neighbors.*/
       MaybeAssignJoint(SplitOf(b, side), b);
       /* Populate {y} for return.*/
