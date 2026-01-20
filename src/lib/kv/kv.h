@@ -9,14 +9,44 @@ static const FildeshKV_id_t FildeshKV_NULL_ID = ~(size_t)0;
 
 BEGIN_EXTERN_C
 
+static inline
+  size_t
+bucket_head_of_FildeshKV(const FildeshKV* map)
+{
+  size_t bucket = 0;
+  if (map->bucket_heads) {
+    return map->bucket_heads[bucket];
+  }
+  if (map->freelist_head == 0) {
+    return FildeshKV_NULL_INDEX;
+  }
+  return bucket;
+}
+
 extern const FildeshKV_VTable DEFAULT_SINGLE_LIST_FildeshKV_VTable;
-#define DEFAULT_FildeshKV_SINGLE_LIST { NULL, NULL, 0, 0, &DEFAULT_SINGLE_LIST_FildeshKV_VTable }
+#define DEFAULT_FildeshKV_SINGLE_LIST { \
+  NULL, NULL, \
+  0, 0, 0, NULL, \
+  &DEFAULT_SINGLE_LIST_FildeshKV_VTable, \
+}
 extern const FildeshKV_VTable DEFAULT_BSTREE_FildeshKV_VTable;
-#define DEFAULT_FildeshKV_BSTREE { NULL, NULL, 0, 0, &DEFAULT_BSTREE_FildeshKV_VTable }
+#define DEFAULT_FildeshKV_BSTREE { \
+  NULL, NULL, \
+  0, 0, 0, NULL, \
+  &DEFAULT_BSTREE_FildeshKV_VTable, \
+}
 extern const FildeshKV_VTable DEFAULT_RBTREE_FildeshKV_VTable;
-#define DEFAULT_FildeshKV_RBTREE { NULL, NULL, 0, 0, &DEFAULT_RBTREE_FildeshKV_VTable }
+#define DEFAULT_FildeshKV_RBTREE { \
+  NULL, NULL, \
+  0, 0, 0, NULL, \
+  &DEFAULT_RBTREE_FildeshKV_VTable, \
+}
 extern const FildeshKV_VTable DEFAULT_BRBTREE_FildeshKV_VTable;
-#define DEFAULT_FildeshKV_BRBTREE { NULL, NULL, 0, 0, &DEFAULT_BRBTREE_FildeshKV_VTable }
+#define DEFAULT_FildeshKV_BRBTREE { \
+  NULL, NULL, \
+  0, 0, 0, NULL, \
+  &DEFAULT_BRBTREE_FildeshKV_VTable, \
+}
 
 void maybe_grow_FildeshKV_SINGLE_LIST(FildeshKV*);
 void reclaim_element_FildeshKV_SINGLE_LIST(FildeshKV*, size_t);

@@ -11,6 +11,8 @@ struct FildeshKVE {
    * We can use these 3 bits because size_t is at least 2 bytes
    * and this struct is at least 12 bytes.
    * Setting vexists==0 && vrefers==0 means the node is unoccupied.
+   *
+   * The 4th bit is effectively also taken by special index values.
    **/
   size_t joint;
   /** The primary key size with the split key size packed in.
@@ -56,6 +58,7 @@ shiftmaskhi_size(size_t size, unsigned bigbitpos, unsigned bitcount) {
           & (((size_t)1 << bitcount)-1));
 }
 
+static inline size_t nullish_bit_FildeshKVE_joint() { return high_size_bit(3); }
 static inline size_t red_bit_FildeshKVE_joint() { return high_size_bit(2); }
 static inline size_t vexists_bit_FildeshKVE_joint() { return high_size_bit(0); }
 static inline size_t vrefers_bit_FildeshKVE_joint() { return high_size_bit(1); }
@@ -73,6 +76,9 @@ static inline size_t get_vrefers_bit_FildeshKVE_joint(size_t x) {
 }
 static inline size_t get_index_FildeshKVE_joint(size_t x) {
   return x & (~(size_t)0 >> 3);
+}
+static inline size_t get_bucket_FildeshKVE_joint(size_t x) {
+  return x & (~(size_t)0 >> 4);
 }
 static inline size_t get_splitvexists_bit_FildeshKVE_size(size_t x) {
   return x & splitvexists_bit_FildeshKVE_size();
@@ -156,6 +162,9 @@ static inline void set1_splitvrefers_bit_FildeshKVE(FildeshKVE* e) {
 static inline void set_joint_index_FildeshKVE(FildeshKVE* e, size_t index) {
   e->joint ^= get_index_FildeshKVE_joint(e->joint);
   e->joint ^= get_index_FildeshKVE_joint(index);
+}
+static inline void set_joint_bucket_FildeshKVE(FildeshKVE* e, size_t bucket) {
+  set_joint_index_FildeshKVE(e, nullish_bit_FildeshKVE_joint() | bucket);
 }
 static inline void nullify_joint_index_FildeshKVE(FildeshKVE* e) {
   e->joint |= FildeshKV_NULL_INDEX;

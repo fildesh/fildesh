@@ -267,9 +267,15 @@ struct FildeshKV {
   FildeshAlloc* alloc;
   size_t freelist_head;
   Fildesh_lgsize allocated_lgcount;
+  Fildesh_lgsize bucket_lgcount;
+  size_t* bucket_heads;
   const FildeshKV_VTable* vt;
 };
-#define DEFAULT_FildeshKV { NULL, NULL, 0, 0, &DEFAULT_FildeshKV_VTable }
+#define DEFAULT_FildeshKV { \
+  NULL, NULL, \
+  0, 0, 0, NULL, \
+  &DEFAULT_FildeshKV_VTable \
+}
 /** Implementation-specific maintenance functions.
  *
  * Prefer to use the inline wrappers:
