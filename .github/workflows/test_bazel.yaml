@@ -30,7 +30,7 @@ jobs:
       uses: actions/cache@v4
       id: cache-bazel
       with:
-        path: ~/.cache/bazel
+        path: ~/.cache/bazel-disk-cache
         key: ${{ runner.os }}-bazel
 
     - name: Bazel Setup
@@ -114,7 +114,7 @@ jobs:
       uses: actions/cache@v4
       id: cache-bazel
       with:
-        path: ~/.cache/bazel
+        path: ~/.cache/bazel-disk-cache
         key: ${{ runner.os }}-bazel
     - name: Bazel Setup
       uses: jwlawson/actions-setup-bazel@v2
@@ -140,7 +140,7 @@ jobs:
       uses: actions/cache@v4
       id: cache-bazel
       with:
-        path: ~/.cache/bazel
+        path: ~/.cache/bazel-disk-cache
         key: ${{ runner.os }}-bazel
     - name: Setup bazel
       uses: jwlawson/actions-setup-bazel@v2

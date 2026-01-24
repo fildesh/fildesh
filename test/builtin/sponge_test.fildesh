@@ -1,0 +1,4 @@
+(: script Filepath .self.opt.script_filepath)
+(: sponge_exe Filepath .self.opt.input_exe)
+
+sh -- $(XOF script) $(XOF sponge_exe)

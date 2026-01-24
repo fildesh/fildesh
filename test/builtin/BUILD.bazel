@@ -323,11 +323,13 @@ spawn_test(
 
 #### sponge
 
-sh_test(
+fildesh_test(
     name = "sponge_sh_test",
-    srcs = ["sponge_test.sh"],
-    args = ["$(location //src/builtin:sponge)"],
-    data = ["//src/builtin:sponge"],
+    srcs = ["sponge_test.fildesh"],
+    input_by_option = {
+        "input_exe": "//src/builtin:sponge",
+        "script_filepath": ":sponge_test.sh",
+    },
     target_compatible_with = select({
         "@platforms//os:windows": ["@platforms//:incompatible"],
         "//conditions:default": [],

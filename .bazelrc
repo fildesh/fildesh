@@ -4,7 +4,7 @@
 build:linux_dev_platform --copt=-march=native
 
 # Testing.
-build:standard_test_platform --disk_cache=~/.cache/bazel
+build:standard_test_platform --disk_cache=~/.cache/bazel-disk-cache
 # Ubuntu compiles with native.
 build:linux_test_platform --cxxopt='-std=c++17'
 build:linux_test_platform --copt=-march=native
@@ -18,7 +18,7 @@ build:windows_test_platform --config=standard_test_platform
 
 # Define the --config=asan-libfuzzer configuration.
 build:asan-libfuzzer --//test:enable_full_fuzzing
-build:asan-libfuzzer --action_env=CC=clang --action_env=CXX=clang++
+build:asan-libfuzzer --repo_env=CC=clang --repo_env=CXX=clang++
 build:asan-libfuzzer --nocache_test_results
 
 # Benchmark.
