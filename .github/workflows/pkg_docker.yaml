@@ -19,7 +19,7 @@ jobs:
         with:
           bazel-version: "latest"
       - name: "Checkout"
-        uses: "actions/checkout@v4"
+        uses: "actions/checkout@v6"
       - name: "Build"
         run: "bazel build -c opt //:fildesh"
       - name: "Docker Login"
