@@ -1,14 +1,14 @@
 
 add_library(sxproto_lib_obj OBJECT
-  "json.c"
   "parse_sxpb.c"
   "parse_sxpb.h"
   "schema.c"
   "sxpb.c"
-  "txtpb.c"
   "value.c"
   "value.h"
-  "yaml.c"
+  "print/json.c"
+  "print/txtpb.c"
+  "print/yaml.c"
   "${PROJECT_SOURCE_DIR}/include/fildesh/sxproto.h"
 )
 add_library(sxproto_lib STATIC

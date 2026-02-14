@@ -3,16 +3,14 @@ load("@rules_cc//cc:defs.bzl", "cc_library")
 cc_library(
     name = "sxproto_lib",
     srcs = [
-        "json.c",
         "parse_sxpb.c",
         "parse_sxpb.h",
         "schema.c",
         "sxpb.c",
-        "txtpb.c",
         "value.c",
         "value.h",
-        "yaml.c",
         "//include/fildesh:sxproto.h",
+        "//src/sxproto/print:srcs",
     ],
     visibility = ["//:__pkg__"],
     deps = ["//:fildesh_lib"],
