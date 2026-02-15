@@ -1,3 +1,5 @@
+#ifndef FILDESH_SXPROTO_VALUE_H_
+#define FILDESH_SXPROTO_VALUE_H_
 #include <fildesh/sxproto.h>
 
 struct FildeshSxprotoValue {
@@ -10,11 +12,6 @@ struct FildeshSxprotoValue {
 { NULL, FildeshSxprotoFieldKind_UNKNOWN, \
   ~(FildeshSxpb_id)0, ~(FildeshSxpb_id)0, \
 }
-
-void
-print_quoted_sxpb_str_FildeshO(FildeshO* out, const char* s);
-void
-print_sxpb_literal_value_FildeshO(FildeshO* out, const FildeshSxprotoValue* e);
 
 const char*
 default_value_text_FildeshSxpb(FildeshSxpb* sxpb, FildeshSxprotoFieldKind kind);
@@ -37,3 +34,5 @@ direct_ensure_subfield_FildeshSxpb(
     FildeshSxpbIT m_it,
     const char* key,
     size_t key_size);
+
+#endif

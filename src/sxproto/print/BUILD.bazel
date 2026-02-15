@@ -2,6 +2,7 @@ filegroup(
     name = "srcs",
     srcs = glob([
         "*.c",
+        "*.h",
     ]),
     visibility = ["//src/sxproto:__pkg__"],
 )

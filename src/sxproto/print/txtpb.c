@@ -1,8 +1,6 @@
 #include <assert.h>
-#include <stdio.h>
-#include <string.h>
 
-#include "src/sxproto/value.h"
+#include "src/sxproto/print/value.h"
 
 static void
 write_txtpb_FildeshO(

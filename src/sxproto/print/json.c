@@ -1,26 +1,6 @@
 #include <assert.h>
-#include <stdio.h>
-#include <string.h>
 
-#include "src/sxproto/value.h"
-
-  void
-print_json_literal_value_FildeshO(FildeshO* out, const FildeshSxprotoValue* e)
-{
-  if (e->field_kind != FildeshSxprotoFieldKind_LITERAL_FLOAT) {
-    print_sxpb_literal_value_FildeshO(out, e);
-    return;
-  }
-  if (e->text[0] == '-') {
-    putc_FildeshO(out, '-');
-  }
-  putc_FildeshO(out, e->text[1]);
-  putc_FildeshO(out, '.');
-  if (e->text[3] == 'e') {
-    putc_FildeshO(out, '0');
-  }
-  putstr_FildeshO(out, &e->text[3]);
-}
+#include "src/sxproto/print/value.h"
 
 static void
 write_json_FildeshO(

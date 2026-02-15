@@ -1,10 +1,6 @@
 #include <assert.h>
-#include <stdio.h>
-#include <string.h>
 
-#include "src/sxproto/value.h"
-
-void print_json_literal_value_FildeshO(FildeshO*, const FildeshSxprotoValue*);
+#include "src/sxproto/print/value.h"
 
 static void
 print_yaml_key_FildeshO(FildeshO* out, const FildeshSxprotoValue* e)

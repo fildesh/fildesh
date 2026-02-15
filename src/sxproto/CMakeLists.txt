@@ -8,6 +8,8 @@ add_library(sxproto_lib_obj OBJECT
   "value.h"
   "print/json.c"
   "print/txtpb.c"
+  "print/value.c"
+  "print/value.h"
   "print/yaml.c"
   "${PROJECT_SOURCE_DIR}/include/fildesh/sxproto.h"
 )
