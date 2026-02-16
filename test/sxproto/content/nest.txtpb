@@ -1,0 +1,98 @@
+[{
+  key: "black bear"
+  values: [{
+    key: "color"
+    values: [{
+      key: "cinnamon"
+    }]
+  }, {
+    key: "clawing at the bark of a Douglas fir"
+  }]
+}, {
+  key: "grizzly bear"
+  values: [{
+    key: "foraging for honeyberries"
+  }]
+}, {
+  key: "meadow"
+  values: [{
+    key: "grass"
+    values: [{
+      key: "green"
+    }, {
+      key: "verdant"
+    }, {
+      key: "swaying"
+      values: [{
+        key: "gently in the breeze"
+      }]
+    }]
+  }, {
+    key: "wildflowers"
+    values: [{
+      key: "blooming"
+    }, {
+      key: "fragrance"
+      values: [{
+        key: "sweet"
+      }, {
+        key: "subtle"
+      }]
+    }]
+  }]
+}, {
+  key: ""
+  values: [{
+    key: "empty_nest"
+    values: []
+  }, {
+    key: "empty_nest"
+    values: []
+  }, {
+    key: ""
+    values: []
+  }, {
+    key: "normal string"
+  }, {
+    key: "an empty string follows this one"
+  }, {
+    key: ""
+  }, {
+    key: "an anonymous nest follows this string"
+  }, {
+    key: ""
+    values: [{
+      key: "content"
+    }]
+  }, {
+    key: "an empty anonymous nest follows this string"
+  }, {
+    key: ""
+    values: []
+  }, {
+    key: "nest"
+    values: [{
+      key: ""
+    }, {
+      key: "with"
+    }, {
+      key: "empty"
+    }, {
+      key: "string"
+    }]
+  }, {
+    key: "nest"
+    values: [{
+      key: ""
+      values: []
+    }, {
+      key: "with"
+    }, {
+      key: "empty"
+    }, {
+      key: "anonymous"
+    }, {
+      key: "nest"
+    }]
+  }]
+}]

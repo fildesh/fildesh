@@ -17,6 +17,7 @@ enum FildeshSxprotoFieldKind {
   FildeshSxprotoFieldKind_LONEOF,
   FildeshSxprotoFieldKind_ARRAY,
   FildeshSxprotoFieldKind_MANYOF,
+  FildeshSxprotoFieldKind_NEST,
   FildeshSxprotoFieldKind_LITERAL_STRING,
   FildeshSxprotoFieldKind_LITERAL_BOOL,
   FildeshSxprotoFieldKind_LITERAL_INT,
