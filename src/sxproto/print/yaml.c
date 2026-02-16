@@ -1,134 +1,100 @@
-#include <assert.h>
-
 #include "src/sxproto/print/value.h"
-
-static void
-print_yaml_key_FildeshO(FildeshO* out, const FildeshSxprotoValue* e)
-{
-  putstr_FildeshO(out, e->text);
-  putc_FildeshO(out, ':');
-}
 
 static void
 write_yaml_FildeshO(
     FildeshO* out,
     const FildeshSxpb* sxpb,
     FildeshSxpbIT it,
-    unsigned indent_level,
-    bool on_indented_line)
+    const char* name,
+    unsigned indent_level);
+
+static
+  void
+print_yaml_child_of_manyof(
+    FildeshO* out,
+    const FildeshSxpb* sxpb,
+    FildeshSxpbIT it,
+    unsigned indent_level)
 {
-#define NEWLINE_INDENT(n, on_indented_line)  do { \
-  if (on_indented_line) { \
-    on_indented_line = false; \
-  } \
-  else { \
-    putc_FildeshO(out, '\n'); \
-    repeat_byte_FildeshO(out, ' ', 2*(n)); \
-  } \
-} while (0)
-  const FildeshSxprotoValue* m = &(*sxpb->values)[it.cons_id];
-  it.elem_id = m->elem;
-  while (!fildesh_nullid(it.elem_id)) {
-    const FildeshSxprotoValue* const e = &(*sxpb->values)[it.elem_id];
-    FildeshSxpbIT sub_it = DEFAULT_FildeshSxpbIT;
-    sub_it.cons_id = it.elem_id;
-    if (m->field_kind == FildeshSxprotoFieldKind_MESSAGE ||
-        m->field_kind == FildeshSxprotoFieldKind_LONEOF)
-    {
-      NEWLINE_INDENT(indent_level, on_indented_line);
-      print_yaml_key_FildeshO(out, e);
-      if (e->field_kind == FildeshSxprotoFieldKind_MESSAGE ||
-          e->field_kind == FildeshSxprotoFieldKind_LONEOF)
-      {
-        if (fildesh_nullid(e->elem)) {
-          putstrlit_FildeshO(out, " {}");
-        }
-        else {
-          write_yaml_FildeshO(out, sxpb, sub_it, indent_level+1, false);
-        }
-      }
-      else if (e->field_kind == FildeshSxprotoFieldKind_ARRAY ||
-               e->field_kind == FildeshSxprotoFieldKind_MANYOF)
-      {
-        if (fildesh_nullid(e->elem)) {
-          putstrlit_FildeshO(out, " []");
-        }
-        else {
-          write_yaml_FildeshO(out, sxpb, sub_it, indent_level+1, false);
-        }
-      }
-      else {
-        assert(!fildesh_nullid(e->elem));
-        putc_FildeshO(out, ' ');
-        print_json_literal_value_FildeshO(out, &(*sxpb->values)[e->elem]);
-      }
+  const char* name = name_of_manyof_entry_FildeshSxpb(sxpb, it);
+  print_newline_json_indent_FildeshO(out, indent_level);
+  putstrlit_FildeshO(out, "- ");
+  write_yaml_FildeshO(out, sxpb, it, name, indent_level+2);
+}
+
+static
+  void
+write_yaml_FildeshO(
+    FildeshO* out,
+    const FildeshSxpb* sxpb,
+    FildeshSxpbIT it,
+    const char* name,
+    unsigned indent_level)
+{
+  const FildeshSxprotoValue* const m = &(*sxpb->values)[id_of_FildeshSxpbIT(it)];
+  const bool is_like_dict = is_like_dict_FildeshSxprotoFieldKind(m->field_kind);
+  const bool is_like_list = is_like_list_FildeshSxprotoFieldKind(m->field_kind);
+  const bool is_top = is_top_of_FildeshSxpb(sxpb, it);
+  bool first = true;
+
+  if (name) {
+    putstr_FildeshO(out, name);
+    putc_FildeshO(out, ':');
+    if (!is_like_dict && !is_like_list) {
+      putc_FildeshO(out, ' ');
     }
-    else if (m->field_kind == FildeshSxprotoFieldKind_ARRAY) {
-      NEWLINE_INDENT(indent_level, on_indented_line);
+  }
+
+  for (it = first_at_FildeshSxpb(sxpb, it);
+       !nullish_FildeshSxpbIT(it);
+       it = next_at_FildeshSxpb(sxpb, it))
+  {
+    if (m->field_kind == FildeshSxprotoFieldKind_ARRAY) {
+      print_newline_json_indent_FildeshO(out, indent_level);
       putstrlit_FildeshO(out, "- ");
-      if (e->field_kind == FildeshSxprotoFieldKind_MESSAGE ||
-          e->field_kind == FildeshSxprotoFieldKind_LONEOF)
-      {
-        if (fildesh_nullid(e->elem)) {
-          putstrlit_FildeshO(out, "{}");
-        }
-        else {
-          write_yaml_FildeshO(out, sxpb, sub_it, indent_level+1, true);
-        }
-      }
-      else {
-        print_json_literal_value_FildeshO(out, e);
-      }
+      write_yaml_FildeshO(out, sxpb, it, NULL, indent_level+1);
+    }
+    else if (m->field_kind == FildeshSxprotoFieldKind_MANYOF) {
+      print_yaml_child_of_manyof(out, sxpb, it, indent_level);
     }
     else {
-      assert(m->field_kind == FildeshSxprotoFieldKind_MANYOF);
-      NEWLINE_INDENT(indent_level, on_indented_line);
-      putstrlit_FildeshO(out, "- ");
-      if (e->field_kind == FildeshSxprotoFieldKind_MESSAGE) {
-        print_yaml_key_FildeshO(out, e);
-        if (fildesh_nullid(e->elem)) {
-          putstrlit_FildeshO(out, " {}");
-        }
-        else {
-          write_yaml_FildeshO(out, sxpb, sub_it, indent_level+2, false);
-        }
+      const char* sub_name = name_of_entry_FildeshSxpb(sxpb, it);
+      unsigned sub_indent_level = (sub_name ? indent_level + 1 : indent_level);
+      if (is_top || (sub_name && (name || !first))) {
+        print_newline_json_indent_FildeshO(out, indent_level);
       }
-      else if (e->field_kind == FildeshSxprotoFieldKind_ARRAY ||
-               e->field_kind == FildeshSxprotoFieldKind_MANYOF)
-      {
-        print_yaml_key_FildeshO(out, e);
-        if (fildesh_nullid(e->elem)) {
-          putstrlit_FildeshO(out, " []");
-        }
-        else {
-          write_yaml_FildeshO(out, sxpb, sub_it, indent_level+2, false);
-        }
-      }
-      else {
-        if (fildesh_nullid(e->elem)) {
-          putstrlit_FildeshO(out, "value: ");
-          print_json_literal_value_FildeshO(out, e);
-        }
-        else {
-          assert(e->field_kind == FildeshSxprotoFieldKind_LITERAL);
-          print_yaml_key_FildeshO(out, e);
-          putc_FildeshO(out, ' ');
-          print_json_literal_value_FildeshO(out, &(*sxpb->values)[e->elem]);
-        }
-      }
+      write_yaml_FildeshO(
+          out, sxpb, it,
+          name_at_FildeshSxpb(sxpb, it),
+          sub_indent_level);
     }
-    it.elem_id = e->next;
+    first = false;
+  }
+
+  if (first) {
+    if (is_like_dict) {
+      if (name) {
+        putc_FildeshO(out, ' ');
+      }
+      putstrlit_FildeshO(out, "{}");
+    }
+    else if (is_like_list) {
+      if (name) {
+        putc_FildeshO(out, ' ');
+      }
+      putstrlit_FildeshO(out, "[]");
+    }
+    else {
+      print_json_literal_value_FildeshO(out, m);
+    }
   }
 }
 
   void
 print_yaml_FildeshO(FildeshO* out, FildeshSxpb* sxpb)
 {
+  const FildeshSxpbIT top_it = top_of_FildeshSxpb(sxpb);
   putstrlit_FildeshO(out, "---");
-  write_yaml_FildeshO(
-      out, sxpb,
-      top_of_FildeshSxpb(sxpb),
-      0, false);
+  write_yaml_FildeshO(out, sxpb, top_it, NULL, 0);
   putstrlit_FildeshO(out, "\n");
 }
-

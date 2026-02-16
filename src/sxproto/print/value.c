@@ -47,3 +47,40 @@ print_json_literal_value_FildeshO(FildeshO* out, const FildeshSxprotoValue* e)
   }
   putstr_FildeshO(out, &e->text[3]);
 }
+
+  void
+print_json_indent_FildeshO(FildeshO* out, unsigned indent_level)
+{
+  repeat_byte_FildeshO(out, ' ', 2*indent_level);
+}
+
+  void
+print_newline_json_indent_FildeshO(FildeshO* out, unsigned indent_level)
+{
+  putc_FildeshO(out, '\n');
+  print_json_indent_FildeshO(out, indent_level);
+}
+
+  const char*
+name_of_manyof_entry_FildeshSxpb(
+    const FildeshSxpb* sxpb,
+    FildeshSxpbIT it)
+{
+  const char* name = name_at_FildeshSxpb(sxpb, it);
+  return name ? name : "value";
+}
+
+  const char*
+name_of_entry_FildeshSxpb(
+    const FildeshSxpb* sxpb,
+    FildeshSxpbIT it)
+{
+  const FildeshSxprotoValue* m = &(*sxpb->values)[it.cons_id];
+  if (is_like_dict_FildeshSxprotoFieldKind(m->field_kind)) {
+    return name_at_FildeshSxpb(sxpb, it);
+  }
+  if (m->field_kind == FildeshSxprotoFieldKind_MANYOF) {
+    return name_of_manyof_entry_FildeshSxpb(sxpb, it);
+  }
+  return NULL;
+}

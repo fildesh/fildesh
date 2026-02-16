@@ -1,5 +1,3 @@
-#include <assert.h>
-
 #include "src/sxproto/print/value.h"
 
 static void
@@ -7,119 +5,87 @@ write_json_FildeshO(
     FildeshO* out,
     const FildeshSxpb* sxpb,
     FildeshSxpbIT it,
+    const char* name,
+    unsigned indent_level);
+
+static
+  void
+print_json_child_of_manyof(
+    FildeshO* out,
+    const FildeshSxpb* sxpb,
+    FildeshSxpbIT it,
     unsigned indent_level)
 {
-#define NEWLINE_INDENT(n)  do { \
-  putc_FildeshO(out, '\n'); \
-  repeat_byte_FildeshO(out, ' ', 2*(n)); \
-} while (0)
-  const FildeshSxprotoValue* m = &(*sxpb->values)[it.cons_id];
-  it.elem_id = m->elem;
-  while (!fildesh_nullid(it.elem_id)) {
-    const FildeshSxprotoValue* const e = &(*sxpb->values)[it.elem_id];
-    bool pending_comma = !fildesh_nullid(e->next);
-    FildeshSxpbIT sub_it = DEFAULT_FildeshSxpbIT;
-    sub_it.cons_id = it.elem_id;
-    if (m->field_kind == FildeshSxprotoFieldKind_MESSAGE ||
-        m->field_kind == FildeshSxprotoFieldKind_LONEOF)
-    {
-      NEWLINE_INDENT(indent_level);
-      print_quoted_sxpb_str_FildeshO(out, e->text);
-      if (e->field_kind == FildeshSxprotoFieldKind_MESSAGE ||
-          e->field_kind == FildeshSxprotoFieldKind_LONEOF)
-      {
-        if (fildesh_nullid(e->elem)) {
-          putstrlit_FildeshO(out, ": {}");
-        }
-        else {
-          putstrlit_FildeshO(out, ": {");
-          write_json_FildeshO(out, sxpb, sub_it, indent_level+1);
-          NEWLINE_INDENT(indent_level);
-          putc_FildeshO(out, '}');
-        }
-      }
-      else if (e->field_kind == FildeshSxprotoFieldKind_ARRAY ||
-               e->field_kind == FildeshSxprotoFieldKind_MANYOF)
-      {
-        putstrlit_FildeshO(out, ": [");
-        write_json_FildeshO(out, sxpb, sub_it, indent_level);
-        putc_FildeshO(out, ']');
-      }
-      else {
-        assert(!fildesh_nullid(e->elem));
-        putstrlit_FildeshO(out, ": ");
-        print_json_literal_value_FildeshO(out, &(*sxpb->values)[e->elem]);
+  const char* name = name_of_manyof_entry_FildeshSxpb(sxpb, it);
+  putc_FildeshO(out, '{');
+  print_newline_json_indent_FildeshO(out, indent_level+1);
+  write_json_FildeshO(out, sxpb, it, name, indent_level+1);
+  print_newline_json_indent_FildeshO(out, indent_level);
+  putc_FildeshO(out, '}');
+}
+
+static
+  void
+write_json_FildeshO(
+    FildeshO* out,
+    const FildeshSxpb* sxpb,
+    FildeshSxpbIT it,
+    const char* name,
+    unsigned indent_level)
+{
+  const FildeshSxprotoValue* const m = &(*sxpb->values)[id_of_FildeshSxpbIT(it)];
+  const bool is_like_dict = is_like_dict_FildeshSxprotoFieldKind(m->field_kind);
+  const bool is_like_list = is_like_list_FildeshSxprotoFieldKind(m->field_kind);
+  bool first = true;
+
+  if (name) {
+    print_quoted_sxpb_str_FildeshO(out, name);
+    putstrlit_FildeshO(out, ": ");
+  }
+
+  if (is_like_dict) {
+    putc_FildeshO(out, '{');
+  }
+  else if (is_like_list) {
+    putc_FildeshO(out, '[');
+  }
+
+  for (it = first_at_FildeshSxpb(sxpb, it);
+       !nullish_FildeshSxpbIT(it);
+       it = next_at_FildeshSxpb(sxpb, it))
+  {
+    if (!first) {
+      putc_FildeshO(out, ',');
+      if (is_like_list) {
+        putc_FildeshO(out, ' ');
       }
     }
-    else if (m->field_kind == FildeshSxprotoFieldKind_ARRAY) {
-      if (e->field_kind == FildeshSxprotoFieldKind_MESSAGE ||
-          e->field_kind == FildeshSxprotoFieldKind_LONEOF)
-      {
-        putc_FildeshO(out, '{');
-        write_json_FildeshO(out, sxpb, sub_it, indent_level+1);
-        NEWLINE_INDENT(indent_level);
-        putc_FildeshO(out, '}');
-        if (pending_comma) {
-          pending_comma = false;
-          putstrlit_FildeshO(out, ", ");
-        }
-      }
-      else {
-        print_json_literal_value_FildeshO(out, e);
-        if (pending_comma) {
-          pending_comma = false;
-          putstrlit_FildeshO(out, ", ");
-        }
-      }
+
+    if (m->field_kind == FildeshSxprotoFieldKind_MANYOF) {
+      print_json_child_of_manyof(out, sxpb, it, indent_level);
     }
     else {
-      assert(m->field_kind == FildeshSxprotoFieldKind_MANYOF);
-      putc_FildeshO(out, '{');
-      NEWLINE_INDENT(indent_level+1);
-      if (e->field_kind == FildeshSxprotoFieldKind_MESSAGE) {
-        print_quoted_sxpb_str_FildeshO(out, e->text);
-        if (fildesh_nullid(e->elem)) {
-          putstrlit_FildeshO(out, ": {}");
-        }
-        else {
-          putstrlit_FildeshO(out, ": {");
-          write_json_FildeshO(out, sxpb, sub_it, indent_level+2);
-          NEWLINE_INDENT(indent_level+1);
-          putc_FildeshO(out, '}');
-        }
+      const char* sub_name = name_of_entry_FildeshSxpb(sxpb, it);
+      unsigned sub_indent_level = (sub_name ? indent_level + 1 : indent_level);
+      if (sub_name) {
+        print_newline_json_indent_FildeshO(out, indent_level+1);
       }
-      else if (e->field_kind == FildeshSxprotoFieldKind_ARRAY ||
-               e->field_kind == FildeshSxprotoFieldKind_MANYOF)
-      {
-        print_quoted_sxpb_str_FildeshO(out, e->text);
-        putstrlit_FildeshO(out, ": [");
-        write_json_FildeshO(out, sxpb, sub_it, indent_level+1);
-        putc_FildeshO(out, ']');
-      }
-      else {
-        if (fildesh_nullid(e->elem)) {
-          putstrlit_FildeshO(out, "\"value\": ");
-          print_json_literal_value_FildeshO(out, e);
-        }
-        else {
-          assert(e->field_kind == FildeshSxprotoFieldKind_LITERAL);
-          print_quoted_sxpb_str_FildeshO(out, e->text);
-          putstrlit_FildeshO(out, ": ");
-          print_json_literal_value_FildeshO(out, &(*sxpb->values)[e->elem]);
-        }
-      }
+      write_json_FildeshO(out, sxpb, it, sub_name, sub_indent_level);
+    }
+    first = false;
+  }
 
-      NEWLINE_INDENT(indent_level);
-      putc_FildeshO(out, '}');
-      if (pending_comma) {
-        pending_comma = false;
-        putstrlit_FildeshO(out, ", ");
-      }
+  if (is_like_dict) {
+    if (!first || !name) {
+      print_newline_json_indent_FildeshO(out, indent_level);
     }
-    if (pending_comma) {
-      putc_FildeshO(out, ',');
-    }
-    it.elem_id = e->next;
+    putc_FildeshO(out, '}');
+  }
+  else if (is_like_list) {
+    putc_FildeshO(out, ']');
+  }
+  else if (first) {
+    print_json_literal_value_FildeshO(out, m);
   }
 }
 
@@ -127,16 +93,6 @@ write_json_FildeshO(
 print_json_FildeshO(FildeshO* out, FildeshSxpb* sxpb)
 {
   const FildeshSxpbIT top_it = top_of_FildeshSxpb(sxpb);
-  const FildeshSxprotoFieldKind top_kind = top_it.field_kind;
-  const bool on_message = (top_kind == FildeshSxprotoFieldKind_MESSAGE);
-
-  putc_FildeshO(out, on_message ? '{' : '[');
-  write_json_FildeshO(
-      out, sxpb,
-      top_it,
-      on_message ? 1 : 0);
-  if (on_message) {putc_FildeshO(out, '\n');}
-  putc_FildeshO(out, on_message ? '}' : ']');
+  write_json_FildeshO(out, sxpb, top_it, NULL, 0);
   putc_FildeshO(out, '\n');
 }
-
