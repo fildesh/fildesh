@@ -218,7 +218,8 @@ name_at_FildeshSxpb(const FildeshSxpb* sxpb, FildeshSxpbIT it)
       e->field_kind == FildeshSxprotoFieldKind_LITERAL ||
       e->field_kind == FildeshSxprotoFieldKind_LONEOF ||
       e->field_kind == FildeshSxprotoFieldKind_ARRAY ||
-      e->field_kind == FildeshSxprotoFieldKind_MANYOF)
+      e->field_kind == FildeshSxprotoFieldKind_MANYOF ||
+      e->field_kind == FildeshSxprotoFieldKind_NEST)
   {
     return e->text;
   }

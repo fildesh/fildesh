@@ -391,7 +391,7 @@ parse_name_FildeshSxpbInfo(
     else {
       nesting_depth = 3;
     }
-    if (oslice->size == 0) {
+    if (oslice->size == 0 && !info->quoted_names_on) {
       if (nesting_depth == 2) {
         syntax_error(info, "Unexpected space between opening and closing parentheses.");
       }
@@ -427,7 +427,8 @@ insert_next_FildeshSxpb(
        kind == FildeshSxprotoFieldKind_LITERAL ||
        kind == FildeshSxprotoFieldKind_LONEOF ||
        kind == FildeshSxprotoFieldKind_ARRAY ||
-       kind == FildeshSxprotoFieldKind_MANYOF))
+       kind == FildeshSxprotoFieldKind_MANYOF ||
+       kind == FildeshSxprotoFieldKind_NEST))
   {
     syntax_error(info, "Array cannot hold fields.");
     return FildeshSxpbIT_of_NULL();
@@ -455,10 +456,14 @@ insert_next_FildeshSxpb(
   }
   if (fildesh_nullid(m->elem)) {
     assert(fildesh_nullid(p_it.elem_id));
-    return direct_insert_first_FildeshSxpb(sxpb, m_it, text, kind);
+    m_it = direct_insert_first_FildeshSxpb(sxpb, m_it, text, kind);
   }
-  assert(!fildesh_nullid(p_it.elem_id));
-  return direct_insert_next_FildeshSxpb(sxpb, p_it, text, kind);
+  else {
+    assert(!fildesh_nullid(p_it.elem_id));
+    m_it = direct_insert_next_FildeshSxpb(sxpb, p_it, text, kind);
+  }
+  m_it.field_kind = kind;
+  return m_it;
 }
 
 static FildeshSxpbIT freshtail_FildeshSxpb(
@@ -471,7 +476,9 @@ static FildeshSxpbIT freshtail_FildeshSxpb(
   else {
     it.elem_id = (*sxpb->values)[it.elem_id].next;
   }
-  assert(!fildesh_nullid(it.elem_id));
+  if (fildesh_nullid(it.elem_id)) {
+    return FildeshSxpbIT_of_NULL();
+  }
   assert(fildesh_nullid((*sxpb->values)[it.elem_id].next));
   it.field_kind = (*sxpb->values)[it.elem_id].field_kind;
   return it;
@@ -486,8 +493,10 @@ parse_field_FildeshSxpbInfo(
     FildeshSxpbIT p_it,
     FildeshO* oslice)
 {
+  const bool parent_is_nest = ((*sxpb->values)[p_it.cons_id].field_kind == FildeshSxprotoFieldKind_NEST);
   const bool info_quoted_names_on = info->quoted_names_on;
   unsigned nesting_depth = 0;
+  FildeshSxpbIT inserted_it;
   const FildeshSxprotoField* field = NULL;
   FildeshSxprotoFieldKind field_kind = FildeshSxprotoFieldKind_UNKNOWN;
   FildeshSxprotoFieldKind elem_kind = FildeshSxprotoFieldKind_UNKNOWN;
@@ -557,6 +566,34 @@ parse_field_FildeshSxpbInfo(
   }
   assert(field_kind != FildeshSxprotoFieldKind_UNKNOWN);
 
+  if (parent_is_nest) {
+    if (field_kind == FildeshSxprotoFieldKind_LITERAL && oslice->size > 0) {
+      /* Assume it's a nest unless we somehow know better?
+       * Actually, (key val) in a nest means key is a sub-nest containing val.
+       */
+      field_kind = FildeshSxprotoFieldKind_NEST;
+    }
+    else if (field_kind == FildeshSxprotoFieldKind_MESSAGE) {
+      /* If key is "" and content is literal (not starting with paren),
+       * then it's a LITERAL field (merged string).
+       * Otherwise it's a NEST field.
+       */
+      if (oslice->size == 0 && !peek_char_FildeshX(in, '(')) {
+        field_kind = FildeshSxprotoFieldKind_LITERAL;
+      }
+      else {
+        field_kind = FildeshSxprotoFieldKind_NEST;
+      }
+    }
+    else if (field_kind == FildeshSxprotoFieldKind_MANYOF) {
+      field_kind = FildeshSxprotoFieldKind_NEST;
+    }
+    else {
+      syntax_error(info, "Unexpected field type in nest.");
+      return false;
+    }
+  }
+
   if (schema && !field) {
     putc_FildeshO(oslice, '\0');
     field = subfield_of_FildeshSxprotoField(schema, oslice->at);
@@ -624,12 +661,14 @@ parse_field_FildeshSxpbInfo(
   if (nullish_FildeshSxpbIT(p_it)) {
     return false;
   }
+  inserted_it = p_it;
   p_it.cons_id = p_it.elem_id;
   p_it.elem_id = ~(FildeshSxpb_id)0;
 
   /* Prepare to append more elements if field already a non-empty array.*/
   if (field_kind == FildeshSxprotoFieldKind_ARRAY ||
-      field_kind == FildeshSxprotoFieldKind_MANYOF)
+      field_kind == FildeshSxprotoFieldKind_MANYOF ||
+      field_kind == FildeshSxprotoFieldKind_NEST)
   {
     FildeshSxpbIT e_it;
     for (e_it = first_at_FildeshSxpb(sxpb, p_it);
@@ -640,9 +679,35 @@ parse_field_FildeshSxpbInfo(
     }
   }
 
+  if (parent_is_nest && field_kind == FildeshSxprotoFieldKind_LITERAL) {
+    info->quoted_names_on = false;
+  }
   if (!parse_field_content_FildeshSxpbInfo(
           info, in, sxpb, p_it, field, elem_kind, oslice)) {
     return false;
+  }
+
+  if (parent_is_nest &&
+      inserted_it.field_kind == FildeshSxprotoFieldKind_LITERAL &&
+      (*sxpb->values)[inserted_it.elem_id].text[0] == '\0')
+  {
+    FildeshSxpbIT child_it = first_at_FildeshSxpb(sxpb, inserted_it);
+    if (nullish_FildeshSxpbIT(child_it)) {
+      remove_at_FildeshSxpb(sxpb, inserted_it);
+    }
+    else if (nullish_FildeshSxpbIT(next_at_FildeshSxpb(sxpb, child_it))) {
+      const FildeshSxprotoFieldKind child_kind = child_it.field_kind;
+      if (child_kind == FildeshSxprotoFieldKind_LITERAL_STRING ||
+          child_kind == FildeshSxprotoFieldKind_LITERAL_INT ||
+          child_kind == FildeshSxprotoFieldKind_LITERAL_FLOAT ||
+          child_kind == FildeshSxprotoFieldKind_LITERAL_BOOL)
+      {
+        (*sxpb->values)[inserted_it.elem_id].text = (*sxpb->values)[child_it.elem_id].text;
+        (*sxpb->values)[inserted_it.elem_id].field_kind = child_kind;
+        inserted_it.field_kind = child_kind;
+        remove_at_FildeshSxpb(sxpb, child_it);
+      }
+    }
   }
 
   info->quoted_names_on = info_quoted_names_on;
@@ -666,8 +731,12 @@ parse_field_content_FildeshSxpbInfo(
     FildeshO* oslice)
 {
   const FildeshSxprotoFieldKind field_kind = p_it.field_kind;
+  bool saved_quoted_names_on = info->quoted_names_on;
   size_t elem_count = 0;
   bool in_avail;
+  if (field_kind == FildeshSxprotoFieldKind_NEST) {
+    info->quoted_names_on = false;
+  }
   for (in_avail = peek_bytestring_FildeshX(in, NULL, 2);
        in_avail && in->at[in->off] != ')';
        in_avail = peek_bytestring_FildeshX(in, NULL, 2))
@@ -714,15 +783,25 @@ parse_field_content_FildeshSxpbInfo(
         assert(!fildesh_nullid(p_it.elem_id));
       }
       else {
-        if (!parse_field_FildeshSxpbInfo(info, schema, in, sxpb, p_it, oslice)) {
+        bool saved_quoted = info->quoted_names_on;
+        if (field_kind == FildeshSxprotoFieldKind_NEST) {
+          info->quoted_names_on = false;
+        }
+        if (!parse_field_FildeshSxpbInfo(
+                info, schema, in, sxpb, p_it, oslice))
+        {
           return false;
         }
+        info->quoted_names_on = saved_quoted;
         if (field_kind != FildeshSxprotoFieldKind_MESSAGE) {
-          p_it = freshtail_FildeshSxpb(sxpb, p_it);
-          if (field_kind == FildeshSxprotoFieldKind_ARRAY &&
-              p_it.field_kind == FildeshSxprotoFieldKind_ARRAY) {
-            syntax_error(info, "Arrays cannot be nested.");
-            return false;
+          FildeshSxpbIT next_it = freshtail_FildeshSxpb(sxpb, p_it);
+          if (!nullish_FildeshSxpbIT(next_it)) {
+            p_it = next_it;
+            if (field_kind == FildeshSxprotoFieldKind_ARRAY &&
+                p_it.field_kind == FildeshSxprotoFieldKind_ARRAY) {
+              syntax_error(info, "Arrays cannot be nested.");
+              return false;
+            }
           }
         }
       }
@@ -733,7 +812,21 @@ parse_field_content_FildeshSxpbInfo(
         syntax_error(info, "Message can only hold fields.");
         return false;
       }
-      if (elem_kind == FildeshSxprotoFieldKind_LITERAL_STRING ||
+      if (field_kind == FildeshSxprotoFieldKind_NEST) {
+        tmp_kind = FildeshSxprotoFieldKind_LITERAL_STRING;
+        if (peek_bytestring_FildeshX(in, fildesh_bytestrlit("\"\" "))) {
+          if (!parse_string_field_content_FildeshSxpbInfo(info, in, oslice)) {
+            return false;
+          }
+        }
+        else {
+          truncate_FildeshO(oslice);
+          if (!parse_concat_string_FildeshSxpbInfo(info, in, oslice)) {
+            return false;
+          }
+        }
+      }
+      else if (elem_kind == FildeshSxprotoFieldKind_LITERAL_STRING ||
           (c0 != '+' && c0 != '-' && c0 != '.' && !('0' <= c0 && c0 <= '9')) ||
           (c0 == '-' && c1 != '.' && c1 != '+' && !('0' <= c1 && c1 <= '9')) ||
           (c0 == '.' && c1 != '-' && c1 != '+' && !('0' <= c1 && c1 <= '9')))
@@ -820,6 +913,9 @@ parse_field_content_FildeshSxpbInfo(
     elem_count += 1;
     skip_separation(in, info);
   }
+  if (field_kind == FildeshSxprotoFieldKind_NEST) {
+    info->quoted_names_on = saved_quoted_names_on;
+  }
   return true;
 }
 
@@ -836,15 +932,51 @@ slurp_sxpb_close_FildeshX(
 
   info->err_out = err_out;
   skip_separation(in, info);
-  if (skipstr_FildeshSxpbInfo(info, in, "(())")) {
+  if (peek_char_FildeshX(in, '(')) {
+    FildeshSxpbInfo backup_info = *info;
+    size_t off = in->off;
+    bool match = false;
+    skipstr_FildeshSxpbInfo(info, in, "(");
     skip_separation(in, info);
-    if (on_array_content(in)) {
-      p_it.field_kind = FildeshSxprotoFieldKind_ARRAY;
+    if (skipstr_FildeshSxpbInfo(info, in, "\"\"")) {
+      skip_separation(in, info);
+      if (skipstr_FildeshSxpbInfo(info, in, ")")) {
+        p_it.field_kind = FildeshSxprotoFieldKind_NEST;
+        (*sxpb->values)[p_it.cons_id].field_kind = p_it.field_kind;
+        skip_separation(in, info);
+      }
+      else {
+        in->off = off;
+        *info = backup_info;
+      }
+    }
+    else if (skipstr_FildeshSxpbInfo(info, in, "(")) {
+      skip_separation(in, info);
+      if (skipstr_FildeshSxpbInfo(info, in, ")")) {
+        skip_separation(in, info);
+        if (skipstr_FildeshSxpbInfo(info, in, ")")) {
+          match = true;
+        }
+      }
+      if (match) {
+        skip_separation(in, info);
+        if (on_array_content(in)) {
+          p_it.field_kind = FildeshSxprotoFieldKind_ARRAY;
+        }
+        else {
+          p_it.field_kind = FildeshSxprotoFieldKind_MANYOF;
+        }
+        (*sxpb->values)[p_it.cons_id].field_kind = p_it.field_kind;
+      }
+      else {
+        in->off = off;
+        *info = backup_info;
+      }
     }
     else {
-      p_it.field_kind = FildeshSxprotoFieldKind_MANYOF;
+      in->off = off;
+      *info = backup_info;
     }
-    (*sxpb->values)[p_it.cons_id].field_kind = p_it.field_kind;
   }
 
   if (!parse_field_content_FildeshSxpbInfo(

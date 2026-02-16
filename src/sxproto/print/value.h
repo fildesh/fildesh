@@ -17,16 +17,19 @@ static inline
   bool
 is_like_dict_FildeshSxprotoFieldKind(FildeshSxprotoFieldKind kind)
 {
-  return (kind == FildeshSxprotoFieldKind_MESSAGE ||
-          kind == FildeshSxprotoFieldKind_LONEOF);
+  return (
+      kind == FildeshSxprotoFieldKind_MESSAGE ||
+      kind == FildeshSxprotoFieldKind_LONEOF);
 }
 
 static inline
   bool
 is_like_list_FildeshSxprotoFieldKind(FildeshSxprotoFieldKind kind)
 {
-  return (kind == FildeshSxprotoFieldKind_ARRAY ||
-          kind == FildeshSxprotoFieldKind_MANYOF);
+  return (
+      kind == FildeshSxprotoFieldKind_ARRAY ||
+      kind == FildeshSxprotoFieldKind_MANYOF ||
+      kind == FildeshSxprotoFieldKind_NEST);
 }
 
 static inline FildeshSxpb_id id_of_FildeshSxpbIT(FildeshSxpbIT it) {

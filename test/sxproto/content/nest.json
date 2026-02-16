@@ -1,0 +1,88 @@
+[
+  {
+    "black bear": [
+      {
+        "color": [
+          "cinnamon"
+        ]
+      },
+      "clawing at the bark of a Douglas fir"
+    ]
+  },
+  {
+    "grizzly bear": [
+      "foraging for honeyberries"
+    ]
+  },
+  {
+    "meadow": [
+      {
+        "grass": [
+          "green",
+          "verdant",
+          {
+            "swaying": [
+              "gently in the breeze"
+            ]
+          }
+        ]
+      },
+      {
+        "wildflowers": [
+          "blooming",
+          {
+            "fragrance": [
+              "sweet",
+              "subtle"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "": [
+      {
+        "empty_nest": []
+      },
+      {
+        "empty_nest": []
+      },
+      {
+        "": []
+      },
+      "normal string",
+      "an empty string follows this one",
+      "",
+      "an anonymous nest follows this string",
+      {
+        "": [
+          "content"
+        ]
+      },
+      "an empty anonymous nest follows this string",
+      {
+        "": []
+      },
+      {
+        "nest": [
+          "",
+          "with",
+          "empty",
+          "string"
+        ]
+      },
+      {
+        "nest": [
+          {
+            "": []
+          },
+          "with",
+          "empty",
+          "anonymous",
+          "nest"
+        ]
+      }
+    ]
+  }
+]

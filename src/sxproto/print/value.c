@@ -82,5 +82,8 @@ name_of_entry_FildeshSxpb(
   if (m->field_kind == FildeshSxprotoFieldKind_MANYOF) {
     return name_of_manyof_entry_FildeshSxpb(sxpb, it);
   }
+  if (m->field_kind == FildeshSxprotoFieldKind_NEST) {
+    return name_at_FildeshSxpb(sxpb, it);
+  }
   return NULL;
 }
