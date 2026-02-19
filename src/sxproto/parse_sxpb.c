@@ -476,9 +476,7 @@ static FildeshSxpbIT freshtail_FildeshSxpb(
   else {
     it.elem_id = (*sxpb->values)[it.elem_id].next;
   }
-  if (fildesh_nullid(it.elem_id)) {
-    return FildeshSxpbIT_of_NULL();
-  }
+  assert(!fildesh_nullid(it.elem_id));
   assert(fildesh_nullid((*sxpb->values)[it.elem_id].next));
   it.field_kind = (*sxpb->values)[it.elem_id].field_kind;
   return it;
@@ -794,7 +792,24 @@ parse_field_content_FildeshSxpbInfo(
         }
         info->quoted_names_on = saved_quoted;
         if (field_kind != FildeshSxprotoFieldKind_MESSAGE) {
-          FildeshSxpbIT next_it = freshtail_FildeshSxpb(sxpb, p_it);
+          FildeshSxpbIT next_it = FildeshSxpbIT_of_NULL();
+          /* Check if there is a next element manually. */
+          bool has_next = false;
+          if (fildesh_nullid(p_it.elem_id)) {
+            if (!fildesh_nullid((*sxpb->values)[p_it.cons_id].elem)) {
+              has_next = true;
+            }
+          }
+          else {
+            if (!fildesh_nullid((*sxpb->values)[p_it.elem_id].next)) {
+              has_next = true;
+            }
+          }
+
+          if (has_next) {
+            next_it = freshtail_FildeshSxpb(sxpb, p_it);
+          }
+
           if (!nullish_FildeshSxpbIT(next_it)) {
             p_it = next_it;
             if (field_kind == FildeshSxprotoFieldKind_ARRAY &&
