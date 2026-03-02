@@ -476,9 +476,7 @@ static FildeshSxpbIT freshtail_FildeshSxpb(
   else {
     it.elem_id = (*sxpb->values)[it.elem_id].next;
   }
-  if (fildesh_nullid(it.elem_id)) {
-    return FildeshSxpbIT_of_NULL();
-  }
+  assert(!fildesh_nullid(it.elem_id));
   assert(fildesh_nullid((*sxpb->values)[it.elem_id].next));
   it.field_kind = (*sxpb->values)[it.elem_id].field_kind;
   return it;
@@ -794,9 +792,11 @@ parse_field_content_FildeshSxpbInfo(
         }
         info->quoted_names_on = saved_quoted;
         if (field_kind != FildeshSxprotoFieldKind_MESSAGE) {
-          FildeshSxpbIT next_it = freshtail_FildeshSxpb(sxpb, p_it);
-          if (!nullish_FildeshSxpbIT(next_it)) {
-            p_it = next_it;
+          FildeshSxpb_id next_id = fildesh_nullid(p_it.elem_id)
+            ? (*sxpb->values)[p_it.cons_id].elem
+            : (*sxpb->values)[p_it.elem_id].next;
+          if (!fildesh_nullid(next_id)) {
+            p_it = freshtail_FildeshSxpb(sxpb, p_it);
             if (field_kind == FildeshSxprotoFieldKind_ARRAY &&
                 p_it.field_kind == FildeshSxprotoFieldKind_ARRAY) {
               syntax_error(info, "Arrays cannot be nested.");
