@@ -1,5 +1,7 @@
 load("@rules_cc//cc:defs.bzl", "cc_library")
 
+exports_files(["parse_sxpb.c", "parse_sxpb.h"])
+
 cc_library(
     name = "sxproto_lib",
     srcs = [

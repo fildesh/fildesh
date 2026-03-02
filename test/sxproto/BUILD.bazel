@@ -26,6 +26,12 @@ cc_test(
 )
 
 cc_test(
+    name = "nest_parse_test",
+    srcs = ["nest_parse_test.c", "//src/sxproto:parse_sxpb.h", "//src/sxproto:parse_sxpb.c"],
+    deps = ["//:sxproto_lib"],
+)
+
+cc_test(
     name = "parse_with_schema_test",
     srcs = ["parse_with_schema_test.c"],
     deps = ["//:sxproto_lib"],

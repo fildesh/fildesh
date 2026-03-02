@@ -221,6 +221,32 @@ static void parse_last_in_string_array_field_test() {
   close_FildeshSxpb(sxpb);
 }
 
+static void parse_nest_field_test() {
+  FildeshSxpbInfo info[1] = {DEFAULT_FildeshSxpbInfo};
+  FildeshO oslice[1] = {DEFAULT_FildeshO};
+  FildeshSxpb* sxpb = open_FildeshSxpb();
+  const FildeshSxpbIT p_it = top_of_FildeshSxpb(sxpb);
+  info->err_out = open_FildeshOF("/dev/stderr");
+
+#define tryparse(text) do { \
+  FildeshX slice = FildeshX_of_strlit(text); \
+  bool good = parse_field_FildeshSxpbInfo(info, NULL,  &slice, sxpb, p_it, oslice); \
+  assert(good); \
+  assert(info->line_count == 0); \
+  assert(info->column_count == strlen(text)); \
+  remove_at_FildeshSxpb(sxpb, first_at_FildeshSxpb(sxpb, p_it)); \
+  assert(nullish_FildeshSxpbIT(first_at_FildeshSxpb(sxpb, p_it))); \
+  info->column_count = 0; \
+} while (0)
+
+  tryparse("( \"\" )");
+
+#undef tryparse
+  close_FildeshO(oslice);
+  close_FildeshO(info->err_out);
+  close_FildeshSxpb(sxpb);
+}
+
 int main() {
   parse_string_test();
   parse_number_test();
@@ -228,5 +254,6 @@ int main() {
   parse_field_test();
   parse_string_field_test();
   parse_last_in_string_array_field_test();
+  parse_nest_field_test();
   return 0;
 }
