@@ -476,9 +476,14 @@ static FildeshSxpbIT freshtail_FildeshSxpb(
   else {
     it.elem_id = (*sxpb->values)[it.elem_id].next;
   }
-  assert(!fildesh_nullid(it.elem_id));
-  assert(fildesh_nullid((*sxpb->values)[it.elem_id].next));
+  if (fildesh_nullid(it.elem_id)) {
+    return FildeshSxpbIT_of_NULL();
+  }
   it.field_kind = (*sxpb->values)[it.elem_id].field_kind;
+  while (!fildesh_nullid((*sxpb->values)[it.elem_id].next)) {
+    it.elem_id = (*sxpb->values)[it.elem_id].next;
+    it.field_kind = (*sxpb->values)[it.elem_id].field_kind;
+  }
   return it;
 }
 
@@ -578,11 +583,6 @@ parse_field_FildeshSxpbInfo(
        */
       if (oslice->size == 0 && !peek_char_FildeshX(in, '(')) {
         field_kind = FildeshSxprotoFieldKind_LITERAL;
-      }
-      else if (oslice->size == 0 && peek_chars_FildeshX(in, "()")) {
-        /* Empty `()` is forbidden */
-        syntax_error(info, "Empty message is forbidden in nest.");
-        return false;
       }
       else {
         field_kind = FildeshSxprotoFieldKind_NEST;
@@ -797,11 +797,14 @@ parse_field_content_FildeshSxpbInfo(
         }
         info->quoted_names_on = saved_quoted;
         if (field_kind != FildeshSxprotoFieldKind_MESSAGE) {
-          p_it = freshtail_FildeshSxpb(sxpb, p_it);
-          if (field_kind == FildeshSxprotoFieldKind_ARRAY &&
-              p_it.field_kind == FildeshSxprotoFieldKind_ARRAY) {
-            syntax_error(info, "Arrays cannot be nested.");
-            return false;
+          FildeshSxpbIT next_it = freshtail_FildeshSxpb(sxpb, p_it);
+          if (!nullish_FildeshSxpbIT(next_it)) {
+            p_it = next_it;
+            if (field_kind == FildeshSxprotoFieldKind_ARRAY &&
+                p_it.field_kind == FildeshSxprotoFieldKind_ARRAY) {
+              syntax_error(info, "Arrays cannot be nested.");
+              return false;
+            }
           }
         }
       }
