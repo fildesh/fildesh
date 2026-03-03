@@ -696,7 +696,19 @@ parse_field_FildeshSxpbInfo(
   {
     FildeshSxpbIT child_it = first_at_FildeshSxpb(sxpb, inserted_it);
     if (nullish_FildeshSxpbIT(child_it)) {
-      remove_at_FildeshSxpb(sxpb, inserted_it);
+      /* Extract from linked list rather than remove_at_FildeshSxpb. */
+      FildeshSxpb_id parent_id = inserted_it.cons_id;
+      FildeshSxpb_id iter_id = (*sxpb->values)[parent_id].elem;
+      if (iter_id == inserted_it.elem_id) {
+        (*sxpb->values)[parent_id].elem = (*sxpb->values)[inserted_it.elem_id].next;
+      } else {
+        while (!fildesh_nullid(iter_id) && (*sxpb->values)[iter_id].next != inserted_it.elem_id) {
+          iter_id = (*sxpb->values)[iter_id].next;
+        }
+        if (!fildesh_nullid(iter_id)) {
+          (*sxpb->values)[iter_id].next = (*sxpb->values)[inserted_it.elem_id].next;
+        }
+      }
     }
     else if (nullish_FildeshSxpbIT(next_at_FildeshSxpb(sxpb, child_it))) {
       const FildeshSxprotoFieldKind child_kind = child_it.field_kind;
@@ -707,8 +719,8 @@ parse_field_FildeshSxpbInfo(
       {
         (*sxpb->values)[inserted_it.elem_id].text = (*sxpb->values)[child_it.elem_id].text;
         (*sxpb->values)[inserted_it.elem_id].field_kind = child_kind;
+        (*sxpb->values)[inserted_it.elem_id].elem = (*sxpb->values)[child_it.elem_id].elem;
         inserted_it.field_kind = child_kind;
-        remove_at_FildeshSxpb(sxpb, child_it);
       }
     }
   }
