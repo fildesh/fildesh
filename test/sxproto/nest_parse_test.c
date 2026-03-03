@@ -7,12 +7,13 @@ static void expect_nest_with_string_test() {
   FildeshSxpbInfo info[1] = {DEFAULT_FildeshSxpbInfo};
   FildeshO oslice[1] = {DEFAULT_FildeshO};
   FildeshSxpb* sxpb = open_FildeshSxpb();
-  (*sxpb->values)[top_of_FildeshSxpb(sxpb).cons_id].field_kind = FildeshSxprotoFieldKind_NEST;
   FildeshX slice = FildeshX_of_strlit("(nest_with_string (\"\") the_string)");
   FildeshSxpbIT p_it = top_of_FildeshSxpb(sxpb);
-  p_it.field_kind = FildeshSxprotoFieldKind_NEST;
   FildeshSxpbIT it;
-  bool good = parse_field_FildeshSxpbInfo(info, NULL, &slice, sxpb, p_it, oslice);
+  bool good;
+  (*sxpb->values)[top_of_FildeshSxpb(sxpb).cons_id].field_kind = FildeshSxprotoFieldKind_NEST;
+  p_it.field_kind = FildeshSxprotoFieldKind_NEST;
+  good = parse_field_FildeshSxpbInfo(info, NULL, &slice, sxpb, p_it, oslice);
   assert(good);
 
   it = first_at_FildeshSxpb(sxpb, p_it);
@@ -35,12 +36,13 @@ static void expect_empty_nest_test() {
   FildeshSxpbInfo info[1] = {DEFAULT_FildeshSxpbInfo};
   FildeshO oslice[1] = {DEFAULT_FildeshO};
   FildeshSxpb* sxpb = open_FildeshSxpb();
-  (*sxpb->values)[top_of_FildeshSxpb(sxpb).cons_id].field_kind = FildeshSxprotoFieldKind_NEST;
   FildeshX slice = FildeshX_of_strlit("(empty_nest (\"\"))");
   FildeshSxpbIT p_it = top_of_FildeshSxpb(sxpb);
-  p_it.field_kind = FildeshSxprotoFieldKind_NEST;
   FildeshSxpbIT it;
-  bool good = parse_field_FildeshSxpbInfo(info, NULL, &slice, sxpb, p_it, oslice);
+  bool good;
+  (*sxpb->values)[top_of_FildeshSxpb(sxpb).cons_id].field_kind = FildeshSxprotoFieldKind_NEST;
+  p_it.field_kind = FildeshSxprotoFieldKind_NEST;
+  good = parse_field_FildeshSxpbInfo(info, NULL, &slice, sxpb, p_it, oslice);
   assert(good);
 
   it = first_at_FildeshSxpb(sxpb, p_it);
@@ -59,12 +61,13 @@ static void expect_nest_with_3_empty_strings_test() {
   FildeshSxpbInfo info[1] = {DEFAULT_FildeshSxpbInfo};
   FildeshO oslice[1] = {DEFAULT_FildeshO};
   FildeshSxpb* sxpb = open_FildeshSxpb();
-  (*sxpb->values)[top_of_FildeshSxpb(sxpb).cons_id].field_kind = FildeshSxprotoFieldKind_NEST;
   FildeshX slice = FildeshX_of_strlit("(nest_with_3_empty_strings (\"\") \"\" \"\" \"\")");
   FildeshSxpbIT p_it = top_of_FildeshSxpb(sxpb);
-  p_it.field_kind = FildeshSxprotoFieldKind_NEST;
   FildeshSxpbIT it;
-  bool good = parse_field_FildeshSxpbInfo(info, NULL, &slice, sxpb, p_it, oslice);
+  bool good;
+  (*sxpb->values)[top_of_FildeshSxpb(sxpb).cons_id].field_kind = FildeshSxprotoFieldKind_NEST;
+  p_it.field_kind = FildeshSxprotoFieldKind_NEST;
+  good = parse_field_FildeshSxpbInfo(info, NULL, &slice, sxpb, p_it, oslice);
   assert(good);
 
   it = first_at_FildeshSxpb(sxpb, p_it);
@@ -87,12 +90,13 @@ static void expect_nest_with_anonymous_discriminated_string_test() {
   FildeshSxpbInfo info[1] = {DEFAULT_FildeshSxpbInfo};
   FildeshO oslice[1] = {DEFAULT_FildeshO};
   FildeshSxpb* sxpb = open_FildeshSxpb();
-  (*sxpb->values)[top_of_FildeshSxpb(sxpb).cons_id].field_kind = FildeshSxprotoFieldKind_NEST;
   FildeshX slice = FildeshX_of_strlit("(nest_with_anonymous_discriminated_string (\"\") (\"\" the_string))");
   FildeshSxpbIT p_it = top_of_FildeshSxpb(sxpb);
-  p_it.field_kind = FildeshSxprotoFieldKind_NEST;
   FildeshSxpbIT it;
-  bool good = parse_field_FildeshSxpbInfo(info, NULL, &slice, sxpb, p_it, oslice);
+  bool good;
+  (*sxpb->values)[top_of_FildeshSxpb(sxpb).cons_id].field_kind = FildeshSxprotoFieldKind_NEST;
+  p_it.field_kind = FildeshSxprotoFieldKind_NEST;
+  good = parse_field_FildeshSxpbInfo(info, NULL, &slice, sxpb, p_it, oslice);
   assert(good);
 
   it = first_at_FildeshSxpb(sxpb, p_it);
@@ -116,13 +120,14 @@ static void expect_nest_with_subnests_test() {
   FildeshSxpbInfo info[1] = {DEFAULT_FildeshSxpbInfo};
   FildeshO oslice[1] = {DEFAULT_FildeshO};
   FildeshSxpb* sxpb = open_FildeshSxpb();
-  (*sxpb->values)[top_of_FildeshSxpb(sxpb).cons_id].field_kind = FildeshSxprotoFieldKind_NEST;
   FildeshX slice = FildeshX_of_strlit("(nest_with_subnests (\"\") (subnest1 k1 k2 k3) (subnest2 k4 k5 k6))");
   FildeshSxpbIT p_it = top_of_FildeshSxpb(sxpb);
-  p_it.field_kind = FildeshSxprotoFieldKind_NEST;
   FildeshSxpbIT it;
   FildeshSxpbIT sub_it;
-  bool good = parse_field_FildeshSxpbInfo(info, NULL, &slice, sxpb, p_it, oslice);
+  bool good;
+  (*sxpb->values)[top_of_FildeshSxpb(sxpb).cons_id].field_kind = FildeshSxprotoFieldKind_NEST;
+  p_it.field_kind = FildeshSxprotoFieldKind_NEST;
+  good = parse_field_FildeshSxpbInfo(info, NULL, &slice, sxpb, p_it, oslice);
   assert(good);
 
   it = first_at_FildeshSxpb(sxpb, p_it);
@@ -172,13 +177,14 @@ static void expect_nest_with_anonymous_subnests_test() {
   FildeshSxpbInfo info[1] = {DEFAULT_FildeshSxpbInfo};
   FildeshO oslice[1] = {DEFAULT_FildeshO};
   FildeshSxpb* sxpb = open_FildeshSxpb();
-  (*sxpb->values)[top_of_FildeshSxpb(sxpb).cons_id].field_kind = FildeshSxprotoFieldKind_NEST;
   FildeshX slice = FildeshX_of_strlit("(nest_with_anonymous_subnests (\"\") (\"\" (\"\") k1 k2 k3) (\"\" (\"\") k4 k5 k6))");
   FildeshSxpbIT p_it = top_of_FildeshSxpb(sxpb);
-  p_it.field_kind = FildeshSxprotoFieldKind_NEST;
   FildeshSxpbIT it;
   FildeshSxpbIT sub_it;
-  bool good = parse_field_FildeshSxpbInfo(info, NULL, &slice, sxpb, p_it, oslice);
+  bool good;
+  (*sxpb->values)[top_of_FildeshSxpb(sxpb).cons_id].field_kind = FildeshSxprotoFieldKind_NEST;
+  p_it.field_kind = FildeshSxprotoFieldKind_NEST;
+  good = parse_field_FildeshSxpbInfo(info, NULL, &slice, sxpb, p_it, oslice);
   assert(good);
 
   it = first_at_FildeshSxpb(sxpb, p_it);
@@ -232,12 +238,13 @@ static void expect_nest_with_empty_subnest_test() {
   FildeshSxpbInfo info[1] = {DEFAULT_FildeshSxpbInfo};
   FildeshO oslice[1] = {DEFAULT_FildeshO};
   FildeshSxpb* sxpb = open_FildeshSxpb();
-  (*sxpb->values)[top_of_FildeshSxpb(sxpb).cons_id].field_kind = FildeshSxprotoFieldKind_NEST;
   FildeshX slice = FildeshX_of_strlit("(nest_with_empty_subnest (\"\") (empty_subnest (\"\")))");
   FildeshSxpbIT p_it = top_of_FildeshSxpb(sxpb);
-  p_it.field_kind = FildeshSxprotoFieldKind_NEST;
   FildeshSxpbIT it;
-  bool good = parse_field_FildeshSxpbInfo(info, NULL, &slice, sxpb, p_it, oslice);
+  bool good;
+  (*sxpb->values)[top_of_FildeshSxpb(sxpb).cons_id].field_kind = FildeshSxprotoFieldKind_NEST;
+  p_it.field_kind = FildeshSxprotoFieldKind_NEST;
+  good = parse_field_FildeshSxpbInfo(info, NULL, &slice, sxpb, p_it, oslice);
   assert(good);
 
   it = first_at_FildeshSxpb(sxpb, p_it);
@@ -261,12 +268,13 @@ static void expect_nest_with_anonymous_empty_subnest_test() {
   FildeshSxpbInfo info[1] = {DEFAULT_FildeshSxpbInfo};
   FildeshO oslice[1] = {DEFAULT_FildeshO};
   FildeshSxpb* sxpb = open_FildeshSxpb();
-  (*sxpb->values)[top_of_FildeshSxpb(sxpb).cons_id].field_kind = FildeshSxprotoFieldKind_NEST;
   FildeshX slice = FildeshX_of_strlit("(nest_with_anonymous_empty_subnest (\"\") (\"\" (\"\")))");
   FildeshSxpbIT p_it = top_of_FildeshSxpb(sxpb);
-  p_it.field_kind = FildeshSxprotoFieldKind_NEST;
   FildeshSxpbIT it;
-  bool good = parse_field_FildeshSxpbInfo(info, NULL, &slice, sxpb, p_it, oslice);
+  bool good;
+  (*sxpb->values)[top_of_FildeshSxpb(sxpb).cons_id].field_kind = FildeshSxprotoFieldKind_NEST;
+  p_it.field_kind = FildeshSxprotoFieldKind_NEST;
+  good = parse_field_FildeshSxpbInfo(info, NULL, &slice, sxpb, p_it, oslice);
   assert(good);
 
   it = first_at_FildeshSxpb(sxpb, p_it);
