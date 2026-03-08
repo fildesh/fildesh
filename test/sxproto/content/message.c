@@ -2,10 +2,7 @@
 #include "src/sxproto/value.h"
 #include <string.h>
 
-static void build_node_8(FildeshSxpb* sxpb, FildeshSxpbIT parent_it) {
-  FildeshSxpbIT it = parent_it;
-  it.cons_id = parent_it.elem_id;
-  it.elem_id = ~(FildeshSxpb_id)0;
+static void build_node_8(FildeshSxpb* sxpb, FildeshSxpbIT it) {
   it = direct_insert_first_FildeshSxpb(sxpb, it, ensure_name_FildeshSxpb(sxpb, "i", 1), FildeshSxprotoFieldKind_LITERAL);
   direct_insert_first_FildeshSxpb(sxpb, it, ensure_name_FildeshSxpb(sxpb, "-5", 2), FildeshSxprotoFieldKind_LITERAL_INT);
   it = direct_insert_next_FildeshSxpb(sxpb, it, ensure_name_FildeshSxpb(sxpb, "f", 1), FildeshSxprotoFieldKind_LITERAL);
@@ -14,10 +11,7 @@ static void build_node_8(FildeshSxpb* sxpb, FildeshSxpbIT parent_it) {
   direct_insert_first_FildeshSxpb(sxpb, it, ensure_name_FildeshSxpb(sxpb, "goodbye", 7), FildeshSxprotoFieldKind_LITERAL_STRING);
 }
 
-static void build_node_1(FildeshSxpb* sxpb, FildeshSxpbIT parent_it) {
-  FildeshSxpbIT it = parent_it;
-  it.cons_id = parent_it.elem_id;
-  it.elem_id = ~(FildeshSxpb_id)0;
+static void build_node_1(FildeshSxpb* sxpb, FildeshSxpbIT it) {
   it = direct_insert_first_FildeshSxpb(sxpb, it, ensure_name_FildeshSxpb(sxpb, "i", 1), FildeshSxprotoFieldKind_LITERAL);
   direct_insert_first_FildeshSxpb(sxpb, it, ensure_name_FildeshSxpb(sxpb, "+5", 2), FildeshSxprotoFieldKind_LITERAL_INT);
   it = direct_insert_next_FildeshSxpb(sxpb, it, ensure_name_FildeshSxpb(sxpb, "f", 1), FildeshSxprotoFieldKind_LITERAL);

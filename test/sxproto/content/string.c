@@ -2,19 +2,13 @@
 #include "src/sxproto/value.h"
 #include <string.h>
 
-static void build_node_14(FildeshSxpb* sxpb, FildeshSxpbIT parent_it) {
-  FildeshSxpbIT it = parent_it;
-  it.cons_id = parent_it.elem_id;
-  it.elem_id = ~(FildeshSxpb_id)0;
+static void build_node_14(FildeshSxpb* sxpb, FildeshSxpbIT it) {
   it = direct_insert_first_FildeshSxpb(sxpb, it, ensure_name_FildeshSxpb(sxpb, "unquoted", 8), FildeshSxprotoFieldKind_LITERAL_STRING);
   it = direct_insert_next_FildeshSxpb(sxpb, it, ensure_name_FildeshSxpb(sxpb, "string", 6), FildeshSxprotoFieldKind_LITERAL_STRING);
   it = direct_insert_next_FildeshSxpb(sxpb, it, ensure_name_FildeshSxpb(sxpb, "array", 5), FildeshSxprotoFieldKind_LITERAL_STRING);
 }
 
-static void build_node_18(FildeshSxpb* sxpb, FildeshSxpbIT parent_it) {
-  FildeshSxpbIT it = parent_it;
-  it.cons_id = parent_it.elem_id;
-  it.elem_id = ~(FildeshSxpb_id)0;
+static void build_node_18(FildeshSxpb* sxpb, FildeshSxpbIT it) {
   it = direct_insert_first_FildeshSxpb(sxpb, it, ensure_name_FildeshSxpb(sxpb, "1", 1), FildeshSxprotoFieldKind_LITERAL_STRING);
   it = direct_insert_next_FildeshSxpb(sxpb, it, ensure_name_FildeshSxpb(sxpb, "2", 1), FildeshSxprotoFieldKind_LITERAL_STRING);
   it = direct_insert_next_FildeshSxpb(sxpb, it, ensure_name_FildeshSxpb(sxpb, "3", 1), FildeshSxprotoFieldKind_LITERAL_STRING);
@@ -23,10 +17,7 @@ static void build_node_18(FildeshSxpb* sxpb, FildeshSxpbIT parent_it) {
   it = direct_insert_next_FildeshSxpb(sxpb, it, ensure_name_FildeshSxpb(sxpb, "7 8", 3), FildeshSxprotoFieldKind_LITERAL_STRING);
 }
 
-static void build_node_1(FildeshSxpb* sxpb, FildeshSxpbIT parent_it) {
-  FildeshSxpbIT it = parent_it;
-  it.cons_id = parent_it.elem_id;
-  it.elem_id = ~(FildeshSxpb_id)0;
+static void build_node_1(FildeshSxpb* sxpb, FildeshSxpbIT it) {
   it = direct_insert_first_FildeshSxpb(sxpb, it, ensure_name_FildeshSxpb(sxpb, "quoted_1", 8), FildeshSxprotoFieldKind_LITERAL);
   direct_insert_first_FildeshSxpb(sxpb, it, ensure_name_FildeshSxpb(sxpb, "AA BB CC", 8), FildeshSxprotoFieldKind_LITERAL_STRING);
   it = direct_insert_next_FildeshSxpb(sxpb, it, ensure_name_FildeshSxpb(sxpb, "quoted_2", 8), FildeshSxprotoFieldKind_LITERAL);
