@@ -2,10 +2,6 @@
 #include "src/sxproto/value.h"
 #include <string.h>
 
-static void build_node_1(FildeshSxpb* sxpb, FildeshSxpbIT parent_it);
-static void build_node_14(FildeshSxpb* sxpb, FildeshSxpbIT parent_it);
-static void build_node_18(FildeshSxpb* sxpb, FildeshSxpbIT parent_it);
-
 static void build_node_14(FildeshSxpb* sxpb, FildeshSxpbIT parent_it) {
   FildeshSxpbIT it = parent_it;
   it.cons_id = parent_it.elem_id;

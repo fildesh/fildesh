@@ -2,14 +2,6 @@
 #include "src/sxproto/value.h"
 #include <string.h>
 
-static void build_node_1(FildeshSxpb* sxpb, FildeshSxpbIT parent_it);
-static void build_node_2(FildeshSxpb* sxpb, FildeshSxpbIT parent_it);
-static void build_node_6(FildeshSxpb* sxpb, FildeshSxpbIT parent_it);
-static void build_node_10(FildeshSxpb* sxpb, FildeshSxpbIT parent_it);
-static void build_node_17(FildeshSxpb* sxpb, FildeshSxpbIT parent_it);
-static void build_node_18(FildeshSxpb* sxpb, FildeshSxpbIT parent_it);
-static void build_node_22(FildeshSxpb* sxpb, FildeshSxpbIT parent_it);
-
 static void build_node_2(FildeshSxpb* sxpb, FildeshSxpbIT parent_it) {
   FildeshSxpbIT it = parent_it;
   it.cons_id = parent_it.elem_id;
@@ -90,7 +82,6 @@ FildeshSxpb* make_array_test_FildeshSxpb(void) {
   FildeshSxpb* sxpb = open_FildeshSxpb();
   FildeshSxpbIT top = top_of_FildeshSxpb(sxpb);
   top.elem_id = 0;
-  (*sxpb->values)[0].field_kind = FildeshSxprotoFieldKind_MESSAGE;
   build_node_1(sxpb, top);
   return sxpb;
 }

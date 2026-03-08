@@ -2,33 +2,6 @@
 #include "src/sxproto/value.h"
 #include <string.h>
 
-static void build_node_1(FildeshSxpb* sxpb, FildeshSxpbIT parent_it);
-static void build_node_2(FildeshSxpb* sxpb, FildeshSxpbIT parent_it);
-static void build_node_3(FildeshSxpb* sxpb, FildeshSxpbIT parent_it);
-static void build_node_4(FildeshSxpb* sxpb, FildeshSxpbIT parent_it);
-static void build_node_7(FildeshSxpb* sxpb, FildeshSxpbIT parent_it);
-static void build_node_10(FildeshSxpb* sxpb, FildeshSxpbIT parent_it);
-static void build_node_11(FildeshSxpb* sxpb, FildeshSxpbIT parent_it);
-static void build_node_14(FildeshSxpb* sxpb, FildeshSxpbIT parent_it);
-static void build_node_15(FildeshSxpb* sxpb, FildeshSxpbIT parent_it);
-static void build_node_20(FildeshSxpb* sxpb, FildeshSxpbIT parent_it);
-static void build_node_25(FildeshSxpb* sxpb, FildeshSxpbIT parent_it);
-static void build_node_26(FildeshSxpb* sxpb, FildeshSxpbIT parent_it);
-static void build_node_31(FildeshSxpb* sxpb, FildeshSxpbIT parent_it);
-static void build_node_32(FildeshSxpb* sxpb, FildeshSxpbIT parent_it);
-static void build_node_33(FildeshSxpb* sxpb, FildeshSxpbIT parent_it);
-static void build_node_34(FildeshSxpb* sxpb, FildeshSxpbIT parent_it);
-static void build_node_37(FildeshSxpb* sxpb, FildeshSxpbIT parent_it);
-static void build_node_40(FildeshSxpb* sxpb, FildeshSxpbIT parent_it);
-static void build_node_41(FildeshSxpb* sxpb, FildeshSxpbIT parent_it);
-static void build_node_42(FildeshSxpb* sxpb, FildeshSxpbIT parent_it);
-static void build_node_45(FildeshSxpb* sxpb, FildeshSxpbIT parent_it);
-static void build_node_48(FildeshSxpb* sxpb, FildeshSxpbIT parent_it);
-static void build_node_49(FildeshSxpb* sxpb, FildeshSxpbIT parent_it);
-static void build_node_50(FildeshSxpb* sxpb, FildeshSxpbIT parent_it);
-static void build_node_51(FildeshSxpb* sxpb, FildeshSxpbIT parent_it);
-static void build_node_54(FildeshSxpb* sxpb, FildeshSxpbIT parent_it);
-
 static void build_node_4(FildeshSxpb* sxpb, FildeshSxpbIT parent_it) {
   FildeshSxpbIT it = parent_it;
   it.cons_id = parent_it.elem_id;
