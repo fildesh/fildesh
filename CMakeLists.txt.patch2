@@ -1,0 +1,11 @@
+--- test/sxproto/content/array.c
++++ test/sxproto/content/array.c
+@@ -121,7 +121,7 @@
+   FildeshSxpb* sxpb = open_FildeshSxpb();
+   FildeshSxpbIT top = top_of_FildeshSxpb(sxpb);
+   top.elem_id = 0;
+-  (*sxpb->values)[0].field_kind = FildeshSxprotoFieldKind_ARRAY;
++  (*sxpb->values)[0].field_kind = FildeshSxprotoFieldKind_MESSAGE;
+   build_node_1(sxpb, top);
+   return sxpb;
+ }

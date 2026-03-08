@@ -70,3 +70,13 @@ add_test(NAME sxpb2yaml_test COMMAND ${Fildesh_EXECUTABLE}
   "--string_sxpb=${CMAKE_CURRENT_SOURCE_DIR}/content/string.sxpb"
   "--string_yaml=${CMAKE_CURRENT_SOURCE_DIR}/content/string.yaml"
 )
+
+add_executable(sxproto_print_content_test
+  "print_content_test.c"
+  "content/array.c"
+  "content/loneof.c"
+  "content/manyof.c"
+  "content/message.c"
+  "content/string.c")
+target_link_libraries(sxproto_print_content_test ${FildeshSxproto_LIBRARIES})
+add_test(NAME sxproto_print_content_test COMMAND sxproto_print_content_test "${CMAKE_CURRENT_SOURCE_DIR}/content")
