@@ -1,6 +1,5 @@
 #include <fildesh/fildesh.h>
 #include <fildesh/sxproto.h>
-#include <assert.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,17 +14,18 @@ static void slurp_file(FildeshX* f) {
   while (read_FildeshX(f)) {}
 }
 
-static void test_print(FildeshSxpb* sxpb, const char* name, const char* content_dir) {
+static int test_print(FildeshSxpb* sxpb, const char* name, const char* content_dir) {
   const char* formats[] = {"json", "yaml", "txtpb"};
   unsigned i;
+  int all_passed = 1;
+
   for (i = 0; i < 3; ++i) {
     FildeshX* f = NULL;
     FildeshO out[1] = {DEFAULT_FildeshO};
     char filepath[1024];
     FildeshX expected;
     FildeshX actual;
-    size_t j = 0;
-    size_t min_len = 0;
+    unsigned line_num = 1;
 
     filepath[0] = '\0';
     strcat(filepath, content_dir);
@@ -37,7 +37,8 @@ static void test_print(FildeshSxpb* sxpb, const char* name, const char* content_
     f = open_FildeshXF(filepath);
     if (!f) {
       fildesh_log_errorf("Failed to open %s", filepath);
-      assert(f);
+      all_passed = 0;
+      continue;
     }
     slurp_file(f);
 
@@ -51,34 +52,40 @@ static void test_print(FildeshSxpb* sxpb, const char* name, const char* content_
 
     expected = *f;
     actual = getslice_FildeshO(out);
-    min_len = expected.size < actual.size ? expected.size : actual.size;
-    for (j = 0; j < min_len; ++j) {
-      if (expected.at[j] != actual.at[j]) {
-        fildesh_log_errorf("Mismatch at index %zu for format %s", j, formats[i]);
-        fildesh_log_errorf("Expected: %c, Actual: %c", expected.at[j], actual.at[j]);
-        assert(0);
+
+    while (avail_FildeshX(&expected) || avail_FildeshX(&actual)) {
+      FildeshX expected_line = sliceline_FildeshX(&expected);
+      FildeshX actual_line = sliceline_FildeshX(&actual);
+
+      if (expected_line.size != actual_line.size || memcmp(expected_line.at, actual_line.at, expected_line.size) != 0) {
+        fildesh_log_errorf("Mismatch in %s format %s at line %u", name, formats[i], line_num);
+        fildesh_log_errorf("Expected: %.*s", (int)expected_line.size, expected_line.at);
+        fildesh_log_errorf("Actual  : %.*s", (int)actual_line.size, actual_line.at);
+        all_passed = 0;
+        break; /* show first error of this format, then continue to next format */
       }
+      line_num++;
     }
-    if (expected.size != actual.size) {
-      fildesh_log_errorf("Size mismatch. Expected %zu, Actual %zu for format %s", expected.size, actual.size, formats[i]);
-    }
-    assert(expected.size == actual.size);
 
     close_FildeshX(f);
     close_FildeshO(out);
   }
   close_FildeshSxpb(sxpb);
+  return all_passed;
 }
 
 int main(int argc, char** argv) {
   const char* content_dir = "test/sxproto/content";
+  int passed = 1;
   if (argc > 1) {
     content_dir = argv[1];
   }
-  test_print(make_array_test_FildeshSxpb(), "array", content_dir);
-  test_print(make_loneof_test_FildeshSxpb(), "loneof", content_dir);
-  test_print(make_manyof_test_FildeshSxpb(), "manyof", content_dir);
-  test_print(make_message_test_FildeshSxpb(), "message", content_dir);
-  test_print(make_string_test_FildeshSxpb(), "string", content_dir);
-  return 0;
+
+  if (!test_print(make_array_test_FildeshSxpb(), "array", content_dir)) passed = 0;
+  if (!test_print(make_loneof_test_FildeshSxpb(), "loneof", content_dir)) passed = 0;
+  if (!test_print(make_manyof_test_FildeshSxpb(), "manyof", content_dir)) passed = 0;
+  if (!test_print(make_message_test_FildeshSxpb(), "message", content_dir)) passed = 0;
+  if (!test_print(make_string_test_FildeshSxpb(), "string", content_dir)) passed = 0;
+
+  return passed ? 0 : 1;
 }

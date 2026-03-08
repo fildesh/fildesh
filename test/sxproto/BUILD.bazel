@@ -87,3 +87,34 @@ fildesh_test(
         "string_yaml": "//test/sxproto/content:string.yaml",
     },
 )
+
+cc_test(
+    name = "print_content_test",
+    srcs = [
+        "print_content_test.c",
+        "//test/sxproto/content:array.c",
+        "//test/sxproto/content:loneof.c",
+        "//test/sxproto/content:manyof.c",
+        "//test/sxproto/content:message.c",
+        "//test/sxproto/content:string.c",
+    ],
+    args = ["test/sxproto/content"],
+    data = [
+        "//test/sxproto/content:array.json",
+        "//test/sxproto/content:array.yaml",
+        "//test/sxproto/content:array.txtpb",
+        "//test/sxproto/content:loneof.json",
+        "//test/sxproto/content:loneof.yaml",
+        "//test/sxproto/content:loneof.txtpb",
+        "//test/sxproto/content:manyof.json",
+        "//test/sxproto/content:manyof.yaml",
+        "//test/sxproto/content:manyof.txtpb",
+        "//test/sxproto/content:message.json",
+        "//test/sxproto/content:message.yaml",
+        "//test/sxproto/content:message.txtpb",
+        "//test/sxproto/content:string.json",
+        "//test/sxproto/content:string.yaml",
+        "//test/sxproto/content:string.txtpb",
+    ],
+    deps = ["//:sxproto_lib"],
+)

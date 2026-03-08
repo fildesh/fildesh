@@ -19,4 +19,9 @@ exports_files([
     "string.sxpb",
     "string.txtpb",
     "string.yaml",
+    "array.c",
+    "loneof.c",
+    "manyof.c",
+    "message.c",
+    "string.c",
 ])
