@@ -21,8 +21,12 @@ static void test_print(FildeshSxpb* sxpb, const char* name, const char* content_
   for (i = 0; i < 3; ++i) {
     FildeshX* f = NULL;
     FildeshO out[1] = {DEFAULT_FildeshO};
-
     char filepath[1024];
+    FildeshX expected;
+    FildeshX actual;
+    size_t j = 0;
+    size_t min_len = 0;
+
     filepath[0] = '\0';
     strcat(filepath, content_dir);
     strcat(filepath, "/");
@@ -45,10 +49,9 @@ static void test_print(FildeshSxpb* sxpb, const char* name, const char* content_
       print_txtpb_FildeshO(out, sxpb);
     }
 
-    FildeshX expected = *f;
-    FildeshX actual = getslice_FildeshO(out);
-    size_t j = 0;
-    size_t min_len = expected.size < actual.size ? expected.size : actual.size;
+    expected = *f;
+    actual = getslice_FildeshO(out);
+    min_len = expected.size < actual.size ? expected.size : actual.size;
     for (j = 0; j < min_len; ++j) {
       if (expected.at[j] != actual.at[j]) {
         fildesh_log_errorf("Mismatch at index %zu for format %s", j, formats[i]);
