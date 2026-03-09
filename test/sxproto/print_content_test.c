@@ -8,6 +8,7 @@ FildeshSxpb* make_array_test_FildeshSxpb(void);
 FildeshSxpb* make_loneof_test_FildeshSxpb(void);
 FildeshSxpb* make_manyof_test_FildeshSxpb(void);
 FildeshSxpb* make_message_test_FildeshSxpb(void);
+FildeshSxpb* make_nest_test_FildeshSxpb(void);
 FildeshSxpb* make_string_test_FildeshSxpb(void);
 
 static
@@ -93,6 +94,7 @@ int main(int argc, char** argv) {
   passing = print_formats_test(make_loneof_test_FildeshSxpb(), "loneof", content_dirpath) && passing;
   passing = print_formats_test(make_manyof_test_FildeshSxpb(), "manyof", content_dirpath) && passing;
   passing = print_formats_test(make_message_test_FildeshSxpb(), "message", content_dirpath) && passing;
+  passing = print_formats_test(make_nest_test_FildeshSxpb(), "nest", content_dirpath) && passing;
   passing = print_formats_test(make_string_test_FildeshSxpb(), "string", content_dirpath) && passing;
 
   return passing ? 0 : 1;

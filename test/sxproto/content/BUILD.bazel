@@ -19,6 +19,7 @@ exports_files([
     "message.sxpb",
     "message.txtpb",
     "message.yaml",
+    "nest.c",
     "nest.json",
     "nest.sxpb",
     "nest.txtpb",
