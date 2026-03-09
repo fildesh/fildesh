@@ -24,6 +24,20 @@ add_executable(sxproto_parse_with_schema_test
 target_link_libraries(sxproto_parse_with_schema_test ${FildeshSxproto_LIBRARIES})
 add_test(NAME sxproto_parse_with_schema_test COMMAND sxproto_parse_with_schema_test)
 
+add_executable(sxproto_print_content_test
+  "print_content_test.c"
+  "content/array.c"
+  "content/loneof.c"
+  "content/manyof.c"
+  "content/message.c"
+  "content/string.c"
+)
+target_link_libraries(sxproto_print_content_test ${FildeshSxproto_LIBRARIES})
+add_test(NAME sxproto_print_content_test COMMAND
+  sxproto_print_content_test
+  "${CMAKE_CURRENT_SOURCE_DIR}/content"
+)
+
 add_executable(sxproto_toplevel_test
   "toplevel_test.c")
 target_link_libraries(sxproto_toplevel_test ${FildeshSxproto_LIBRARIES})
