@@ -29,6 +29,12 @@ static void create_in_message_test() {
   assert(!nullish_FildeshSxpbIT(it));
   assert(nullish_FildeshSxpbIT(first_at_FildeshSxpb(sxpb, it)));
 
+  it = ensure_nest_subfield_at_FildeshSxpb(sxpb, m_it, "some_nest");
+  assert(!nullish_FildeshSxpbIT(it));
+  it = lookup_subfield_at_FildeshSxpb(sxpb, m_it, "some_nest");
+  assert(!nullish_FildeshSxpbIT(it));
+  assert(nullish_FildeshSxpbIT(first_at_FildeshSxpb(sxpb, it)));
+
   it = ensure_bool_subfield_at_FildeshSxpb(sxpb, m_it, "b");
   assert(!bool_value_at_FildeshSxpb(sxpb, it));
   it = assign_bool_subfield_at_FildeshSxpb(sxpb, m_it, "b", true);

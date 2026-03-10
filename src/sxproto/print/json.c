@@ -26,6 +26,28 @@ print_json_child_of_manyof(
 
 static
   void
+print_json_child_of_nest(
+    FildeshO* out,
+    const FildeshSxpb* sxpb,
+    FildeshSxpbIT it,
+    unsigned indent_level)
+{
+  const char* name = name_of_entry_FildeshSxpb(sxpb, it);
+  print_newline_json_indent_FildeshO(out, indent_level+1);
+  if (it.field_kind == FildeshSxprotoFieldKind_LITERAL_STRING) {
+    write_json_FildeshO(out, sxpb, it, name, indent_level+1);
+  }
+  else {
+    putc_FildeshO(out, '{');
+    print_newline_json_indent_FildeshO(out, indent_level+2);
+    write_json_FildeshO(out, sxpb, it, name, indent_level+2);
+    print_newline_json_indent_FildeshO(out, indent_level+1);
+    putc_FildeshO(out, '}');
+  }
+}
+
+static
+  void
 write_json_FildeshO(
     FildeshO* out,
     const FildeshSxpb* sxpb,
@@ -56,13 +78,16 @@ write_json_FildeshO(
   {
     if (!first) {
       putc_FildeshO(out, ',');
-      if (is_like_list) {
+      if (is_like_list && m->field_kind != FildeshSxprotoFieldKind_NEST) {
         putc_FildeshO(out, ' ');
       }
     }
 
     if (m->field_kind == FildeshSxprotoFieldKind_MANYOF) {
       print_json_child_of_manyof(out, sxpb, it, indent_level);
+    }
+    else if (m->field_kind == FildeshSxprotoFieldKind_NEST) {
+      print_json_child_of_nest(out, sxpb, it, indent_level);
     }
     else {
       const char* sub_name = name_of_entry_FildeshSxpb(sxpb, it);
@@ -82,6 +107,9 @@ write_json_FildeshO(
     putc_FildeshO(out, '}');
   }
   else if (is_like_list) {
+    if (m->field_kind == FildeshSxprotoFieldKind_NEST && !first) {
+      print_newline_json_indent_FildeshO(out, indent_level);
+    }
     putc_FildeshO(out, ']');
   }
   else if (first) {

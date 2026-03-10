@@ -1,4 +1,32 @@
+#include <ctype.h>
+
 #include "src/sxproto/print/value.h"
+
+static
+  void
+print_yaml_key_FildeshO(FildeshO* out, const char* s)
+{
+  bool safe = true;
+  if (s[0] == '\0' || isdigit((unsigned char)s[0])) {
+    safe = false;
+  }
+  else {
+    size_t i;
+    for (i = 0; s[i] != '\0'; ++i) {
+      if (!isalnum((unsigned char)s[i]) && s[i] != '_' && s[i] != '-' && s[i] != '.') {
+        safe = false;
+        break;
+      }
+    }
+  }
+
+  if (safe) {
+    putstr_FildeshO(out, s);
+  }
+  else {
+    print_quoted_sxpb_str_FildeshO(out, s);
+  }
+}
 
 static void
 write_yaml_FildeshO(
@@ -24,6 +52,23 @@ print_yaml_child_of_manyof(
 
 static
   void
+print_yaml_child_of_nest(
+    FildeshO* out,
+    const FildeshSxpb* sxpb,
+    FildeshSxpbIT it,
+    unsigned indent_level)
+{
+  const char* name = NULL;
+  print_newline_json_indent_FildeshO(out, indent_level);
+  putstrlit_FildeshO(out, "- ");
+  if (it.field_kind != FildeshSxprotoFieldKind_LITERAL_STRING) {
+    name = name_of_manyof_entry_FildeshSxpb(sxpb, it);
+  }
+  write_yaml_FildeshO(out, sxpb, it, name, indent_level+1);
+}
+
+static
+  void
 write_yaml_FildeshO(
     FildeshO* out,
     const FildeshSxpb* sxpb,
@@ -38,7 +83,7 @@ write_yaml_FildeshO(
   bool first = true;
 
   if (name) {
-    putstr_FildeshO(out, name);
+    print_yaml_key_FildeshO(out, name);
     putc_FildeshO(out, ':');
     if (!is_like_dict && !is_like_list) {
       putc_FildeshO(out, ' ');
@@ -56,6 +101,9 @@ write_yaml_FildeshO(
     }
     else if (m->field_kind == FildeshSxprotoFieldKind_MANYOF) {
       print_yaml_child_of_manyof(out, sxpb, it, indent_level);
+    }
+    else if (m->field_kind == FildeshSxprotoFieldKind_NEST) {
+      print_yaml_child_of_nest(out, sxpb, it, indent_level);
     }
     else {
       const char* sub_name = name_of_entry_FildeshSxpb(sxpb, it);

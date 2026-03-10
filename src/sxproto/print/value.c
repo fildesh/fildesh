@@ -76,7 +76,8 @@ name_of_entry_FildeshSxpb(
     FildeshSxpbIT it)
 {
   const FildeshSxprotoValue* m = &(*sxpb->values)[it.cons_id];
-  if (is_like_dict_FildeshSxprotoFieldKind(m->field_kind)) {
+  if (is_like_dict_FildeshSxprotoFieldKind(m->field_kind) ||
+      m->field_kind == FildeshSxprotoFieldKind_NEST) {
     return name_at_FildeshSxpb(sxpb, it);
   }
   if (m->field_kind == FildeshSxprotoFieldKind_MANYOF) {

@@ -30,6 +30,7 @@ add_executable(sxproto_print_content_test
   "content/loneof.c"
   "content/manyof.c"
   "content/message.c"
+  "content/nest.c"
   "content/string.c"
 )
 target_link_libraries(sxproto_print_content_test ${FildeshSxproto_LIBRARIES})

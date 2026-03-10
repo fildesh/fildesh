@@ -90,6 +90,10 @@ ensure_manyof_subfield_at_FildeshSxpb(FildeshSxpb* sxpb, FildeshSxpbIT it, const
   return ensure_subfield_at_FildeshSxpb( sxpb, it, k, FildeshSxprotoFieldKind_MANYOF);
 }
   FildeshSxpbIT
+ensure_nest_subfield_at_FildeshSxpb(FildeshSxpb* sxpb, FildeshSxpbIT it, const char* k) {
+  return ensure_subfield_at_FildeshSxpb( sxpb, it, k, FildeshSxprotoFieldKind_NEST);
+}
+  FildeshSxpbIT
 ensure_bool_subfield_at_FildeshSxpb(FildeshSxpb* sxpb, FildeshSxpbIT it, const char* k) {
   return ensure_subfield_at_FildeshSxpb(sxpb, it, k, FildeshSxprotoFieldKind_LITERAL_BOOL);
 }
@@ -218,7 +222,8 @@ name_at_FildeshSxpb(const FildeshSxpb* sxpb, FildeshSxpbIT it)
       e->field_kind == FildeshSxprotoFieldKind_LITERAL ||
       e->field_kind == FildeshSxprotoFieldKind_LONEOF ||
       e->field_kind == FildeshSxprotoFieldKind_ARRAY ||
-      e->field_kind == FildeshSxprotoFieldKind_MANYOF)
+      e->field_kind == FildeshSxprotoFieldKind_MANYOF ||
+      e->field_kind == FildeshSxprotoFieldKind_NEST)
   {
     return e->text;
   }

@@ -24,6 +24,28 @@ print_txtpb_child_of_manyof(
   putc_FildeshO(out, '}');
 }
 
+static
+  void
+print_txtpb_child_of_nest(
+    FildeshO* out,
+    const FildeshSxpb* sxpb,
+    FildeshSxpbIT it,
+    unsigned indent_level)
+{
+  const char* name = name_of_entry_FildeshSxpb(sxpb, it);
+  putc_FildeshO(out, '{');
+  print_newline_json_indent_FildeshO(out, indent_level+1);
+  putstrlit_FildeshO(out, "key: ");
+  if (it.field_kind == FildeshSxprotoFieldKind_NEST) {
+    print_quoted_sxpb_str_FildeshO(out, name);
+    print_newline_json_indent_FildeshO(out, indent_level+1);
+    putstrlit_FildeshO(out, "values: ");
+  }
+  write_txtpb_FildeshO(out, sxpb, it, NULL, indent_level+1);
+  print_newline_json_indent_FildeshO(out, indent_level);
+  putc_FildeshO(out, '}');
+}
+
   static void
 write_txtpb_FildeshO(
     FildeshO* out,
@@ -67,6 +89,9 @@ write_txtpb_FildeshO(
 
     if (m->field_kind == FildeshSxprotoFieldKind_MANYOF) {
       print_txtpb_child_of_manyof(out, sxpb, it, indent_level);
+    }
+    else if (m->field_kind == FildeshSxprotoFieldKind_NEST) {
+      print_txtpb_child_of_nest(out, sxpb, it, indent_level);
     }
     else {
       const char* sub_name = name_of_entry_FildeshSxpb(sxpb, it);

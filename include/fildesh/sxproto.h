@@ -17,6 +17,7 @@ enum FildeshSxprotoFieldKind {
   FildeshSxprotoFieldKind_LONEOF,
   FildeshSxprotoFieldKind_ARRAY,
   FildeshSxprotoFieldKind_MANYOF,
+  FildeshSxprotoFieldKind_NEST,
   FildeshSxprotoFieldKind_LITERAL_STRING,
   FildeshSxprotoFieldKind_LITERAL_BOOL,
   FildeshSxprotoFieldKind_LITERAL_INT,
@@ -127,10 +128,11 @@ print_yaml_FildeshO(FildeshO* out, FildeshSxpb* sxpb);
 
 const char*
 ensure_name_FildeshSxpb(FildeshSxpb* sxpb, const char* s, size_t n);
-FildeshSxpbIT ensure_message_subfield_at_FildeshSxpb(FildeshSxpb*, FildeshSxpbIT, const char*);
 FildeshSxpbIT ensure_array_subfield_at_FildeshSxpb(FildeshSxpb*, FildeshSxpbIT, const char*);
-FildeshSxpbIT ensure_manyof_subfield_at_FildeshSxpb(FildeshSxpb*, FildeshSxpbIT, const char*);
 FildeshSxpbIT ensure_loneof_subfield_at_FildeshSxpb(FildeshSxpb*, FildeshSxpbIT, const char*);
+FildeshSxpbIT ensure_manyof_subfield_at_FildeshSxpb(FildeshSxpb*, FildeshSxpbIT, const char*);
+FildeshSxpbIT ensure_message_subfield_at_FildeshSxpb(FildeshSxpb*, FildeshSxpbIT, const char*);
+FildeshSxpbIT ensure_nest_subfield_at_FildeshSxpb(FildeshSxpb*, FildeshSxpbIT, const char*);
 FildeshSxpbIT ensure_bool_subfield_at_FildeshSxpb(FildeshSxpb*, FildeshSxpbIT, const char*);
 FildeshSxpbIT ensure_int_subfield_at_FildeshSxpb(FildeshSxpb*, FildeshSxpbIT, const char*);
 FildeshSxpbIT ensure_float_subfield_at_FildeshSxpb(FildeshSxpb*, FildeshSxpbIT, const char*);
