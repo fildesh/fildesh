@@ -172,10 +172,6 @@ parse_concat_string_FildeshSxpbInfo(
   if (peek_char_FildeshX(in, '"')) {
     return parse_quoted_string_FildeshSxpbInfo(info, in, oslice);
   }
-  if (info->quoted_names_on) {
-    syntax_error(info, "Strings must be quoted when field names are.");
-    return false;
-  }
   return parse_bare_string_FildeshSxpbInfo(info, in, oslice);
 }
 
@@ -329,12 +325,7 @@ parse_name_FildeshSxpbInfo(
       if (!parse_quoted_string_FildeshSxpbInfo(info, in, oslice)) {
         return false;
       }
-      info->quoted_names_on = true;
     }
-  }
-  else if (info->quoted_names_on) {
-    syntax_error(info, "Expected subfield name to be quoted too.");
-    return false;
   }
   else {
     putslice_FildeshO(oslice, slice);
@@ -486,7 +477,6 @@ parse_field_FildeshSxpbInfo(
     FildeshSxpbIT p_it,
     FildeshO* oslice)
 {
-  const bool info_quoted_names_on = info->quoted_names_on;
   unsigned nesting_depth = 0;
   const FildeshSxprotoField* field = NULL;
   FildeshSxprotoFieldKind field_kind = FildeshSxprotoFieldKind_UNKNOWN;
@@ -645,7 +635,6 @@ parse_field_FildeshSxpbInfo(
     return false;
   }
 
-  info->quoted_names_on = info_quoted_names_on;
   if (avail_FildeshX(in)) {
     if (skipstr_FildeshSxpbInfo(info, in, ")")) {
       return true;

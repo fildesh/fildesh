@@ -13,22 +13,6 @@ NEXT_FUZZ_DATA
 "(k \"v"
 NEXT_FUZZ_DATA
 "1,6,"
-"Strings must be quoted when field names are.\n"
-"(\"k\" v)"
-NEXT_FUZZ_DATA
-"1,21,"
-"Strings must be quoted when field names are.\n"
-"(\"a\" () \"5\" \"6\" \"7\" 8)"
-NEXT_FUZZ_DATA
-"1,27,"
-"Strings must be quoted when field names are.\n"
-"(\"a\" (()) \"5\" \"6\" \"7\" (\"\" 8))"
-NEXT_FUZZ_DATA
-"1,8,"
-"Expected subfield name to be quoted too.\n"
-"(\"a\" (b 5))"
-NEXT_FUZZ_DATA
-"1,6,"
 "Expected closing paren after loneof selection name.\n"
 "((x y"
 NEXT_FUZZ_DATA

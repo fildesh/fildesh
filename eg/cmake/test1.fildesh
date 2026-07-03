@@ -1,0 +1,11 @@
+#!/bin/env fildesh
+
+(: target Str .self.opt.target)
+
+|< cmake --build bld --config RelOnHost --target "${target}"
+|> stdout
+
+$(barrier)
+
+|< ctest --test-dir bld -C RelOnHost --timeout 10 -R "${target}"
+|> stdout
