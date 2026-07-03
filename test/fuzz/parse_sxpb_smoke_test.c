@@ -80,6 +80,10 @@ NEXT_FUZZ_DATA
 "Arrays cannot be nested.\n"
 "(()) (())"
 NEXT_FUZZ_DATA
+"2,9,"
+"Nest can only hold nests and strings.\n"
+"(\"\")\n((a) b)"
+NEXT_FUZZ_DATA
 "1,18,"
 "Unexpected literal type.\n"
 "(a (()) 5 6 7 \"8\")"

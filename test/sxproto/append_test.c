@@ -194,9 +194,53 @@ append_to_manyof_from_manyof_test()
   close_FildeshO(err_out);
 }
 
+static
+  void
+append_to_nest_test()
+{
+  FildeshX in[1];
+  FildeshO* err_out = open_FildeshOF("/dev/stderr");
+  FildeshSxpb* sxpb = open_FildeshSxpb();
+  FildeshSxpb* src_sxpb;
+  FildeshSxpbIT src_it;
+  FildeshSxpbIT dst_it;
+  FildeshSxpbIT it;
+
+  dst_it = ensure_nest_subfield_at_FildeshSxpb(
+      sxpb, top_of_FildeshSxpb(sxpb), "dst_nest");
+
+  *in = FildeshX_of_strlit("(src_nest (\"\") (a b) (\"\" c))");
+  src_sxpb = slurp_sxpb_close_FildeshX(in, NULL, err_out);
+  assert(src_sxpb);
+
+  src_it = lookup_subfield_at_FildeshSxpb(
+      src_sxpb, top_of_FildeshSxpb(src_sxpb), "src_nest");
+  src_it = first_at_FildeshSxpb(src_sxpb, src_it);
+  it = append_at_FildeshSxpb(
+      sxpb, dst_it, name_at_FildeshSxpb(src_sxpb, src_it), src_sxpb, src_it);
+  assert(!nullish_FildeshSxpbIT(it));
+  assert(it.field_kind == FildeshSxprotoFieldKind_NEST);
+  assert(0 == strcmp("a", name_at_FildeshSxpb(sxpb, it)));
+  assert(0 == strcmp("b", str_value_at_FildeshSxpb(
+          sxpb, first_at_FildeshSxpb(sxpb, it))));
+
+  src_it = next_at_FildeshSxpb(src_sxpb, src_it);
+  it = append_at_FildeshSxpb(
+      sxpb, dst_it, str_value_at_FildeshSxpb(src_sxpb, src_it), src_sxpb, src_it);
+  assert(!nullish_FildeshSxpbIT(it));
+  assert(it.field_kind == FildeshSxprotoFieldKind_LITERAL_STRING);
+  assert(0 == strcmp("c", str_value_at_FildeshSxpb(sxpb, it)));
+  assert(nullish_FildeshSxpbIT(next_at_FildeshSxpb(sxpb, it)));
+
+  close_FildeshSxpb(src_sxpb);
+  close_FildeshSxpb(sxpb);
+  close_FildeshO(err_out);
+}
+
 int main() {
   append_to_array_test();
   append_to_manyof_from_array_test();
   append_to_manyof_from_manyof_test();
+  append_to_nest_test();
   return 0;
 }

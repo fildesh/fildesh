@@ -5,6 +5,7 @@
 # - array_sxpb
 # - manyof_sxpb
 # - string_sxpb
+# - nest_sxpb
 
 (: message_sxpb Filepath .self.opt.message_sxpb)
 (: message_yaml Filepath .self.opt.message_yaml)
@@ -58,3 +59,13 @@ $(barrier)
 |- cmptxt $(XOF string_yaml)
 |> stdout
 
+
+$(barrier)
+
+(: nest_sxpb Filepath .self.opt.nest_sxpb)
+(: nest_yaml Filepath .self.opt.nest_yaml)
+
+|< splice / / $(XOF nest_sxpb)
+|- sxpb2yaml
+|- cmptxt $(XOF nest_yaml)
+|> stdout

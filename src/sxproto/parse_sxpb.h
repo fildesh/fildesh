@@ -44,4 +44,5 @@ parse_field_content_FildeshSxpbInfo(
     FildeshSxpbIT p_it,
     const FildeshSxprotoField* field,
     FildeshSxprotoFieldKind elem_kind,
+    bool nest_discriminator_on,
     FildeshO* oslice);

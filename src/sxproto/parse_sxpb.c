@@ -309,6 +309,13 @@ parse_name_FildeshSxpbInfo(
   FildeshX slice;
   unsigned nesting_depth = *ret_nesting_depth;
   if (nesting_depth != 3) {
+    if (skipstr_FildeshSxpbInfo(info, in, "(\"\")")) {
+      /* Nest discriminator with empty name.*/
+      skip_separation(in, info);
+      truncate_FildeshO(oslice);
+      *ret_nesting_depth = 4;
+      return true;
+    }
     if (peek_bytestring_FildeshX(in, fildesh_bytestrlit("()"))) {
       /* Will parse this later.*/
       nesting_depth = 0;
@@ -372,6 +379,9 @@ parse_name_FildeshSxpbInfo(
       else {
         nesting_depth = 2;
       }
+    }
+    else if (skipstr_FildeshSxpbInfo(info, in, "(\"\")")) {
+      nesting_depth = 4;
     }
   }
   else {
@@ -497,6 +507,13 @@ parse_field_FildeshSxpbInfo(
       field_kind = FildeshSxprotoFieldKind_MESSAGE;
       field = schema;
     }
+    else if ((*sxpb->values)[p_it.cons_id].field_kind == FildeshSxprotoFieldKind_NEST) {
+      /* Fields within NEST are always NEST kind, even with "" prefix. */
+      field_kind = FildeshSxprotoFieldKind_NEST;
+    }
+    else if (peek_bytestring_FildeshX(in, fildesh_bytestrlit("\"\""))) {
+      field_kind = FildeshSxprotoFieldKind_LITERAL;
+    }
     else if (peek_chars_FildeshX(in, "()")) {
       field_kind = FildeshSxprotoFieldKind_MESSAGE;
     }
@@ -509,6 +526,9 @@ parse_field_FildeshSxpbInfo(
   }
   else if (nesting_depth == 2) {
     field_kind = FildeshSxprotoFieldKind_MANYOF;
+  }
+  else if (nesting_depth == 4) {
+    field_kind = FildeshSxprotoFieldKind_NEST;
   }
   else {
     assert(nesting_depth == 3);
@@ -589,6 +609,13 @@ parse_field_FildeshSxpbInfo(
         elem_kind = (FildeshSxprotoFieldKind)field->hi;
       }
     }
+    else if (field->kind == FildeshSxprotoFieldKind_NEST) {
+      if (field_kind != FildeshSxprotoFieldKind_NEST) {
+        syntax_error(info, "Expected field to be a nest.");
+        return false;
+      }
+      field = NULL;
+    }
     else if (field == schema && field->kind == FildeshSxprotoFieldKind_MANYOF) {
       if (field_kind != FildeshSxprotoFieldKind_MESSAGE) {
         syntax_error(info, "Expected manyof element to be a message.");
@@ -631,7 +658,9 @@ parse_field_FildeshSxpbInfo(
   }
 
   if (!parse_field_content_FildeshSxpbInfo(
-          info, in, sxpb, p_it, field, elem_kind, oslice)) {
+          info, in, sxpb, p_it, field, elem_kind,
+          field_kind == FildeshSxprotoFieldKind_NEST && nesting_depth == 4,
+          oslice)) {
     return false;
   }
 
@@ -652,11 +681,32 @@ parse_field_content_FildeshSxpbInfo(
     FildeshSxpbIT p_it,
     const FildeshSxprotoField* schema,
     FildeshSxprotoFieldKind elem_kind,
+    bool nest_discriminator_on,
     FildeshO* oslice)
 {
   const FildeshSxprotoFieldKind field_kind = p_it.field_kind;
   size_t elem_count = 0;
   bool in_avail;
+  if (field_kind == FildeshSxprotoFieldKind_NEST &&
+      !nest_discriminator_on &&
+      peek_bytestring_FildeshX(in, fildesh_bytestrlit("\"\" "))) {
+    /* Consume "" discriminator, then parse the content that follows
+     * as one concatenated LITERAL_STRING in the nest.
+     */
+    skipstr_FildeshSxpbInfo(info, in, "\"\"");
+    skip_separation(in, info);
+    if (!avail_FildeshX(in) || peek_char_FildeshX(in, ')')) {
+      truncate_FildeshO(oslice);
+    }
+    else if (!parse_string_field_content_FildeshSxpbInfo(info, in, oslice)) {
+      return false;
+    }
+    p_it = insert_next_FildeshSxpb(
+        sxpb, p_it, FildeshSxprotoFieldKind_LITERAL_STRING, oslice, info);
+    assert(!fildesh_nullid(p_it.elem_id));
+    elem_count += 1;
+    skip_separation(in, info);
+  }
   for (in_avail = peek_bytestring_FildeshX(in, NULL, 2);
        in_avail && in->at[in->off] != ')';
        in_avail = peek_bytestring_FildeshX(in, NULL, 2))
@@ -689,6 +739,17 @@ parse_field_content_FildeshSxpbInfo(
           return false;
         }
       }
+      else if (field_kind == FildeshSxprotoFieldKind_NEST) {
+        if (peek_bytestring_FildeshX(in, fildesh_bytestrlit("(\"\" "))) {
+          /* Check if content after anonymous name is a nest discriminator.
+           * By itself, ("") means anonymous nest, not anonymous string.
+           */
+          if (!peek_bytestring_FildeshX(in, fildesh_bytestrlit("(\"\" (\"\")"))) {
+            is_anonymous_discriminated_string_element = true;
+            elem_kind = FildeshSxprotoFieldKind_LITERAL_STRING;
+          }
+        }
+      }
 
       if (is_anonymous_discriminated_string_element) {
         skipstr_FildeshSxpbInfo(info, in, "(");
@@ -713,6 +774,11 @@ parse_field_content_FildeshSxpbInfo(
             syntax_error(info, "Arrays cannot be nested.");
             return false;
           }
+          if (field_kind == FildeshSxprotoFieldKind_NEST &&
+              p_it.field_kind != FildeshSxprotoFieldKind_NEST) {
+            syntax_error(info, "Nest can only hold nests and strings.");
+            return false;
+          }
         }
       }
     }
@@ -723,6 +789,7 @@ parse_field_content_FildeshSxpbInfo(
         return false;
       }
       if (elem_kind == FildeshSxprotoFieldKind_LITERAL_STRING ||
+          field_kind == FildeshSxprotoFieldKind_NEST ||
           (c0 != '+' && c0 != '-' && c0 != '.' && !('0' <= c0 && c0 <= '9')) ||
           (c0 == '-' && c1 != '.' && c1 != '+' && !('0' <= c1 && c1 <= '9')) ||
           (c0 == '.' && c1 != '-' && c1 != '+' && !('0' <= c1 && c1 <= '9')))
@@ -822,6 +889,7 @@ slurp_sxpb_close_FildeshX(
   FildeshSxpb* sxpb = open_FildeshSxpb();
   FildeshSxpbIT p_it = top_of_FildeshSxpb(sxpb);
   FildeshO oslice[1] = {DEFAULT_FildeshO};
+  bool nest_discriminator_on = false;
 
   info->err_out = err_out;
   skip_separation(in, info);
@@ -835,10 +903,17 @@ slurp_sxpb_close_FildeshX(
     }
     (*sxpb->values)[p_it.cons_id].field_kind = p_it.field_kind;
   }
+  else if (skipstr_FildeshSxpbInfo(info, in, "(\"\")")) {
+    skip_separation(in, info);
+    p_it.field_kind = FildeshSxprotoFieldKind_NEST;
+    (*sxpb->values)[p_it.cons_id].field_kind = p_it.field_kind;
+    nest_discriminator_on = true;
+  }
 
   if (!parse_field_content_FildeshSxpbInfo(
           info, in, sxpb, p_it, schema,
           FildeshSxprotoFieldKind_UNKNOWN,
+          nest_discriminator_on,
           oslice))
   {
     close_FildeshSxpb(sxpb);

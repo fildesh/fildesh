@@ -53,6 +53,9 @@ static const char manyof_coercion_test_content[] = "\
 ((a) 1 2 3)\n\
 (many_fruits (banana +true) (apple +true) (banana +false))\n\
 ";
+static const char nest_test_content[] = "\
+(nest (\"\") (a b (c d)) e)\n\
+";
 
 static
   const FildeshSxprotoField*
@@ -81,6 +84,7 @@ sxproto_schema()
     {"cons", FILL_FildeshSxprotoField_MESSAGE(m_fields)},
     {"many_fruits", FILL_FildeshSxprotoField_MANYOF(fruit_loneof)},
     {"messages", FILL_FildeshSxprotoField_MESSAGES(m_fields)},
+    {"nest", FILL_DEFAULT_FildeshSxprotoField_NEST},
     {"predicates", FILL_FildeshSxprotoField_MANYOF(predicates_manyof)},
     {"s", FILL_FildeshSxprotoField_STRING(1, 64)},
     {"s_alternate_name", FILL_DEFAULT_FildeshSxprotoField_ALIAS},
@@ -412,6 +416,55 @@ manyof_coercion_test()
   close_FildeshO(err_out);
 }
 
+static
+  void
+nest_test()
+{
+  DECLARE_STRLIT_FildeshX(in, nest_test_content);
+  FildeshO* err_out = open_FildeshOF("/dev/stderr");
+  const FildeshSxprotoField* const schema = sxproto_schema();
+  FildeshSxpb* const sxpb = slurp_sxpb_close_FildeshX(in, schema, err_out);
+  const FildeshSxpbIT top_it = top_of_FildeshSxpb(sxpb);
+  FildeshSxpbIT it;
+  FildeshSxpbIT val_it;
+
+  assert(sxpb);
+  it = lookup_subfield_at_FildeshSxpb(sxpb, top_it, "nest");
+  assert(0 == strcmp(name_at_FildeshSxpb(sxpb, it), "nest"));
+  assert(it.field_kind == FildeshSxprotoFieldKind_NEST);
+
+  val_it = first_at_FildeshSxpb(sxpb, it);
+  assert(val_it.field_kind == FildeshSxprotoFieldKind_NEST);
+  assert(0 == strcmp(name_at_FildeshSxpb(sxpb, val_it), "a"));
+  assert(0 == strcmp(str_value_at_FildeshSxpb(
+          sxpb, first_at_FildeshSxpb(sxpb, val_it)), "b"));
+
+  val_it = next_at_FildeshSxpb(sxpb, val_it);
+  assert(val_it.field_kind == FildeshSxprotoFieldKind_LITERAL_STRING);
+  assert(0 == strcmp(str_value_at_FildeshSxpb(sxpb, val_it), "e"));
+  assert(nullish_FildeshSxpbIT(next_at_FildeshSxpb(sxpb, val_it)));
+
+  close_FildeshSxpb(sxpb);
+  close_FildeshO(err_out);
+}
+
+static
+  void
+nest_schema_error_test()
+{
+  FildeshX in[1];
+  FildeshO err_out[1] = {DEFAULT_FildeshO};
+  const FildeshSxprotoField* const schema = sxproto_schema();
+  FildeshSxpb* sxpb;
+
+  *in = FildeshX_of_strlit("(nest not_a_nest)");
+  sxpb = slurp_sxpb_close_FildeshX(in, schema, err_out);
+  assert(!sxpb);
+  putc_FildeshO(err_out, '\0');
+  assert(strstr(err_out->at, "Expected field to be a nest."));
+  close_FildeshO(err_out);
+}
+
 int main() {
   literal_test();
   message_test();
@@ -419,5 +472,7 @@ int main() {
   array_test();
   manyof_test();
   manyof_coercion_test();
+  nest_test();
+  nest_schema_error_test();
   return 0;
 }

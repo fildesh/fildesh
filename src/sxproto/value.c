@@ -223,6 +223,11 @@ append_element_at_FildeshSxpb(
           sxpb, it, ensure_name_FildeshSxpb(sxpb, optional_field_name, n));
       optional_field_name = NULL;
     }
+    else if (e->field_kind == FildeshSxprotoFieldKind_NEST) {
+      assert(kind == FildeshSxprotoFieldKind_NEST ||
+             kind == FildeshSxprotoFieldKind_LITERAL_STRING);
+      optional_field_name = ensure_name_FildeshSxpb(sxpb, optional_field_name, n);
+    }
     else {
       assert(e->field_kind == FildeshSxprotoFieldKind_MANYOF);
       optional_field_name = ensure_name_FildeshSxpb(sxpb, optional_field_name, n);
@@ -230,6 +235,16 @@ append_element_at_FildeshSxpb(
   }
   else {
     assert(v_text || e->field_kind == FildeshSxprotoFieldKind_ARRAY);
+  }
+  if (optional_field_name && e->field_kind == FildeshSxprotoFieldKind_NEST) {
+    if (nullish_FildeshSxpbIT(first_at_FildeshSxpb(sxpb, it))) {
+      return direct_insert_first_FildeshSxpb(sxpb, it, optional_field_name, kind);
+    }
+    it = first_at_FildeshSxpb(sxpb, it);
+    while (!nullish_FildeshSxpbIT(next_at_FildeshSxpb(sxpb, it))) {
+      it = next_at_FildeshSxpb(sxpb, it);
+    }
+    return direct_insert_next_FildeshSxpb(sxpb, it, optional_field_name, kind);
   }
   e = NULL;
   if (nullish_FildeshSxpbIT(first_at_FildeshSxpb(sxpb, it))) {

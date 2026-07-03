@@ -21,6 +21,7 @@ exports_files([
     "message.yaml",
     "nest.c",
     "nest.json",
+    "nest.sxpb",
     "nest.txtpb",
     "nest.yaml",
     "string.c",

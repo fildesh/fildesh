@@ -116,7 +116,56 @@ assign_to_subfield_test()
   close_FildeshO(err_out);
 }
 
+static
+  void
+assign_nest_test()
+{
+  FildeshX in[1];
+  FildeshO* err_out = open_FildeshOF("/dev/stderr");
+  FildeshSxpb* sxpb = open_FildeshSxpb();
+  FildeshSxpb* src_sxpb;
+  FildeshSxpbIT src_it;
+  FildeshSxpbIT dst_it;
+  FildeshSxpbIT val_it;
+
+  dst_it = ensure_nest_subfield_at_FildeshSxpb(
+      sxpb, top_of_FildeshSxpb(sxpb), "dst_nest");
+
+  *in = FildeshX_of_strlit("(src_nest (\"\") (a b (c d)) a)");
+  src_sxpb = slurp_sxpb_close_FildeshX(in, NULL, err_out);
+  assert(src_sxpb);
+  src_it = lookup_subfield_at_FildeshSxpb(
+      src_sxpb, top_of_FildeshSxpb(src_sxpb), "src_nest");
+  assign_at_FildeshSxpb(sxpb, dst_it, NULL, src_sxpb, src_it);
+  close_FildeshSxpb(src_sxpb);
+
+  val_it = first_at_FildeshSxpb(sxpb, dst_it);
+  assert(!nullish_FildeshSxpbIT(val_it));
+  assert(val_it.field_kind == FildeshSxprotoFieldKind_NEST);
+  assert(0 == strcmp("a", name_at_FildeshSxpb(sxpb, val_it)));
+
+  src_it = first_at_FildeshSxpb(sxpb, val_it);
+  assert(src_it.field_kind == FildeshSxprotoFieldKind_LITERAL_STRING);
+  assert(0 == strcmp("b", str_value_at_FildeshSxpb(sxpb, src_it)));
+
+  src_it = next_at_FildeshSxpb(sxpb, src_it);
+  assert(src_it.field_kind == FildeshSxprotoFieldKind_NEST);
+  assert(0 == strcmp("c", name_at_FildeshSxpb(sxpb, src_it)));
+  src_it = first_at_FildeshSxpb(sxpb, src_it);
+  assert(src_it.field_kind == FildeshSxprotoFieldKind_LITERAL_STRING);
+  assert(0 == strcmp("d", str_value_at_FildeshSxpb(sxpb, src_it)));
+
+  val_it = next_at_FildeshSxpb(sxpb, val_it);
+  assert(val_it.field_kind == FildeshSxprotoFieldKind_LITERAL_STRING);
+  assert(0 == strcmp("a", str_value_at_FildeshSxpb(sxpb, val_it)));
+  assert(nullish_FildeshSxpbIT(next_at_FildeshSxpb(sxpb, val_it)));
+
+  close_FildeshSxpb(sxpb);
+  close_FildeshO(err_out);
+}
+
 int main() {
   assign_to_subfield_test();
+  assign_nest_test();
   return 0;
 }

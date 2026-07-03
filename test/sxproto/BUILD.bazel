@@ -26,6 +26,12 @@ cc_test(
 )
 
 cc_test(
+    name = "parse_nest_test",
+    srcs = ["parse_nest_test.c"],
+    deps = ["//:sxproto_lib"],
+)
+
+cc_test(
     name = "parse_with_schema_test",
     srcs = ["parse_with_schema_test.c"],
     deps = ["//:sxproto_lib"],
@@ -84,6 +90,8 @@ fildesh_test(
         "manyof_sxpb": "//test/sxproto/content:manyof.sxpb",
         "message_json": "//test/sxproto/content:message.json",
         "message_sxpb": "//test/sxproto/content:message.sxpb",
+        "nest_json": "//test/sxproto/content:nest.json",
+        "nest_sxpb": "//test/sxproto/content:nest.sxpb",
         "string_json": "//test/sxproto/content:string.json",
         "string_sxpb": "//test/sxproto/content:string.sxpb",
     },
@@ -118,6 +126,8 @@ fildesh_test(
         "manyof_yaml": "//test/sxproto/content:manyof.yaml",
         "message_sxpb": "//test/sxproto/content:message.sxpb",
         "message_yaml": "//test/sxproto/content:message.yaml",
+        "nest_sxpb": "//test/sxproto/content:nest.sxpb",
+        "nest_yaml": "//test/sxproto/content:nest.yaml",
         "string_sxpb": "//test/sxproto/content:string.sxpb",
         "string_yaml": "//test/sxproto/content:string.yaml",
     },

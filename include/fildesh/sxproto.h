@@ -78,6 +78,8 @@ tag_id_of_FildeshSxprotoField(const FildeshSxprotoField* schema) {
   +0, FildeshSxprotoFieldKind_MESSAGE, NULL, 0, 0
 #define FILL_RECURSIVE_FildeshSxprotoField_MANYOF \
   +0, FildeshSxprotoFieldKind_MANYOF, NULL, 0, 0
+#define FILL_DEFAULT_FildeshSxprotoField_NEST \
+  +0, FildeshSxprotoFieldKind_NEST, NULL, 0, 0
 #define FILL_DEFAULT_FildeshSxprotoField_ALIAS \
   +0, FildeshSxprotoFieldKind_UNKNOWN, NULL, 0, 0
 

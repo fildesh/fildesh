@@ -5,6 +5,7 @@
 # - array_sxpb
 # - manyof_sxpb
 # - string_sxpb
+# - nest_sxpb
 
 (: message_sxpb Filepath .self.opt.message_sxpb)
 (: message_json Filepath .self.opt.message_json)
@@ -58,3 +59,13 @@ $(barrier)
 |- cmptxt $(XOF string_json)
 |> stdout
 
+
+$(barrier)
+
+(: nest_sxpb Filepath .self.opt.nest_sxpb)
+(: nest_json Filepath .self.opt.nest_json)
+
+|< splice / / $(XOF nest_sxpb)
+|- sxpb2json
+|- cmptxt $(XOF nest_json)
+|> stdout

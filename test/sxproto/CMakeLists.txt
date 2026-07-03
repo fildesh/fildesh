@@ -19,6 +19,11 @@ add_executable(sxproto_parse_test
 target_link_libraries(sxproto_parse_test ${FildeshSxproto_LIBRARIES})
 add_test(NAME sxproto_parse_test COMMAND sxproto_parse_test)
 
+add_executable(sxproto_parse_nest_test
+  "parse_nest_test.c")
+target_link_libraries(sxproto_parse_nest_test ${FildeshSxproto_LIBRARIES})
+add_test(NAME sxproto_parse_nest_test COMMAND sxproto_parse_nest_test)
+
 add_executable(sxproto_parse_with_schema_test
   "parse_with_schema_test.c")
 target_link_libraries(sxproto_parse_with_schema_test ${FildeshSxproto_LIBRARIES})
@@ -54,6 +59,8 @@ add_test(NAME sxpb2json_test COMMAND ${Fildesh_EXECUTABLE}
   "--manyof_sxpb=${CMAKE_CURRENT_SOURCE_DIR}/content/manyof.sxpb"
   "--message_json=${CMAKE_CURRENT_SOURCE_DIR}/content/message.json"
   "--message_sxpb=${CMAKE_CURRENT_SOURCE_DIR}/content/message.sxpb"
+  "--nest_json=${CMAKE_CURRENT_SOURCE_DIR}/content/nest.json"
+  "--nest_sxpb=${CMAKE_CURRENT_SOURCE_DIR}/content/nest.sxpb"
   "--string_json=${CMAKE_CURRENT_SOURCE_DIR}/content/string.json"
   "--string_sxpb=${CMAKE_CURRENT_SOURCE_DIR}/content/string.sxpb"
 )
@@ -82,6 +89,8 @@ add_test(NAME sxpb2yaml_test COMMAND ${Fildesh_EXECUTABLE}
   "--manyof_yaml=${CMAKE_CURRENT_SOURCE_DIR}/content/manyof.yaml"
   "--message_sxpb=${CMAKE_CURRENT_SOURCE_DIR}/content/message.sxpb"
   "--message_yaml=${CMAKE_CURRENT_SOURCE_DIR}/content/message.yaml"
+  "--nest_sxpb=${CMAKE_CURRENT_SOURCE_DIR}/content/nest.sxpb"
+  "--nest_yaml=${CMAKE_CURRENT_SOURCE_DIR}/content/nest.yaml"
   "--string_sxpb=${CMAKE_CURRENT_SOURCE_DIR}/content/string.sxpb"
   "--string_yaml=${CMAKE_CURRENT_SOURCE_DIR}/content/string.yaml"
 )
