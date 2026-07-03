@@ -32,6 +32,12 @@ static void parse_string_test() {
   expectparse("abcdef", "abcdef");
   expectparse("ab'cd", "ab'cd");
   expectparse("ab\\cd", "ab\\cd");
+  expectparse("-", "-");
+  expectparse(".", ".");
+  expectparse("--", "--");
+  expectparse("..", "..");
+  expectparse("-bare", "-bare");
+  expectparse(".bare", ".bare");
 
   /* Empty.*/
   expectparse("", "\"\"");
@@ -211,6 +217,7 @@ static void parse_last_in_string_array_field_test() {
 
   expectparse("hello", "hello");
   expectparse("hello", "hi \"hello\"");
+  expectparse("", "(\"\" \"\")");
   expectparse("fourty five", "(\"\" fourty five)");
   expectparse("45", "(\"\" 44) (\"\" 45)");
   expectparse("quoted", "(\"\" something) (\"\" \"quo\" ted)");
