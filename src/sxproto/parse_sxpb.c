@@ -355,17 +355,11 @@ parse_name_FildeshSxpbInfo(
   if (nesting_depth == 0) {
     if (skipstr_FildeshSxpbInfo(info, in, "()")) {
       skip_separation(in, info);
-      if (peek_char_FildeshX(in, ')')) {
-        nesting_depth = 1;
-      }
-      else if (oslice->size == 0) {
+      if (oslice->size == 0) {
         nesting_depth = 0;
-      }
-      else if (on_array_content(in)) {
-        nesting_depth = 1;
       }
       else {
-        nesting_depth = 0;
+        nesting_depth = 5;
       }
     }
     else if (skipstr_FildeshSxpbInfo(info, in, "(())")) {
@@ -425,6 +419,7 @@ insert_next_FildeshSxpb(
       text_slice.size > 0 &&
       (kind == FildeshSxprotoFieldKind_UNKNOWN ||
        kind == FildeshSxprotoFieldKind_MESSAGE ||
+       kind == FildeshSxprotoFieldKind_DICT ||
        kind == FildeshSxprotoFieldKind_LITERAL ||
        kind == FildeshSxprotoFieldKind_LONEOF ||
        kind == FildeshSxprotoFieldKind_ARRAY ||
@@ -437,7 +432,8 @@ insert_next_FildeshSxpb(
   text = ensure_name_FildeshSxpb(sxpb, text_slice.at, text_slice.size);
   m_it.cons_id = p_it.cons_id;
 
-  if (cons_kind == FildeshSxprotoFieldKind_MESSAGE) {
+  if (cons_kind == FildeshSxprotoFieldKind_MESSAGE ||
+      cons_kind == FildeshSxprotoFieldKind_DICT) {
     FildeshSxpbIT e_it = direct_ensure_subfield_FildeshSxpb(
         sxpb, m_it, text, text_slice.size);
     if (e_it.field_kind == kind && kind == FildeshSxprotoFieldKind_ARRAY) {
@@ -478,6 +474,104 @@ static FildeshSxpbIT freshtail_FildeshSxpb(
   return it;
 }
 
+static
+  bool
+reconcile_elem_kind_FildeshSxpbInfo(
+    FildeshSxpbInfo* info,
+    FildeshO* oslice,
+    FildeshSxprotoFieldKind* elem_kind,
+    FildeshSxprotoFieldKind* tmp_kind,
+    bool schema_on)
+{
+  if (*elem_kind == FildeshSxprotoFieldKind_UNKNOWN) {
+    *elem_kind = *tmp_kind;
+  }
+  else if (*elem_kind == FildeshSxprotoFieldKind_LITERAL_FLOAT &&
+           *tmp_kind == FildeshSxprotoFieldKind_LITERAL_INT)
+  {
+    /* This is fine. */
+  }
+  else if (!schema_on &&
+           *elem_kind == FildeshSxprotoFieldKind_LITERAL_INT &&
+           *tmp_kind == FildeshSxprotoFieldKind_LITERAL_FLOAT)
+  {
+    /* Upgrade type. */
+    *elem_kind = FildeshSxprotoFieldKind_LITERAL_FLOAT;
+  }
+  else if (*elem_kind == FildeshSxprotoFieldKind_LITERAL_BOOL &&
+           *tmp_kind == FildeshSxprotoFieldKind_LITERAL_INT)
+  {
+    /* Upgrade type. */
+    if (oslice->size == 2 && oslice->at[0] == '+' && oslice->at[1] == '1') {
+      truncate_FildeshO(oslice);
+      putstrlit_FildeshO(oslice, "+true");
+    }
+    else if (oslice->size == 2 && oslice->at[0] == '+' && oslice->at[1] == '0') {
+      truncate_FildeshO(oslice);
+      putstrlit_FildeshO(oslice, "+false");
+    }
+    else {
+      syntax_error(info, "Expected a bool, not an int.");
+      return false;
+    }
+    *tmp_kind = FildeshSxprotoFieldKind_LITERAL_BOOL;
+  }
+  else if (*elem_kind != *tmp_kind) {
+    syntax_error(info, "Unexpected literal type.");
+    return false;
+  }
+  return true;
+}
+
+static
+  FildeshSxprotoValue*
+literal_value_at_FildeshSxpb(FildeshSxpb* sxpb, FildeshSxpbIT it)
+{
+  FildeshSxprotoValue* e = &(*sxpb->values)[it.elem_id];
+  assert(e->field_kind == FildeshSxprotoFieldKind_LITERAL);
+  assert(!fildesh_nullid(e->elem));
+  e = &(*sxpb->values)[e->elem];
+  assert(e->field_kind == FildeshSxprotoFieldKind_LITERAL_STRING ||
+         e->field_kind == FildeshSxprotoFieldKind_LITERAL_BOOL ||
+         e->field_kind == FildeshSxprotoFieldKind_LITERAL_INT ||
+         e->field_kind == FildeshSxprotoFieldKind_LITERAL_FLOAT);
+  return e;
+}
+
+static
+  bool
+reconcile_dict_value_kind_FildeshSxpbInfo(
+    FildeshSxpbInfo* info,
+    FildeshSxpb* sxpb,
+    FildeshSxpbIT it,
+    FildeshO* oslice,
+    FildeshSxprotoFieldKind* elem_kind,
+    bool schema_on)
+{
+  FildeshSxprotoFieldKind tmp_kind = it.field_kind;
+  FildeshSxprotoValue* e = NULL;
+  if (tmp_kind == FildeshSxprotoFieldKind_LITERAL) {
+    e = literal_value_at_FildeshSxpb(sxpb, it);
+    tmp_kind = e->field_kind;
+    truncate_FildeshO(oslice);
+    putstr_FildeshO(oslice, e->text);
+  }
+  if (!reconcile_elem_kind_FildeshSxpbInfo(
+          info, oslice, elem_kind, &tmp_kind, schema_on)) {
+    return false;
+  }
+  if (e && *elem_kind == FildeshSxprotoFieldKind_LITERAL_FLOAT &&
+      tmp_kind == FildeshSxprotoFieldKind_LITERAL_INT) {
+    tmp_kind = FildeshSxprotoFieldKind_LITERAL_FLOAT;
+  }
+  if (e && e->field_kind != tmp_kind) {
+    const FildeshX xslice = getslice_FildeshO(oslice);
+    e->field_kind = tmp_kind;
+    e->text = ensure_name_FildeshSxpb(sxpb, xslice.at, xslice.size);
+  }
+  return true;
+}
+
   bool
 parse_field_FildeshSxpbInfo(
     FildeshSxpbInfo* info,
@@ -491,6 +585,8 @@ parse_field_FildeshSxpbInfo(
   const FildeshSxprotoField* field = NULL;
   FildeshSxprotoFieldKind field_kind = FildeshSxprotoFieldKind_UNKNOWN;
   FildeshSxprotoFieldKind elem_kind = FildeshSxprotoFieldKind_UNKNOWN;
+  FildeshSxprotoFieldKind parent_kind = FildeshSxprotoFieldKind_UNKNOWN;
+  bool loneof_value_on = false;
   truncate_FildeshO(oslice);
 
   assert(in->off < in->size && in->at[in->off] == '(');
@@ -501,13 +597,14 @@ parse_field_FildeshSxpbInfo(
     return false;
   }
   skip_separation(in, info);
+  parent_kind = (*sxpb->values)[p_it.cons_id].field_kind;
 
   if (nesting_depth == 0) {
     if (oslice->size == 0) {
       field_kind = FildeshSxprotoFieldKind_MESSAGE;
       field = schema;
     }
-    else if ((*sxpb->values)[p_it.cons_id].field_kind == FildeshSxprotoFieldKind_NEST) {
+    else if (parent_kind == FildeshSxprotoFieldKind_NEST) {
       /* Fields within NEST are always NEST kind, even with "" prefix. */
       field_kind = FildeshSxprotoFieldKind_NEST;
     }
@@ -530,6 +627,9 @@ parse_field_FildeshSxpbInfo(
   else if (nesting_depth == 4) {
     field_kind = FildeshSxprotoFieldKind_NEST;
   }
+  else if (nesting_depth == 5) {
+    field_kind = FildeshSxprotoFieldKind_DICT;
+  }
   else {
     assert(nesting_depth == 3);
     field_kind = FildeshSxprotoFieldKind_LONEOF;
@@ -549,6 +649,7 @@ parse_field_FildeshSxpbInfo(
     if (nullish_FildeshSxpbIT(p_it)) {
       return false;
     }
+    loneof_value_on = true;
     p_it.cons_id = p_it.elem_id;
     p_it.elem_id = ~(FildeshSxpb_id)0;
     if (!parse_name_FildeshSxpbInfo(info, in, oslice, &nesting_depth)) {
@@ -557,6 +658,9 @@ parse_field_FildeshSxpbInfo(
     skip_separation(in, info);
     if (nesting_depth == 1) {
       field_kind = FildeshSxprotoFieldKind_ARRAY;
+    }
+    else if (nesting_depth == 5) {
+      field_kind = FildeshSxprotoFieldKind_DICT;
     }
     else if (peek_chars_FildeshX(in, "()")) {
       field_kind = FildeshSxprotoFieldKind_MESSAGE;
@@ -567,6 +671,24 @@ parse_field_FildeshSxpbInfo(
   }
   assert(field_kind != FildeshSxprotoFieldKind_UNKNOWN);
 
+  if ((*sxpb->values)[p_it.cons_id].field_kind == FildeshSxprotoFieldKind_NEST &&
+      field_kind != FildeshSxprotoFieldKind_NEST) {
+    syntax_error(info, "Nest can only hold nests and strings.");
+    return false;
+  }
+  if (parent_kind == FildeshSxprotoFieldKind_DICT &&
+      !loneof_value_on &&
+      is_protobuf_repeated_FildeshSxprotoFieldKind(field_kind)) {
+    syntax_error(info, "Dict cannot hold list-like or dict values.");
+    return false;
+  }
+
+  if (schema && !field) {
+    if (parent_kind == FildeshSxprotoFieldKind_DICT &&
+        schema->kind == FildeshSxprotoFieldKind_DICT) {
+      field = schema;
+    }
+  }
   if (schema && !field) {
     putc_FildeshO(oslice, '\0');
     field = subfield_of_FildeshSxprotoField(schema, oslice->at);
@@ -586,6 +708,31 @@ parse_field_FildeshSxpbInfo(
       if (field_kind != FildeshSxprotoFieldKind_MESSAGE) {
         syntax_error(info, "Expected field to be a message.");
         return false;
+      }
+    }
+    else if (field->kind == FildeshSxprotoFieldKind_DICT) {
+      if (parent_kind == FildeshSxprotoFieldKind_DICT) {
+        if (field->subfields) {
+          if (field_kind != FildeshSxprotoFieldKind_MESSAGE) {
+            syntax_error(info, "Expected dict value to be a message.");
+            return false;
+          }
+        }
+        else {
+          elem_kind = (FildeshSxprotoFieldKind)field->hi;
+          if (elem_kind != FildeshSxprotoFieldKind_UNKNOWN &&
+              field_kind != FildeshSxprotoFieldKind_LITERAL) {
+            syntax_error(info, "Expected dict value to be a literal.");
+            return false;
+          }
+        }
+      }
+      else if (field_kind != FildeshSxprotoFieldKind_DICT) {
+        syntax_error(info, "Expected field to be a dict.");
+        return false;
+      }
+      else if (!field->subfields && field->hi == 0) {
+        field = NULL;
       }
     }
     else if (field == schema && field->kind == FildeshSxprotoFieldKind_ARRAY) {
@@ -721,6 +868,10 @@ parse_field_content_FildeshSxpbInfo(
       bool is_anonymous_discriminated_string_element = false;
       assert(field_kind != FildeshSxprotoFieldKind_LITERAL);
       if (field_kind == FildeshSxprotoFieldKind_ARRAY) {
+        if (peek_bytestring_FildeshX(in, fildesh_bytestrlit("(())"))) {
+          syntax_error(info, "Arrays cannot be nested.");
+          return false;
+        }
         if (peek_bytestring_FildeshX(in, fildesh_bytestrlit("(\"\" "))) {
           is_anonymous_discriminated_string_element = true;
           if (elem_kind == FildeshSxprotoFieldKind_UNKNOWN) {
@@ -769,14 +920,10 @@ parse_field_content_FildeshSxpbInfo(
         }
         if (field_kind != FildeshSxprotoFieldKind_MESSAGE) {
           p_it = freshtail_FildeshSxpb(sxpb, p_it);
-          if (field_kind == FildeshSxprotoFieldKind_ARRAY &&
-              p_it.field_kind == FildeshSxprotoFieldKind_ARRAY) {
-            syntax_error(info, "Arrays cannot be nested.");
-            return false;
-          }
-          if (field_kind == FildeshSxprotoFieldKind_NEST &&
-              p_it.field_kind != FildeshSxprotoFieldKind_NEST) {
-            syntax_error(info, "Nest can only hold nests and strings.");
+        }
+        if (field_kind == FildeshSxprotoFieldKind_DICT) {
+          if (!reconcile_dict_value_kind_FildeshSxpbInfo(
+                  info, sxpb, p_it, oslice, &elem_kind, schema != NULL)) {
             return false;
           }
         }
@@ -786,6 +933,10 @@ parse_field_content_FildeshSxpbInfo(
       FildeshSxprotoFieldKind tmp_kind = FildeshSxprotoFieldKind_UNKNOWN;
       if (field_kind == FildeshSxprotoFieldKind_MESSAGE) {
         syntax_error(info, "Message can only hold fields.");
+        return false;
+      }
+      if (field_kind == FildeshSxprotoFieldKind_DICT) {
+        syntax_error(info, "Dict items must be key-value pairs even when the value is empty.");
         return false;
       }
       if (elem_kind == FildeshSxprotoFieldKind_LITERAL_STRING ||
@@ -833,40 +984,8 @@ parse_field_content_FildeshSxpbInfo(
         return false;
       }
 
-      if (elem_kind == FildeshSxprotoFieldKind_UNKNOWN) {
-        elem_kind = tmp_kind;
-      }
-      else if (elem_kind == FildeshSxprotoFieldKind_LITERAL_FLOAT &&
-               tmp_kind == FildeshSxprotoFieldKind_LITERAL_INT)
-      {
-        /* This is fine.*/
-      }
-      else if (!schema &&
-               elem_kind == FildeshSxprotoFieldKind_LITERAL_INT &&
-               tmp_kind == FildeshSxprotoFieldKind_LITERAL_FLOAT)
-      {
-        /* Upgrade type.*/
-        elem_kind = FildeshSxprotoFieldKind_LITERAL_FLOAT;
-      }
-      else if (elem_kind == FildeshSxprotoFieldKind_LITERAL_BOOL &&
-               tmp_kind == FildeshSxprotoFieldKind_LITERAL_INT)
-      {
-        /* Upgrade type.*/
-        if (oslice->size == 2 && oslice->at[0] == '+' && oslice->at[1] == '1') {
-          truncate_FildeshO(oslice);
-          putstrlit_FildeshO(oslice, "+true");
-        }
-        else if (oslice->size == 2 && oslice->at[0] == '+' && oslice->at[1] == '0') {
-          truncate_FildeshO(oslice);
-          putstrlit_FildeshO(oslice, "+false");
-        }
-        else {
-          syntax_error(info, "Expected a bool, not an int.");
-          return false;
-        }
-      }
-      else if (elem_kind != tmp_kind) {
-        syntax_error(info, "Unexpected literal type.");
+      if (!reconcile_elem_kind_FildeshSxpbInfo(
+              info, oslice, &elem_kind, &tmp_kind, schema != NULL)) {
         return false;
       }
 
@@ -902,6 +1021,12 @@ slurp_sxpb_close_FildeshX(
       p_it.field_kind = FildeshSxprotoFieldKind_MANYOF;
     }
     (*sxpb->values)[p_it.cons_id].field_kind = p_it.field_kind;
+  }
+  else if (skipstr_FildeshSxpbInfo(info, in, "()")) {
+    skip_separation(in, info);
+    p_it.field_kind = FildeshSxprotoFieldKind_DICT;
+    (*sxpb->values)[p_it.cons_id].field_kind = p_it.field_kind;
+    schema = NULL;
   }
   else if (skipstr_FildeshSxpbInfo(info, in, "(\"\")")) {
     skip_separation(in, info);

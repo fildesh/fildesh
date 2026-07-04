@@ -94,8 +94,8 @@ static void parse_name_test() {
 } while (0)
 
   expectparse("x", 0, "x");
-  expectparse("x", 0, "x () (x 5)");
-  expectparse("x", 1, "x ()");
+  expectparse("x", 5, "x () (x 5)");
+  expectparse("x", 5, "x ()");
   expectparse("y", 1, "y (())");
   expectparse("y", 1, "y (()) (() (x 5))");
   expectparse("y", 2, "y (()) (x 5)");
@@ -105,7 +105,7 @@ static void parse_name_test() {
   expectparse("", 0, "\"\" anonymous discriminated string");
   /* Quoted names.*/
   expectparse("abc", 0, "\"abc\"");
-  expectparse("(a\"bc", 1, "\"(a\\\"bc\" ()");
+  expectparse("(a\"bc", 5, "\"(a\\\"bc\" ()");
 
 #undef expectparse
   close_FildeshO(oslice);
@@ -134,10 +134,18 @@ static void parse_field_test() {
   tryparse("(z 5.254)");
   tryparse("(m (x 5) (y 7) (z 12))");
   tryparse("(m (x 5) (\"y\" 7) (z 12))");
+  tryparse("(d () (x 5) (y 7))");
+  tryparse("(d () (x 5) (y 7.5))");
+  tryparse("(d () (x +true) (y 0))");
+  tryparse("(d () (x (a 1)) (y (b 2)))");
+  tryparse("(d () ((key option) (()) 1 2 3))");
+  tryparse("((my_loneof option) () (key1 1) (key2 2))");
+  tryparse("(empty_dict ())");
   tryparse("((do_with x) 5)");
   tryparse("((do_with m) (x 1) (y 2))");
   tryparse("((do_with empty_m))");
   tryparse("(a (()) 1 2 3 4 5)");
+  tryparse("(a (()) 1 2.2 3)");
   tryparse("(\"a\" (()) 1 2 3 4 5)");
   tryparse("(a (()) (() (x 5)) (() (y 7)) () (() (z 12)))");
   tryparse("(a (()) x y z)");

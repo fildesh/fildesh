@@ -1,0 +1,7 @@
+; A dict field.
+(my_dict ()
+ (key1 (value val1))
+ (key2 (subkey subval))
+)
+; An empty dict field.
+(empty_dict ())

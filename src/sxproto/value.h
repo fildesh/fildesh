@@ -35,4 +35,25 @@ direct_ensure_subfield_FildeshSxpb(
     const char* key,
     size_t key_size);
 
+static inline
+  bool
+is_like_dict_FildeshSxprotoFieldKind(FildeshSxprotoFieldKind kind)
+{
+  return (
+      kind == FildeshSxprotoFieldKind_MESSAGE ||
+      kind == FildeshSxprotoFieldKind_DICT ||
+      kind == FildeshSxprotoFieldKind_LONEOF);
+}
+
+static inline
+  bool
+is_protobuf_repeated_FildeshSxprotoFieldKind(FildeshSxprotoFieldKind kind)
+{
+  return (
+      kind == FildeshSxprotoFieldKind_ARRAY ||
+      kind == FildeshSxprotoFieldKind_DICT ||
+      kind == FildeshSxprotoFieldKind_MANYOF ||
+      kind == FildeshSxprotoFieldKind_NEST);
+}
+
 #endif

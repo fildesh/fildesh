@@ -42,6 +42,7 @@ cc_test(
     srcs = [
         "print_content_test.c",
         "//test/sxproto/content:array.c",
+        "//test/sxproto/content:dict.c",
         "//test/sxproto/content:loneof.c",
         "//test/sxproto/content:manyof.c",
         "//test/sxproto/content:message.c",
@@ -53,6 +54,9 @@ cc_test(
         "//test/sxproto/content:array.json",
         "//test/sxproto/content:array.txtpb",
         "//test/sxproto/content:array.yaml",
+        "//test/sxproto/content:dict.json",
+        "//test/sxproto/content:dict.txtpb",
+        "//test/sxproto/content:dict.yaml",
         "//test/sxproto/content:loneof.json",
         "//test/sxproto/content:loneof.txtpb",
         "//test/sxproto/content:loneof.yaml",
@@ -84,6 +88,8 @@ fildesh_test(
     input_by_option = {
         "array_json": "//test/sxproto/content:array.json",
         "array_sxpb": "//test/sxproto/content:array.sxpb",
+        "dict_json": "//test/sxproto/content:dict.json",
+        "dict_sxpb": "//test/sxproto/content:dict.sxpb",
         "loneof_json": "//test/sxproto/content:loneof.json",
         "loneof_sxpb": "//test/sxproto/content:loneof.sxpb",
         "manyof_json": "//test/sxproto/content:manyof.json",
@@ -103,6 +109,8 @@ fildesh_test(
     input_by_option = {
         "array_sxpb": "//test/sxproto/content:array.sxpb",
         "array_txtpb": "//test/sxproto/content:array.txtpb",
+        "dict_sxpb": "//test/sxproto/content:dict.sxpb",
+        "dict_txtpb": "//test/sxproto/content:dict.txtpb",
         "loneof_sxpb": "//test/sxproto/content:loneof.sxpb",
         "loneof_txtpb": "//test/sxproto/content:loneof.txtpb",
         "manyof_sxpb": "//test/sxproto/content:manyof.sxpb",
@@ -120,6 +128,8 @@ fildesh_test(
     input_by_option = {
         "array_sxpb": "//test/sxproto/content:array.sxpb",
         "array_yaml": "//test/sxproto/content:array.yaml",
+        "dict_sxpb": "//test/sxproto/content:dict.sxpb",
+        "dict_yaml": "//test/sxproto/content:dict.yaml",
         "loneof_sxpb": "//test/sxproto/content:loneof.sxpb",
         "loneof_yaml": "//test/sxproto/content:loneof.yaml",
         "manyof_sxpb": "//test/sxproto/content:manyof.sxpb",

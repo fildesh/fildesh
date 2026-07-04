@@ -48,6 +48,10 @@ NEXT_FUZZ_DATA
 "Message can only hold fields.\n"
 "(() 7 7 7)"
 NEXT_FUZZ_DATA
+"1,7,"
+"Dict items must be key-value pairs even when the value is empty.\n"
+"(x () \"*\")"
+NEXT_FUZZ_DATA
 "1,6,"
 "Unexpected open paren in string.\n"
 "(a b ("
@@ -76,13 +80,37 @@ NEXT_FUZZ_DATA
 "Unexpected message array element.\n"
 "(a (()) 5 (() (a 1)))"
 NEXT_FUZZ_DATA
-"1,10,"
+"1,6,"
 "Arrays cannot be nested.\n"
 "(()) (())"
 NEXT_FUZZ_DATA
-"2,9,"
+"2,7,"
 "Nest can only hold nests and strings.\n"
 "(\"\")\n((a) b)"
+NEXT_FUZZ_DATA
+"1,15,"
+"Dict cannot hold list-like or dict values.\n"
+"(d () (a (()) 1))"
+NEXT_FUZZ_DATA
+"1,12,"
+"Dict cannot hold list-like or dict values.\n"
+"(d () ((a) 1))"
+NEXT_FUZZ_DATA
+"1,15,"
+"Dict cannot hold list-like or dict values.\n"
+"(d () (a (\"\") b))"
+NEXT_FUZZ_DATA
+"1,13,"
+"Dict cannot hold list-like or dict values.\n"
+"(d () (a () (b c)))"
+NEXT_FUZZ_DATA
+"1,22,"
+"Expected a bool, not an int.\n"
+"(d () (a +true) (b 2))"
+NEXT_FUZZ_DATA
+"1,20,"
+"Unexpected literal type.\n"
+"(d () (a 1) (b \"x\"))"
 NEXT_FUZZ_DATA
 "1,18,"
 "Unexpected literal type.\n"

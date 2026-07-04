@@ -13,6 +13,7 @@ typedef struct FildeshSxprotoField FildeshSxprotoField;
 enum FildeshSxprotoFieldKind {
   FildeshSxprotoFieldKind_UNKNOWN,
   FildeshSxprotoFieldKind_MESSAGE,
+  FildeshSxprotoFieldKind_DICT,
   FildeshSxprotoFieldKind_LITERAL,
   FildeshSxprotoFieldKind_LONEOF,
   FildeshSxprotoFieldKind_ARRAY,
@@ -74,6 +75,27 @@ tag_id_of_FildeshSxprotoField(const FildeshSxprotoField* schema) {
   NULL, (size_t)FildeshSxprotoFieldKind_LITERAL_FLOAT, \
   0
 
+#define FILL_DEFAULT_FildeshSxprotoField_STRING_DICT \
+  +0, FildeshSxprotoFieldKind_DICT, \
+  NULL, (size_t)FildeshSxprotoFieldKind_LITERAL_STRING, \
+  0
+#define FILL_DEFAULT_FildeshSxprotoField_INT_DICT \
+  +0, FildeshSxprotoFieldKind_DICT, \
+  NULL, (size_t)FildeshSxprotoFieldKind_LITERAL_INT, \
+  0
+#define FILL_DEFAULT_FildeshSxprotoField_FLOAT_DICT \
+  +0, FildeshSxprotoFieldKind_DICT, \
+  NULL, (size_t)FildeshSxprotoFieldKind_LITERAL_FLOAT, \
+  0
+#define FILL_DEFAULT_FildeshSxprotoField_BOOL_DICT \
+  +0, FildeshSxprotoFieldKind_DICT, \
+  NULL, (size_t)FildeshSxprotoFieldKind_LITERAL_BOOL, \
+  0
+#define FILL_FildeshSxprotoField_MESSAGE_DICT(subfields) \
+  +0, FildeshSxprotoFieldKind_DICT, \
+  subfields, sizeof(subfields)/sizeof(FildeshSxprotoField), \
+  0
+
 #define FILL_RECURSIVE_FildeshSxprotoField_MESSAGE \
   +0, FildeshSxprotoFieldKind_MESSAGE, NULL, 0, 0
 #define FILL_RECURSIVE_FildeshSxprotoField_MANYOF \
@@ -131,6 +153,7 @@ print_yaml_FildeshO(FildeshO* out, FildeshSxpb* sxpb);
 const char*
 ensure_name_FildeshSxpb(FildeshSxpb* sxpb, const char* s, size_t n);
 FildeshSxpbIT ensure_array_subfield_at_FildeshSxpb(FildeshSxpb*, FildeshSxpbIT, const char*);
+FildeshSxpbIT ensure_dict_subfield_at_FildeshSxpb(FildeshSxpb*, FildeshSxpbIT, const char*);
 FildeshSxpbIT ensure_loneof_subfield_at_FildeshSxpb(FildeshSxpb*, FildeshSxpbIT, const char*);
 FildeshSxpbIT ensure_manyof_subfield_at_FildeshSxpb(FildeshSxpb*, FildeshSxpbIT, const char*);
 FildeshSxpbIT ensure_message_subfield_at_FildeshSxpb(FildeshSxpb*, FildeshSxpbIT, const char*);

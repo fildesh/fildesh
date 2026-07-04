@@ -21,7 +21,18 @@ static void create_in_message_test() {
   assert(!nullish_FildeshSxpbIT(it));
   it = lookup_subfield_at_FildeshSxpb(sxpb, m_it, "some_array");
   assert(!nullish_FildeshSxpbIT(it));
+  assert(it.field_kind == FildeshSxprotoFieldKind_ARRAY);
   assert(nullish_FildeshSxpbIT(first_at_FildeshSxpb(sxpb, it)));
+
+  it = ensure_dict_subfield_at_FildeshSxpb(sxpb, m_it, "some_dict");
+  assert(!nullish_FildeshSxpbIT(it));
+  it = lookup_subfield_at_FildeshSxpb(sxpb, m_it, "some_dict");
+  assert(!nullish_FildeshSxpbIT(it));
+  assert(it.field_kind == FildeshSxprotoFieldKind_DICT);
+  assert(nullish_FildeshSxpbIT(first_at_FildeshSxpb(sxpb, it)));
+  it = ensure_dict_subfield_at_FildeshSxpb(sxpb, m_it, "some_dict");
+  assert(!nullish_FildeshSxpbIT(it));
+  assert(it.field_kind == FildeshSxprotoFieldKind_DICT);
 
   it = ensure_manyof_subfield_at_FildeshSxpb(sxpb, m_it, "some_manyof");
   assert(!nullish_FildeshSxpbIT(it));

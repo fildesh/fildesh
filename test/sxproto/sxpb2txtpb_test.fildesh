@@ -1,6 +1,7 @@
 
 # There are several tests. Search for:
 # - message_sxpb
+# - dict_sxpb
 # - loneof_sxpb
 # - array_sxpb
 # - manyof_sxpb
@@ -12,6 +13,17 @@
 |< splice / / $(XOF message_sxpb)
 |- sxpb2txtpb
 |- cmptxt $(XOF message_txtpb)
+|> stdout
+
+
+$(barrier)
+
+(: dict_sxpb Filepath .self.opt.dict_sxpb)
+(: dict_txtpb Filepath .self.opt.dict_txtpb)
+
+|< splice / / $(XOF dict_sxpb)
+|- sxpb2txtpb
+|- cmptxt $(XOF dict_txtpb)
 |> stdout
 
 

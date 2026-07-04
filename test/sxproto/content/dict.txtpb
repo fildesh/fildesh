@@ -1,0 +1,12 @@
+my_dict: [{
+  key: "key1"
+  value {
+    value: "val1"
+  }
+}, {
+  key: "key2"
+  value {
+    subkey: "subval"
+  }
+}]
+empty_dict: []

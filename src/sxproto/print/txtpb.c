@@ -10,6 +10,25 @@ write_txtpb_FildeshO(
 
 static
   void
+print_txtpb_child_of_dict(
+    FildeshO* out,
+    const FildeshSxpb* sxpb,
+    FildeshSxpbIT it,
+    unsigned indent_level)
+{
+  const char* key = name_of_entry_FildeshSxpb(sxpb, it);
+  putc_FildeshO(out, '{');
+  print_newline_json_indent_FildeshO(out, indent_level+1);
+  putstrlit_FildeshO(out, "key: ");
+  print_quoted_sxpb_str_FildeshO(out, key);
+  print_newline_json_indent_FildeshO(out, indent_level+1);
+  write_txtpb_FildeshO(out, sxpb, it, "value", indent_level+1);
+  print_newline_json_indent_FildeshO(out, indent_level);
+  putc_FildeshO(out, '}');
+}
+
+static
+  void
 print_txtpb_child_of_manyof(
     FildeshO* out,
     const FildeshSxpb* sxpb,
@@ -55,20 +74,23 @@ write_txtpb_FildeshO(
     unsigned indent_level)
 {
   const FildeshSxprotoValue* const m = &(*sxpb->values)[id_of_FildeshSxpbIT(it)];
-  const bool is_like_dict = is_like_dict_FildeshSxprotoFieldKind(m->field_kind);
-  const bool is_like_list = is_like_list_FildeshSxprotoFieldKind(m->field_kind);
+  const bool is_like_list = (
+      is_protobuf_repeated_FildeshSxprotoFieldKind(m->field_kind));
+  const bool is_like_mesg = (
+      is_like_dict_FildeshSxprotoFieldKind(m->field_kind) &&
+      m->field_kind != FildeshSxprotoFieldKind_DICT);
   const bool is_top = is_top_of_FildeshSxpb(sxpb, it);
   bool first = true;
 
   if (name) {
     putstr_FildeshO(out, name);
-    if (!is_like_dict) {
+    if (!is_like_mesg) {
       putc_FildeshO(out, ':');
     }
     putc_FildeshO(out, ' ');
   }
 
-  if (is_like_dict) {
+  if (is_like_mesg) {
     if (!is_top) {
       putc_FildeshO(out, '{');
     }
@@ -87,7 +109,10 @@ write_txtpb_FildeshO(
       }
     }
 
-    if (m->field_kind == FildeshSxprotoFieldKind_MANYOF) {
+    if (m->field_kind == FildeshSxprotoFieldKind_DICT) {
+      print_txtpb_child_of_dict(out, sxpb, it, indent_level);
+    }
+    else if (m->field_kind == FildeshSxprotoFieldKind_MANYOF) {
       print_txtpb_child_of_manyof(out, sxpb, it, indent_level);
     }
     else if (m->field_kind == FildeshSxprotoFieldKind_NEST) {
@@ -107,7 +132,7 @@ write_txtpb_FildeshO(
     first = false;
   }
 
-  if (is_like_dict && !is_top) {
+  if (is_like_mesg && !is_top) {
     /* Add newline when nonempty or within an array.*/
     if (!first || !name) {
       print_newline_json_indent_FildeshO(out, indent_level);

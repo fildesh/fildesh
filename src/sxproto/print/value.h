@@ -15,15 +15,6 @@ name_of_entry_FildeshSxpb(const FildeshSxpb* sxpb, FildeshSxpbIT it);
 
 static inline
   bool
-is_like_dict_FildeshSxprotoFieldKind(FildeshSxprotoFieldKind kind)
-{
-  return (
-      kind == FildeshSxprotoFieldKind_MESSAGE ||
-      kind == FildeshSxprotoFieldKind_LONEOF);
-}
-
-static inline
-  bool
 is_like_list_FildeshSxprotoFieldKind(FildeshSxprotoFieldKind kind)
 {
   return (

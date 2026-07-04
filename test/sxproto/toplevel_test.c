@@ -10,6 +10,12 @@ static const char array_test_content[] = "\
 (() (y 7) (z 8))\n\
 ";
 
+static const char dict_test_content[] = "\
+()\n\
+(key1 (value val1))\n\
+(key2 (subkey subval))\n\
+";
+
 static const char nest_test_content[] = "\
 (\"\")\n\
 \"\"  ; Empty string.\n\
@@ -57,6 +63,33 @@ array_test()
 
   /* End of array.*/
   assert(nullish_FildeshSxpbIT(next_at_FildeshSxpb(sxpb, it)));
+
+  close_FildeshSxpb(sxpb);
+  close_FildeshO(err_out);
+}
+
+static
+  void
+dict_test()
+{
+  DECLARE_STRLIT_FildeshX(in, dict_test_content);
+  FildeshO* err_out = open_FildeshOF("/dev/stderr");
+  FildeshSxpb* const sxpb = slurp_sxpb_close_FildeshX(in, NULL, err_out);
+  FildeshSxpbIT it;
+  FildeshSxpbIT val_it;
+
+  assert(sxpb);
+
+  it = top_of_FildeshSxpb(sxpb);
+  assert(it.field_kind == FildeshSxprotoFieldKind_DICT);
+  val_it = lookup_subfield_at_FildeshSxpb(sxpb, it, "key1");
+  assert(val_it.field_kind == FildeshSxprotoFieldKind_MESSAGE);
+  val_it = lookup_subfield_at_FildeshSxpb(sxpb, val_it, "value");
+  assert(0 == strcmp("val1", str_value_at_FildeshSxpb(sxpb, val_it)));
+  val_it = lookup_subfield_at_FildeshSxpb(sxpb, it, "key2");
+  assert(val_it.field_kind == FildeshSxprotoFieldKind_MESSAGE);
+  val_it = lookup_subfield_at_FildeshSxpb(sxpb, val_it, "subkey");
+  assert(0 == strcmp("subval", str_value_at_FildeshSxpb(sxpb, val_it)));
 
   close_FildeshSxpb(sxpb);
   close_FildeshO(err_out);
@@ -149,6 +182,7 @@ nest_test()
 
 int main() {
   array_test();
+  dict_test();
   nest_test();
   return 0;
 }

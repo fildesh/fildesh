@@ -172,8 +172,7 @@ assign_at_FildeshSxpb(
   FildeshSxprotoFieldKind kind = (*src_sxpb->values)[src_it.elem_id].field_kind;
   if (optional_field_name) {
     size_t n = strlen(optional_field_name);
-    assert(e->field_kind == FildeshSxprotoFieldKind_MESSAGE ||
-           e->field_kind == FildeshSxprotoFieldKind_LONEOF);
+    assert(is_like_dict_FildeshSxprotoFieldKind(e->field_kind));
     optional_field_name = ensure_name_FildeshSxpb(sxpb, optional_field_name, n);
     it = direct_ensure_subfield_FildeshSxpb(sxpb, it, optional_field_name, n);
     e = &(*sxpb->values)[it.elem_id];
@@ -194,8 +193,7 @@ assign_at_FildeshSxpb(
        src_it = next_at_FildeshSxpb(src_sxpb, src_it))
   {
     optional_field_name = (*src_sxpb->values)[src_it.elem_id].text;
-    if (kind == FildeshSxprotoFieldKind_MESSAGE ||
-        kind == FildeshSxprotoFieldKind_LONEOF) {
+    if (is_like_dict_FildeshSxprotoFieldKind(kind)) {
       assign_at_FildeshSxpb(sxpb, it, optional_field_name, src_sxpb, src_it);
     }
     else if (kind == FildeshSxprotoFieldKind_ARRAY) {
@@ -218,7 +216,8 @@ append_element_at_FildeshSxpb(
   const char* v_text = default_value_text_FildeshSxpb(sxpb, kind);
   if (optional_field_name) {
     size_t n = strlen(optional_field_name);
-    if (e->field_kind == FildeshSxprotoFieldKind_MESSAGE) {
+    if (is_like_dict_FildeshSxprotoFieldKind(e->field_kind)) {
+      assert(e->field_kind != FildeshSxprotoFieldKind_LONEOF);
       it = ensure_message_subfield_at_FildeshSxpb(
           sxpb, it, ensure_name_FildeshSxpb(sxpb, optional_field_name, n));
       optional_field_name = NULL;
@@ -375,8 +374,7 @@ direct_ensure_subfield_FildeshSxpb(
   FildeshSxpbIT p_it = DEFAULT_FildeshSxpbIT;
   FildeshSxprotoValue* p = NULL;
 
-  assert(m->field_kind == FildeshSxprotoFieldKind_MESSAGE ||
-         m->field_kind == FildeshSxprotoFieldKind_LONEOF);
+  assert(is_like_dict_FildeshSxprotoFieldKind(m->field_kind));
   p_it.cons_id = m - *sxpb->values;
 
   if (!fildesh_nullid(m->elem)) {

@@ -14,6 +14,7 @@ assign_to_subfield_test()
   static FildeshSxprotoField m_message[] = {
     {"a", FILL_DEFAULT_FildeshSxprotoField_INTS},
     {"b", FILL_DEFAULT_FildeshSxprotoField_BOOL},
+    {"d", FILL_DEFAULT_FildeshSxprotoField_INT_DICT},
     {"i", FILL_FildeshSxprotoField_INT(0, 10)},
     {"thing", FILL_FildeshSxprotoField_LONEOF(thing_loneof)},
     {"things", FILL_FildeshSxprotoField_MANYOF(thing_loneof)},
@@ -111,6 +112,20 @@ assign_to_subfield_test()
   dst_it = lookup_subfield_at_FildeshSxpb(sxpb, it, "dst_things");
   dst_it = first_at_FildeshSxpb(sxpb, dst_it);
   assert(!nullish_FildeshSxpbIT(dst_it));
+
+  /* dst_message.dst_dict := (() (key1 1) (key2 2)) */
+  *in = FildeshX_of_strlit("(d () (key1 1) (key2 2))");
+  src_sxpb = slurp_sxpb_close_FildeshX(in, message_schema, err_out);
+  src_it = lookup_subfield_at_FildeshSxpb(
+      src_sxpb, top_of_FildeshSxpb(src_sxpb), "d");
+  assign_at_FildeshSxpb(sxpb, it, "dst_dict", src_sxpb, src_it);
+  close_FildeshSxpb(src_sxpb);
+  dst_it = lookup_subfield_at_FildeshSxpb(sxpb, it, "dst_dict");
+  assert(dst_it.field_kind == FildeshSxprotoFieldKind_DICT);
+  assert(1 == unsigned_value_at_FildeshSxpb(
+          sxpb, lookup_subfield_at_FildeshSxpb(sxpb, dst_it, "key1")));
+  assert(2 == unsigned_value_at_FildeshSxpb(
+          sxpb, lookup_subfield_at_FildeshSxpb(sxpb, dst_it, "key2")));
 
   close_FildeshSxpb(sxpb);
   close_FildeshO(err_out);

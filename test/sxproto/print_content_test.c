@@ -5,6 +5,7 @@
 #include <fildesh/sxproto.h>
 
 FildeshSxpb* make_array_test_FildeshSxpb(void);
+FildeshSxpb* make_dict_test_FildeshSxpb(void);
 FildeshSxpb* make_loneof_test_FildeshSxpb(void);
 FildeshSxpb* make_manyof_test_FildeshSxpb(void);
 FildeshSxpb* make_message_test_FildeshSxpb(void);
@@ -91,6 +92,7 @@ int main(int argc, char** argv) {
   }
 
   passing = print_formats_test(make_array_test_FildeshSxpb(), "array", content_dirpath) && passing;
+  passing = print_formats_test(make_dict_test_FildeshSxpb(), "dict", content_dirpath) && passing;
   passing = print_formats_test(make_loneof_test_FildeshSxpb(), "loneof", content_dirpath) && passing;
   passing = print_formats_test(make_manyof_test_FildeshSxpb(), "manyof", content_dirpath) && passing;
   passing = print_formats_test(make_message_test_FildeshSxpb(), "message", content_dirpath) && passing;

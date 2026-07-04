@@ -28,6 +28,16 @@ static const char array_test_content[] = "\
 )\n\
 (a (()) 0.5e1 4 30e-1 2.e0 1)\n\
 ";
+static const char dict_test_content[] = "\
+(string_dict () (alpha \"one\") (beta \"two\"))\n\
+(int_dict () (alpha 1) (beta 2))\n\
+(float_dict () (alpha 1.5) (beta 2.5))\n\
+(bool_dict () (alpha +true) (beta +false))\n\
+(message_dict ()\n\
+ (first (car \"one\") (cdr))\n\
+ (second (car \"two\") (cdr))\n\
+)\n\
+";
 static const char manyof_test_content[] = "\
 ((predicates)\n\
  \"alpha\"\n\
@@ -81,13 +91,18 @@ sxproto_schema()
     {"n", FILL_FildeshSxprotoField_INT(0, INT_MAX)},
     {"f", FILL_FildeshSxprotoField_FLOAT(0, 10)},
     {"a", FILL_DEFAULT_FildeshSxprotoField_FLOATS},
+    {"bool_dict", FILL_DEFAULT_FildeshSxprotoField_BOOL_DICT},
     {"cons", FILL_FildeshSxprotoField_MESSAGE(m_fields)},
+    {"float_dict", FILL_DEFAULT_FildeshSxprotoField_FLOAT_DICT},
+    {"int_dict", FILL_DEFAULT_FildeshSxprotoField_INT_DICT},
     {"many_fruits", FILL_FildeshSxprotoField_MANYOF(fruit_loneof)},
+    {"message_dict", FILL_FildeshSxprotoField_MESSAGE_DICT(m_fields)},
     {"messages", FILL_FildeshSxprotoField_MESSAGES(m_fields)},
     {"nest", FILL_DEFAULT_FildeshSxprotoField_NEST},
     {"predicates", FILL_FildeshSxprotoField_MANYOF(predicates_manyof)},
     {"s", FILL_FildeshSxprotoField_STRING(1, 64)},
     {"s_alternate_name", FILL_DEFAULT_FildeshSxprotoField_ALIAS},
+    {"string_dict", FILL_DEFAULT_FildeshSxprotoField_STRING_DICT},
     {"fruit_as", FILL_FildeshSxprotoField_LONEOF(fruit_loneof)},
   };
   DECLARE_TOPLEVEL_FildeshSxprotoField(schema, toplevel_fields);
@@ -274,6 +289,63 @@ array_test()
 
 static
   void
+dict_test()
+{
+  DECLARE_STRLIT_FildeshX(in, dict_test_content);
+  FildeshO* err_out = open_FildeshOF("/dev/stderr");
+  const FildeshSxprotoField* const schema = sxproto_schema();
+  FildeshSxpb* const sxpb = slurp_sxpb_close_FildeshX(in, schema, err_out);
+  const FildeshSxpbIT top_it = top_of_FildeshSxpb(sxpb);
+  FildeshSxpbIT it;
+  FildeshSxpbIT val_it;
+
+  assert(sxpb);
+
+  it = lookup_subfield_at_FildeshSxpb(sxpb, top_it, "string_dict");
+  assert(0 == strcmp(name_at_FildeshSxpb(sxpb, it), "string_dict"));
+  val_it = lookup_subfield_at_FildeshSxpb(sxpb, it, "alpha");
+  assert(0 == strcmp("one", str_value_at_FildeshSxpb(sxpb, val_it)));
+  val_it = lookup_subfield_at_FildeshSxpb(sxpb, it, "beta");
+  assert(0 == strcmp("two", str_value_at_FildeshSxpb(sxpb, val_it)));
+
+  it = lookup_subfield_at_FildeshSxpb(sxpb, top_it, "int_dict");
+  assert(0 == strcmp(name_at_FildeshSxpb(sxpb, it), "int_dict"));
+  val_it = lookup_subfield_at_FildeshSxpb(sxpb, it, "alpha");
+  assert(1 == unsigned_value_at_FildeshSxpb(sxpb, val_it));
+  val_it = lookup_subfield_at_FildeshSxpb(sxpb, it, "beta");
+  assert(2 == unsigned_value_at_FildeshSxpb(sxpb, val_it));
+
+  it = lookup_subfield_at_FildeshSxpb(sxpb, top_it, "float_dict");
+  assert(0 == strcmp(name_at_FildeshSxpb(sxpb, it), "float_dict"));
+  val_it = lookup_subfield_at_FildeshSxpb(sxpb, it, "alpha");
+  assert(1.5f == float_value_at_FildeshSxpb(sxpb, val_it));
+  val_it = lookup_subfield_at_FildeshSxpb(sxpb, it, "beta");
+  assert(2.5f == float_value_at_FildeshSxpb(sxpb, val_it));
+
+  it = lookup_subfield_at_FildeshSxpb(sxpb, top_it, "bool_dict");
+  assert(0 == strcmp(name_at_FildeshSxpb(sxpb, it), "bool_dict"));
+  val_it = lookup_subfield_at_FildeshSxpb(sxpb, it, "alpha");
+  assert(bool_value_at_FildeshSxpb(sxpb, val_it));
+  val_it = lookup_subfield_at_FildeshSxpb(sxpb, it, "beta");
+  assert(!bool_value_at_FildeshSxpb(sxpb, val_it));
+
+  it = lookup_subfield_at_FildeshSxpb(sxpb, top_it, "message_dict");
+  assert(0 == strcmp(name_at_FildeshSxpb(sxpb, it), "message_dict"));
+  val_it = lookup_subfield_at_FildeshSxpb(sxpb, it, "first");
+  assert(val_it.field_kind == FildeshSxprotoFieldKind_MESSAGE);
+  assert(0 == strcmp("one", str_value_at_FildeshSxpb(
+          sxpb, lookup_subfield_at_FildeshSxpb(sxpb, val_it, "car"))));
+  val_it = lookup_subfield_at_FildeshSxpb(sxpb, it, "second");
+  assert(val_it.field_kind == FildeshSxprotoFieldKind_MESSAGE);
+  assert(0 == strcmp("two", str_value_at_FildeshSxpb(
+          sxpb, lookup_subfield_at_FildeshSxpb(sxpb, val_it, "car"))));
+
+  close_FildeshSxpb(sxpb);
+  close_FildeshO(err_out);
+}
+
+static
+  void
 manyof_test()
 {
   DECLARE_STRLIT_FildeshX(in, manyof_test_content);
@@ -450,6 +522,45 @@ nest_test()
 
 static
   void
+dict_schema_error_test()
+{
+  FildeshX in[1];
+  FildeshO err_out[1] = {DEFAULT_FildeshO};
+  const FildeshSxprotoField* const schema = sxproto_schema();
+  FildeshSxpb* sxpb;
+
+  *in = FildeshX_of_strlit("(message_dict () (first not_a_message))");
+  sxpb = slurp_sxpb_close_FildeshX(in, schema, err_out);
+  assert(!sxpb);
+  putc_FildeshO(err_out, '\0');
+  assert(strstr(err_out->at, "Expected dict value to be a message."));
+
+  truncate_FildeshO(err_out);
+  *in = FildeshX_of_strlit("(int_dict () (alpha (value 1)))");
+  sxpb = slurp_sxpb_close_FildeshX(in, schema, err_out);
+  assert(!sxpb);
+  putc_FildeshO(err_out, '\0');
+  assert(strstr(err_out->at, "Expected dict value to be a literal."));
+
+  truncate_FildeshO(err_out);
+  *in = FildeshX_of_strlit("(string_dict not_a_dict)");
+  sxpb = slurp_sxpb_close_FildeshX(in, schema, err_out);
+  assert(!sxpb);
+  putc_FildeshO(err_out, '\0');
+  assert(strstr(err_out->at, "Expected field to be a dict."));
+
+  truncate_FildeshO(err_out);
+  *in = FildeshX_of_strlit("(unknown x)");
+  sxpb = slurp_sxpb_close_FildeshX(in, schema, err_out);
+  assert(!sxpb);
+  putc_FildeshO(err_out, '\0');
+  assert(strstr(err_out->at, "Unrecognized field name."));
+
+  close_FildeshO(err_out);
+}
+
+static
+  void
 nest_schema_error_test()
 {
   FildeshX in[1];
@@ -470,9 +581,11 @@ int main() {
   message_test();
   loneof_test();
   array_test();
+  dict_test();
   manyof_test();
   manyof_coercion_test();
   nest_test();
+  dict_schema_error_test();
   nest_schema_error_test();
   return 0;
 }
