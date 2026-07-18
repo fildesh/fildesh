@@ -4,9 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 
-
-static const char sxpb_delim_bytes[] = " \t\n\v\f\r\"();";
-static const char sxpb_blank_bytes[] = " \t\n\v\f\r";
+#include "src/sxproto/syntax.h"
 
 static void
 syntax_error(const FildeshSxpbInfo* info, const char* msg)
@@ -74,7 +72,7 @@ skip_separation(FildeshX* in, FildeshSxpbInfo* info)
     if (peek_char_FildeshX(in, ';')) {
       until_chars_FildeshSxpbInfo(info, in, "\n");
     }
-    slice = while_chars_FildeshSxpbInfo(info, in, sxpb_blank_bytes);
+    slice = while_chars_FildeshSxpbInfo(info, in, sxpb_blank_chars);
   } while (slice.size > 0);
 }
 
@@ -150,7 +148,7 @@ parse_bare_string_FildeshSxpbInfo(
     FildeshX* in,
     FildeshO* oslice)
 {
-  FildeshX xslice = until_chars_FildeshSxpbInfo(info, in, sxpb_delim_bytes);
+  FildeshX xslice = until_chars_FildeshSxpbInfo(info, in, sxpb_delim_chars);
   assert(xslice.size > 0);
   if (info->unquoted_value_separation_on) {
     putc_FildeshO(oslice, ' ');
@@ -325,7 +323,7 @@ parse_name_FildeshSxpbInfo(
       skip_separation(in, info);
     }
   }
-  slice = until_chars_FildeshSxpbInfo(info, in, sxpb_delim_bytes);
+  slice = until_chars_FildeshSxpbInfo(info, in, sxpb_delim_chars);
   truncate_FildeshO(oslice);
   if (slice.size == 0) {
     if (peek_char_FildeshX(in, '"')) {
@@ -524,21 +522,6 @@ reconcile_elem_kind_FildeshSxpbInfo(
 }
 
 static
-  FildeshSxprotoValue*
-literal_value_at_FildeshSxpb(FildeshSxpb* sxpb, FildeshSxpbIT it)
-{
-  FildeshSxprotoValue* e = &(*sxpb->values)[it.elem_id];
-  assert(e->field_kind == FildeshSxprotoFieldKind_LITERAL);
-  assert(!fildesh_nullid(e->elem));
-  e = &(*sxpb->values)[e->elem];
-  assert(e->field_kind == FildeshSxprotoFieldKind_LITERAL_STRING ||
-         e->field_kind == FildeshSxprotoFieldKind_LITERAL_BOOL ||
-         e->field_kind == FildeshSxprotoFieldKind_LITERAL_INT ||
-         e->field_kind == FildeshSxprotoFieldKind_LITERAL_FLOAT);
-  return e;
-}
-
-static
   bool
 reconcile_dict_value_kind_FildeshSxpbInfo(
     FildeshSxpbInfo* info,
@@ -551,7 +534,7 @@ reconcile_dict_value_kind_FildeshSxpbInfo(
   FildeshSxprotoFieldKind tmp_kind = it.field_kind;
   FildeshSxprotoValue* e = NULL;
   if (tmp_kind == FildeshSxprotoFieldKind_LITERAL) {
-    e = literal_value_at_FildeshSxpb(sxpb, it);
+    e = &(*sxpb->values)[literal_value_id_at_FildeshSxpb(sxpb, it)];
     tmp_kind = e->field_kind;
     truncate_FildeshO(oslice);
     putstr_FildeshO(oslice, e->text);

@@ -1,8 +1,9 @@
-#include <stdio.h>
-#include <stdlib.h>
+#include <assert.h>
 #include <string.h>
 
 #include <fildesh/sxproto.h>
+
+#include "test/sxproto/print_test.h"
 
 FildeshSxpb* make_array_test_FildeshSxpb(void);
 FildeshSxpb* make_dict_test_FildeshSxpb(void);
@@ -13,11 +14,43 @@ FildeshSxpb* make_nest_test_FildeshSxpb(void);
 FildeshSxpb* make_string_test_FildeshSxpb(void);
 
 static
-  int
+  bool
+print_sxpb_roundtrip_test(FildeshSxpb* sxpb, const char* name)
+{
+  FildeshO original[1] = {DEFAULT_FildeshO};
+  FildeshO printed[1] = {DEFAULT_FildeshO};
+  FildeshO reparsed[1] = {DEFAULT_FildeshO};
+  FildeshO* err_out = open_FildeshOF("/dev/stderr");
+  FildeshX* in = open_FildeshXA();
+  FildeshSxpb* roundtrip_sxpb;
+  bool passing;
+
+  print_json_FildeshO(original, sxpb);
+  print_sxpb_FildeshO(printed, sxpb);
+  memcpy(grow_FildeshX(in, printed->size), printed->at, printed->size);
+  roundtrip_sxpb = slurp_sxpb_close_FildeshX(in, NULL, err_out);
+  assert(roundtrip_sxpb);
+  print_json_FildeshO(reparsed, roundtrip_sxpb);
+  passing = check_same_printed_format(
+      err_out, name, "roundtrip JSON",
+      bytestring_of_FildeshO(original),
+      bytestring_of_FildeshO(reparsed));
+  close_FildeshSxpb(roundtrip_sxpb);
+
+  close_FildeshO(original);
+  close_FildeshO(printed);
+  close_FildeshO(reparsed);
+  close_FildeshO(err_out);
+  return passing;
+}
+
+static
+  bool
 print_formats_test(FildeshSxpb* sxpb, const char* name, const char* content_dir)
 {
   bool passing = true;
   FildeshO oslice[1] = {DEFAULT_FildeshO};
+  FildeshO* err_out = open_FildeshOF("/dev/stderr");
   const char* formats[] = {"json", "yaml", "txtpb"};
   void (*print_fns[])(FildeshO*, FildeshSxpb*) = {
     print_json_FildeshO,
@@ -30,7 +63,6 @@ print_formats_test(FildeshSxpb* sxpb, const char* name, const char* content_dir)
     FildeshX actual;
     FildeshX expect_slice;
     FildeshX* in;
-    unsigned line_count = 0;
 
     truncate_FildeshO(oslice);
     putstr_FildeshO(oslice, content_dir);
@@ -41,45 +73,29 @@ print_formats_test(FildeshSxpb* sxpb, const char* name, const char* content_dir)
     putc_FildeshO(oslice, '\0');
 
     in = open_FildeshXF(oslice->at);
-    if (!in) {
-      fildesh_log_errorf("Failed to open %s", oslice->at);
-      passing = false;
-      continue;
-    }
-
+    assert(in);
     truncate_FildeshO(oslice);
     print_fns[i](oslice, sxpb);
-
     actual = getslice_FildeshO(oslice);
     for (expect_slice = sliceline_FildeshX(in);
          expect_slice.at;
          expect_slice = sliceline_FildeshX(in))
     {
       FildeshX actual_slice = sliceline_FildeshX(&actual);
-      line_count += 1;
-      if (!actual_slice.at ||
-          0 != fildesh_compare_bytestring(
-              bytestring_of_FildeshX(&expect_slice),
-              bytestring_of_FildeshX(&actual_slice)))
-      {
-        fildesh_log_errorf("Mismatch in %s format %s at line %u", name, formats[i], line_count);
-        fildesh_log_errorf("Expect: %.*s", (int)expect_slice.size, expect_slice.at);
-        fildesh_log_errorf("Actual: %.*s", (int)actual_slice.size, actual_slice.at);
-        passing = false;
-        break;
-      }
+      assert(actual_slice.at);
+      passing = check_same_printed_format(
+          err_out, name, formats[i],
+          bytestring_of_FildeshX(&expect_slice),
+          bytestring_of_FildeshX(&actual_slice))
+        && passing;
     }
-    if (!expect_slice.at) {
-      FildeshX actual_slice = sliceline_FildeshX(&actual);
-      if (actual_slice.at) {
-        fildesh_log_errorf("Extra line(s) in %s format %s.", name, formats[i]);
-        passing = false;
-      }
-    }
-
+    expect_slice = sliceline_FildeshX(&actual);
+    assert(!expect_slice.at);
     close_FildeshX(in);
   }
+  passing = print_sxpb_roundtrip_test(sxpb, name) && passing;
   close_FildeshO(oslice);
+  close_FildeshO(err_out);
   close_FildeshSxpb(sxpb);
   return passing;
 }

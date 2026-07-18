@@ -38,9 +38,23 @@ cc_test(
 )
 
 cc_test(
+    name = "print_sxpb_test",
+    srcs = [
+        "print_sxpb_test.c",
+        "print_test.c",
+        "print_test.h",
+    ],
+    args = ["test/sxproto/content/idempotent_sxpb2sxpb_test_dict.sxpb"],
+    data = ["//test/sxproto/content:idempotent_sxpb2sxpb_test_dict.sxpb"],
+    deps = ["//:sxproto_lib"],
+)
+
+cc_test(
     name = "print_content_test",
     srcs = [
         "print_content_test.c",
+        "print_test.c",
+        "print_test.h",
         "//test/sxproto/content:array.c",
         "//test/sxproto/content:dict.c",
         "//test/sxproto/content:loneof.c",
@@ -85,6 +99,27 @@ cc_test(
 fildesh_test(
     name = "sxpb2json_test",
     srcs = ["sxpb2json_test.fildesh"],
+    input_by_option = {
+        "array_json": "//test/sxproto/content:array.json",
+        "array_sxpb": "//test/sxproto/content:array.sxpb",
+        "dict_json": "//test/sxproto/content:dict.json",
+        "dict_sxpb": "//test/sxproto/content:dict.sxpb",
+        "loneof_json": "//test/sxproto/content:loneof.json",
+        "loneof_sxpb": "//test/sxproto/content:loneof.sxpb",
+        "manyof_json": "//test/sxproto/content:manyof.json",
+        "manyof_sxpb": "//test/sxproto/content:manyof.sxpb",
+        "message_json": "//test/sxproto/content:message.json",
+        "message_sxpb": "//test/sxproto/content:message.sxpb",
+        "nest_json": "//test/sxproto/content:nest.json",
+        "nest_sxpb": "//test/sxproto/content:nest.sxpb",
+        "string_json": "//test/sxproto/content:string.json",
+        "string_sxpb": "//test/sxproto/content:string.sxpb",
+    },
+)
+
+fildesh_test(
+    name = "sxpb2sxpb_test",
+    srcs = ["sxpb2sxpb_test.fildesh"],
     input_by_option = {
         "array_json": "//test/sxproto/content:array.json",
         "array_sxpb": "//test/sxproto/content:array.sxpb",

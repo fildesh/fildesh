@@ -20,6 +20,7 @@ int fildesh_builtin_replace_string_main(unsigned, char**, FildeshX**, FildeshO**
 int fildesh_builtin_seq_main(unsigned, char**, FildeshX**, FildeshO**);
 int fildesh_builtin_sponge_main(unsigned, char**, FildeshX**, FildeshO**);
 int fildesh_builtin_sxpb2json_main(unsigned, char**, FildeshX**, FildeshO**);
+int fildesh_builtin_sxpb2sxpb_main(unsigned, char**, FildeshX**, FildeshO**);
 int fildesh_builtin_sxpb2txtpb_main(unsigned, char**, FildeshX**, FildeshO**);
 int fildesh_builtin_sxpb2yaml_main(unsigned, char**, FildeshX**, FildeshO**);
 int fildesh_builtin_time2sec_main(unsigned, char**, FildeshX**, FildeshO**);

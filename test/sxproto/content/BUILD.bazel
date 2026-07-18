@@ -9,6 +9,7 @@ exports_files([
     "dict.sxpb",
     "dict.txtpb",
     "dict.yaml",
+    "idempotent_sxpb2sxpb_test_dict.sxpb",
     "loneof.c",
     "loneof.json",
     "loneof.sxpb",

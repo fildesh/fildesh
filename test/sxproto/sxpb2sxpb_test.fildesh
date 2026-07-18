@@ -1,0 +1,89 @@
+# There are several tests. Search for:
+# - message_sxpb
+# - dict_sxpb
+# - loneof_sxpb
+# - array_sxpb
+# - manyof_sxpb
+# - string_sxpb
+# - nest_sxpb
+
+(: message_sxpb Filepath .self.opt.message_sxpb)
+(: message_json Filepath .self.opt.message_json)
+
+|< splice / / $(XOF message_sxpb)
+|- sxpb2sxpb
+|- sxpb2json
+|- cmptxt $(XOF message_json)
+|> stdout
+
+
+$(barrier)
+
+(: dict_sxpb Filepath .self.opt.dict_sxpb)
+(: dict_json Filepath .self.opt.dict_json)
+
+|< splice / / $(XOF dict_sxpb)
+|- sxpb2sxpb
+|- sxpb2json
+|- cmptxt $(XOF dict_json)
+|> stdout
+
+
+$(barrier)
+
+(: loneof_sxpb Filepath .self.opt.loneof_sxpb)
+(: loneof_json Filepath .self.opt.loneof_json)
+
+|< splice / / $(XOF loneof_sxpb)
+|- sxpb2sxpb
+|- sxpb2json
+|- cmptxt $(XOF loneof_json)
+|> stdout
+
+
+$(barrier)
+
+(: array_sxpb Filepath .self.opt.array_sxpb)
+(: array_json Filepath .self.opt.array_json)
+
+|< splice / / $(XOF array_sxpb)
+|- sxpb2sxpb
+|- sxpb2json
+|- cmptxt $(XOF array_json)
+|> stdout
+
+
+$(barrier)
+
+(: manyof_sxpb Filepath .self.opt.manyof_sxpb)
+(: manyof_json Filepath .self.opt.manyof_json)
+
+|< splice / / $(XOF manyof_sxpb)
+|- sxpb2sxpb
+|- sxpb2json
+|- cmptxt $(XOF manyof_json)
+|> stdout
+
+
+$(barrier)
+
+(: string_sxpb Filepath .self.opt.string_sxpb)
+(: string_json Filepath .self.opt.string_json)
+
+|< splice / / $(XOF string_sxpb)
+|- sxpb2sxpb
+|- sxpb2json
+|- cmptxt $(XOF string_json)
+|> stdout
+
+
+$(barrier)
+
+(: nest_sxpb Filepath .self.opt.nest_sxpb)
+(: nest_json Filepath .self.opt.nest_json)
+
+|< splice / / $(XOF nest_sxpb)
+|- sxpb2sxpb
+|- sxpb2json
+|- cmptxt $(XOF nest_json)
+|> stdout

@@ -146,6 +146,8 @@ slurp_sxpb_close_FildeshX(
 void
 print_json_FildeshO(FildeshO* out, FildeshSxpb* sxpb);
 void
+print_sxpb_FildeshO(FildeshO* out, FildeshSxpb* sxpb);
+void
 print_txtpb_FildeshO(FildeshO* out, FildeshSxpb* sxpb);
 void
 print_yaml_FildeshO(FildeshO* out, FildeshSxpb* sxpb);

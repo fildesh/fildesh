@@ -4,25 +4,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-static
-  const FildeshSxprotoValue*
-value_at_FildeshSxpb(const FildeshSxpb* sxpb, FildeshSxpbIT it)
-{
-  const FildeshSxprotoValue* const e = (
-      fildesh_nullid(it.elem_id)
-      ? &(*sxpb->values)[it.cons_id]
-      : &(*sxpb->values)[it.elem_id]);
-  if (fildesh_nullid(e->elem)) {
-    return e;
-  }
-  assert(e->field_kind == FildeshSxprotoFieldKind_LITERAL);
-  return &(*sxpb->values)[e->elem];
-}
-
   bool
 bool_value_at_FildeshSxpb(const FildeshSxpb* sxpb, FildeshSxpbIT it)
 {
-  const FildeshSxprotoValue* const v = value_at_FildeshSxpb(sxpb, it);
+  const FildeshSxprotoValue* const v = literal_value_at_FildeshSxpb(sxpb, it);
   if (v->field_kind == FildeshSxprotoFieldKind_LITERAL_INT) {
     unsigned x = UINT_MAX;
     const char* s = v->text;
@@ -38,7 +23,7 @@ bool_value_at_FildeshSxpb(const FildeshSxpb* sxpb, FildeshSxpbIT it)
   unsigned
 unsigned_value_at_FildeshSxpb(const FildeshSxpb* sxpb, FildeshSxpbIT it)
 {
-  const FildeshSxprotoValue* const v = value_at_FildeshSxpb(sxpb, it);
+  const FildeshSxprotoValue* const v = literal_value_at_FildeshSxpb(sxpb, it);
   unsigned x = UINT_MAX;
   const char* s = v->text;
   assert(v->field_kind == FildeshSxprotoFieldKind_LITERAL_INT);
@@ -50,7 +35,7 @@ unsigned_value_at_FildeshSxpb(const FildeshSxpb* sxpb, FildeshSxpbIT it)
   float
 float_value_at_FildeshSxpb(const FildeshSxpb* sxpb, FildeshSxpbIT it)
 {
-  const FildeshSxprotoValue* const v = value_at_FildeshSxpb(sxpb, it);
+  const FildeshSxprotoValue* const v = literal_value_at_FildeshSxpb(sxpb, it);
   double x = 0.0;
   const char* s = v->text;
   assert(v->field_kind == FildeshSxprotoFieldKind_LITERAL_FLOAT ||
@@ -63,7 +48,7 @@ float_value_at_FildeshSxpb(const FildeshSxpb* sxpb, FildeshSxpbIT it)
   const char*
 str_value_at_FildeshSxpb(const FildeshSxpb* sxpb, FildeshSxpbIT it)
 {
-  const FildeshSxprotoValue* const v = value_at_FildeshSxpb(sxpb, it);
+  const FildeshSxprotoValue* const v = literal_value_at_FildeshSxpb(sxpb, it);
   assert(v->field_kind == FildeshSxprotoFieldKind_LITERAL_STRING);
   return v->text;
 }
@@ -140,11 +125,9 @@ direct_assign_literal(
     FildeshSxpb* sxpb, FildeshSxpbIT it, FildeshSxprotoValue* e,
     const FildeshSxpb* src_sxpb, FildeshSxpbIT src_it)
 {
-  const FildeshSxprotoValue* src_e = &(*src_sxpb->values)[src_it.elem_id];
+  const FildeshSxprotoValue* const src_e =
+    literal_value_at_FildeshSxpb(src_sxpb, src_it);
   const char* v_text;
-  if (src_e->field_kind == FildeshSxprotoFieldKind_LITERAL) {
-    src_e = &(*src_sxpb->values)[src_e->elem];
-  }
   v_text = ensure_name_FildeshSxpb(sxpb, src_e->text, strlen(src_e->text));
   if (e->field_kind == FildeshSxprotoFieldKind_LITERAL) {
     if (fildesh_nullid(e->elem)) {

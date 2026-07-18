@@ -1,0 +1,112 @@
+()
+
+(empty_nest """\
+("")
+""")
+
+(message_literal """\
+(a b)
+""")
+
+(message_nest """\
+(nest (""))
+""")
+
+(array_of_ints """\
+(my_array (()) 1 2 3)
+""")
+
+(top_array_split """\
+(())
+1
+2
+3
+""")
+
+(array_multiword_strings """\
+(strings (()) "hello world" bare "1")
+""")
+
+(array_of_messages """\
+(my_messages (()) (() (i 5)) ())
+""")
+
+(manyof_literals """\
+((add) 1 2)
+""")
+
+(loneof_literal """\
+((bag_with paper) 2)
+""")
+
+(loneof_empty_message """\
+((my_loneof my_choice))
+""")
+
+(dict """\
+(my_dict () (key1 (value val1)) (key2 (subkey subval)))
+""")
+
+(top_dict """\
+()
+(key value)
+""")
+
+(nest_leaf """\
+("")
+(a b)
+""")
+
+(top_nest_split """\
+("")
+black
+(white bear)
+(grass green verdant)
+""")
+
+(nest_space_leaf """\
+("")
+(animal "" black bear)
+""")
+
+(nest_single_multiword_string """\
+("")
+(x "" multi-word string)
+""")
+
+(nest_multiword_string_with_sibling """\
+("")
+(x "multi-word string" y)
+""")
+
+(message_multiword_string """\
+(message "hello world")
+""")
+
+(empty_string_leaf """\
+("")
+("" "")
+""")
+
+(anonymous_nest """\
+("")
+("" ("") content)
+""")
+
+(empty_anonymous_nest """\
+("")
+("" (""))
+""")
+
+(nest_with_empty_string_first """\
+("")
+(nest ("" "") with empty string)
+""")
+
+(quoted_string_literal """\
+(needs_quote "1 2")
+""")
+
+(array_of_strings """\
+(strings (()) "1" "two words" bare)
+""")

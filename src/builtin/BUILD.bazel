@@ -17,6 +17,7 @@ exports_files([
     "splice.c",
     "sponge.c",
     "sxpb2json.c",
+    "sxpb2sxpb.c",
     "sxpb2txtpb.c",
     "sxpb2yaml.c",
     "time2sec.c",

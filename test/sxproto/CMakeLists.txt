@@ -29,8 +29,20 @@ add_executable(sxproto_parse_with_schema_test
 target_link_libraries(sxproto_parse_with_schema_test ${FildeshSxproto_LIBRARIES})
 add_test(NAME sxproto_parse_with_schema_test COMMAND sxproto_parse_with_schema_test)
 
+add_executable(sxproto_print_sxpb_test
+  "print_sxpb_test.c"
+  "print_test.c"
+  "print_test.h")
+target_link_libraries(sxproto_print_sxpb_test ${FildeshSxproto_LIBRARIES})
+add_test(NAME sxproto_print_sxpb_test COMMAND
+  sxproto_print_sxpb_test
+  "${CMAKE_CURRENT_SOURCE_DIR}/content/idempotent_sxpb2sxpb_test_dict.sxpb"
+)
+
 add_executable(sxproto_print_content_test
   "print_content_test.c"
+  "print_test.c"
+  "print_test.h"
   "content/array.c"
   "content/dict.c"
   "content/loneof.c"
@@ -52,6 +64,24 @@ add_test(NAME sxproto_toplevel_test COMMAND sxproto_toplevel_test)
 
 add_test(NAME sxpb2json_test COMMAND ${Fildesh_EXECUTABLE}
   -f "${CMAKE_CURRENT_SOURCE_DIR}/sxpb2json_test.fildesh"
+  "--array_json=${CMAKE_CURRENT_SOURCE_DIR}/content/array.json"
+  "--array_sxpb=${CMAKE_CURRENT_SOURCE_DIR}/content/array.sxpb"
+  "--dict_json=${CMAKE_CURRENT_SOURCE_DIR}/content/dict.json"
+  "--dict_sxpb=${CMAKE_CURRENT_SOURCE_DIR}/content/dict.sxpb"
+  "--loneof_json=${CMAKE_CURRENT_SOURCE_DIR}/content/loneof.json"
+  "--loneof_sxpb=${CMAKE_CURRENT_SOURCE_DIR}/content/loneof.sxpb"
+  "--manyof_json=${CMAKE_CURRENT_SOURCE_DIR}/content/manyof.json"
+  "--manyof_sxpb=${CMAKE_CURRENT_SOURCE_DIR}/content/manyof.sxpb"
+  "--message_json=${CMAKE_CURRENT_SOURCE_DIR}/content/message.json"
+  "--message_sxpb=${CMAKE_CURRENT_SOURCE_DIR}/content/message.sxpb"
+  "--nest_json=${CMAKE_CURRENT_SOURCE_DIR}/content/nest.json"
+  "--nest_sxpb=${CMAKE_CURRENT_SOURCE_DIR}/content/nest.sxpb"
+  "--string_json=${CMAKE_CURRENT_SOURCE_DIR}/content/string.json"
+  "--string_sxpb=${CMAKE_CURRENT_SOURCE_DIR}/content/string.sxpb"
+)
+
+add_test(NAME sxpb2sxpb_test COMMAND ${Fildesh_EXECUTABLE}
+  -f "${CMAKE_CURRENT_SOURCE_DIR}/sxpb2sxpb_test.fildesh"
   "--array_json=${CMAKE_CURRENT_SOURCE_DIR}/content/array.json"
   "--array_sxpb=${CMAKE_CURRENT_SOURCE_DIR}/content/array.sxpb"
   "--dict_json=${CMAKE_CURRENT_SOURCE_DIR}/content/dict.json"

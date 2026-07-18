@@ -155,6 +155,7 @@ static void builtin_sponge_test() {
 
 static void builtin_sxpb_test() {
   MAIN_TEST(64, "sxpb2json\0invalid_argument");
+  MAIN_TEST(64, "sxpb2sxpb\0invalid_argument");
   MAIN_TEST(64, "sxpb2txtpb\0invalid_argument");
   MAIN_TEST(64, "sxpb2yaml\0invalid_argument");
 }

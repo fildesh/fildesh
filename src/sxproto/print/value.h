@@ -23,10 +23,6 @@ is_like_list_FildeshSxprotoFieldKind(FildeshSxprotoFieldKind kind)
       kind == FildeshSxprotoFieldKind_NEST);
 }
 
-static inline FildeshSxpb_id id_of_FildeshSxpbIT(FildeshSxpbIT it) {
-  return fildesh_nullid(it.elem_id) ? it.cons_id : it.elem_id;
-}
-
 static inline
   bool
 is_top_of_FildeshSxpb(const FildeshSxpb* sxpb, FildeshSxpbIT it)
