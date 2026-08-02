@@ -70,8 +70,32 @@ static void parse_number_test() {
   expectparse("+1.e+5", "100000.0");
   expectparse("+1.023e+2", "102.3");
   expectparse("+2.e-3", ".0020");
+  expectparse("+5.e+0", "5.");
+  expectparse("+5.e-1", ".5");
+  expectparse("+5.e-1", "+.5");
+  expectparse("-5.e-1", "-.5");
 
 #undef expectparse
+  close_FildeshO(info->err_out);
+  close_FildeshO(oslice);
+}
+
+static void parse_number_failure_test() {
+  FildeshSxpbInfo info[1] = {DEFAULT_FildeshSxpbInfo};
+  FildeshO oslice[1] = {DEFAULT_FildeshO};
+  info->err_out = open_FildeshOF("/dev/stderr");
+
+#define expectfail(text) do { \
+  FildeshX slice = FildeshX_of_strlit(text); \
+  bool good = parse_number_FildeshSxpbInfo(info, &slice, oslice); \
+  assert(!good); \
+} while (0)
+
+  expectfail("-.");
+  expectfail("+.");
+  expectfail(".");
+
+#undef expectfail
   close_FildeshO(info->err_out);
   close_FildeshO(oslice);
 }
@@ -239,6 +263,7 @@ static void parse_last_in_string_array_field_test() {
 int main() {
   parse_string_test();
   parse_number_test();
+  parse_number_failure_test();
   parse_name_test();
   parse_field_test();
   parse_string_field_test();

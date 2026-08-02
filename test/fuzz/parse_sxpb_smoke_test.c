@@ -64,6 +64,14 @@ NEXT_FUZZ_DATA
 "Expected open paren to start field.\n"
 ")"
 NEXT_FUZZ_DATA
+"1,6,"
+"Expected some digit in number.\n"
+"(x -.)"
+NEXT_FUZZ_DATA
+"1,6,"
+"Expected some digit in number.\n"
+"(x +.)"
+NEXT_FUZZ_DATA
 "1,7,"
 "Cannot parse exponent.\n"
 "(x 5e+bad)"

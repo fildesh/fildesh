@@ -214,6 +214,7 @@ parse_number_FildeshSxpbInfo(
   FildeshX slice;
   int exponent = 0;
   bool fractional = false;
+  bool has_digit = false;
   truncate_FildeshO(oslice);
   if (skipstr_FildeshSxpbInfo(info, in, "-")) {
     putc_FildeshO(oslice, '-');
@@ -224,16 +225,22 @@ parse_number_FildeshSxpbInfo(
   }
   assert(oslice->size == 1);
   slice = while_chars_FildeshSxpbInfo(info, in, "0123456789");
+  has_digit = (slice.size > 0);
   skip_leading_zeroes(&slice);
   putslice_FildeshO(oslice, slice);
   if (skipstr_FildeshSxpbInfo(info, in, ".")) {
     fractional = true;
     slice = while_chars_FildeshSxpbInfo(info, in, "0123456789");
+    has_digit = has_digit || (slice.size > 0);
     exponent = -(int)slice.size;
     if (oslice->size == 1) {
       skip_leading_zeroes(&slice);
     }
     putslice_FildeshO(oslice, slice);
+  }
+  if (!has_digit) {
+    syntax_error(info, "Expected some digit in number.");
+    return false;
   }
   if (skipstr_FildeshSxpbInfo(info, in, "e") ||
       skipstr_FildeshSxpbInfo(info, in, "E"))
