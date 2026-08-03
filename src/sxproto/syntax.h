@@ -9,6 +9,14 @@ static const char sxpb_delim_chars[] = " \t\n\v\f\r\"();";
 
 static inline
   bool
+is_sxpb_blank(char c)
+{
+  return NULL != memchr(
+      sxpb_blank_chars, c, sizeof(sxpb_blank_chars)-1);
+}
+
+static inline
+  bool
 is_sxpb_delim(char c)
 {
   return NULL != memchr(
@@ -17,14 +25,30 @@ is_sxpb_delim(char c)
 
 static inline
   bool
+has_sxpb_special_prefix(const char* s, size_t n)
+{
+  char c = (n > 0 ? s[0] : '\0');
+  if (c == '+') {return true;}
+  if (c == '-' || c == '.') {
+    if (n == 1 || c == s[1]) {return false;}
+    c = s[1];
+    if (c == '+' || c == '-' || c == '.') {return true;}
+  }
+  return false;
+}
+
+static inline
+  bool
 has_sxpb_bare_prefix(const char* s, size_t n)
 {
   static const char sxpb_bad_bare_prefix_chars[] =
     " \t\n\v\f\r\"();0123456789-+.";
-  const char c = (n > 0 ? s[0] : '\0');
+  char c = (n > 0 ? s[0] : '\0');
   if (c == '\0') {return false;}
-  if (c == '-' && (n == 1 || s[1] == '-')) {return true;}
-  if (c == '.' && (n == 1 || s[1] == '.')) {return true;}
+  if (c == '-' || c == '.') {
+    if (n == 1 || c == s[1]) {return true;}
+    c = s[1];
+  }
   return NULL == memchr(
       sxpb_bad_bare_prefix_chars,
       c,

@@ -186,6 +186,107 @@ static void parse_field_test() {
   close_FildeshSxpb(sxpb);
 }
 
+static void parse_field_name_validity_test() {
+  /* Message field names must be valid bare strings; numbers, booleans, and
+   * digit-leading PLAIN words are rejected (parity with sxpb-py). */
+#define expectbadname(text) do { \
+  FildeshX slice = FildeshX_of_strlit(text); \
+  FildeshO eo[1] = {DEFAULT_FildeshO}; \
+  FildeshSxpb* s = slurp_sxpb_close_FildeshX(&slice, NULL, eo); \
+  assert(NULL == s); \
+  assert(eo->size > 0); \
+  close_FildeshO(eo); \
+} while (0)
+  expectbadname("(+.5 1)");
+  expectbadname("(-.5 1)");
+  expectbadname("(+1 1)");
+  expectbadname("(+true 1)");
+  expectbadname("(50mm 1)");
+  expectbadname("(123 1)");
+  expectbadname("(+truex 1)");
+  expectbadname("((50mm) 1)");
+  expectbadname("(( ; comment\n +truex) 1)");
+#undef expectbadname
+
+#define expectgoodname(name) do { \
+  FildeshX slice = FildeshX_of_strlit("(" name " 1)"); \
+  FildeshO eo[1] = {DEFAULT_FildeshO}; \
+  FildeshSxpb* s = slurp_sxpb_close_FildeshX(&slice, NULL, eo); \
+  FildeshSxpbIT it; \
+  assert(s); \
+  it = lookup_subfield_at_FildeshSxpb(s, top_of_FildeshSxpb(s), name); \
+  assert(!nullish_FildeshSxpbIT(it)); \
+  close_FildeshSxpb(s); \
+  close_FildeshO(eo); \
+} while (0)
+  expectgoodname("abc");
+  expectgoodname("-foo");
+  expectgoodname("--x");
+  expectgoodname("_");
+#undef expectgoodname
+
+  /* Quoting leaves otherwise reserved or non-bare names unambiguous. */
+#define expectgoodquotedname(name) do { \
+  FildeshX slice = FildeshX_of_strlit("(\"" name "\" 1)"); \
+  FildeshO eo[1] = {DEFAULT_FildeshO}; \
+  FildeshSxpb* s = slurp_sxpb_close_FildeshX(&slice, NULL, eo); \
+  FildeshSxpbIT it; \
+  assert(s); \
+  it = lookup_subfield_at_FildeshSxpb(s, top_of_FildeshSxpb(s), name); \
+  assert(!nullish_FildeshSxpbIT(it)); \
+  close_FildeshSxpb(s); \
+  close_FildeshO(eo); \
+} while (0)
+  expectgoodquotedname("50mm");
+  expectgoodquotedname("+.");
+#undef expectgoodquotedname
+
+  {
+    FildeshX in = FildeshX_of_strlit("((\"50mm\") 1)");
+    FildeshO err_out[1] = {DEFAULT_FildeshO};
+    FildeshSxpb* sxpb = slurp_sxpb_close_FildeshX(&in, NULL, err_out);
+    FildeshSxpbIT it;
+    assert(sxpb);
+    it = lookup_subfield_at_FildeshSxpb(
+        sxpb, top_of_FildeshSxpb(sxpb), "50mm");
+    assert(!nullish_FildeshSxpbIT(it));
+    close_FildeshSxpb(sxpb);
+    close_FildeshO(err_out);
+  }
+
+  /* Nest keys accept PLAIN words (numeric keys remain valid), but a
+   * reserved-prefix starter is rejected. */
+  {
+    FildeshX in = FildeshX_of_strlit(
+        "(n (\"\") (50mm x) (123 y) (\"+.\" z))");
+    FildeshO err_out[1] = {DEFAULT_FildeshO};
+    FildeshSxpb* sxpb = slurp_sxpb_close_FildeshX(&in, NULL, err_out);
+    FildeshSxpbIT it;
+    assert(sxpb);
+    it = lookup_subfield_at_FildeshSxpb(sxpb, top_of_FildeshSxpb(sxpb), "n");
+    assert(!nullish_FildeshSxpbIT(it));
+    it = first_at_FildeshSxpb(sxpb, it);
+    assert(0 == strcmp("50mm", name_at_FildeshSxpb(sxpb, it)));
+    it = next_at_FildeshSxpb(sxpb, it);
+    assert(0 == strcmp("123", name_at_FildeshSxpb(sxpb, it)));
+    it = next_at_FildeshSxpb(sxpb, it);
+    assert(0 == strcmp("+.", name_at_FildeshSxpb(sxpb, it)));
+    close_FildeshSxpb(sxpb);
+    close_FildeshO(err_out);
+  }
+#define expectbadnestkey(text) do { \
+  FildeshX slice = FildeshX_of_strlit(text); \
+  FildeshO eo[1] = {DEFAULT_FildeshO}; \
+  FildeshSxpb* s = slurp_sxpb_close_FildeshX(&slice, NULL, eo); \
+  assert(NULL == s); \
+  assert(eo->size > 0); \
+  close_FildeshO(eo); \
+} while (0)
+  expectbadnestkey("(n (\"\") (+truex x))");
+  expectbadnestkey("(n (\"\") (-.x x))");
+#undef expectbadnestkey
+}
+
 static void parse_string_field_test() {
   FildeshSxpbInfo info[1] = {DEFAULT_FildeshSxpbInfo};
   FildeshO oslice[1] = {DEFAULT_FildeshO};
@@ -292,6 +393,7 @@ int main() {
   parse_number_failure_test();
   parse_name_test();
   parse_field_test();
+  parse_field_name_validity_test();
   parse_string_field_test();
   parse_last_in_string_array_field_test();
   parse_array_of_empty_messages_test();
