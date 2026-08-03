@@ -466,12 +466,6 @@ insert_next_FildeshSxpb(
       cons_kind == FildeshSxprotoFieldKind_DICT) {
     FildeshSxpbIT e_it = direct_ensure_subfield_FildeshSxpb(
         sxpb, m_it, text, text_slice.size);
-    if (e_it.field_kind == kind && kind == FildeshSxprotoFieldKind_ARRAY) {
-      return e_it;
-    }
-    if (e_it.field_kind == kind && kind == FildeshSxprotoFieldKind_MANYOF) {
-      return e_it;
-    }
     if (e_it.field_kind != FildeshSxprotoFieldKind_UNKNOWN) {
       syntax_error(info, "Duplicate field name. Use array syntax for repeated fields.");
       return FildeshSxpbIT_of_NULL();
@@ -587,6 +581,102 @@ reconcile_dict_value_kind_FildeshSxpbInfo(
   return true;
 }
 
+static
+  bool
+on_append_operator(FildeshX* in)
+{
+  char c;
+  if (!peek_bytestring_FildeshX(in, NULL, 4)) {
+    return false;
+  }
+  if (!peek_bytestring_FildeshX(in, fildesh_bytestrlit("(+."))) {
+    return false;
+  }
+  c = in->at[in->off + 3];
+  return c == ')' || is_sxpb_blank(c);
+}
+
+/** Parse an append operation of the form:
+ *   ((+. path to field) (()) elem elem ...)
+ **/
+static
+  bool
+parse_append_field_FildeshSxpbInfo(
+    FildeshSxpbInfo* info,
+    FildeshX* in,
+    FildeshSxpb* sxpb,
+    FildeshSxpbIT p_it,
+    FildeshO* oslice)
+{
+  FildeshSxpbIT path_it = DEFAULT_FildeshSxpbIT;
+  FildeshSxpbIT tail_it = DEFAULT_FildeshSxpbIT;
+  FildeshSxpbIT e_it;
+  FildeshSxprotoFieldKind elem_kind = FildeshSxprotoFieldKind_UNKNOWN;
+  skipstr_FildeshSxpbInfo(info, in, "(+.");
+  skip_separation(in, info);
+
+  /* Resolve keypath relative to the current message.*/
+  path_it.cons_id = p_it.cons_id;
+  for (;;) {
+    FildeshX slice = until_chars_FildeshSxpbInfo(info, in, sxpb_delim_chars);
+    if (slice.size == 0) {
+      syntax_error(info, "Expected a field name in the append keypath.");
+      return false;
+    }
+    path_it = lookup_subfield_at_FildeshSxpb(
+        sxpb, path_it, ensure_name_FildeshSxpb(sxpb, slice.at, slice.size));
+    if (nullish_FildeshSxpbIT(path_it)) {
+      syntax_error(info, "Unknown append target.");
+      return false;
+    }
+    skip_separation(in, info);
+    if (skipstr_FildeshSxpbInfo(info, in, ")")) {
+      break;
+    }
+    if (path_it.field_kind != FildeshSxprotoFieldKind_MESSAGE &&
+        path_it.field_kind != FildeshSxprotoFieldKind_DICT) {
+      syntax_error(info, "Expected mesg or dict in append operation keypath.");
+      return false;
+    }
+  }
+
+  if (path_it.field_kind != FildeshSxprotoFieldKind_ARRAY &&
+      path_it.field_kind != FildeshSxprotoFieldKind_MANYOF) {
+    syntax_error(info, "Expected append target to be an array or manyof.");
+    return false;
+  }
+
+  skip_separation(in, info);
+  if (!skipstr_FildeshSxpbInfo(info, in, "(())")) {
+    syntax_error(info, "Expected (()) discriminator before append elements.");
+    return false;
+  }
+  skip_separation(in, info);
+
+  tail_it.field_kind = path_it.field_kind;
+  tail_it.cons_id = path_it.elem_id;
+  for (e_it = first_at_FildeshSxpb(sxpb, tail_it);
+       !nullish_FildeshSxpbIT(e_it);
+       e_it = next_at_FildeshSxpb(sxpb, tail_it))
+  {
+    if (elem_kind == FildeshSxprotoFieldKind_UNKNOWN) {
+      elem_kind = e_it.field_kind;
+    }
+    tail_it = e_it;
+  }
+
+  if (!parse_field_content_FildeshSxpbInfo(
+          info, in, sxpb, tail_it, NULL, elem_kind, false, oslice)) {
+    return false;
+  }
+  skip_separation(in, info);
+  if (!skipstr_FildeshSxpbInfo(info, in, ")")) {
+    syntax_error(info, "Expected a closing paren after append elements.");
+    return false;
+  }
+  return true;
+}
+
   bool
 parse_field_FildeshSxpbInfo(
     FildeshSxpbInfo* info,
@@ -610,6 +700,9 @@ parse_field_FildeshSxpbInfo(
 
   skip_separation(in, info);
 
+  if (on_append_operator(in)) {
+    return parse_append_field_FildeshSxpbInfo(info, in, sxpb, p_it, oslice);
+  }
   {
     const FildeshSxpbInfo tmp_info = *info;
     const bool good = parse_name_FildeshSxpbInfo(
@@ -825,19 +918,6 @@ parse_field_FildeshSxpbInfo(
   }
   p_it.cons_id = p_it.elem_id;
   p_it.elem_id = ~(FildeshSxpb_id)0;
-
-  /* Prepare to append more elements if field already a non-empty array.*/
-  if (field_kind == FildeshSxprotoFieldKind_ARRAY ||
-      field_kind == FildeshSxprotoFieldKind_MANYOF)
-  {
-    FildeshSxpbIT e_it;
-    for (e_it = first_at_FildeshSxpb(sxpb, p_it);
-         !nullish_FildeshSxpbIT(e_it);
-         e_it = next_at_FildeshSxpb(sxpb, p_it))
-    {
-      p_it = e_it;
-    }
-  }
 
   if (!parse_field_content_FildeshSxpbInfo(
           info, in, sxpb, p_it, field, elem_kind,

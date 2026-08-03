@@ -387,6 +387,115 @@ static void parse_array_of_empty_messages_test() {
   close_FildeshO(err_out);
 }
 
+static void parse_repeated_list_field_test() {
+  /* Repeating a manyof field is rejected (reject-all duplicate names). */
+  {
+    FildeshX in = FildeshX_of_strlit(
+        "(m (()) (a 1))(m (()) (a 2))");
+    FildeshO err_out[1] = {DEFAULT_FildeshO};
+    FildeshSxpb* sxpb = slurp_sxpb_close_FildeshX(&in, NULL, err_out);
+    assert(NULL == sxpb);
+    assert(err_out->size > 0);
+    close_FildeshO(err_out);
+  }
+
+  /* Repeating an array field is rejected as well. These message-element cases
+   * used to append; they are now duplicate-field errors.
+   */
+  {
+    FildeshX in = FildeshX_of_strlit(
+        "(a (()) (() (x 1)))(a (()) (() (x 2)))");
+    FildeshO err_out[1] = {DEFAULT_FildeshO};
+    FildeshSxpb* sxpb = slurp_sxpb_close_FildeshX(&in, NULL, err_out);
+    assert(NULL == sxpb);
+    assert(err_out->size > 0);
+    close_FildeshO(err_out);
+  }
+}
+
+static void parse_append_operator_test() {
+  /* Appending to an existing array via a top-level path. */
+  {
+    FildeshX in = FildeshX_of_strlit(
+        "(m (a (()) 1 2 3))((+. m a) (()) 4 5 6)");
+    FildeshO err_out[1] = {DEFAULT_FildeshO};
+    FildeshSxpb* sxpb = slurp_sxpb_close_FildeshX(&in, NULL, err_out);
+    FildeshSxpbIT it;
+    unsigned i;
+    assert(sxpb);
+    assert(err_out->size == 0);
+    it = lookup_subfield_at_FildeshSxpb(sxpb, top_of_FildeshSxpb(sxpb), "m");
+    it = lookup_subfield_at_FildeshSxpb(sxpb, it, "a");
+    assert(it.field_kind == FildeshSxprotoFieldKind_ARRAY);
+    it = first_at_FildeshSxpb(sxpb, it);
+    for (i = 1; i <= 6; ++i) {
+      assert(i == unsigned_value_at_FildeshSxpb(sxpb, it));
+      it = next_at_FildeshSxpb(sxpb, it);
+    }
+    assert(nullish_FildeshSxpbIT(it));
+    close_FildeshSxpb(sxpb);
+    close_FildeshO(err_out);
+  }
+
+  /* A multi-segment path descends through nested messages. */
+  {
+    FildeshX in = FildeshX_of_strlit(
+        "(o (m (a (()) 1)))((+. o m a) (()) 2)");
+    FildeshO err_out[1] = {DEFAULT_FildeshO};
+    FildeshSxpb* sxpb = slurp_sxpb_close_FildeshX(&in, NULL, err_out);
+    FildeshSxpbIT it;
+    assert(sxpb);
+    it = lookup_subfield_at_FildeshSxpb(sxpb, top_of_FildeshSxpb(sxpb), "o");
+    it = lookup_subfield_at_FildeshSxpb(sxpb, it, "m");
+    it = lookup_subfield_at_FildeshSxpb(sxpb, it, "a");
+    it = first_at_FildeshSxpb(sxpb, it);
+    assert(1 == unsigned_value_at_FildeshSxpb(sxpb, it));
+    it = next_at_FildeshSxpb(sxpb, it);
+    assert(2 == unsigned_value_at_FildeshSxpb(sxpb, it));
+    assert(nullish_FildeshSxpbIT(next_at_FildeshSxpb(sxpb, it)));
+    close_FildeshSxpb(sxpb);
+    close_FildeshO(err_out);
+  }
+
+  /* Appending entries to an existing manyof field. */
+  {
+    FildeshX in = FildeshX_of_strlit(
+        "((m) (a 1) (b 2))((+. m) (()) (c 3))");
+    FildeshO err_out[1] = {DEFAULT_FildeshO};
+    FildeshSxpb* sxpb = slurp_sxpb_close_FildeshX(&in, NULL, err_out);
+    FildeshSxpbIT it;
+    assert(sxpb);
+    it = lookup_subfield_at_FildeshSxpb(sxpb, top_of_FildeshSxpb(sxpb), "m");
+    assert(it.field_kind == FildeshSxprotoFieldKind_MANYOF);
+    it = first_at_FildeshSxpb(sxpb, it);
+    assert(0 == strcmp("a", name_at_FildeshSxpb(sxpb, it)));
+    assert(1 == unsigned_value_at_FildeshSxpb(sxpb, it));
+    it = next_at_FildeshSxpb(sxpb, it);
+    assert(0 == strcmp("b", name_at_FildeshSxpb(sxpb, it)));
+    assert(2 == unsigned_value_at_FildeshSxpb(sxpb, it));
+    it = next_at_FildeshSxpb(sxpb, it);
+    assert(0 == strcmp("c", name_at_FildeshSxpb(sxpb, it)));
+    assert(3 == unsigned_value_at_FildeshSxpb(sxpb, it));
+    assert(nullish_FildeshSxpbIT(next_at_FildeshSxpb(sxpb, it)));
+    close_FildeshSxpb(sxpb);
+    close_FildeshO(err_out);
+  }
+
+  /* Failures: unknown target, non-list target, missing (()) discriminator. */
+#define expectappendfail(text) do { \
+  FildeshX slice = FildeshX_of_strlit(text); \
+  FildeshO eo[1] = {DEFAULT_FildeshO}; \
+  FildeshSxpb* s = slurp_sxpb_close_FildeshX(&slice, NULL, eo); \
+  assert(NULL == s); \
+  assert(eo->size > 0); \
+  close_FildeshO(eo); \
+} while (0)
+  expectappendfail("(m (a (()) 1))((+. m zzz) (()) 2)");
+  expectappendfail("(m (x 5))((+. m x) (()) 1)");
+  expectappendfail("(m (a (()) 1))((+. m a) 2)");
+#undef expectappendfail
+}
+
 int main() {
   parse_string_test();
   parse_number_test();
@@ -397,5 +506,7 @@ int main() {
   parse_string_field_test();
   parse_last_in_string_array_field_test();
   parse_array_of_empty_messages_test();
+  parse_repeated_list_field_test();
+  parse_append_operator_test();
   return 0;
 }
