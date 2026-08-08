@@ -513,7 +513,9 @@ reconcile_elem_kind_FildeshSxpbInfo(
   else if (*elem_kind == FildeshSxprotoFieldKind_LITERAL_FLOAT &&
            *tmp_kind == FildeshSxprotoFieldKind_LITERAL_INT)
   {
-    /* This is fine. */
+    /* Store an integer token in the canonical float representation. */
+    putstrlit_FildeshO(oslice, ".e+0");
+    *tmp_kind = FildeshSxprotoFieldKind_LITERAL_FLOAT;
   }
   else if (!schema_on &&
            *elem_kind == FildeshSxprotoFieldKind_LITERAL_INT &&
@@ -596,6 +598,33 @@ on_append_operator(FildeshX* in)
   return c == ')' || is_sxpb_blank(c);
 }
 
+static
+  bool
+reconcile_existing_elem_kind_FildeshSxpbInfo(
+    FildeshSxpbInfo* info,
+    FildeshSxprotoFieldKind* elem_kind,
+    FildeshSxprotoFieldKind tmp_kind)
+{
+  if (*elem_kind == FildeshSxprotoFieldKind_UNKNOWN) {
+    *elem_kind = tmp_kind;
+  }
+  else if (*elem_kind == FildeshSxprotoFieldKind_LITERAL_FLOAT &&
+           tmp_kind == FildeshSxprotoFieldKind_LITERAL_INT)
+  {
+    /* An integer element is valid in a float list. */
+  }
+  else if (*elem_kind == FildeshSxprotoFieldKind_LITERAL_INT &&
+           tmp_kind == FildeshSxprotoFieldKind_LITERAL_FLOAT)
+  {
+    *elem_kind = FildeshSxprotoFieldKind_LITERAL_FLOAT;
+  }
+  else if (*elem_kind != tmp_kind) {
+    syntax_error(info, "Inconsistent existing append target element types.");
+    return false;
+  }
+  return true;
+}
+
 /** Parse an append operation of the form:
  *   ((+. path to field) (()) elem elem ...)
  **/
@@ -603,11 +632,13 @@ static
   bool
 parse_append_field_FildeshSxpbInfo(
     FildeshSxpbInfo* info,
+    const FildeshSxprotoField* schema,
     FildeshX* in,
     FildeshSxpb* sxpb,
     FildeshSxpbIT p_it,
     FildeshO* oslice)
 {
+  const FildeshSxprotoField* path_schema = schema;
   FildeshSxpbIT path_it = DEFAULT_FildeshSxpbIT;
   FildeshSxpbIT tail_it = DEFAULT_FildeshSxpbIT;
   FildeshSxpbIT e_it;
@@ -615,16 +646,33 @@ parse_append_field_FildeshSxpbInfo(
   skipstr_FildeshSxpbInfo(info, in, "(+.");
   skip_separation(in, info);
 
-  /* Resolve keypath relative to the current message.*/
+  /* Resolve keypath and schema relative to the current message. */
   path_it.cons_id = p_it.cons_id;
   for (;;) {
-    FildeshX slice = until_chars_FildeshSxpbInfo(info, in, sxpb_delim_chars);
+    const FildeshSxprotoFieldKind path_parent_kind = (
+        (*sxpb->values)[id_of_FildeshSxpbIT(path_it)].field_kind);
+    FildeshX slice;
+    const char* name;
+    if (path_parent_kind != FildeshSxprotoFieldKind_MESSAGE &&
+        path_parent_kind != FildeshSxprotoFieldKind_DICT) {
+      syntax_error(info, "Expected mesg or dict in append operation keypath.");
+      return false;
+    }
+    slice = until_chars_FildeshSxpbInfo(info, in, sxpb_delim_chars);
     if (slice.size == 0) {
       syntax_error(info, "Expected a field name in the append keypath.");
       return false;
     }
-    path_it = lookup_subfield_at_FildeshSxpb(
-        sxpb, path_it, ensure_name_FildeshSxpb(sxpb, slice.at, slice.size));
+    name = ensure_name_FildeshSxpb(sxpb, slice.at, slice.size);
+    if (path_schema && path_parent_kind != FildeshSxprotoFieldKind_DICT) {
+      path_schema = subfield_of_FildeshSxprotoField(path_schema, name);
+      if (!path_schema) {
+        syntax_error(info, "Unknown append target in schema.");
+        return false;
+      }
+      name = path_schema->name;
+    }
+    path_it = lookup_subfield_at_FildeshSxpb(sxpb, path_it, name);
     if (nullish_FildeshSxpbIT(path_it)) {
       syntax_error(info, "Unknown append target.");
       return false;
@@ -632,11 +680,6 @@ parse_append_field_FildeshSxpbInfo(
     skip_separation(in, info);
     if (skipstr_FildeshSxpbInfo(info, in, ")")) {
       break;
-    }
-    if (path_it.field_kind != FildeshSxprotoFieldKind_MESSAGE &&
-        path_it.field_kind != FildeshSxprotoFieldKind_DICT) {
-      syntax_error(info, "Expected mesg or dict in append operation keypath.");
-      return false;
     }
   }
 
@@ -653,20 +696,40 @@ parse_append_field_FildeshSxpbInfo(
   }
   skip_separation(in, info);
 
+  if (path_schema && path_schema->kind == FildeshSxprotoFieldKind_ARRAY) {
+    elem_kind = (path_schema->subfields
+                 ? FildeshSxprotoFieldKind_MESSAGE
+                 : (FildeshSxprotoFieldKind)path_schema->hi);
+  }
+  else if (path_schema &&
+           path_schema->kind == FildeshSxprotoFieldKind_MANYOF)
+  {
+    const FildeshSxprotoField* const anonymous_field = (
+        subfield_of_FildeshSxprotoField(path_schema, ""));
+    if (anonymous_field &&
+        is_literal_FildeshSxprotoFieldKind(anonymous_field->kind)) {
+      elem_kind = anonymous_field->kind;
+    }
+  }
+
   tail_it.field_kind = path_it.field_kind;
   tail_it.cons_id = path_it.elem_id;
   for (e_it = first_at_FildeshSxpb(sxpb, tail_it);
        !nullish_FildeshSxpbIT(e_it);
        e_it = next_at_FildeshSxpb(sxpb, tail_it))
   {
-    if (elem_kind == FildeshSxprotoFieldKind_UNKNOWN) {
-      elem_kind = e_it.field_kind;
+    if (path_it.field_kind == FildeshSxprotoFieldKind_ARRAY ||
+        name_at_FildeshSxpb(sxpb, e_it) == NULL) {
+      if (!reconcile_existing_elem_kind_FildeshSxpbInfo(
+              info, &elem_kind, e_it.field_kind)) {
+        return false;
+      }
     }
     tail_it = e_it;
   }
 
   if (!parse_field_content_FildeshSxpbInfo(
-          info, in, sxpb, tail_it, NULL, elem_kind, false, oslice)) {
+          info, in, sxpb, tail_it, path_schema, elem_kind, false, oslice)) {
     return false;
   }
   skip_separation(in, info);
@@ -701,7 +764,8 @@ parse_field_FildeshSxpbInfo(
   skip_separation(in, info);
 
   if (on_append_operator(in)) {
-    return parse_append_field_FildeshSxpbInfo(info, in, sxpb, p_it, oslice);
+    return parse_append_field_FildeshSxpbInfo(
+        info, schema, in, sxpb, p_it, oslice);
   }
   {
     const FildeshSxpbInfo tmp_info = *info;
@@ -1084,6 +1148,16 @@ parse_field_content_FildeshSxpbInfo(
       if (field_kind == FildeshSxprotoFieldKind_DICT) {
         syntax_error(info, "Dict items must be key-value pairs even when the value is empty.");
         return false;
+      }
+      if (field_kind == FildeshSxprotoFieldKind_MANYOF && schema) {
+        const FildeshSxprotoField* const anonymous_field = (
+            subfield_of_FildeshSxprotoField(schema, ""));
+        if (!anonymous_field ||
+            !is_literal_FildeshSxprotoFieldKind(anonymous_field->kind)) {
+          syntax_error(info, "Manyof has no anonymous literal alternative.");
+          return false;
+        }
+        elem_kind = anonymous_field->kind;
       }
       if (elem_kind == FildeshSxprotoFieldKind_LITERAL_STRING ||
           field_kind == FildeshSxprotoFieldKind_NEST ||

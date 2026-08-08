@@ -168,6 +168,34 @@ NEXT_FUZZ_DATA
 "Unexpected literal type.\n"
 "(a (()) 5 6 7 \"8\")"
 NEXT_FUZZ_DATA
+"1,5,"
+"Expected a field name in the append keypath.\n"
+"((+.) (()) 1)"
+NEXT_FUZZ_DATA
+"1,25,"
+"Unknown append target.\n"
+"(m (a (()) 1))((+. m zzz) (()) 2)"
+NEXT_FUZZ_DATA
+"1,19,"
+"Expected mesg or dict in append operation keypath.\n"
+"(m (x 5))((+. m x y) (()) 1)"
+NEXT_FUZZ_DATA
+"1,19,"
+"Expected append target to be an array or manyof.\n"
+"(m (x 5))((+. m x) (()) 1)"
+NEXT_FUZZ_DATA
+"1,25,"
+"Expected (()) discriminator before append elements.\n"
+"(m (a (()) 1))((+. m a) 2)"
+NEXT_FUZZ_DATA
+"1,33,"
+"Unexpected literal type.\n"
+"(m (a (()) 1))((+. m a) (()) \"x\")"
+NEXT_FUZZ_DATA
+"1,30,"
+"Expected a closing paren after append elements.\n"
+"(m (a (()) 1))((+. m a) (()) 2"
+NEXT_FUZZ_DATA
 "1,12,"
 "Expected a literal or closing paren.\n"
 "(a (()) (()"

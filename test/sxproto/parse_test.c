@@ -437,6 +437,52 @@ static void parse_append_operator_test() {
     close_FildeshO(err_out);
   }
 
+  /* Appending no elements is a successful no-op. */
+  {
+    FildeshX in = FildeshX_of_strlit(
+        "(a (()) 1 2)((+. a) (()))");
+    FildeshO err_out[1] = {DEFAULT_FildeshO};
+    FildeshSxpb* sxpb = slurp_sxpb_close_FildeshX(&in, NULL, err_out);
+    FildeshSxpbIT it;
+    assert(sxpb);
+    it = lookup_subfield_at_FildeshSxpb(
+        sxpb, top_of_FildeshSxpb(sxpb), "a");
+    it = first_at_FildeshSxpb(sxpb, it);
+    assert(1 == unsigned_value_at_FildeshSxpb(sxpb, it));
+    it = next_at_FildeshSxpb(sxpb, it);
+    assert(2 == unsigned_value_at_FildeshSxpb(sxpb, it));
+    assert(nullish_FildeshSxpbIT(next_at_FildeshSxpb(sxpb, it)));
+    close_FildeshSxpb(sxpb);
+    close_FildeshO(err_out);
+  }
+
+  /* Reconstruct the widened type from every existing array element. */
+  {
+    FildeshX in = FildeshX_of_strlit(
+        "(a (()) 1 2.0)((+. a) (()) 3 4.0)");
+    FildeshO err_out[1] = {DEFAULT_FildeshO};
+    FildeshSxpb* sxpb = slurp_sxpb_close_FildeshX(&in, NULL, err_out);
+    FildeshSxpbIT it;
+    assert(sxpb);
+    it = lookup_subfield_at_FildeshSxpb(
+        sxpb, top_of_FildeshSxpb(sxpb), "a");
+    it = first_at_FildeshSxpb(sxpb, it);
+    assert(it.field_kind == FildeshSxprotoFieldKind_LITERAL_INT);
+    assert(1.0f == float_value_at_FildeshSxpb(sxpb, it));
+    it = next_at_FildeshSxpb(sxpb, it);
+    assert(it.field_kind == FildeshSxprotoFieldKind_LITERAL_FLOAT);
+    assert(2.0f == float_value_at_FildeshSxpb(sxpb, it));
+    it = next_at_FildeshSxpb(sxpb, it);
+    assert(it.field_kind == FildeshSxprotoFieldKind_LITERAL_FLOAT);
+    assert(3.0f == float_value_at_FildeshSxpb(sxpb, it));
+    it = next_at_FildeshSxpb(sxpb, it);
+    assert(it.field_kind == FildeshSxprotoFieldKind_LITERAL_FLOAT);
+    assert(4.0f == float_value_at_FildeshSxpb(sxpb, it));
+    assert(nullish_FildeshSxpbIT(next_at_FildeshSxpb(sxpb, it)));
+    close_FildeshSxpb(sxpb);
+    close_FildeshO(err_out);
+  }
+
   /* A multi-segment path descends through nested messages. */
   {
     FildeshX in = FildeshX_of_strlit(
@@ -457,10 +503,10 @@ static void parse_append_operator_test() {
     close_FildeshO(err_out);
   }
 
-  /* Appending entries to an existing manyof field. */
+  /* Named manyof entries do not constrain later anonymous elements. */
   {
     FildeshX in = FildeshX_of_strlit(
-        "((m) (a 1) (b 2))((+. m) (()) (c 3))");
+        "((m) (a 1) (b 2))((+. m) (()) (c 3) 4 5)");
     FildeshO err_out[1] = {DEFAULT_FildeshO};
     FildeshSxpb* sxpb = slurp_sxpb_close_FildeshX(&in, NULL, err_out);
     FildeshSxpbIT it;
@@ -476,6 +522,12 @@ static void parse_append_operator_test() {
     it = next_at_FildeshSxpb(sxpb, it);
     assert(0 == strcmp("c", name_at_FildeshSxpb(sxpb, it)));
     assert(3 == unsigned_value_at_FildeshSxpb(sxpb, it));
+    it = next_at_FildeshSxpb(sxpb, it);
+    assert(NULL == name_at_FildeshSxpb(sxpb, it));
+    assert(4 == unsigned_value_at_FildeshSxpb(sxpb, it));
+    it = next_at_FildeshSxpb(sxpb, it);
+    assert(NULL == name_at_FildeshSxpb(sxpb, it));
+    assert(5 == unsigned_value_at_FildeshSxpb(sxpb, it));
     assert(nullish_FildeshSxpbIT(next_at_FildeshSxpb(sxpb, it)));
     close_FildeshSxpb(sxpb);
     close_FildeshO(err_out);
