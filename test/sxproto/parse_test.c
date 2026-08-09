@@ -545,6 +545,8 @@ static void parse_append_operator_test() {
   expectappendfail("(m (a (()) 1))((+. m zzz) (()) 2)");
   expectappendfail("(m (x 5))((+. m x) (()) 1)");
   expectappendfail("(m (a (()) 1))((+. m a) 2)");
+  expectappendfail("((m) 1)((+. m) (()) ())");
+  expectappendfail("((m) ())((+. m) (()) 1)");
 #undef expectappendfail
 }
 

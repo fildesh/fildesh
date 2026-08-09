@@ -86,8 +86,46 @@ static void parse_manyof_basic_append_test() {
   close_FildeshO(err_out);
 }
 
+static void parse_manyof_element_kind_test() {
+#define expectmanyoffail(text) do { \
+  FildeshX slice = FildeshX_of_strlit(text); \
+  FildeshO eo[1] = {DEFAULT_FildeshO}; \
+  FildeshSxpb* s = slurp_sxpb_close_FildeshX(&slice, NULL, eo); \
+  assert(NULL == s); \
+  assert(eo->size > 0); \
+  close_FildeshO(eo); \
+} while (0)
+
+  /* Unnamed manyof elements obey the same kind constraints as arrays. */
+  expectmanyoffail("((m) 1 ())");
+  expectmanyoffail("((m) () 1)");
+  expectmanyoffail("((m) 1 (() (x 2)))");
+  expectmanyoffail("((m) (() (x 1)) 2)");
+  expectmanyoffail("((m) one ())");
+  expectmanyoffail("((m) () one)");
+  expectmanyoffail("((m) (()))");
+#undef expectmanyoffail
+
+#define expectmanyofparse(text) do { \
+  FildeshX slice = FildeshX_of_strlit(text); \
+  FildeshO eo[1] = {DEFAULT_FildeshO}; \
+  FildeshSxpb* s = slurp_sxpb_close_FildeshX(&slice, NULL, eo); \
+  assert(s); \
+  assert(eo->size == 0); \
+  close_FildeshSxpb(s); \
+  close_FildeshO(eo); \
+} while (0)
+
+  /* Named elements are transparent to the unnamed element kind. */
+  expectmanyofparse("((m) 1 (named (x 2)) 3)");
+  expectmanyofparse("((m) (named (x 2)) 1 3)");
+  expectmanyofparse("((m) () (named 1) (() (x 2)))");
+#undef expectmanyofparse
+}
+
 int main() {
   parse_manyof_anonymous_discriminated_string_test();
   parse_manyof_basic_append_test();
+  parse_manyof_element_kind_test();
   return 0;
 }
