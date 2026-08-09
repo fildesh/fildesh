@@ -718,8 +718,9 @@ parse_append_field_FildeshSxpbInfo(
        !nullish_FildeshSxpbIT(e_it);
        e_it = next_at_FildeshSxpb(sxpb, tail_it))
   {
+    const char* const elem_name = name_at_FildeshSxpb(sxpb, e_it);
     if (path_it.field_kind == FildeshSxprotoFieldKind_ARRAY ||
-        name_at_FildeshSxpb(sxpb, e_it) == NULL) {
+        !elem_name || elem_name[0] == '\0') {
       if (!reconcile_existing_elem_kind_FildeshSxpbInfo(
               info, &elem_kind, e_it.field_kind)) {
         return false;
