@@ -658,12 +658,21 @@ parse_append_field_FildeshSxpbInfo(
       syntax_error(info, "Expected mesg or dict in append operation keypath.");
       return false;
     }
+    truncate_FildeshO(oslice);
     slice = until_chars_FildeshSxpbInfo(info, in, sxpb_delim_chars);
-    if (slice.size == 0) {
+    if (slice.size > 0) {
+      putslice_FildeshO(oslice, slice);
+    }
+    else if (peek_char_FildeshX(in, '"')) {
+      if (!parse_quoted_string_FildeshSxpbInfo(info, in, oslice)) {
+        return false;
+      }
+    }
+    if (oslice->size == 0) {
       syntax_error(info, "Expected a field name in the append keypath.");
       return false;
     }
-    name = ensure_name_FildeshSxpb(sxpb, slice.at, slice.size);
+    name = ensure_name_FildeshSxpb(sxpb, oslice->at, oslice->size);
     if (path_schema && path_parent_kind != FildeshSxprotoFieldKind_DICT) {
       path_schema = subfield_of_FildeshSxprotoField(path_schema, name);
       if (!path_schema) {

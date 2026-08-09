@@ -437,6 +437,27 @@ static void parse_append_operator_test() {
     close_FildeshO(err_out);
   }
 
+  /* Quoted field names are valid append keypath segments. */
+  {
+    FildeshX in = FildeshX_of_strlit(
+        "(\"m m\" (\"a a\" (()) 1))((+. \"m m\" \"a a\") (()) 2)");
+    FildeshO err_out[1] = {DEFAULT_FildeshO};
+    FildeshSxpb* sxpb = slurp_sxpb_close_FildeshX(&in, NULL, err_out);
+    FildeshSxpbIT it;
+    assert(sxpb);
+    assert(err_out->size == 0);
+    it = lookup_subfield_at_FildeshSxpb(
+        sxpb, top_of_FildeshSxpb(sxpb), "m m");
+    it = lookup_subfield_at_FildeshSxpb(sxpb, it, "a a");
+    it = first_at_FildeshSxpb(sxpb, it);
+    assert(1 == unsigned_value_at_FildeshSxpb(sxpb, it));
+    it = next_at_FildeshSxpb(sxpb, it);
+    assert(2 == unsigned_value_at_FildeshSxpb(sxpb, it));
+    assert(nullish_FildeshSxpbIT(next_at_FildeshSxpb(sxpb, it)));
+    close_FildeshSxpb(sxpb);
+    close_FildeshO(err_out);
+  }
+
   /* Appending no elements is a successful no-op. */
   {
     FildeshX in = FildeshX_of_strlit(
