@@ -48,6 +48,10 @@
 (my_messages (()) (() (i 5)) ())
 """)
 
+(array_of_empty_messages """\
+(my_empty_messages (()) () () ())
+""")
+
 (manyof_literals """\
 ((add) 1 2)
 """)

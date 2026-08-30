@@ -295,7 +295,8 @@ on_array_content(FildeshX* in)
   if (!peek_char_FildeshX(in, '(')) {
     return true;
   }
-  if (peek_bytestring_FildeshX(in, fildesh_bytestrlit("(()"))) {
+  if (peek_bytestring_FildeshX(in, fildesh_bytestrlit("(()")) ||
+      peek_bytestring_FildeshX(in, fildesh_bytestrlit("()"))) {
     return true;
   }
   if (peek_bytestring_FildeshX(in, fildesh_bytestrlit("(\"\" "))) {
