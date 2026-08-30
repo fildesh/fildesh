@@ -3,6 +3,7 @@
 
 #include <fildesh/sxproto.h>
 
+#include "src/sxproto/value.h"
 #include "test/sxproto/print_test.h"
 
 static
@@ -19,6 +20,39 @@ static
 slurp_sxpb_str(const char* s, FildeshO* err_out)
 {
   return slurp_sxpb_bytes(s, strlen(s), err_out);
+}
+
+static
+  bool
+toplevel_manyof_anonymous_int_print_test()
+{
+  const char expect_content[] = "(())\n(value 1)\n2\n";
+  bool passing = true;
+  FildeshO* err_out = open_FildeshOF("/dev/stderr");
+  FildeshO oslice[1] = {DEFAULT_FildeshO};
+  FildeshSxpb* sxpb = open_FildeshSxpb();
+  FildeshSxpbIT it = top_of_FildeshSxpb(sxpb);
+
+  (*sxpb->values)[it.cons_id].field_kind = FildeshSxprotoFieldKind_MANYOF;
+  it = direct_insert_first_FildeshSxpb(
+      sxpb, it,
+      ensure_name_FildeshSxpb(sxpb, "+1", 2),
+      FildeshSxprotoFieldKind_LITERAL_INT);
+  direct_insert_next_FildeshSxpb(
+      sxpb, it,
+      ensure_name_FildeshSxpb(sxpb, "+2", 2),
+      FildeshSxprotoFieldKind_LITERAL_INT);
+
+  print_sxpb_FildeshO(oslice, sxpb);
+  passing = check_same_printed_format(
+      err_out, "toplevel_manyof_anonymous_int", "sxpb",
+      fildesh_bytestrlit(expect_content),
+      bytestring_of_FildeshO(oslice));
+
+  close_FildeshSxpb(sxpb);
+  close_FildeshO(oslice);
+  close_FildeshO(err_out);
+  return passing;
 }
 
 static
@@ -73,6 +107,7 @@ int main(int argc, char** argv) {
   }
 
   check_same_printed_format_test();
+  passing = toplevel_manyof_anonymous_int_print_test() && passing;
   case_sxpb = slurp_sxpb_close_FildeshX(open_FildeshXF(case_filepath), NULL, err_out);
   assert(case_sxpb);
 

@@ -4,10 +4,6 @@
 #include "src/sxproto/print/value.h"
 #include "src/sxproto/syntax.h"
 
-static void write_sxpb_named_field_FildeshO(
-    FildeshO* out,
-    const FildeshSxpb* sxpb,
-    FildeshSxpbIT it);
 static void write_sxpb_entries_FildeshO(
     FildeshO* out,
     const FildeshSxpb* sxpb,
@@ -15,6 +11,15 @@ static void write_sxpb_entries_FildeshO(
     char separator,
     bool separate_prefix_on,
     FildeshSxprotoFieldKind parent_kind);
+static void write_sxpb_field_body_FildeshO(
+    FildeshO* out,
+    const FildeshSxpb* sxpb,
+    FildeshSxpbIT it,
+    FildeshSxprotoFieldKind kind);
+static void write_sxpb_named_field_FildeshO(
+    FildeshO* out,
+    const FildeshSxpb* sxpb,
+    FildeshSxpbIT it);
 
 static
   void
@@ -95,10 +100,21 @@ static
 write_sxpb_manyof_entry_FildeshO(
     FildeshO* out,
     const FildeshSxpb* sxpb,
-    FildeshSxpbIT it)
+    FildeshSxpbIT it,
+    bool first)
 {
   const FildeshSxprotoValue* const e = &(*sxpb->values)[id_of_FildeshSxpbIT(it)];
-  if (is_literal_FildeshSxprotoFieldKind(e->field_kind)) {
+  const char* const name = name_at_FildeshSxpb(sxpb, it);
+  const bool value_name_on = (
+      first && (!name || name[0] == '\0') &&
+      it.cons_id == top_of_FildeshSxpb(sxpb).cons_id);
+
+  if (value_name_on) {
+    putstrlit_FildeshO(out, "(value");
+    write_sxpb_field_body_FildeshO(out, sxpb, it, e->field_kind);
+    putc_FildeshO(out, ')');
+  }
+  else if (is_literal_FildeshSxprotoFieldKind(e->field_kind)) {
     write_sxpb_literal_FildeshO(out, sxpb, it);
   }
   else {
@@ -174,7 +190,7 @@ write_sxpb_entries_FildeshO(
         write_sxpb_array_entry_FildeshO(out, sxpb, it);
         break;
       case FildeshSxprotoFieldKind_MANYOF:
-        write_sxpb_manyof_entry_FildeshO(out, sxpb, it);
+        write_sxpb_manyof_entry_FildeshO(out, sxpb, it, first);
         break;
       case FildeshSxprotoFieldKind_NEST:
         write_sxpb_nest_entry_FildeshO(out, sxpb, it);
