@@ -60,6 +60,10 @@
 ((mixed) (value 2) 1 (a 3))
 """)
 
+(manyof_anonymous_messages """\
+((choice) () (() (x 0)))
+""")
+
 (top_manyof"""\
 (())
 (first 1)

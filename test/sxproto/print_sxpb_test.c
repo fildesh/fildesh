@@ -57,6 +57,46 @@ toplevel_manyof_anonymous_int_print_test()
 
 static
   bool
+toplevel_manyof_anonymous_message_print_test()
+{
+  const char expect_content[] = "(())\n(value (x 0))\n(() (y 1))\n";
+  bool passing;
+  FildeshO* err_out = open_FildeshOF("/dev/stderr");
+  FildeshO oslice[1] = {DEFAULT_FildeshO};
+  FildeshSxpb* sxpb = open_FildeshSxpb();
+  FildeshSxpbIT it = top_of_FildeshSxpb(sxpb);
+
+  (*sxpb->values)[it.cons_id].field_kind = FildeshSxprotoFieldKind_MANYOF;
+  it = direct_insert_first_FildeshSxpb(
+      sxpb, it,
+      ensure_name_FildeshSxpb(sxpb, "", 0),
+      FildeshSxprotoFieldKind_MESSAGE);
+  ensure_int_subfield_at_FildeshSxpb(sxpb, it, "x");
+
+  it = direct_insert_next_FildeshSxpb(
+      sxpb, it,
+      ensure_name_FildeshSxpb(sxpb, "", 0),
+      FildeshSxprotoFieldKind_MESSAGE);
+  it = ensure_int_subfield_at_FildeshSxpb(sxpb, it, "y");
+  direct_insert_first_FildeshSxpb(
+      sxpb, it,
+      ensure_name_FildeshSxpb(sxpb, "+1", 2),
+      FildeshSxprotoFieldKind_LITERAL_INT);
+
+  print_sxpb_FildeshO(oslice, sxpb);
+  passing = check_same_printed_format(
+      err_out, "toplevel_manyof_anonymous_message", "sxpb",
+      fildesh_bytestrlit(expect_content),
+      bytestring_of_FildeshO(oslice));
+
+  close_FildeshSxpb(sxpb);
+  close_FildeshO(oslice);
+  close_FildeshO(err_out);
+  return passing;
+}
+
+static
+  bool
 expect_sxpb_roundtrip(const char* name, const char* expect_sxpb)
 {
   bool passing = true;
@@ -108,6 +148,7 @@ int main(int argc, char** argv) {
 
   check_same_printed_format_test();
   passing = toplevel_manyof_anonymous_int_print_test() && passing;
+  passing = toplevel_manyof_anonymous_message_print_test() && passing;
   case_sxpb = slurp_sxpb_close_FildeshX(open_FildeshXF(case_filepath), NULL, err_out);
   assert(case_sxpb);
 
