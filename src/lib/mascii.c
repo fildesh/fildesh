@@ -32,6 +32,10 @@ get_FildeshMascii(const FildeshMascii* mascii, unsigned char c) {
   return (mascii->at[(c>>3) & 15] & (1 << (c & 7))) && (c < 128);
 }
 
+static inline bool in_FildeshMascii(const FildeshMascii* mascii, char c) {
+  return (unsigned char)0 != get_FildeshMascii(mascii, (unsigned char)c);
+}
+
 static inline FildeshMascii and_FildeshMascii(FildeshMascii a, FildeshMascii b) {
   FildeshMascii mascii;
 #if defined(FILDESH_MASCII_AUTOVECTORIZE_FAST)
@@ -222,7 +226,7 @@ find_FildeshMascii(const FildeshMascii* mascii, const char* s, size_t n)
       (n - t_offset) / 16);
 
   for (i = 0; i < t_offset; ++i) {
-    if (get_FildeshMascii(mascii, (unsigned char) s[i])) {
+    if (in_FildeshMascii(mascii, (unsigned char) s[i])) {
       return i;
     }
   }
@@ -233,10 +237,21 @@ find_FildeshMascii(const FildeshMascii* mascii, const char* s, size_t n)
     }
   }
   for (i = t_offset + 16 * t_count; i < n; ++i) {
-    if (get_FildeshMascii(mascii, (unsigned char) s[i])) {
+    if (in_FildeshMascii(mascii, (unsigned char) s[i])) {
       return i;
     }
   }
   return n;
 }
 
+  size_t
+span_FildeshMascii(const FildeshMascii* mascii, const char* s, size_t n)
+{
+  size_t i;
+  for (i = 0; i < n; ++i) {
+    if (!in_FildeshMascii(mascii, (unsigned char) s[i])) {
+      return i;
+    }
+  }
+  return n;
+}

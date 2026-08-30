@@ -264,11 +264,52 @@ until_chars_FildeshX(FildeshX* in, const char* delims)
 }
 
 /** Like strspn but returns a slice.**/
+static
+  FildeshX
+while_mascii_FildeshX(FildeshX* in, const FildeshMascii* mascii)
+{
+  FildeshX slice = DEFAULT_FildeshX;
+  size_t ret_off;
+  size_t end;
+
+  maybe_flush_FildeshX(in);
+  ret_off = in->off;
+  end = 0;
+  if (in->size > 0) {
+    end = in->off + span_FildeshMascii(
+        mascii, &in->at[in->off], in->size - in->off);
+  }
+
+  while (end == in->size) {
+    in->off = in->size;
+    if (0 == read_FildeshX(in)) {
+      break;
+    }
+    end = in->off + span_FildeshMascii(
+        mascii, &in->at[in->off], in->size - in->off);
+  }
+
+  if (ret_off == in->size) {
+    assert(in->off == in->size);
+    return slice;  /* Empty.*/
+  }
+
+  if (end < in->size) {
+    in->off = end;
+    slice = slice_FildeshX(in, ret_off, in->off);
+  } else {
+    assert(in->off == in->size);
+    slice = slice_FildeshX(in, ret_off, in->size);
+  }
+  return slice;
+}
+
+/** Like strspn but returns a slice.**/
   FildeshX
 while_chars_FildeshX(FildeshX* in, const char* span)
 {
-  FildeshMascii mascii = charnot_FildeshMascii(span, strlen(span));
-  return until_mascii_FildeshX(in, &mascii);
+  const FildeshMascii mascii = charset_FildeshMascii(span, strlen(span));
+  return while_mascii_FildeshX(in, &mascii);
 }
 
   bool

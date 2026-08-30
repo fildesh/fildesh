@@ -26,22 +26,20 @@ LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
       break;
     }
   }
+  mascii = charset_FildeshMascii(needle, needle_size);
   if (spanning) {
-    mascii = charnot_FildeshMascii(needle, needle_size);
+    found_index = span_FildeshMascii(&mascii, haystack, haystack_size);
   }
   else {
-    mascii = charset_FildeshMascii(needle, needle_size);
+    found_index = find_FildeshMascii(&mascii, haystack, haystack_size);
   }
 
-  found_index = find_FildeshMascii(&mascii, haystack, haystack_size);
   assert(found_index <= haystack_size);
 
   for (i = 0; i < found_index; ++i) {
-    if ((unsigned char) haystack[i] < 128) {
-      void* match = memchr(needle, haystack[i], needle_size);
-      assert(!spanning || match);
-      assert(spanning || !match);
-    }
+    void* match = memchr(needle, haystack[i], needle_size);
+    assert(!spanning || match);
+    assert(spanning || !match);
   }
 
   if (found_index < haystack_size) {

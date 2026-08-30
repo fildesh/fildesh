@@ -35,6 +35,7 @@ union FildeshMascii {
 FildeshMascii charset_FildeshMascii(const char*, size_t);
 FildeshMascii charnot_FildeshMascii(const char*, size_t);
 size_t find_FildeshMascii(const FildeshMascii*, const char*, size_t);
+size_t span_FildeshMascii(const FildeshMascii*, const char*, size_t);
 
 #ifdef __cplusplus
 } /* extern "C" */
