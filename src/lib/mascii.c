@@ -182,6 +182,47 @@ static inline unsigned span0_ascii_FildeshMascii(FildeshMascii a, FildeshMascii 
 #endif
 }
 
+static inline unsigned span1_ascii_FildeshMascii(FildeshMascii a, FildeshMascii b) {
+  FildeshMascii mascii;
+#if defined(FILDESH_MASCII_AUTOVECTORIZE_FAST)
+  unsigned char i;
+#ifdef _OPENMP
+#pragma omp simd
+#endif
+  for (i = 0; i < 16; ++i) {
+    a.at[i] = a.at[i] == 0 ? 255 : 0;
+    b.at[i] = b.at[i] >= 128 ? 255 : 0;
+    mascii.at[i] = a.at[i] | b.at[i];
+  }
+#elif defined(FILDESH_MASCII_INTRINSIC_MM)
+  mascii.mm = _mm_setzero_si128();
+  a.mm = _mm_cmpeq_epi8(a.mm, mascii.mm);
+  b.mm = _mm_cmplt_epi8(b.mm, mascii.mm);
+  mascii.mm = _mm_or_si128(a.mm, b.mm);
+#else
+  assert(false);
+#endif
+
+#if defined(FILDESH_MASCII_AUTOVECTORIZE_OKAY)
+  if (mascii.at4x[0] || mascii.at4x[1] || mascii.at4x[2] || mascii.at4x[3]) {
+    for (i = 0; i < 16; ++i) {
+      if (mascii.at[i]) {
+        return i;
+      }
+    }
+  }
+  return 16;
+#elif defined(FILDESH_MASCII_INTRINSIC_MM)
+  {
+    int bits = _mm_movemask_epi8(mascii.mm);
+    if (bits == 0) {return 16;}
+    return _bit_scan_forward(bits);
+  }
+#else
+  assert(false);
+#endif
+}
+
 
 FildeshMascii charset_FildeshMascii(const char* needles, size_t n) {
   FildeshMascii mascii;
@@ -203,27 +244,50 @@ FildeshMascii charnot_FildeshMascii(const char* needles, size_t n) {
   return mascii;
 }
 
-static inline unsigned
-get16_FildeshMascii(const FildeshMascii mascii, const FildeshMascii data) {
+static inline FildeshMascii load16_FildeshMascii(const char* s) {
+  FildeshMascii data;
+  memcpy(&data, s, sizeof(data));
+  return data;
+}
+
+static inline
+  FildeshMascii
+match16_FildeshMascii(const FildeshMascii mascii, const FildeshMascii data)
+{
   FildeshMascii shard = shuffle_FildeshMascii(
       mascii,
       shard_index_FildeshMascii(data));
   FildeshMascii shard_mask = lshift_1by_3bits_FildeshMascii(data);
-  return span0_ascii_FildeshMascii(and_FildeshMascii(shard, shard_mask), data);
+  return and_FildeshMascii(shard, shard_mask);
+}
+
+static inline unsigned
+get16_FildeshMascii(const FildeshMascii mascii, const FildeshMascii data) {
+  return span0_ascii_FildeshMascii(match16_FildeshMascii(mascii, data), data);
+}
+
+static inline
+  unsigned
+span16_FildeshMascii(const FildeshMascii mascii, const FildeshMascii data)
+{
+  return span1_ascii_FildeshMascii(match16_FildeshMascii(mascii, data), data);
 }
 
   size_t
 find_FildeshMascii(const FildeshMascii* mascii, const char* s, size_t n)
 {
   size_t i;
-  const FildeshMascii* t = (const FildeshMascii*) (
-      ((uintptr_t)s + 15) & ~(uintptr_t)15);
-  const size_t t_offset = (
-      (uintptr_t)t - (uintptr_t)s >= n
-      ? n
-      : (uintptr_t)t - (uintptr_t)s);
-  const size_t t_count = (
-      (n - t_offset) / 16);
+  size_t align_offset;
+  size_t t_offset;
+  const char* t;
+  size_t t_count;
+  if (n == 0) {
+    return 0;
+  }
+  align_offset = (16 - ((uintptr_t)s & 15)) & 15;
+  t_offset = (align_offset < n ? align_offset : n);
+  t = &s[t_offset];
+  t_count = ((n - t_offset) / 16);
 
   for (i = 0; i < t_offset; ++i) {
     if (in_FildeshMascii(mascii, (unsigned char) s[i])) {
@@ -231,7 +295,8 @@ find_FildeshMascii(const FildeshMascii* mascii, const char* s, size_t n)
     }
   }
   for (i = 0; i < t_count; ++i) {
-    unsigned idx = get16_FildeshMascii(*mascii, t[i]);
+    const FildeshMascii data = load16_FildeshMascii(&t[16*i]);
+    unsigned idx = get16_FildeshMascii(*mascii, data);
     if (idx < 16) {
       return t_offset + 16*i + (size_t)idx;
     }
@@ -248,8 +313,32 @@ find_FildeshMascii(const FildeshMascii* mascii, const char* s, size_t n)
 span_FildeshMascii(const FildeshMascii* mascii, const char* s, size_t n)
 {
   size_t i;
-  for (i = 0; i < n; ++i) {
-    if (!in_FildeshMascii(mascii, (unsigned char) s[i])) {
+  size_t align_offset;
+  size_t t_offset;
+  const char* t;
+  size_t t_count;
+  if (n == 0) {
+    return 0;
+  }
+  align_offset = (16 - ((uintptr_t)s & 15)) & 15;
+  t_offset = (align_offset < n ? align_offset : n);
+  t = &s[t_offset];
+  t_count = ((n - t_offset) / 16);
+
+  for (i = 0; i < t_offset; ++i) {
+    if (!get_FildeshMascii(mascii, (unsigned char) s[i])) {
+      return i;
+    }
+  }
+  for (i = 0; i < t_count; ++i) {
+    const FildeshMascii data = load16_FildeshMascii(&t[16*i]);
+    unsigned idx = span16_FildeshMascii(*mascii, data);
+    if (idx < 16) {
+      return t_offset + 16*i + (size_t)idx;
+    }
+  }
+  for (i = t_offset + 16 * t_count; i < n; ++i) {
+    if (!get_FildeshMascii(mascii, (unsigned char) s[i])) {
       return i;
     }
   }

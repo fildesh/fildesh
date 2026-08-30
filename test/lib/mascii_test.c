@@ -40,6 +40,30 @@ static void charset_short_test() {
   assert(got == 4);
 }
 
+static void span_short_test() {
+  static const char high_bytes[] = {'a', 'b', (char)0xEF, 'a'};
+  size_t got;
+  FildeshMascii mascii;
+
+  mascii = charset_FildeshMascii(NULL, 0);
+  got = span_FildeshMascii(&mascii, "abcd", 4);
+  assert(got == 0);
+  got = span_FildeshMascii(&mascii, NULL, 0);
+  assert(got == 0);
+
+  mascii = charset_FildeshMascii("ab", 2);
+  got = span_FildeshMascii(&mascii, "abcd", 4);
+  assert(got == 2);
+
+  mascii = charset_FildeshMascii("abcd", 4);
+  got = span_FildeshMascii(&mascii, "abcd", 4);
+  assert(got == 4);
+
+  /* Mascii sets are ASCII, so a high byte always ends the span. */
+  got = span_FildeshMascii(&mascii, high_bytes, sizeof(high_bytes));
+  assert(got == 2);
+}
+
 static void charnot_short_test() {
   size_t got;
   FildeshMascii mascii;
@@ -116,11 +140,14 @@ static void only_simd_test() {
     reserve_FildeshAlloc(alloc, 16, 16);
   char* const size32_aligned32 = (char*)
     reserve_FildeshAlloc(alloc, 32, 32);
+  char* const size32_aligned32plus1 = 1 + (char*)
+    reserve_FildeshAlloc(alloc, 33, 32);
   char* const size32_aligned32plus16 = 16 + (char*)
     reserve_FildeshAlloc(alloc, 64, 32);
 
   assert(((uintptr_t)size16_aligned16 & 15) == 0);
   assert(((uintptr_t)size32_aligned32 & 31) == 0);
+  assert(((uintptr_t)size32_aligned32plus1 & 31) == 1);
   assert(((uintptr_t)size32_aligned32plus16 & 31) == 16);
 
   mascii = charset_FildeshMascii("abc9de", 6);
@@ -146,6 +173,25 @@ static void only_simd_test() {
   got = find_FildeshMascii(&mascii, size32_aligned32plus16, 32);
   assert(got < 32);
   assert(got == 21);
+
+  mascii = charset_FildeshMascii("a", 1);
+  memset(size32_aligned32, 'a', 32);
+  got = span_FildeshMascii(&mascii, size32_aligned32, 32);
+  assert(got == 32);
+
+  size32_aligned32[15] = '!';
+  got = span_FildeshMascii(&mascii, size32_aligned32, 32);
+  assert(got == 15);
+
+  memset(size32_aligned32, 'a', 32);
+  size32_aligned32[11] = (char)0xEF;
+  got = span_FildeshMascii(&mascii, size32_aligned32, 32);
+  assert(got == 11);
+
+  memset(size32_aligned32plus1, 'a', 32);
+  size32_aligned32plus1[22] = '!';
+  got = span_FildeshMascii(&mascii, size32_aligned32plus1, 32);
+  assert(got == 22);
 
   close_FildeshAlloc(alloc);
 }
@@ -177,6 +223,7 @@ static void historically_problematic_test() {
 int main() {
   alignment_test();
   charset_short_test();
+  span_short_test();
   charnot_short_test();
   no_simd_test();
   only_simd_test();
