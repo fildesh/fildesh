@@ -1,9 +1,13 @@
+/.*
+!/.bazelrc
+!/.github/
+!/.gitignore
+
+/MODULE.bazel.lock
+/Testing/
 /bazel-*
 /bld/
 /build/
 /clang/
-/MODULE.bazel.lock
 /out/
 /tags
-/Testing/
-/.vs*

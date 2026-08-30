@@ -22,6 +22,9 @@ print_sxpb_literal_value_FildeshO(FildeshO* out, const FildeshSxprotoValue* e)
   if (e->field_kind == FildeshSxprotoFieldKind_LITERAL_STRING) {
     print_quoted_sxpb_str_FildeshO(out, e->text);
   }
+  else if (e->field_kind == FildeshSxprotoFieldKind_LITERAL_BOOL) {
+    putstr_FildeshO(out, e->text);
+  }
   else if (e->text[0] == '+') {
     putstr_FildeshO(out, &e->text[1]);
   }
@@ -33,19 +36,23 @@ print_sxpb_literal_value_FildeshO(FildeshO* out, const FildeshSxprotoValue* e)
   void
 print_json_literal_value_FildeshO(FildeshO* out, const FildeshSxprotoValue* e)
 {
-  if (e->field_kind != FildeshSxprotoFieldKind_LITERAL_FLOAT) {
+  if (e->field_kind == FildeshSxprotoFieldKind_LITERAL_BOOL) {
+    putstr_FildeshO(out, &e->text[1]);
+  }
+  else if (e->field_kind == FildeshSxprotoFieldKind_LITERAL_FLOAT) {
+    if (e->text[0] == '-') {
+      putc_FildeshO(out, '-');
+    }
+    putc_FildeshO(out, e->text[1]);
+    putc_FildeshO(out, '.');
+    if (e->text[3] == 'e') {
+      putc_FildeshO(out, '0');
+    }
+    putstr_FildeshO(out, &e->text[3]);
+  }
+  else {
     print_sxpb_literal_value_FildeshO(out, e);
-    return;
   }
-  if (e->text[0] == '-') {
-    putc_FildeshO(out, '-');
-  }
-  putc_FildeshO(out, e->text[1]);
-  putc_FildeshO(out, '.');
-  if (e->text[3] == 'e') {
-    putc_FildeshO(out, '0');
-  }
-  putstr_FildeshO(out, &e->text[3]);
 }
 
   void

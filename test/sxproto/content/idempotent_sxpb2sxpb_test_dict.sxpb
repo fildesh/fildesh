@@ -8,6 +8,23 @@
 (a b)
 """)
 
+(boolean_fields """\
+(enabled +true)
+(disabled +false)
+""")
+
+(boolean_array """\
+(flags (()) +true +false)
+""")
+
+(boolean_loneof """\
+((flag enabled) +true)
+""")
+
+(boolean_manyof """\
+((flags) +true +false)
+""")
+
 (message_nest """\
 (nest (""))
 """)
