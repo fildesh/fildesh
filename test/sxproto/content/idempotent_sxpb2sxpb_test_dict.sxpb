@@ -52,6 +52,20 @@
 ((add) 1 2)
 """)
 
+(manyof_named_literal """\
+((m) (a 1))
+""")
+
+(manyof_mixed_literal_names """\
+((mixed) (value 2) 1 (a 3))
+""")
+
+(top_manyof"""\
+(())
+(first 1)
+2
+""")
+
 (loneof_literal """\
 ((bag_with paper) 2)
 """)

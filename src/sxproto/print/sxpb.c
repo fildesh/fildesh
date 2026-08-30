@@ -114,10 +114,11 @@ write_sxpb_manyof_entry_FildeshO(
     write_sxpb_field_body_FildeshO(out, sxpb, it, e->field_kind);
     putc_FildeshO(out, ')');
   }
-  else if (is_literal_FildeshSxprotoFieldKind(e->field_kind)) {
+  else if (is_literal_FildeshSxprotoFieldKind(e->field_kind) && !name) {
     write_sxpb_literal_FildeshO(out, sxpb, it);
   }
   else {
+    /* Preserve explicitly-written element field, including "value".*/
     write_sxpb_named_field_FildeshO(out, sxpb, it);
   }
 }
