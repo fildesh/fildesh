@@ -12,6 +12,10 @@ NEXT_FUZZ_DATA
 "Expected closing double quote.\n"
 "(k \"v"
 NEXT_FUZZ_DATA
+"1,14,"
+"Unexpected anonymous subnest outside of a nest.\n"
+"(a (()) ((\"\") subnest))"
+NEXT_FUZZ_DATA
 "1,6,"
 "Expected closing paren after loneof selection name.\n"
 "((x y"
@@ -44,9 +48,9 @@ NEXT_FUZZ_DATA
 "Literal field can only hold 1 value.\n"
 "(k 5 (w"
 NEXT_FUZZ_DATA
-"1,5,"
+"1,13,"
 "Message can only hold fields.\n"
-"(() 7 7 7)"
+"(a (()) (() 7 7 7))"
 NEXT_FUZZ_DATA
 "1,7,"
 "Dict items must be key-value pairs even when the value is empty.\n"

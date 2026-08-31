@@ -311,13 +311,18 @@ parse_name_FildeshSxpbInfo(
     FildeshSxpbInfo* info,
     FildeshX* in,
     FildeshO* oslice,
-    unsigned* ret_nesting_depth)
+    unsigned* ret_nesting_depth,
+    FildeshSxprotoFieldKind parent_kind)
 {
   FildeshX slice;
   unsigned nesting_depth = *ret_nesting_depth;
   if (nesting_depth != 3) {
     if (skipstr_FildeshSxpbInfo(info, in, "(\"\")")) {
       /* Nest discriminator with empty name.*/
+      if (parent_kind != FildeshSxprotoFieldKind_NEST) {
+        syntax_error(info, "Unexpected anonymous subnest outside of a nest.");
+        return false;
+      }
       skip_separation(in, info);
       truncate_FildeshO(oslice);
       *ret_nesting_depth = 4;
@@ -577,7 +582,8 @@ parse_field_FildeshSxpbInfo(
   const FildeshSxprotoField* field = NULL;
   FildeshSxprotoFieldKind field_kind = FildeshSxprotoFieldKind_UNKNOWN;
   FildeshSxprotoFieldKind elem_kind = FildeshSxprotoFieldKind_UNKNOWN;
-  FildeshSxprotoFieldKind parent_kind = FildeshSxprotoFieldKind_UNKNOWN;
+  const FildeshSxprotoFieldKind parent_kind = (
+      (*sxpb->values)[p_it.cons_id].field_kind);
   bool loneof_value_on = false;
   truncate_FildeshO(oslice);
 
@@ -585,11 +591,12 @@ parse_field_FildeshSxpbInfo(
   skipstr_FildeshSxpbInfo(info, in, "(");
 
   skip_separation(in, info);
-  if (!parse_name_FildeshSxpbInfo(info, in, oslice, &nesting_depth)) {
+  if (!parse_name_FildeshSxpbInfo(
+          info, in, oslice, &nesting_depth,
+          parent_kind)) {
     return false;
   }
   skip_separation(in, info);
-  parent_kind = (*sxpb->values)[p_it.cons_id].field_kind;
 
   if (nesting_depth == 0) {
     if (oslice->size == 0) {
@@ -644,7 +651,9 @@ parse_field_FildeshSxpbInfo(
     loneof_value_on = true;
     p_it.cons_id = p_it.elem_id;
     p_it.elem_id = ~(FildeshSxpb_id)0;
-    if (!parse_name_FildeshSxpbInfo(info, in, oslice, &nesting_depth)) {
+    if (!parse_name_FildeshSxpbInfo(
+            info, in, oslice, &nesting_depth,
+            FildeshSxprotoFieldKind_LONEOF)) {
       return false;
     }
     skip_separation(in, info);

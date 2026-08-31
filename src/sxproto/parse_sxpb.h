@@ -27,7 +27,8 @@ parse_name_FildeshSxpbInfo(
     FildeshSxpbInfo* info,
     FildeshX* in,
     FildeshO* oslice,
-    unsigned* ret_nesting_depth);
+    unsigned* ret_nesting_depth,
+    FildeshSxprotoFieldKind parent_kind);
 bool
 parse_field_FildeshSxpbInfo(
     FildeshSxpbInfo* info,

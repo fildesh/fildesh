@@ -107,7 +107,8 @@ static void parse_name_test() {
 #define expectparse(expect, expect_depth, text) do { \
   FildeshX slice = FildeshX_of_strlit(text); \
   unsigned nesting_depth = 0; \
-  bool good = parse_name_FildeshSxpbInfo(info, &slice, oslice, &nesting_depth); \
+  bool good = parse_name_FildeshSxpbInfo(info, &slice, oslice, &nesting_depth, \
+                                         FildeshSxprotoFieldKind_MESSAGE); \
   assert(good); \
   putc_FildeshO(oslice, '\0'); \
   fildesh_log_trace(oslice->at); \
