@@ -823,7 +823,7 @@ parse_field_content_FildeshSxpbInfo(
     bool nest_discriminator_on,
     FildeshO* oslice)
 {
-  const FildeshSxprotoFieldKind field_kind = p_it.field_kind;
+  const FildeshSxprotoFieldKind field_kind = (*sxpb->values)[p_it.cons_id].field_kind;
   size_t elem_count = 0;
   bool in_avail;
   if (field_kind == FildeshSxprotoFieldKind_NEST &&
