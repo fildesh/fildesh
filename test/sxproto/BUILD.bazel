@@ -26,6 +26,12 @@ cc_test(
 )
 
 cc_test(
+    name = "parse_manyof_test",
+    srcs = ["parse_manyof_test.c"],
+    deps = ["//:sxproto_lib"],
+)
+
+cc_test(
     name = "parse_nest_test",
     srcs = ["parse_nest_test.c"],
     deps = ["//:sxproto_lib"],

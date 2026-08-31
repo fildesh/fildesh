@@ -299,7 +299,8 @@ on_array_content(FildeshX* in)
       peek_bytestring_FildeshX(in, fildesh_bytestrlit("()"))) {
     return true;
   }
-  if (peek_bytestring_FildeshX(in, fildesh_bytestrlit("(\"\" "))) {
+  if (peek_bytestring_FildeshX(in, fildesh_bytestrlit("(\"\" ")) ||
+      peek_bytestring_FildeshX(in, fildesh_bytestrlit("(\"\")"))) {
     return true;
   }
   return false;
@@ -858,9 +859,22 @@ parse_field_content_FildeshSxpbInfo(
     if (c0 == '(') {
       bool is_anonymous_discriminated_string_element = false;
       assert(field_kind != FildeshSxprotoFieldKind_LITERAL);
-      if (field_kind == FildeshSxprotoFieldKind_ARRAY) {
+      if (field_kind == FildeshSxprotoFieldKind_ARRAY ||
+          field_kind == FildeshSxprotoFieldKind_MANYOF) {
         if (peek_bytestring_FildeshX(in, fildesh_bytestrlit("(())"))) {
-          syntax_error(info, "Arrays cannot be nested.");
+          syntax_error(
+              info,
+              field_kind == FildeshSxprotoFieldKind_ARRAY
+              ? "Unexpected array discriminator as array element."
+              : "Unexpected array discriminator as manyof element.");
+          return false;
+        }
+        if (peek_bytestring_FildeshX(in, fildesh_bytestrlit("(\"\")"))) {
+          syntax_error(
+              info,
+              field_kind == FildeshSxprotoFieldKind_ARRAY
+              ? "Unexpected nest discriminator as array element."
+              : "Unexpected nest discriminator as manyof element.");
           return false;
         }
         if (peek_bytestring_FildeshX(in, fildesh_bytestrlit("(\"\" "))) {
@@ -869,14 +883,20 @@ parse_field_content_FildeshSxpbInfo(
             elem_kind = FildeshSxprotoFieldKind_LITERAL_STRING;
           }
           else if (elem_kind != FildeshSxprotoFieldKind_LITERAL_STRING) {
-            syntax_error(info, "Unexpected string array element.");
+            syntax_error(
+                info,
+                field_kind == FildeshSxprotoFieldKind_ARRAY
+                ? "Unexpected string array element."
+                : "Unexpected string manyof element.");
             return false;
           }
         }
-        else if (elem_kind == FildeshSxprotoFieldKind_UNKNOWN) {
+        else if (field_kind == FildeshSxprotoFieldKind_ARRAY &&
+                 elem_kind == FildeshSxprotoFieldKind_UNKNOWN) {
           elem_kind = FildeshSxprotoFieldKind_MESSAGE;
         }
-        else if (elem_kind != FildeshSxprotoFieldKind_MESSAGE) {
+        else if (field_kind == FildeshSxprotoFieldKind_ARRAY &&
+                 elem_kind != FildeshSxprotoFieldKind_MESSAGE) {
           syntax_error(info, "Unexpected message array element.");
           return false;
         }
@@ -911,6 +931,18 @@ parse_field_content_FildeshSxpbInfo(
         }
         if (field_kind != FildeshSxprotoFieldKind_MESSAGE) {
           p_it = freshtail_FildeshSxpb(sxpb, p_it);
+        }
+        if (field_kind == FildeshSxprotoFieldKind_MANYOF) {
+          const char* const elem_name = name_at_FildeshSxpb(sxpb, p_it);
+          if (!elem_name || elem_name[0] == '\0') {
+            if (elem_kind == FildeshSxprotoFieldKind_UNKNOWN) {
+              elem_kind = p_it.field_kind;
+            }
+            else if (elem_kind != p_it.field_kind) {
+              syntax_error(info, "Manyof cannot mix anonymous element types.");
+              return false;
+            }
+          }
         }
         if (field_kind == FildeshSxprotoFieldKind_DICT) {
           if (!reconcile_dict_value_kind_FildeshSxpbInfo(

@@ -44,6 +44,7 @@ static const char manyof_test_content[] = "\
  \"beta\"\n\
  \"gamma\"\n\
  \"delta\"\n\
+ (\"\" epsilon zeta)\n\
  (b +false)\n\
  ((or)\n\
   (b 1)\n\
@@ -375,6 +376,10 @@ manyof_test()
     it = next_at_FildeshSxpb(sxpb, it);
     assert(!name_at_FildeshSxpb(sxpb, it));
     assert(0 == strcmp(str_value_at_FildeshSxpb(sxpb, it), "delta"));
+
+    it = next_at_FildeshSxpb(sxpb, it);
+    assert(!name_at_FildeshSxpb(sxpb, it));
+    assert(0 == strcmp(str_value_at_FildeshSxpb(sxpb, it), "epsilon zeta"));
 
     it = next_at_FildeshSxpb(sxpb, it);
     assert(0 == strcmp(name_at_FildeshSxpb(sxpb, it), "b"));

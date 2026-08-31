@@ -80,17 +80,37 @@ NEXT_FUZZ_DATA
 "Duplicate field name. Use array syntax for repeated fields.\n"
 "(x 5) (x 6)"
 NEXT_FUZZ_DATA
+"1,6,"
+"Unexpected array discriminator as array element.\n"
+"(()) (())"
+NEXT_FUZZ_DATA
+"1,14,"
+"Unexpected array discriminator as manyof element.\n"
+"((my_manyof) (()))"
+NEXT_FUZZ_DATA
+"1,9,"
+"Unexpected nest discriminator as array element.\n"
+"(a (()) (\"\"))"
+NEXT_FUZZ_DATA
+"1,6,"
+"Unexpected nest discriminator as manyof element.\n"
+"((a) (\"\"))"
+NEXT_FUZZ_DATA
 "1,11,"
 "Unexpected string array element.\n"
 "(a (()) 5 (\"\" string))"
+NEXT_FUZZ_DATA
+"1,8,"
+"Unexpected string manyof element.\n"
+"((a) 5 (\"\" string))"
 NEXT_FUZZ_DATA
 "1,11,"
 "Unexpected message array element.\n"
 "(a (()) 5 (() (a 1)))"
 NEXT_FUZZ_DATA
-"1,6,"
-"Arrays cannot be nested.\n"
-"(()) (())"
+"1,26,"
+"Manyof cannot mix anonymous element types.\n"
+"((my_manyof) 5 (() (a 1)))"
 NEXT_FUZZ_DATA
 "2,7,"
 "Nest can only hold nests and strings.\n"
