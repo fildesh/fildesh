@@ -324,6 +324,12 @@ parse_name_FildeshSxpbInfo(
         return false;
       }
       skip_separation(in, info);
+      if (peek_char_FildeshX(in, ')')) {
+        syntax_error(
+            info,
+            "Empty anonymous subnest must be written as `(\"\" (\"\"))`.");
+        return false;
+      }
       truncate_FildeshO(oslice);
       *ret_nesting_depth = 4;
       return true;
@@ -591,10 +597,23 @@ parse_field_FildeshSxpbInfo(
   skipstr_FildeshSxpbInfo(info, in, "(");
 
   skip_separation(in, info);
-  if (!parse_name_FildeshSxpbInfo(
-          info, in, oslice, &nesting_depth,
-          parent_kind)) {
-    return false;
+
+  {
+    const FildeshSxpbInfo tmp_info = *info;
+    const bool good = parse_name_FildeshSxpbInfo(
+        info, in, oslice, &nesting_depth,
+        parent_kind);
+    if (!good) {return false;}
+    if (nesting_depth == 0 && oslice->size == 0 &&
+        (parent_kind == FildeshSxprotoFieldKind_MESSAGE ||
+         parent_kind == FildeshSxprotoFieldKind_DICT)) {
+      syntax_error(
+          &tmp_info,
+          parent_kind == FildeshSxprotoFieldKind_MESSAGE
+          ? "Unexpected empty field name in message."
+          : "Unexpected empty key in dict.");
+      return false;
+    }
   }
   skip_separation(in, info);
 
@@ -660,6 +679,9 @@ parse_field_FildeshSxpbInfo(
     if (nesting_depth == 1) {
       field_kind = FildeshSxprotoFieldKind_ARRAY;
     }
+    else if (nesting_depth == 4) {
+      field_kind = FildeshSxprotoFieldKind_NEST;
+    }
     else if (nesting_depth == 5) {
       field_kind = FildeshSxprotoFieldKind_DICT;
     }
@@ -672,8 +694,8 @@ parse_field_FildeshSxpbInfo(
   }
   assert(field_kind != FildeshSxprotoFieldKind_UNKNOWN);
 
-  if ((*sxpb->values)[p_it.cons_id].field_kind == FildeshSxprotoFieldKind_NEST &&
-      field_kind != FildeshSxprotoFieldKind_NEST) {
+  if (parent_kind == FildeshSxprotoFieldKind_NEST &&
+      (loneof_value_on || field_kind != FildeshSxprotoFieldKind_NEST)) {
     syntax_error(info, "Nest can only hold nests and strings.");
     return false;
   }

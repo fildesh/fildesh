@@ -82,6 +82,14 @@
 ((my_loneof my_choice))
 """)
 
+(loneof_empty_array """\
+((my_loneof my_nest) (()))
+""")
+
+(loneof_empty_nest """\
+((my_loneof my_nest) (""))
+""")
+
 (dict """\
 (my_dict () (key1 (value val1)) (key2 (subkey subval)))
 """)

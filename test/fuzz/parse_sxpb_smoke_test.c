@@ -16,6 +16,10 @@ NEXT_FUZZ_DATA
 "Unexpected anonymous subnest outside of a nest.\n"
 "(a (()) ((\"\") subnest))"
 NEXT_FUZZ_DATA
+"1,22,"
+"Empty anonymous subnest must be written as `(\"\" (\"\"))`.\n"
+"(my_nest (\"\") a ((\"\")) b c)"
+NEXT_FUZZ_DATA
 "1,6,"
 "Expected closing paren after loneof selection name.\n"
 "((x y"
@@ -116,6 +120,18 @@ NEXT_FUZZ_DATA
 "Manyof cannot mix anonymous element types.\n"
 "((my_manyof) 5 (() (a 1)))"
 NEXT_FUZZ_DATA
+"1,5,"
+"Unexpected empty field name in message.\n"
+"(m (\"\" 1))"
+NEXT_FUZZ_DATA
+"1,11,"
+"Unexpected empty field name in message.\n"
+"(m (a 1) ())"
+NEXT_FUZZ_DATA
+"1,8,"
+"Unexpected empty key in dict.\n"
+"(d () (\"\" 1))"
+NEXT_FUZZ_DATA
 "2,7,"
 "Nest can only hold nests and strings.\n"
 "(\"\")\n((a) b)"
@@ -148,9 +164,9 @@ NEXT_FUZZ_DATA
 "Unexpected literal type.\n"
 "(a (()) 5 6 7 \"8\")"
 NEXT_FUZZ_DATA
-"1,4,"
+"1,12,"
 "Expected a literal or closing paren.\n"
-"(()"
+"(a (()) (()"
 NEXT_FUZZ_DATA
 "1,3,"
 "Expected a literal or closing paren.\n"
