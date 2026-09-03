@@ -167,6 +167,10 @@ parse_concat_string_FildeshSxpbInfo(
   if (oslice->size == 0) {
     info->unquoted_value_separation_on = false;
   }
+  if (peek_char_FildeshX(in, '(')) {
+    syntax_error(info, "Unexpected open paren in string.");
+    return false;
+  }
   if (peek_char_FildeshX(in, '"')) {
     return parse_quoted_string_FildeshSxpbInfo(info, in, oslice);
   }
@@ -188,10 +192,6 @@ parse_string_field_content_FildeshSxpbInfo(
        avail_FildeshX(in) && !peek_char_FildeshX(in, ')');
        skip_separation(in, info))
   {
-    if (peek_char_FildeshX(in, '(')) {
-      syntax_error(info, "Unexpected open paren in string.");
-      return false;
-    }
     if (!parse_concat_string_FildeshSxpbInfo(info, in, oslice)) {
       return false;
     }

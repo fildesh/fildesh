@@ -64,6 +64,10 @@ NEXT_FUZZ_DATA
 "Unexpected open paren in string.\n"
 "(a b ("
 NEXT_FUZZ_DATA
+"1,11,"
+"Unexpected open paren in string.\n"
+"(\"\")(a \"\" ("
+NEXT_FUZZ_DATA
 "1,1,"
 "Expected open paren to start field.\n"
 "a"
