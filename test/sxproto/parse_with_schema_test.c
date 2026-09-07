@@ -92,6 +92,7 @@ sxproto_schema()
     {"n", FILL_FildeshSxprotoField_INT(0, INT_MAX)},
     {"f", FILL_FildeshSxprotoField_FLOAT(0, 10)},
     {"a", FILL_DEFAULT_FildeshSxprotoField_FLOATS},
+    {"a_alias", FILL_DEFAULT_FildeshSxprotoField_ALIAS},
     {"bool_dict", FILL_DEFAULT_FildeshSxprotoField_BOOL_DICT},
     {"cons", FILL_FildeshSxprotoField_MESSAGE(m_fields)},
     {"float_dict", FILL_DEFAULT_FildeshSxprotoField_FLOAT_DICT},
@@ -495,6 +496,93 @@ manyof_coercion_test()
 
 static
   void
+append_to_empty_array_test()
+{
+  DECLARE_STRLIT_FildeshX(
+      in, "(a_alias (()))((+. a_alias) (()) 1 2 3)");
+  FildeshO err_out[1] = {DEFAULT_FildeshO};
+  const FildeshSxprotoField* const schema = sxproto_schema();
+  FildeshSxpb* const sxpb = slurp_sxpb_close_FildeshX(in, schema, err_out);
+  FildeshSxpbIT it;
+  unsigned i;
+
+  assert(sxpb);
+  assert(err_out->size == 0);
+  it = lookup_subfield_at_FildeshSxpb(
+      sxpb, top_of_FildeshSxpb(sxpb), "a");
+  assert(it.field_kind == FildeshSxprotoFieldKind_ARRAY);
+  it = first_at_FildeshSxpb(sxpb, it);
+  for (i = 1; i <= 3; ++i) {
+    assert(it.field_kind == FildeshSxprotoFieldKind_LITERAL_FLOAT);
+    assert((float)i == float_value_at_FildeshSxpb(sxpb, it));
+    it = next_at_FildeshSxpb(sxpb, it);
+  }
+  assert(nullish_FildeshSxpbIT(it));
+
+  close_FildeshSxpb(sxpb);
+  close_FildeshO(err_out);
+}
+
+static
+  void
+append_manyof_elements_to_empty_manyof_test()
+{
+  DECLARE_STRLIT_FildeshX(
+      in,
+      "((predicates))"
+      "((+. predicates) (()) (b +true) \"alpha\" (u 1) \"omega\")");
+  FildeshO err_out[1] = {DEFAULT_FildeshO};
+  const FildeshSxprotoField* const schema = sxproto_schema();
+  FildeshSxpb* const sxpb = slurp_sxpb_close_FildeshX(in, schema, err_out);
+  FildeshSxpbIT it;
+
+  assert(sxpb);
+  assert(err_out->size == 0);
+  it = lookup_subfield_at_FildeshSxpb(
+      sxpb, top_of_FildeshSxpb(sxpb), "predicates");
+  assert(it.field_kind == FildeshSxprotoFieldKind_MANYOF);
+  it = first_at_FildeshSxpb(sxpb, it);
+  assert(0 == strcmp("b", name_at_FildeshSxpb(sxpb, it)));
+  assert(bool_value_at_FildeshSxpb(sxpb, it));
+  it = next_at_FildeshSxpb(sxpb, it);
+  assert(NULL == name_at_FildeshSxpb(sxpb, it));
+  assert(0 == strcmp("alpha", str_value_at_FildeshSxpb(sxpb, it)));
+  it = next_at_FildeshSxpb(sxpb, it);
+  assert(0 == strcmp("u", name_at_FildeshSxpb(sxpb, it)));
+  assert(1 == unsigned_value_at_FildeshSxpb(sxpb, it));
+  it = next_at_FildeshSxpb(sxpb, it);
+  assert(NULL == name_at_FildeshSxpb(sxpb, it));
+  assert(0 == strcmp("omega", str_value_at_FildeshSxpb(sxpb, it)));
+  assert(nullish_FildeshSxpbIT(next_at_FildeshSxpb(sxpb, it)));
+
+  close_FildeshSxpb(sxpb);
+  close_FildeshO(err_out);
+
+  {
+    DECLARE_STRLIT_FildeshX(
+        bad_in, "((predicates))((+. predicates) (()) (unknown 1))");
+    FildeshO bad_err_out[1] = {DEFAULT_FildeshO};
+    FildeshSxpb* const bad_sxpb = slurp_sxpb_close_FildeshX(
+        bad_in, schema, bad_err_out);
+    assert(!bad_sxpb);
+    assert(bad_err_out->size > 0);
+    close_FildeshO(bad_err_out);
+  }
+
+  {
+    DECLARE_STRLIT_FildeshX(
+        bad_in, "((many_fruits))((+. many_fruits) (()) 1)");
+    FildeshO bad_err_out[1] = {DEFAULT_FildeshO};
+    FildeshSxpb* const bad_sxpb = slurp_sxpb_close_FildeshX(
+        bad_in, schema, bad_err_out);
+    assert(!bad_sxpb);
+    assert(bad_err_out->size > 0);
+    close_FildeshO(bad_err_out);
+  }
+}
+
+static
+  void
 nest_test()
 {
   DECLARE_STRLIT_FildeshX(in, nest_test_content);
@@ -589,6 +677,8 @@ int main() {
   dict_test();
   manyof_test();
   manyof_coercion_test();
+  append_to_empty_array_test();
+  append_manyof_elements_to_empty_manyof_test();
   nest_test();
   dict_schema_error_test();
   nest_schema_error_test();

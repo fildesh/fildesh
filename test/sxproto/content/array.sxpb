@@ -8,8 +8,8 @@
 (my_strings (()) "yo" "howdy" "moin")
 
 ; Additional strings appended to above.
-(my_strings (()) "ciao")
-(my_strings (()) "adios" "farewell")
+((+. my_strings) (()) "ciao")
+((+. my_strings) (()) "adios" "farewell")
 
 ; An array of 3 messages.
 (my_messages (())
