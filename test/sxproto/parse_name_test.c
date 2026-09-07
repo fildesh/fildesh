@@ -148,6 +148,21 @@ static void parse_subnest_name_failure_test() {
   close_FildeshO(err_out);
 }
 
+static void parse_append_name_failure_test() {
+  FildeshO err_out[1] = {DEFAULT_FildeshO};
+#define expectfail(text) do { \
+  FildeshX slice = FildeshX_of_strlit(text); \
+  FildeshSxpb* s = slurp_sxpb_close_FildeshX(&slice, NULL, err_out); \
+  assert(s == NULL); \
+  assert(err_out->size > 0); \
+  truncate_FildeshO(err_out); \
+} while (0)
+  expectfail("(\"50mm\" (()) 1)((+. 50mm) (()) 2)");
+  expectfail("(\"+true\" (()) 1)((+. +true) (()) 2)");
+#undef expectfail
+  close_FildeshO(err_out);
+}
+
 int main() {
   parse_name_test();
   parse_field_name_test();
@@ -155,5 +170,6 @@ int main() {
   parse_field_name_failure_test();
   parse_subnest_name_test();
   parse_subnest_name_failure_test();
+  parse_append_name_failure_test();
   return 0;
 }

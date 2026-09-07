@@ -9,6 +9,14 @@ static const char sxpb_delim_chars[] = " \t\n\v\f\r\"();";
 
 static inline
   bool
+is_sxpb_blank(char c)
+{
+  return NULL != memchr(
+      sxpb_blank_chars, c, sizeof(sxpb_blank_chars)-1);
+}
+
+static inline
+  bool
 is_sxpb_delim(char c)
 {
   return NULL != memchr(
