@@ -24,6 +24,11 @@ add_executable(sxproto_parse_manyof_test
 target_link_libraries(sxproto_parse_manyof_test ${FildeshSxproto_LIBRARIES})
 add_test(NAME sxproto_parse_manyof_test COMMAND sxproto_parse_manyof_test)
 
+add_executable(sxproto_parse_name_test
+  "parse_name_test.c")
+target_link_libraries(sxproto_parse_name_test ${FildeshSxproto_LIBRARIES})
+add_test(NAME sxproto_parse_name_test COMMAND sxproto_parse_name_test)
+
 add_executable(sxproto_parse_nest_test
   "parse_nest_test.c")
 target_link_libraries(sxproto_parse_nest_test ${FildeshSxproto_LIBRARIES})

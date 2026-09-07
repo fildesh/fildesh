@@ -354,6 +354,21 @@ parse_name_FildeshSxpbInfo(
   }
   else {
     putslice_FildeshO(oslice, slice);
+    if (parent_kind == FildeshSxprotoFieldKind_NEST) {
+      if (has_sxpb_special_prefix(oslice->at, oslice->size)) {
+        syntax_error(info, "Unexpected special prefix of plain subnest name.");
+        return false;
+      }
+    }
+    else if (!has_sxpb_bare_prefix(oslice->at, oslice->size)) {
+      if (parent_kind == FildeshSxprotoFieldKind_DICT) {
+        syntax_error(info, "Expected plain dict key to be a bare string.");
+      }
+      else {
+        syntax_error(info, "Expected plain field name to be a bare string.");
+      }
+      return false;
+    }
   }
 
   if (nesting_depth == 3) {

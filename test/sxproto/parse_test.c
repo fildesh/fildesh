@@ -100,42 +100,6 @@ static void parse_number_failure_test() {
   close_FildeshO(oslice);
 }
 
-static void parse_name_test() {
-  FildeshSxpbInfo info[1] = {DEFAULT_FildeshSxpbInfo};
-  FildeshO oslice[1] = {DEFAULT_FildeshO};
-
-#define expectparse(expect, expect_depth, text) do { \
-  FildeshX slice = FildeshX_of_strlit(text); \
-  unsigned nesting_depth = 0; \
-  bool good = parse_name_FildeshSxpbInfo(info, &slice, oslice, &nesting_depth, \
-                                         FildeshSxprotoFieldKind_MESSAGE); \
-  assert(good); \
-  putc_FildeshO(oslice, '\0'); \
-  fildesh_log_trace(oslice->at); \
-  oslice->size -= 1; \
-  assert(strlen(expect) == oslice->size); \
-  assert(0 == memcmp(expect, oslice->at, oslice->size)); \
-  assert(expect_depth == nesting_depth); \
-} while (0)
-
-  expectparse("x", 0, "x");
-  expectparse("x", 5, "x () (x 5)");
-  expectparse("x", 5, "x ()");
-  expectparse("y", 1, "y (())");
-  expectparse("y", 1, "y (()) (() (x 5))");
-  expectparse("y", 2, "y (()) (x 5)");
-  expectparse("", 0, "()");
-  expectparse("", 0, "() (x 5)");
-  expectparse("", 0, "() (() (x 5))");
-  expectparse("", 0, "\"\" anonymous discriminated string");
-  /* Quoted names.*/
-  expectparse("abc", 0, "\"abc\"");
-  expectparse("(a\"bc", 5, "\"(a\\\"bc\" ()");
-
-#undef expectparse
-  close_FildeshO(oslice);
-}
-
 static void parse_field_test() {
   FildeshSxpbInfo info[1] = {DEFAULT_FildeshSxpbInfo};
   FildeshO oslice[1] = {DEFAULT_FildeshO};
@@ -290,7 +254,6 @@ int main() {
   parse_string_test();
   parse_number_test();
   parse_number_failure_test();
-  parse_name_test();
   parse_field_test();
   parse_string_field_test();
   parse_last_in_string_array_field_test();

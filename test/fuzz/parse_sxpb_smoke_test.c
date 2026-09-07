@@ -20,6 +20,18 @@ NEXT_FUZZ_DATA
 "Empty anonymous subnest must be written as `(\"\" (\"\"))`.\n"
 "(my_nest (\"\") a ((\"\")) b c)"
 NEXT_FUZZ_DATA
+"1,19,"
+"Unexpected special prefix of plain subnest name.\n"
+"(my_nest (\"\") (.+x 1))"
+NEXT_FUZZ_DATA
+"1,12,"
+"Expected plain dict key to be a bare string.\n"
+"(d () (50mm 1))"
+NEXT_FUZZ_DATA
+"1,9,"
+"Expected plain field name to be a bare string.\n"
+"(m (50mm 1))"
+NEXT_FUZZ_DATA
 "1,6,"
 "Expected closing paren after loneof selection name.\n"
 "((x y"
