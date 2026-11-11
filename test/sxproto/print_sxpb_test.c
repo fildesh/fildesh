@@ -134,6 +134,15 @@ expect_sxpb_roundtrip(const char* name, const char* expect_sxpb)
   return passing;
 }
 
+static bool string_escape_test() {
+  return expect_sxpb_roundtrip(
+      "string_escape",
+      "(single \"\\\"\\\\\t\\n\v\f\\r\")\n"
+      "(array (()) \"a\\rb\" \"a\\r\\n\" \"\\r\" \"a\\r\")\n"
+      "(\"a\\rb\" \"a\\rb\")\n");
+  return 0;
+}
+
 int main(int argc, char** argv) {
   const char* case_filepath = "test/sxproto/content/idempotent_sxpb2sxpb_test_dict.sxpb";
   FildeshO* err_out = open_FildeshOF("/dev/stderr");
@@ -149,6 +158,7 @@ int main(int argc, char** argv) {
   check_same_printed_format_test();
   passing = toplevel_manyof_anonymous_int_print_test() && passing;
   passing = toplevel_manyof_anonymous_message_print_test() && passing;
+  passing = string_escape_test() && passing;
   case_sxpb = slurp_sxpb_close_FildeshX(open_FildeshXF(case_filepath), NULL, err_out);
   assert(case_sxpb);
 

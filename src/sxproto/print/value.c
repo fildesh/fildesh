@@ -10,6 +10,7 @@ print_quoted_sxpb_str_FildeshO(FildeshO* out, const char* s)
       case '"':   putstrlit_FildeshO(out, "\\\"");  break;
       case '\\':  putstrlit_FildeshO(out, "\\\\");  break;
       case '\n':  putstrlit_FildeshO(out, "\\n");  break;
+      case '\r':  putstrlit_FildeshO(out, "\\r");  break;
       default:    putc_FildeshO(out, s[i]);  break;
     }
   }
