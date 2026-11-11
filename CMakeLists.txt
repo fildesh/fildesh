@@ -52,7 +52,7 @@ elseif (CMAKE_C_COMPILER_ID STREQUAL CLANG_COMPILER_ID)
 elseif (CMAKE_C_COMPILER_ID STREQUAL TCC_COMPILER_ID)
   # TinyCC:
   #  cmake -D CMAKE_C_COMPILER=tcc ..
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wunsupported -Wwrite-strings")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wwrite-strings")
 elseif (CMAKE_C_COMPILER_ID STREQUAL MSVC_COMPILER_ID)
   # Windows.
   set (CMAKE_C_FLAGS "/favor:ATOM /W4 /MP")
