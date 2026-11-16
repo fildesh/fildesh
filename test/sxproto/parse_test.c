@@ -434,6 +434,22 @@ static void parse_append_operator_test() {
 #undef expectappendfail
 }
 
+static void parse_append_float_canonical_test() {
+  const char expected[] = "(a (()) 1.e+0 2.e+0)\n";
+  FildeshX in = FildeshX_of_strlit("(a (()) 1.0)((+. a) (()) 2)");
+  FildeshO err_out[1] = {DEFAULT_FildeshO};
+  FildeshSxpb* sxpb = slurp_sxpb_close_FildeshX(&in, NULL, err_out);
+  FildeshO printed[1] = {DEFAULT_FildeshO};
+  assert(sxpb);
+  assert(err_out->size == 0);
+  print_sxpb_FildeshO(printed, sxpb);
+  assert(printed->size == sizeof(expected)-1);
+  assert(0 == memcmp(printed->at, expected, printed->size));
+  close_FildeshSxpb(sxpb);
+  close_FildeshO(printed);
+  close_FildeshO(err_out);
+}
+
 int main() {
   parse_string_test();
   parse_number_test();
@@ -444,5 +460,6 @@ int main() {
   parse_array_of_empty_messages_test();
   parse_repeated_list_field_test();
   parse_append_operator_test();
+  parse_append_float_canonical_test();
   return 0;
 }

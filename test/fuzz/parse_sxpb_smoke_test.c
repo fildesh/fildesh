@@ -208,6 +208,14 @@ NEXT_FUZZ_DATA
 "Expected a closing paren after append elements.\n"
 "(m (a (()) 1))((+. m a) (()) 2"
 NEXT_FUZZ_DATA
+"1,6,"
+"Expected plain field name to be a bare string.\n"
+"((+.x) 5)"
+NEXT_FUZZ_DATA
+"1,21,"
+"Expected a field name in the append keypath.\n"
+"(a (()) 1)((+. a(())) (()) 2)"
+NEXT_FUZZ_DATA
 "1,12,"
 "Expected a literal or closing paren.\n"
 "(a (()) (()"

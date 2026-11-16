@@ -75,6 +75,7 @@ sxproto_schema()
   static FildeshSxprotoField m_fields[] = {
     {"car", FILL_DEFAULT_FildeshSxprotoField_STRING},
     {"cdr", FILL_RECURSIVE_FildeshSxprotoField_MESSAGE},
+    {"int_list", FILL_DEFAULT_FildeshSxprotoField_INTS},
   };
   static FildeshSxprotoField predicates_manyof[] = {
     {"", FILL_FildeshSxprotoField_STRING(1, INT_MAX)},
@@ -583,6 +584,98 @@ append_manyof_elements_to_empty_manyof_test()
 
 static
   void
+append_to_message_array_test()
+{
+  DECLARE_STRLIT_FildeshX(
+      in,
+      "(messages (()) (() (car \"a\")))"
+      "((+. messages) (()) (() (car \"b\")) (() (car \"c\")))");
+  FildeshO err_out[1] = {DEFAULT_FildeshO};
+  const FildeshSxprotoField* const schema = sxproto_schema();
+  FildeshSxpb* const sxpb = slurp_sxpb_close_FildeshX(in, schema, err_out);
+  const char* expected[3] = {"a", "b", "c"};
+  FildeshSxpbIT it;
+  FildeshSxpbIT val_it;
+  unsigned i;
+
+  assert(sxpb);
+  assert(err_out->size == 0);
+  it = lookup_subfield_at_FildeshSxpb(
+      sxpb, top_of_FildeshSxpb(sxpb), "messages");
+  assert(it.field_kind == FildeshSxprotoFieldKind_ARRAY);
+  it = first_at_FildeshSxpb(sxpb, it);
+  for (i = 0; i < 3; ++i) {
+    assert(!nullish_FildeshSxpbIT(it));
+    val_it = lookup_subfield_at_FildeshSxpb(sxpb, it, "car");
+    assert(0 == strcmp(expected[i], str_value_at_FildeshSxpb(sxpb, val_it)));
+    it = next_at_FildeshSxpb(sxpb, it);
+  }
+  assert(nullish_FildeshSxpbIT(it));
+
+  close_FildeshSxpb(sxpb);
+  close_FildeshO(err_out);
+}
+
+static
+  void
+append_unknown_schema_target_test()
+{
+  const FildeshSxprotoField* const schema = sxproto_schema();
+  /* A top-level name absent from the schema. */
+  {
+    DECLARE_STRLIT_FildeshX(in, "(a (()) 1)((+. zzz) (()) 2)");
+    FildeshO err_out[1] = {DEFAULT_FildeshO};
+    FildeshSxpb* const sxpb = slurp_sxpb_close_FildeshX(in, schema, err_out);
+    assert(!sxpb);
+    assert(err_out->size > 0);
+    close_FildeshO(err_out);
+  }
+  /* A name absent from the schema, reached through a dict. */
+  {
+    DECLARE_STRLIT_FildeshX(
+        in, "(message_dict () (k (int_list (()) 1)))((+. message_dict k zzz) (()) 2)");
+    FildeshO err_out[1] = {DEFAULT_FildeshO};
+    FildeshSxpb* const sxpb = slurp_sxpb_close_FildeshX(in, schema, err_out);
+    assert(!sxpb);
+    assert(err_out->size > 0);
+    close_FildeshO(err_out);
+  }
+}
+
+static
+  void
+append_through_dict_test()
+{
+  DECLARE_STRLIT_FildeshX(
+      in,
+      "(message_dict () (k (int_list (()) 1)))"
+      "((+. message_dict k int_list) (()) 2 3)");
+  FildeshO err_out[1] = {DEFAULT_FildeshO};
+  const FildeshSxprotoField* const schema = sxproto_schema();
+  FildeshSxpb* const sxpb = slurp_sxpb_close_FildeshX(in, schema, err_out);
+  FildeshSxpbIT it;
+  unsigned i;
+
+  assert(sxpb);
+  assert(err_out->size == 0);
+  it = lookup_subfield_at_FildeshSxpb(
+      sxpb, top_of_FildeshSxpb(sxpb), "message_dict");
+  it = lookup_subfield_at_FildeshSxpb(sxpb, it, "k");
+  it = lookup_subfield_at_FildeshSxpb(sxpb, it, "int_list");
+  assert(it.field_kind == FildeshSxprotoFieldKind_ARRAY);
+  it = first_at_FildeshSxpb(sxpb, it);
+  for (i = 1; i <= 3; ++i) {
+    assert(i == unsigned_value_at_FildeshSxpb(sxpb, it));
+    it = next_at_FildeshSxpb(sxpb, it);
+  }
+  assert(nullish_FildeshSxpbIT(it));
+
+  close_FildeshSxpb(sxpb);
+  close_FildeshO(err_out);
+}
+
+static
+  void
 nest_test()
 {
   DECLARE_STRLIT_FildeshX(in, nest_test_content);
@@ -679,6 +772,9 @@ int main() {
   manyof_coercion_test();
   append_to_empty_array_test();
   append_manyof_elements_to_empty_manyof_test();
+  append_to_message_array_test();
+  append_unknown_schema_target_test();
+  append_through_dict_test();
   nest_test();
   dict_schema_error_test();
   nest_schema_error_test();
