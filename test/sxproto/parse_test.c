@@ -434,6 +434,35 @@ static void parse_append_operator_test() {
 #undef expectappendfail
 }
 
+static void parse_append_relative_keypath_test() {
+  const char* const inputs[] = {
+    "(m (a (()) 1) ((+. a) (()) 2))",
+    "() (m (a (()) 1)) ((+. m a) (()) 2)",
+    "() (m (a (()) 1 2)) ((+. m a) (()))",
+    "() (m (a (()) 1)) ((+. m a) (()) 2) (n (x 3))",
+  };
+  unsigned i;
+  for (i = 0; i < sizeof(inputs)/sizeof(inputs[0]); ++i) {
+    FildeshX in = FildeshX_of_bytestring(
+        (const unsigned char*)inputs[i], strlen(inputs[i]));
+    FildeshO err_out[1] = {DEFAULT_FildeshO};
+    FildeshSxpb* sxpb = slurp_sxpb_close_FildeshX(&in, NULL, err_out);
+    FildeshSxpbIT it;
+    assert(sxpb);
+    assert(err_out->size == 0);
+    it = lookup_subfield_at_FildeshSxpb(sxpb, top_of_FildeshSxpb(sxpb), "m");
+    it = lookup_subfield_at_FildeshSxpb(sxpb, it, "a");
+    assert(it.field_kind == FildeshSxprotoFieldKind_ARRAY);
+    it = first_at_FildeshSxpb(sxpb, it);
+    assert(1 == unsigned_value_at_FildeshSxpb(sxpb, it));
+    it = next_at_FildeshSxpb(sxpb, it);
+    assert(2 == unsigned_value_at_FildeshSxpb(sxpb, it));
+    assert(nullish_FildeshSxpbIT(next_at_FildeshSxpb(sxpb, it)));
+    close_FildeshSxpb(sxpb);
+    close_FildeshO(err_out);
+  }
+}
+
 int main() {
   parse_string_test();
   parse_number_test();
@@ -444,5 +473,6 @@ int main() {
   parse_array_of_empty_messages_test();
   parse_repeated_list_field_test();
   parse_append_operator_test();
+  parse_append_relative_keypath_test();
   return 0;
 }

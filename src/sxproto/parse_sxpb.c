@@ -493,7 +493,11 @@ static FildeshSxpbIT freshtail_FildeshSxpb(
     it.elem_id = (*sxpb->values)[it.cons_id].elem;
   }
   else {
-    it.elem_id = (*sxpb->values)[it.elem_id].next;
+    const FildeshSxpb_id next_id = (*sxpb->values)[it.elem_id].next;
+    /* An explicit append modifies a descendant without adding a sibling.*/
+    if (!fildesh_nullid(next_id)) {
+      it.elem_id = next_id;
+    }
   }
   assert(!fildesh_nullid(it.elem_id));
   assert(fildesh_nullid((*sxpb->values)[it.elem_id].next));
@@ -623,6 +627,66 @@ reconcile_existing_elem_kind(
   }
 }
 
+/** Consume (+. path to field), resolving the target and its schema together.
+ **/
+static
+  FildeshSxpbIT
+parse_append_keypath_FildeshSxpbInfo(
+    FildeshSxpbInfo* info,
+    const FildeshSxprotoField** ret_schema,
+    FildeshX* in,
+    FildeshSxpb* sxpb,
+    FildeshSxpbIT p_it,
+    FildeshO* oslice)
+{
+  const FildeshSxprotoField* path_schema = *ret_schema;
+  FildeshSxpbIT path_it = DEFAULT_FildeshSxpbIT;
+  skipstr_FildeshSxpbInfo(info, in, "(+.");
+  skip_separation(in, info);
+
+  /* Resolve keypath and schema relative to the current message. */
+  path_it.cons_id = p_it.cons_id;
+  for (;;) {
+    const FildeshSxprotoFieldKind path_parent_kind = (
+        (*sxpb->values)[id_of_FildeshSxpbIT(path_it)].field_kind);
+    const char* name;
+    unsigned nesting_depth = 0;
+    if (path_parent_kind != FildeshSxprotoFieldKind_MESSAGE &&
+        path_parent_kind != FildeshSxprotoFieldKind_DICT) {
+      syntax_error(info, "Expected mesg or dict in append operation keypath.");
+      return FildeshSxpbIT_of_NULL();
+    }
+    if (!parse_name_FildeshSxpbInfo(
+            info, in, oslice, &nesting_depth, path_parent_kind)) {
+      return FildeshSxpbIT_of_NULL();
+    }
+    if (oslice->size == 0 || nesting_depth != 0) {
+      syntax_error(info, "Expected a field name in the append keypath.");
+      return FildeshSxpbIT_of_NULL();
+    }
+    name = ensure_name_FildeshSxpb(sxpb, oslice->at, oslice->size);
+    if (path_schema && path_parent_kind != FildeshSxprotoFieldKind_DICT) {
+      path_schema = subfield_of_FildeshSxprotoField(path_schema, name);
+      if (!path_schema) {
+        syntax_error(info, "Unknown append target in schema.");
+        return FildeshSxpbIT_of_NULL();
+      }
+      name = path_schema->name;
+    }
+    path_it = lookup_subfield_at_FildeshSxpb(sxpb, path_it, name);
+    if (nullish_FildeshSxpbIT(path_it)) {
+      syntax_error(info, "Unknown append target.");
+      return FildeshSxpbIT_of_NULL();
+    }
+    skip_separation(in, info);
+    if (skipstr_FildeshSxpbInfo(info, in, ")")) {
+      break;
+    }
+  }
+  *ret_schema = path_schema;
+  return path_it;
+}
+
 /** Parse an append operation of the form:
  *   ((+. path to field) (()) elem elem ...)
  **/
@@ -637,53 +701,14 @@ parse_append_field_FildeshSxpbInfo(
     FildeshO* oslice)
 {
   const FildeshSxprotoField* path_schema = schema;
-  FildeshSxpbIT path_it = DEFAULT_FildeshSxpbIT;
+  const FildeshSxpbIT path_it = parse_append_keypath_FildeshSxpbInfo(
+      info, &path_schema, in, sxpb, p_it, oslice);
   FildeshSxpbIT tail_it = DEFAULT_FildeshSxpbIT;
   FildeshSxpbIT e_it;
   FildeshSxprotoFieldKind elem_kind = FildeshSxprotoFieldKind_UNKNOWN;
-  skipstr_FildeshSxpbInfo(info, in, "(+.");
-  skip_separation(in, info);
-
-  /* Resolve keypath and schema relative to the current message. */
-  path_it.cons_id = p_it.cons_id;
-  for (;;) {
-    const FildeshSxprotoFieldKind path_parent_kind = (
-        (*sxpb->values)[id_of_FildeshSxpbIT(path_it)].field_kind);
-    const char* name;
-    unsigned nesting_depth = 0;
-    if (path_parent_kind != FildeshSxprotoFieldKind_MESSAGE &&
-        path_parent_kind != FildeshSxprotoFieldKind_DICT) {
-      syntax_error(info, "Expected mesg or dict in append operation keypath.");
-      return false;
-    }
-    if (!parse_name_FildeshSxpbInfo(
-            info, in, oslice, &nesting_depth, path_parent_kind)) {
-      return false;
-    }
-    if (oslice->size == 0 || nesting_depth != 0) {
-      syntax_error(info, "Expected a field name in the append keypath.");
-      return false;
-    }
-    name = ensure_name_FildeshSxpb(sxpb, oslice->at, oslice->size);
-    if (path_schema && path_parent_kind != FildeshSxprotoFieldKind_DICT) {
-      path_schema = subfield_of_FildeshSxprotoField(path_schema, name);
-      if (!path_schema) {
-        syntax_error(info, "Unknown append target in schema.");
-        return false;
-      }
-      name = path_schema->name;
-    }
-    path_it = lookup_subfield_at_FildeshSxpb(sxpb, path_it, name);
-    if (nullish_FildeshSxpbIT(path_it)) {
-      syntax_error(info, "Unknown append target.");
-      return false;
-    }
-    skip_separation(in, info);
-    if (skipstr_FildeshSxpbInfo(info, in, ")")) {
-      break;
-    }
+  if (nullish_FildeshSxpbIT(path_it)) {
+    return false;
   }
-
   if (path_it.field_kind != FildeshSxprotoFieldKind_ARRAY &&
       path_it.field_kind != FildeshSxprotoFieldKind_MANYOF) {
     syntax_error(info, "Expected append target to be an array or manyof.");
@@ -717,7 +742,7 @@ parse_append_field_FildeshSxpbInfo(
   tail_it.cons_id = path_it.elem_id;
   for (e_it = first_at_FildeshSxpb(sxpb, tail_it);
        !nullish_FildeshSxpbIT(e_it);
-       e_it = next_at_FildeshSxpb(sxpb, tail_it))
+       e_it = next_at_FildeshSxpb(sxpb, e_it))
   {
     const char* const elem_name = name_at_FildeshSxpb(sxpb, e_it);
     if (path_it.field_kind == FildeshSxprotoFieldKind_ARRAY ||
